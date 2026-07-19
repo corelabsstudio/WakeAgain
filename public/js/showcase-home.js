@@ -60,18 +60,28 @@
       }
       var list = (data && data.showcases) || [];
       if (!list.length) {
+        var en0 = window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en";
         grid.innerHTML =
-          '<div class="empty-state" style="grid-column:1/-1">아직 자랑이 없어요. ' +
-          '<a class="text-link" href="/diagnose.html">무료진단</a></div>';
+          '<div class="empty-state" style="grid-column:1/-1">' +
+          (en0 ? "No showcases yet. " : "아직 자랑이 없어요. ") +
+          '<a class="text-link" href="/diagnose.html">' +
+          (en0 ? "Free diagnose" : "무료진단") +
+          "</a></div>";
         return;
       }
       grid.innerHTML = list.map(card).join("");
     } catch (e) {
+      var en1 = window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en";
       grid.innerHTML =
-        '<div class="empty-state" style="grid-column:1/-1">불러오지 못했어요. ' +
-        '<a class="text-link" href="/showcase.html">보드</a></div>';
+        '<div class="empty-state" style="grid-column:1/-1">' +
+        (en1 ? "Could not load. " : "불러오지 못했어요. ") +
+        '<a class="text-link" href="/showcase.html">' +
+        (en1 ? "Board" : "보드") +
+        "</a></div>";
     }
   }
 
   load();
+  document.addEventListener("wa:langchange", load);
+  document.addEventListener("wa:currencychange", load);
 })();

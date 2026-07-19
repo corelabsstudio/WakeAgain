@@ -119,32 +119,58 @@
     return "violet";
   }
 
+  function tt(key, fallback) {
+    try {
+      if (window.WakeAgainI18n && window.WakeAgainI18n.t) {
+        var v = window.WakeAgainI18n.t(key);
+        if (v && v !== key) return v;
+      }
+    } catch (e) {}
+    return fallback;
+  }
+
+  function money(n) {
+    if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) {
+      return window.WakeAgainI18n.formatMoney(n);
+    }
+    return "₩" + Number(n).toLocaleString("ko-KR");
+  }
+
   function badge(p) {
-    if (p.listing_status === "preview") return { cls: "new", text: "예시" };
+    var en = (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang()) === "en";
+    if (p.listing_status === "preview") return { cls: "new", text: en ? "Sample" : "예시" };
     const a = (p.auction_status || "live").toLowerCase();
-    if (a === "sold") return { cls: "ending", text: "팔림" };
-    if (a === "ended") return { cls: "draft", text: "끝남" };
-    if ((p.bid_count || 0) > 0) return { cls: "live", text: "입찰 중" };
-    if (p.listing_status === "pending") return { cls: "draft", text: "검토 중" };
-    return { cls: "live", text: "첫 입찰 대기" };
+    if (a === "sold") return { cls: "ending", text: en ? "Sold" : "팔림" };
+    if (a === "ended") return { cls: "draft", text: en ? "Ended" : "끝남" };
+    if ((p.bid_count || 0) > 0) return { cls: "live", text: en ? "Bidding" : "입찰 중" };
+    if (p.listing_status === "pending") return { cls: "draft", text: en ? "In review" : "검토 중" };
+    return { cls: "live", text: en ? "Awaiting first bid" : "첫 입찰 대기" };
   }
 
   function formatPrice(p) {
+    var en = (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang()) === "en";
     if (p.listing_status === "preview") {
       const cur = p.price_current != null ? p.price_current : p.price_start;
       return {
-        label: (p.bid_count || 0) > 0 ? "지금 가격" : "시작 가격",
-        value: "₩" + Number(cur).toLocaleString("ko-KR"),
+        label: (p.bid_count || 0) > 0 ? (en ? "Current" : "지금 가격") : (en ? "Start" : "시작 가격"),
+        value: money(cur),
       };
     }
     const cur = p.price_current != null ? p.price_current : p.price_start;
     if (cur != null) {
       return {
-        label: (p.bid_count || 0) > 0 ? "지금 가격 · 공개" : "시작 가격 · 공개",
-        value: "₩" + Number(cur).toLocaleString("ko-KR"),
+        label:
+          (p.bid_count || 0) > 0
+            ? en
+              ? "Current · public"
+              : "지금 가격 · 공개"
+            : en
+              ? "Start · public"
+              : "시작 가격 · 공개",
+        value: money(cur),
       };
     }
-    return { label: "가격", value: "문의" };
+    return { label: en ? "Price" : "가격", value: en ? "Inquire" : "문의" };
   }
 
   function detailHref(p) {
@@ -161,24 +187,26 @@
     const href = detailHref(p);
     const cats = p.cats || inferCats(p);
     const bids = p.bid_count || 0;
+    const en = (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang()) === "en";
     const title = escapeHtml(p.title || "Untitled");
     const line = escapeHtml(p.one_liner || "");
     const bidNote =
       bids > 0
-        ? `<span class="listing-bid-note">${bids}명이 가격 씀 · 모두 공개</span>`
-        : `<span class="listing-bid-note">첫 입찰 대기</span>`;
+        ? `<span class="listing-bid-note">${en ? bids + " bids · public" : bids + "명이 가격 씀 · 모두 공개"}</span>`
+        : `<span class="listing-bid-note">${en ? "Awaiting first bid" : "첫 입찰 대기"}</span>`;
     const ptype = escapeHtml(p.product_type_label || "");
     const typeBit = ptype
       ? `<span class="listing-type-tag">${ptype}</span>`
       : "";
+    const cta = bids > 0 ? (en ? "Bid & view" : "가격 쓰고 보기") : (en ? "View project" : "프로젝트 자세히 보기");
     return (
       `<article class="listing-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}">` +
       `<div class="listing-icon ${tone}">${ICONS[tone] || ICONS.violet}</div>` +
       `<div class="listing-body">` +
       `<div class="listing-title-row"><h3>${title}</h3><span class="badge ${b.cls}">${b.text}</span></div>` +
       `<p>${line}</p>${typeBit}${bidNote}` +
-      `<div class="listing-foot"><div><span class="label">${price.label}</span><strong data-price>${price.value}</strong></div>` +
-      `<a class="btn btn-primary btn-sm" href="${href}">${bids > 0 ? "가격 쓰고 보기" : "프로젝트 자세히 보기"}</a></div>` +
+      `<div class="listing-foot"><div><span class="label">${price.label}</span><strong data-price data-money-krw="${escapeAttr(String(p.price_current != null ? p.price_current : p.price_start || 0))}">${price.value}</strong></div>` +
+      `<a class="btn btn-primary btn-sm" href="${href}">${cta}</a></div>` +
       `</div></article>`
     );
   }
@@ -210,8 +238,12 @@
     if (empty) {
       empty.hidden = shown > 0;
       if (shown === 0) {
-        empty.textContent =
-          source === "api"
+        var en = (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang()) === "en";
+        empty.textContent = en
+          ? source === "api"
+            ? "No listings in this category."
+            : "No samples in this category."
+          : source === "api"
             ? "해당 카테고리 매물이 없습니다."
             : "해당 카테고리 예시가 없습니다.";
       }
@@ -355,7 +387,7 @@
     }
     const price = first.price_current != null ? first.price_current : first.price_start;
     if (bid && price != null) {
-      const next = "₩" + Number(price).toLocaleString("ko-KR");
+      const next = money(price);
       if (bid.textContent !== next) {
         bid.textContent = next;
         bid.classList.add("price-flash");
@@ -422,7 +454,7 @@
       const strong = card.querySelector("[data-price]");
       const price = a.price_current != null ? a.price_current : a.price_start;
       if (strong && price != null) {
-        const next = "₩" + Number(price).toLocaleString("ko-KR");
+        const next = money(price);
         if (strong.textContent !== next) {
           strong.textContent = next;
           strong.classList.add("price-flash");
@@ -512,20 +544,33 @@
         const t = live.ticker[0];
         const toast = document.querySelector(".live-toast");
         if (toast && t) {
+          var en = (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang()) === "en";
           toast.innerHTML =
-            '<span class="pulse-dot"></span> 방금 입찰 · ₩' +
-            Number(t.amount).toLocaleString("ko-KR") +
+            '<span class="pulse-dot"></span> ' +
+            (en ? "New bid · " : "방금 입찰 · ") +
+            money(t.amount) +
             " · " +
             (t.bidder_label || "") +
             ' · <a href="/project.html?id=' +
             encodeURIComponent(t.project_id) +
-            '" style="color:inherit;text-decoration:underline">보기</a>';
+            '" style="color:inherit;text-decoration:underline">' +
+            (en ? "view" : "보기") +
+            "</a>";
         }
       }
     } catch (e) {
       /* quiet */
     }
   }
+
+  function rerenderForLocale() {
+    if (cache && cache.length) {
+      grid.innerHTML = cache.map(cardHtml).join("");
+      applyFilter();
+    }
+  }
+  document.addEventListener("wa:langchange", rerenderForLocale);
+  document.addEventListener("wa:currencychange", rerenderForLocale);
 
   load(true).then(function () {
     setInterval(pollLive, 4000);
