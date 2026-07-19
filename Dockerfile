@@ -16,7 +16,9 @@ ENV AUCTION_SCHEDULER=1
 ENV EMAIL_DEV_MODE=0
 
 RUN mkdir -p /data
-VOLUME ["/data"]
+# Note: Railway rejects Dockerfile VOLUME — use dashboard Volume mount on /data if needed
 
 EXPOSE 8080
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+# Railway injects PORT; local default 8080
+# Railway sets PORT; shell form so variable expands (exec form would not)
+CMD sh -c "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"

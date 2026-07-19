@@ -1,6 +1,7 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+# Railway Builder enum: HEROKU | NIXPACKS | PAKETO | RAILPACK (no DOCKERFILE enum)
+# RAILPACK auto-detects Dockerfile in repo root
+builder = "RAILPACK"
 
 [deploy]
 healthcheckPath = "/health"

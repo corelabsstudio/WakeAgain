@@ -40,3 +40,6 @@ mobile/www/
 *.log
 _variant_snip.txt
 ref-screenshot.png
+
+.railway/
+
