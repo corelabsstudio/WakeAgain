@@ -2,6 +2,9 @@
 
 **Status:** UI/locale foundation ready (KO + EN). Settlement remains **KRW** until multi-region PG.
 
+**Priority (2026-07-20):** **Korea first — close real deals in KR.**  
+No separate foreign site / multi-country PG until KR marketplace loop is proven.
+
 ## What is ready
 
 | Area | Status |
