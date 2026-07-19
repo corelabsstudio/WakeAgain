@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WakeAgain</string>
+    <string name="title_activity_main">WakeAgain</string>
+    <string name="package_name">com.corelabs.wakeagain</string>
+    <string name="custom_url_scheme">com.corelabs.wakeagain</string>
+</resources>

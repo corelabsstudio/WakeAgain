@@ -1,0 +1,42 @@
+{
+  "appId": "com.corelabs.wakeagain",
+  "appName": "WakeAgain",
+  "webDir": "www",
+  "backgroundColor": "#050508",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "allowNavigation": [
+      "http://10.0.2.2:*",
+      "http://127.0.0.1:*",
+      "http://localhost:*",
+      "http://192.168.*",
+      "https://*"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#050508",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#050508"
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#050508"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#050508",
+    "preferredContentMode": "mobile"
+  }
+}

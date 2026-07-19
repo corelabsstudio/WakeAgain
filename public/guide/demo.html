@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>데모 올리는 법 — WakeAgain</title>
+  <meta name="description" content="바이브 코딩·비개발자도 가능한 데모 안내. 영상·스크린만으로 매물 등록." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="stylesheet" href="/legal/legal.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    .demo-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.2rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .demo-block h2 { margin: 0 0 0.45rem; font-size: 1.1rem; }
+    .demo-block ol { margin: 0.5rem 0 0; padding-left: 1.2rem; color: var(--muted); line-height: 1.55; }
+    .demo-block li { margin: 0.35rem 0; }
+    .easy {
+      background: var(--purple-soft);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.25rem;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/app/#new">내 프로젝트 올리기</a>
+      </div>
+    </div>
+  </header>
+  <main class="legal-page" style="max-width:720px">
+    <p class="eyebrow">Guide · Demo</p>
+    <h1>데모 올리는 법</h1>
+    <p class="legal-meta">코딩·배포를 잘 몰라도 됩니다. 구매자와 검수자가 <strong>돌아가는 모습</strong>을 보면 됩니다.</p>
+
+    <div class="easy">
+      <strong>한 줄 요약</strong><br />
+      공개 사이트 주소가 없으면 → <strong>화면 녹화 1~2분</strong> → YouTube/Loom/Drive 링크를 데모 칸에 붙이세요.<br />
+      서버 올리기·스토어 등록은 필수가 아닙니다.
+    </div>
+
+    <div class="demo-block">
+      <h2>공통 (가장 쉬운 순서)</h2>
+      <ol>
+        <li>제품을 실행한다 (로컬·폰·에뮬 모두 OK)</li>
+        <li>화면을 녹화한다 (아래 OS별)</li>
+        <li>영상을 올린다 (유튜브 「링크 있는 사람만」, Loom, 구글 드라이브)</li>
+        <li>매물 등록의 데모 칸에 <strong>링크 + 한 줄 설명</strong>을 적는다</li>
+      </ol>
+    </div>
+
+    <div class="demo-block">
+      <h2>화면 녹화 어떻게 하나요?</h2>
+      <ol>
+        <li><strong>Windows</strong> — <code>Win + G</code> (Xbox 게임 바) → 캡처</li>
+        <li><strong>Mac</strong> — <code>Cmd + Shift + 5</code> → 화면 기록</li>
+        <li><strong>iPhone</strong> — 설정 → 제어 센터 → 화면 기록 추가 후 스와이프해서 녹화</li>
+        <li><strong>Android</strong> — 빠른 설정 패널의 화면 녹화 (기종마다 이름 다름)</li>
+      </ol>
+    </div>
+
+    <div class="demo-block">
+      <h2>형태별로</h2>
+      <ol>
+        <li><strong>웹사이트·SaaS</strong> — 주소가 있으면 주소. 없으면 브라우저 화면 녹화</li>
+        <li><strong>모바일 앱</strong> — 폰 화면 기록. TestFlight/내부 테스트는 보너스</li>
+        <li><strong>데스크톱</strong> — PC 화면 녹화. 설치 파일 첨부는 성사 후로 미뤄도 됨</li>
+        <li><strong>API</strong> — 호출 영상 또는 JSON 예시 + 문서 링크</li>
+      </ol>
+    </div>
+
+    <div class="demo-block">
+      <h2>검수에서 보는 것</h2>
+      <ol>
+        <li>데모가 <strong>실제로 열리는지</strong> (링크 죽음 X)</li>
+        <li>상태(프로토타입 등)와 영상이 <strong>과하게 안 다른지</strong></li>
+        <li>사기·명백한 도용 티가 없는지</li>
+      </ol>
+      <p class="muted fine" style="margin:0.75rem 0 0;line-height:1.5">코드 품질 감정·시세 감정은 하지 않습니다. “돌아가는 흔적”이 있으면 등록을 검토합니다.</p>
+    </div>
+
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="/app/#new">내 프로젝트 올리기</a>
+      <a class="btn btn-ghost" href="/guide/status.html">상태 분류 기준</a>
+    </p>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain · <a href="/legal/terms.html">이용약관</a></p>
+  </footer>
+</body>
+</html>

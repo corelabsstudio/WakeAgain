@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>내 프로젝트 올리기 — WakeAgain</title>
+  <meta name="description" content="방치·미출시 프로젝트를 WakeAgain에 카드로 등록합니다." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/#list">마켓플레이스</a>
+        <a href="/app/#list">앱</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="nav-login" href="/app/#login">로그인</a>
+        <a class="btn btn-primary btn-sm" href="/buy.html">관심 등록하기</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="form-page">
+    <p class="eyebrow">판매자 · 사전 등록</p>
+    <h1>내 프로젝트 올리기</h1>
+    <p class="lede">방치·미출시 프로젝트를 카드로 등록합니다. 큰돈이 오갈 수 있는 장이라 <strong>공개 매물 등록은 이메일 인증 + 실명·휴대폰</strong>이 필요합니다.</p>
+
+    <div class="review-sla-banner" role="note">
+      <strong>검수 안내</strong>
+      <p>계정으로 올린 매물은 <strong>바로 공개되지 않습니다.</strong> 운영 <strong>형식 검수</strong> 후 공개되며, 보통 <strong>1~2영업일</strong> 안에 게시 허용·보류·반려가 반영됩니다. (품질·가치 보증 아님)</p>
+    </div>
+
+    <div class="form-path-cards">
+      <a class="path-card path-primary" href="/app/#new">
+        <strong>계정으로 등록 (권장 · Lv2)</strong>
+        <span>이메일 인증 → 실명·휴대폰 → 매물 등록 → 검수 후 공개. 연락처 비공개</span>
+      </a>
+      <div class="path-card">
+        <strong>빠른 접수 (비회원)</strong>
+        <span>아래 폼은 사전 문의용입니다. 공개 리스팅·입찰 권한은 없습니다</span>
+      </div>
+    </div>
+    <p class="trust-inline-note muted fine">
+      올리기 전 궁금하면
+      <a class="text-link" href="/diagnose.html">내 프로젝트는 얼마일까? (30초 무료 진단)</a>
+      · 성사 전 정산 계좌(Lv3) 확인
+    </p>
+
+    <div class="fee-notice-banner" role="note" style="margin-bottom:1.25rem">
+      <strong>수수료 고지 (등록·접수 전 확인)</strong>
+      <ul style="margin:0.4rem 0 0;padding-left:1.15rem;line-height:1.55;color:var(--muted)">
+        <li>등록·사전 접수 <strong>무료</strong></li>
+        <li>거래 <strong>성사 시 판매자 10%</strong> · 구매자는 합의(낙찰)가만</li>
+        <li>미성사 시 플랫폼 수수료 없음 ·
+          <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">이용약관 제13조</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="safety-notice" role="note" style="margin-bottom:1.25rem">
+      <span class="safety-notice-title">사기 금지 · 판매자 책임</span>
+      <ul>
+        <li>허위·남의 자산·기망 매물은 즉시 차단·신고 대상입니다.</li>
+        <li>매물 품질·내용의 1차 책임은 <strong>판매자</strong>에게 있습니다. 플랫폼은 거래 당사자가 아닙니다.</li>
+        <li><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 어긴 손해는 본인 책임입니다.</li>
+      </ul>
+    </div>
+
+    <form class="form-card" id="sellForm" novalidate>
+      <input type="hidden" name="type" value="sell" />
+
+      <label for="title">프로젝트명 <span class="req">*</span></label>
+      <input id="title" name="title" required maxlength="80" placeholder="예: FocusTimer" autocomplete="off" />
+
+      <label for="one_liner">한 줄 소개 <span class="req">*</span></label>
+      <input id="one_liner" name="one_liner" required maxlength="120" placeholder="무엇을 하는 제품인가요?" />
+
+      <label for="product_type">제품 형태 <span class="req">*</span></label>
+      <select id="product_type" name="product_type" required>
+        <option value="">선택</option>
+        <option value="website">웹사이트</option>
+        <option value="webapp">웹 앱 / SaaS</option>
+        <option value="mobile">모바일 앱</option>
+        <option value="desktop">데스크톱 프로그램</option>
+        <option value="api">API / SDK / 백엔드</option>
+        <option value="game">게임</option>
+        <option value="other">기타</option>
+      </select>
+      <p class="price-guide muted fine">웹·앱·데스크톱 등 어디에 돌아가는 제품인지 선택합니다.</p>
+      <div id="sellDemoHelp" class="demo-help-host" hidden></div>
+
+      <label for="status">지금 얼마나 만들었나요? <span class="req">*</span></label>
+      <select id="status" name="status" required>
+        <option value="">선택</option>
+        <option value="prototype">돌아가는 초안</option>
+        <option value="beta">써 볼 수 있는 제품</option>
+        <option value="launched">공개했다가 멈춤</option>
+        <option value="other">그 외 (도구·코드·자료)</option>
+      </select>
+      <p class="price-guide">
+        어려운 용어 없이 지금 상태를 고르면 됩니다. 과장은 신뢰·심사에 불리합니다.
+        <a href="/guide/status.html" target="_blank" rel="noopener">쉽게 고르는 법</a>
+      </p>
+      <div class="status-criteria" id="sellStatusCriteria" hidden></div>
+      <p class="price-guide" id="sellPriceGuide">상태에 따라 희망 시작가 권장 구간이 달라집니다.</p>
+
+      <label for="story">스토리 (왜 만들었고 왜 멈췄는지) <span class="req">*</span></label>
+      <textarea id="story" name="story" required maxlength="2000" placeholder="200자 이상 권장. 솔직하게 적어 주세요."></textarea>
+
+      <label for="demo">데모 (URL · 영상 링크 · 설명) <span class="req">*</span></label>
+      <p class="price-guide muted fine">
+        배포 URL 없어도 됩니다. 화면 녹화 링크만으로 OK.
+        <a href="/guide/demo.html" target="_blank" rel="noopener">데모 올리는 법 (바이브 코딩 OK)</a>
+      </p>
+      <textarea id="demo" name="demo" required maxlength="1000" placeholder="제품 형태를 고르면 안내·예시가 뜹니다"></textarea>
+
+      <label>포함 자산</label>
+      <div class="checks">
+        <label><input type="checkbox" name="asset" value="code" /> 코드</label>
+        <label><input type="checkbox" name="asset" value="design" /> 디자인(피그마 등)</label>
+        <label><input type="checkbox" name="asset" value="domain" /> 도메인</label>
+        <label><input type="checkbox" name="asset" value="docs" /> 기획/문서</label>
+        <label><input type="checkbox" name="asset" value="accounts" /> 계정/스토어</label>
+      </div>
+
+      <label for="price_start">희망 시작 입찰가 (원) <span class="req">*</span></label>
+      <input id="price_start" name="price_start" type="number" min="50000" max="100000000" step="10000" placeholder="상태 선택 후 권장가가 채워집니다" inputmode="numeric" required />
+      <p class="note" id="sellPriceHint">초안은 낮게, 공개했다가 멈춘 제품은 높게 — 지금 상태에 맞춥니다. (최대 1억 원)</p>
+
+      <label for="price_buy_now">즉시구매가 (원) — <strong>선택</strong></label>
+      <input id="price_buy_now" name="price_buy_now" type="number" min="50000" max="100000000" step="10000" placeholder="비워 두면 즉시구매 없음" inputmode="numeric" />
+      <p class="note">
+        <strong>안 넣어도 됩니다.</strong> 비우면 경매(가격 쓰기)만 진행됩니다.
+        넣을 때만 시작가 이상 ~ 최대 1억 원. 더 높은 입찰을 기다리려면 비워 두세요.
+        (999… 같은 비현실 금액은 등록되지 않습니다.)
+      </p>
+
+      <label for="contact">연락 이메일 또는 텔레그램 <span class="req">*</span></label>
+      <input id="contact" name="contact" required maxlength="120" placeholder="you@email.com 또는 @telegram" />
+
+      <label class="checks check-single">
+        <input type="checkbox" name="fee_ack" value="yes" required />
+        <span>성사 시 <strong>판매자 수수료 10%</strong> · 구매자는 합의가만 부담하는 것에 동의합니다. <span class="req">*</span></span>
+      </label>
+
+      <label class="checks check-single">
+        <input type="checkbox" name="rights_ok" value="yes" required />
+        <span>양도 가능한 자산이며, 타인 저작물을 침해하지 않음을 확인합니다. <span class="req">*</span></span>
+      </label>
+
+      <label class="checks check-single">
+        <input type="checkbox" name="terms_ok" value="yes" required />
+        <span>
+          <a href="/legal/terms.html" target="_blank" rel="noopener">이용약관</a> 및
+          <a href="/legal/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>에 동의합니다.
+          <span class="req">*</span>
+        </span>
+      </label>
+
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit">등록 요청하기</button>
+        <a class="btn btn-ghost" href="/">취소</a>
+      </div>
+      <p class="note">계정 등록 건은 형식 검수 후 공개(보통 1~2영업일 · 품질 보증 아님). 성사 시 판매자 수수료 10%(약관 제13조) · 구매자는 합의가만. 등록 비용 무료.</p>
+      <p class="form-error" id="formError" hidden></p>
+    </form>
+
+    <div class="success-panel" id="ok" hidden>
+      <h2>접수됐어요.</h2>
+      <p>사전 접수는 운영이 확인한 뒤 연락드립니다. <strong>공개 마켓에 바로 올라가려면</strong> 계정으로 등록해 주세요. 검수는 보통 1~2영업일입니다.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/app/#register">계정 만들고 관리하기</a>
+        <a class="btn btn-ghost" href="/">홈</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs. All rights reserved. · WakeAgain</p>
+    <p class="footer-copy">
+      <a href="/legal/terms.html">이용약관</a> ·
+      <a href="/legal/privacy.html">개인정보처리방침</a> ·
+      <a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>
+    </p>
+    <p class="footer-copy muted">운영 코어랩스(CoreLabs) · 등록 비용 무료 · Powered by CoreLabs</p>
+  </footer>
+  <script src="/js/api.js"></script>
+  <script src="/js/demo-help.js"></script>
+  <script src="/form.js"></script>
+  <script>
+    (function () {
+      var sel = document.getElementById("product_type");
+      var box = document.getElementById("sellDemoHelp");
+      var demo = document.getElementById("demo");
+      if (!sel || !window.WakeAgainDemoHelp) return;
+      function sync() {
+        window.WakeAgainDemoHelp.applyTo(box, demo, sel.value || null);
+      }
+      sel.addEventListener("change", sync);
+      sync();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data & secrets
+data/
+*.db
+*.db-journal
+.env
+.env.*
+!.env.example
+.launch/
+**/railway.token
+**/*.token
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Mobile / Android build noise
+mobile/node_modules/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/local.properties
+mobile/android/app/src/main/assets/public/
+mobile/android/app/build/
+mobile/www/
+
+# Logs & temp
+*.log
+_variant_snip.txt
+ref-screenshot.png

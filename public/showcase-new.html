@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>자랑 등록하기 — WakeAgain</title>
+  <meta name="description" content="프로젝트를 자랑 보드에 올립니다. 판매 매물이 아닙니다." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    .showcase-new-page { max-width: 560px; }
+    .sc-note {
+      margin: 0 0 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.08);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    .sc-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0 0 0.75rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .sc-back:hover { color: var(--text); }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/#list">마켓플레이스</a>
+        <a href="/showcase.html">자랑하기</a>
+        <a href="/guide/">이용안내</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" href="/showcase.html">보드 보기</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="form-page showcase-new-page">
+    <a class="sc-back" href="/showcase.html">← 자랑 보드</a>
+    <h1>자랑 등록하기</h1>
+    <p class="muted fine" style="margin:0 0 1rem;line-height:1.45">
+      자신만의 특별한 기능·아이디어 본문은 적지 마세요. 누구나 비슷하게 구현할 수 있습니다.
+    </p>
+
+    <div id="scGate" hidden>
+      <div class="hero-cta" style="margin-top:0.5rem">
+        <a class="btn btn-primary" href="/diagnose.html">무료진단</a>
+        <a class="btn btn-ghost" href="/showcase.html">보드 보기</a>
+      </div>
+    </div>
+
+    <form class="form-card" id="scForm" novalidate>
+      <label for="scName">표시 이름 <span class="req">*</span></label>
+      <input id="scName" required maxlength="40" placeholder="예: 김도윤 / 익명" autocomplete="nickname" />
+
+      <label for="scTitle">프로젝트 이름 <span class="req">*</span></label>
+      <input id="scTitle" required maxlength="80" placeholder="예: ShopPulse" />
+
+      <label for="scOne">한 줄 소개 <span class="req">*</span></label>
+      <input id="scOne" required maxlength="120" placeholder="예: 잠든 SaaS 초안" />
+
+      <label for="scStatus">지금 상태</label>
+      <select id="scStatus">
+        <option value="prototype">돌아가는 초안</option>
+        <option value="beta">써 볼 수 있는 제품</option>
+        <option value="launched">공개했다가 멈춤</option>
+        <option value="other">그 외</option>
+      </select>
+
+      <label for="scType">제품 형태</label>
+      <select id="scType">
+        <option value="webapp">웹 앱 / SaaS</option>
+        <option value="website">웹사이트</option>
+        <option value="mobile">모바일 앱</option>
+        <option value="desktop">데스크톱</option>
+        <option value="api">API / 백엔드</option>
+        <option value="game">게임</option>
+        <option value="other">기타</option>
+      </select>
+
+      <label for="scStory">하고싶은 말 (선택)</label>
+      <input id="scStory" maxlength="120" placeholder="기능·비법 말고, 짧게 한 줄" />
+
+      <label for="scDemo">데모 (선택)</label>
+      <input id="scDemo" maxlength="1000" placeholder="링크만 (선택)" />
+
+      <label for="scPrice">시작가 힌트 (원, 선택)</label>
+      <input id="scPrice" type="number" min="0" max="100000000" step="10000" inputmode="numeric" placeholder="진단 힌트가 있으면 자동 입력" />
+
+      <input type="hidden" id="scDiag" value="" />
+
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit">자랑 등록하기</button>
+        <a class="btn btn-ghost" href="/showcase.html">취소</a>
+      </div>
+      <p class="form-error" id="scErr" hidden></p>
+    </form>
+
+    <div class="success-panel" id="scOk" hidden>
+      <h2>등록됐어요.</h2>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/showcase.html">보드 보기</a>
+        <a class="btn btn-ghost" href="/app/#new">마켓에 올리기</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">쇼케이스는 판매 매물이 아닙니다. WakeAgain(코어랩스)은 품질·사기를 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain ·
+      <a href="/legal/terms.html">이용약관</a> ·
+      <a href="/showcase.html">자랑 보드</a>
+    </p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      var api = window.WakeAgainAPI;
+      var form = document.getElementById("scForm");
+      var err = document.getElementById("scErr");
+      var ok = document.getElementById("scOk");
+      var gate = document.getElementById("scGate");
+      var diagPayload = null;
+
+      // Only after free diagnosis (session set on result step)
+      try {
+        var raw = sessionStorage.getItem("wa_diag_showcase");
+        if (raw) diagPayload = JSON.parse(raw);
+      } catch (e) {
+        diagPayload = null;
+      }
+      var hasDiag =
+        diagPayload &&
+        diagPayload.from_diagnose === true &&
+        diagPayload.diag_score != null &&
+        Number(diagPayload.diag_score) >= 0;
+
+      if (!hasDiag) {
+        form.hidden = true;
+        if (gate) gate.hidden = false;
+        return;
+      }
+
+      // Prefill from diagnose session
+      if (diagPayload.title) document.getElementById("scTitle").value = diagPayload.title;
+      if (diagPayload.one_liner) document.getElementById("scOne").value = diagPayload.one_liner;
+      if (diagPayload.status) document.getElementById("scStatus").value = diagPayload.status;
+      if (diagPayload.product_type) document.getElementById("scType").value = diagPayload.product_type;
+      if (diagPayload.story) document.getElementById("scStory").value = diagPayload.story;
+      if (diagPayload.price_hint != null) document.getElementById("scPrice").value = diagPayload.price_hint;
+      if (diagPayload.diag_score != null) document.getElementById("scDiag").value = diagPayload.diag_score;
+      // price_hint + diag are locked from diagnosis
+      document.getElementById("scPrice").readOnly = true;
+      document.getElementById("scDiag").value = String(diagPayload.diag_score);
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        err.hidden = true;
+        // Re-check gate at submit (session may have been cleared)
+        try {
+          var raw2 = sessionStorage.getItem("wa_diag_showcase");
+          var d2 = raw2 ? JSON.parse(raw2) : null;
+          if (!d2 || d2.from_diagnose !== true || d2.diag_score == null) {
+            form.hidden = true;
+            if (gate) gate.hidden = false;
+            return;
+          }
+        } catch (x) {
+          form.hidden = true;
+          if (gate) gate.hidden = false;
+          return;
+        }
+        var priceVal = document.getElementById("scPrice").value;
+        var diagVal = document.getElementById("scDiag").value;
+        if (diagVal === "" || diagVal == null) {
+          err.hidden = false;
+          err.textContent = "무료진단이 필요합니다.";
+          return;
+        }
+        var payload = {
+          author_name: document.getElementById("scName").value.trim(),
+          title: document.getElementById("scTitle").value.trim(),
+          one_liner: document.getElementById("scOne").value.trim(),
+          story: document.getElementById("scStory").value.trim(),
+          demo: document.getElementById("scDemo").value.trim(),
+          status_key: document.getElementById("scStatus").value,
+          product_type: document.getElementById("scType").value,
+          price_hint: priceVal ? Number(priceVal) : null,
+          diag_score: Number(diagVal),
+        };
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        try {
+          await api.request("/api/v1/showcases", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          try {
+            sessionStorage.removeItem("wa_diag_showcase");
+            sessionStorage.removeItem("wa_diag");
+          } catch (x) {}
+          form.hidden = true;
+          ok.hidden = false;
+        } catch (ex) {
+          err.hidden = false;
+          err.textContent = (ex && ex.message) || "등록에 실패했습니다.";
+        }
+        if (btn) btn.disabled = false;
+      });
+
+      if (!api || !api.request) {
+        api = {
+          request: async function (path, opts) {
+            opts = opts || {};
+            var res = await fetch(path, {
+              method: opts.method || "GET",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: opts.body || undefined,
+            });
+            var data = await res.json().catch(function () { return {}; });
+            if (!res.ok) throw new Error(data.detail || data.message || res.statusText);
+            return data;
+          },
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

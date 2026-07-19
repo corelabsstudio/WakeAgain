@@ -1,0 +1,58 @@
+{
+  "id": "/",
+  "name": "WakeAgain",
+  "short_name": "WakeAgain",
+  "description": "잠든 프로젝트를 다시 깨우는 곳. 웹·앱 동일 계정.",
+  "start_url": "/app/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050508",
+  "theme_color": "#7c3aed",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "shopping"],
+  "icons": [
+    {
+      "src": "/assets/logo-mark-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logo-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logo-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "마켓 보기",
+      "url": "/app/#list",
+      "description": "등록된 프로젝트 목록"
+    },
+    {
+      "name": "프로젝트 올리기",
+      "url": "/app/#new",
+      "description": "매물 등록"
+    },
+    {
+      "name": "자랑하기",
+      "url": "/showcase.html",
+      "description": "프로젝트 쇼케이스"
+    }
+  ]
+}

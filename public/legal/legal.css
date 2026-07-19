@@ -1,0 +1,82 @@
+/* Legal document pages — WakeAgain purple system */
+.legal-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 7rem 1.25rem 4rem;
+}
+.legal-page .eyebrow {
+  color: var(--purple);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+}
+.legal-page h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  letter-spacing: -0.03em;
+}
+.legal-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem;
+  line-height: 1.55;
+}
+.legal-body {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.35rem 1.75rem;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+.legal-body h2 {
+  margin: 1.75rem 0 0.65rem;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.legal-body h2:first-child { margin-top: 0; }
+.legal-body p { margin: 0.55rem 0; color: var(--text); }
+.legal-body ul, .legal-body ol {
+  margin: 0.45rem 0 0.75rem;
+  padding-left: 1.25rem;
+  color: var(--muted);
+}
+.legal-body li { margin: 0.25rem 0; }
+.legal-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0 1rem;
+  font-size: 0.88rem;
+}
+.legal-body th,
+.legal-body td {
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+.legal-body th {
+  background: rgba(168, 85, 247, 0.08);
+  color: var(--text);
+  font-weight: 650;
+}
+.legal-body td { color: var(--muted); }
+.legal-body a { color: var(--purple); font-weight: 600; }
+.legal-body blockquote {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--purple);
+  background: var(--purple-soft);
+  color: var(--muted);
+  font-size: 0.88rem;
+  border-radius: 0 12px 12px 0;
+}
+.legal-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.25rem 0 0;
+}

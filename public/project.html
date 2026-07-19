@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>매물 상세 — WakeAgain</title>
+  <meta name="description" content="WakeAgain 공개 경매. 현재가는 사이트 방문객 전원에게 실시간으로 공개됩니다." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="stylesheet" href="/legal/legal.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    /* Dynamic auction atmosphere */
+    .auction-page {
+      position: relative;
+      isolation: isolate;
+      transition: background 0.6s ease;
+    }
+    .auction-ambient {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      /* Always on for project pages — not only when bidding is hot */
+      opacity: 0.9;
+      transition: opacity 0.7s ease, filter 0.6s ease;
+    }
+    .auction-page.auction-hot .auction-ambient { opacity: 0.95; }
+    .auction-page.auction-hotter .auction-ambient { opacity: 1; }
+    .auction-page.auction-sold .auction-ambient {
+      opacity: 0.55;
+      filter: saturate(0.75) brightness(0.92);
+    }
+    .auction-ambient .amb-base {
+      position: absolute;
+      inset: -4%;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% -5%, rgba(192, 132, 252, 0.3), transparent 55%),
+        radial-gradient(ellipse 55% 45% at 95% 50%, rgba(244, 114, 182, 0.16), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 5% 75%, rgba(129, 140, 248, 0.15), transparent 50%),
+        radial-gradient(ellipse 40% 30% at 70% 100%, rgba(168, 85, 247, 0.1), transparent 50%);
+      animation: amb-breathe 8s ease-in-out infinite;
+    }
+    .auction-page.auction-hot .auction-ambient .amb-base {
+      animation-duration: 6s;
+    }
+    .auction-page.auction-hotter .auction-ambient .amb-base {
+      animation-duration: 4.5s;
+      filter: brightness(1.06) saturate(1.1);
+    }
+    @keyframes amb-breathe {
+      0%, 100% { filter: brightness(1) saturate(1); transform: scale(1); }
+      50% { filter: brightness(1.12) saturate(1.15); transform: scale(1.03); }
+    }
+    .amb-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(48px);
+      opacity: 0.62;
+      will-change: transform;
+    }
+    .amb-orb-a {
+      width: min(42vw, 320px);
+      height: min(42vw, 320px);
+      left: -8%;
+      top: 15%;
+      background: rgba(168, 85, 247, 0.45);
+      animation: amb-float-a 14s ease-in-out infinite;
+    }
+    .amb-orb-b {
+      width: min(36vw, 280px);
+      height: min(36vw, 280px);
+      right: -6%;
+      top: 35%;
+      background: rgba(236, 72, 153, 0.32);
+      animation: amb-float-b 11s ease-in-out infinite;
+    }
+    .amb-orb-c {
+      width: min(30vw, 220px);
+      height: min(30vw, 220px);
+      left: 40%;
+      bottom: 5%;
+      background: rgba(99, 102, 241, 0.28);
+      animation: amb-float-c 16s ease-in-out infinite;
+    }
+    .auction-page.auction-hotter .amb-orb {
+      opacity: 0.75;
+      filter: blur(40px);
+    }
+    @keyframes amb-float-a {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(12%, 18%) scale(1.12); }
+    }
+    @keyframes amb-float-b {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-14%, -10%) scale(1.08); }
+    }
+    @keyframes amb-float-c {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(8%, -16%) scale(1.15); }
+    }
+    .amb-scan {
+      position: absolute;
+      inset: -20% 0;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.03) 48%,
+        rgba(192, 132, 252, 0.08) 50%,
+        rgba(255, 255, 255, 0.03) 52%,
+        transparent 60%
+      );
+      opacity: 1;
+      animation: amb-scan 10s linear infinite;
+    }
+    .auction-page.auction-hot .amb-scan {
+      animation-duration: 7s;
+    }
+    .auction-page.auction-hotter .amb-scan {
+      animation-duration: 5s;
+    }
+    @keyframes amb-scan {
+      0% { transform: translateX(-40%); }
+      100% { transform: translateX(40%); }
+    }
+    .auction-page > header,
+    .auction-page > main,
+    .auction-page > footer {
+      position: relative;
+      z-index: 1;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .amb-orb, .amb-base, .amb-scan { animation: none !important; }
+      .auction-ambient { opacity: 0.35 !important; }
+    }
+
+    .auction-hero {
+      display: grid;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (min-width: 800px) {
+      .auction-hero { grid-template-columns: 1.2fr 0.9fr; align-items: start; }
+    }
+    .price-panel {
+      background: linear-gradient(160deg, rgba(192, 132, 252, 0.2), rgba(20, 12, 32, 0.95));
+      border: 1px solid rgba(192, 132, 252, 0.45);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.2rem 1.35rem;
+      box-shadow:
+        0 16px 48px rgba(168, 85, 247, 0.18),
+        0 0 50px rgba(168, 85, 247, 0.1);
+      transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+      animation: panel-pulse 4s ease-in-out infinite;
+    }
+    .auction-page.auction-hot .price-panel {
+      border-color: rgba(232, 121, 249, 0.5);
+      animation-duration: 3s;
+      box-shadow:
+        0 16px 52px rgba(168, 85, 247, 0.26),
+        0 0 0 1px rgba(236, 72, 153, 0.12),
+        0 0 70px rgba(168, 85, 247, 0.16);
+    }
+    .auction-page.auction-hotter .price-panel {
+      animation-duration: 2.2s;
+      box-shadow:
+        0 18px 56px rgba(168, 85, 247, 0.3),
+        0 0 80px rgba(236, 72, 153, 0.14);
+    }
+    .auction-page.auction-sold .price-panel {
+      animation: none;
+      border-color: rgba(52, 211, 153, 0.35);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+    }
+    @keyframes panel-pulse {
+      0%, 100% { box-shadow: 0 16px 48px rgba(168, 85, 247, 0.2), 0 0 40px rgba(168, 85, 247, 0.1); }
+      50% { box-shadow: 0 18px 56px rgba(192, 132, 252, 0.32), 0 0 70px rgba(236, 72, 153, 0.14); }
+    }
+    .price-panel .live-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .price-big {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0.15rem 0 0.35rem;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 22px rgba(192, 132, 252, 0.28);
+      transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.35s ease;
+    }
+    .auction-page.auction-hot .price-big {
+      text-shadow: 0 0 28px rgba(232, 121, 249, 0.4);
+    }
+    .price-big.flash { color: var(--pink); transform: scale(1.03); text-shadow: 0 0 24px rgba(232, 121, 249, 0.55); }
+    .price-meta { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0; }
+    .bid-form label { display: block; font-weight: 600; font-size: 0.88rem; margin: 0.85rem 0 0.35rem; }
+    .bid-form input {
+      width: 100%; border-radius: 12px; border: 1px solid var(--border-strong);
+      background: var(--bg-elev); color: var(--text); padding: 0.75rem 0.9rem; font: inherit;
+    }
+    .bid-form input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18); }
+    .bid-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; max-height: 280px; overflow: auto; }
+    .bid-list li {
+      display: flex; justify-content: space-between; gap: 0.75rem;
+      padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--bg-elev);
+      border: 1px solid var(--border); font-size: 0.9rem;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .auction-page.auction-hot .bid-list li:first-child {
+      border-color: rgba(192, 132, 252, 0.45);
+      background: rgba(168, 85, 247, 0.1);
+    }
+    .bid-list .amt { font-weight: 700; color: var(--purple); font-variant-numeric: tabular-nums; }
+    .story-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.25rem 1.2rem; white-space: pre-wrap; line-height: 1.65; color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+    .story-box h2 { color: var(--text); margin: 0 0 0.75rem; font-size: 1.05rem; }
+    .public-banner {
+      background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.35);
+      border-radius: var(--radius-sm); padding: 0.7rem 0.95rem; margin-bottom: 1rem;
+      font-size: 0.9rem; color: var(--text);
+      backdrop-filter: blur(8px);
+    }
+    .auction-page.auction-hot .public-banner {
+      background: rgba(168, 85, 247, 0.12);
+      border-color: rgba(192, 132, 252, 0.4);
+    }
+  </style>
+</head>
+<body class="form-body auction-page">
+  <div class="auction-ambient" aria-hidden="true">
+    <div class="amb-base"></div>
+    <span class="amb-orb amb-orb-a"></span>
+    <span class="amb-orb amb-orb-b"></span>
+    <span class="amb-orb amb-orb-c"></span>
+    <span class="amb-scan"></span>
+  </div>
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/#list">마켓플레이스</a>
+        <a href="/app/#list">앱</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="nav-login" href="/app/#login">로그인</a>
+        <a class="btn btn-primary btn-sm" href="/app/#new">내 프로젝트 올리기</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page" style="max-width: 900px">
+    <div class="legal-nav-links project-top-nav" style="margin:0 0 1rem;justify-content:flex-start">
+      <a class="btn btn-ghost" href="/#listings">목록으로</a>
+      <a class="btn btn-primary" href="/app/#list">앱에서 보기</a>
+    </div>
+    <p class="public-banner" id="publicBanner">
+      <strong id="publicBannerStrong">판매 중</strong>
+      <span id="publicBannerText"> — 누구나 지금 가격을 볼 수 있어요. 가격 쓰기는 쉽고, 낙찰되면 안내에 따라 빠르게 입금해야 해요.</span>
+    </p>
+    <p class="eyebrow" id="statusEyebrow">AUCTION</p>
+    <h1 id="pTitle">불러오는 중…</h1>
+    <p class="legal-meta" id="pOne"></p>
+
+    <div class="auction-hero">
+      <div>
+        <div class="story-box" id="storyBox">
+          <h2>스토리</h2>
+          <div id="pStory"></div>
+        </div>
+        <div class="story-box" style="margin-top:1rem">
+          <h2>데모 · 상태</h2>
+          <p id="pDemo" class="price-meta"></p>
+          <p id="pStatus" class="price-meta"></p>
+        </div>
+        <div class="story-box" id="msgBox" style="margin-top:1rem" hidden>
+          <h2>쪽지 (판매자 · 입찰자)</h2>
+          <ul class="bid-list" id="msgList" style="max-height:200px"></ul>
+          <form id="msgForm" class="bid-form" style="margin-top:0.75rem">
+            <label for="msgBody">메시지</label>
+            <textarea id="msgBody" maxlength="2000" required placeholder="이전·질문 등" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
+            <div class="form-actions" style="margin-top:0.5rem">
+              <button class="btn btn-primary btn-sm" type="submit">보내기</button>
+            </div>
+            <p class="form-error" id="msgErr" hidden></p>
+          </form>
+          <p class="price-meta">로그인 후 판매자 또는 입찰자만 이용할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <aside class="price-panel">
+        <div class="live-row">
+          <span class="badge live" id="liveBadge">LIVE</span>
+          <span class="price-meta" id="pollHint">4초마다 새로고침</span>
+        </div>
+        <p class="price-meta">지금 가격 (모두가 볼 수 있어요)</p>
+        <p class="price-big" id="priceCurrent">—</p>
+        <p class="price-meta" id="priceStartLine"></p>
+        <p class="price-meta" id="bidCountLine"></p>
+        <p class="price-meta" id="endsLine"></p>
+        <p class="price-meta" id="countdownLine" style="font-weight:700;color:var(--purple)"></p>
+        <p class="price-meta" id="nextMinLine"></p>
+        <p class="price-meta" id="feeLine"></p>
+        <p class="price-meta" id="sellerLine"></p>
+        <div class="seller-identity-card" id="sellerIdentityCard" hidden>
+          <strong class="seller-identity-title">판매자 정보 (구매자 확인용)</strong>
+          <p class="price-meta" id="sellerIdType"></p>
+          <p class="price-meta" id="sellerIdName"></p>
+          <p class="price-meta" id="sellerIdCeo" hidden></p>
+          <p class="price-meta" id="sellerIdBiz" hidden></p>
+          <p class="price-meta" id="sellerIdMailOrder"></p>
+          <p class="price-meta" id="sellerIdContact"></p>
+          <p class="price-meta" id="sellerIdAddr" hidden></p>
+          <p class="price-meta muted fine" id="sellerIdNote"></p>
+        </div>
+        <p class="price-meta" id="dealLine" hidden></p>
+
+        <form class="bid-form" id="bidForm">
+          <label for="bidAmount">얼마에 살지 쓰기 (원)</label>
+          <input id="bidAmount" type="number" min="0" step="10000" required inputmode="numeric" />
+          <div class="form-actions" style="margin-top:0.85rem;flex-wrap:wrap">
+            <button class="btn btn-primary btn-lg" type="submit" id="bidBtn">이 가격으로 살게요</button>
+            <button class="btn btn-white btn-lg" type="button" id="buyNowBtn" hidden>지금 가격에 바로 사기</button>
+          </div>
+          <p class="form-error" id="bidErr" hidden></p>
+          <p class="price-meta" style="margin-top:0.65rem;line-height:1.55">
+            가격 쓰기·바로 사기: <a class="text-link" href="/app/#register">Lv2 인증</a> 필요.
+            팔리면 수수료는 <strong>파는 사람 10%</strong> (사는 사람은 합의 가격만).
+          </p>
+          <div class="price-meta bid-notice" style="margin-top:0.45rem;line-height:1.55;padding:0.7rem 0.8rem;border-radius:10px;border:1px solid rgba(168,85,247,0.25);background:rgba(168,85,247,0.08)">
+            <p style="margin:0 0 0.55rem"><strong>낙찰되면</strong> 회사·판매자 안내에 따라 빠르게 입금해야 합니다.</p>
+            <p style="margin:0 0 0.55rem">시간 내 입금이 안 되면 무효가 되고 다음 순위 입찰자에게 넘어가게 되며, 사이트 내 신용 점수가 내려갈 수 있습니다.</p>
+            <p style="margin:0 0 0.55rem">지금은 운영 안내·수동 처리 구간입니다.<br />1시간 자동 타이머·결제 링크는 PG 연동 후 적용됩니다.</p>
+            <p style="margin:0">입금 준비가 된 분만 사용해 주세요.<br />
+              <a class="text-link" href="/guide/credit.html">점수 설명 보기</a>
+              ·
+              <a class="text-link" href="/legal/terms.html">이용약관 제12조</a>
+            </p>
+          </div>
+          <div class="safety-notice" role="note">
+            <span class="safety-notice-title">안전 · 책임 고지</span>
+            <ul>
+              <li>WakeAgain은 <strong>통신판매중개자</strong>이며 거래 당사자가 아닙니다.</li>
+              <li>매물 품질·내용·사기 피해의 1차 책임은 <strong>당사자(판매자·가해자)</strong>에게 있습니다.</li>
+              <li>운영 형식 검수·게시 허용·사이트 내 신용 점수는 <strong>보증이 아닙니다.</strong> 직접 확인하세요.</li>
+              <li>사는 쪽: 검토 없이 보내지 마세요. 파는 쪽: <strong>입금 확인 전</strong> 코드·계정 이전 금지.</li>
+              <li>PG 전 대금은 <strong>오프플랫폼(계좌이체 등)</strong>일 수 있으며, 플랫폼이 대금을 보관·보증하지 않습니다.</li>
+              <li>분쟁 시 — ① 낙찰 후 판매자와 직접 연락 · ② 아래 신고 · ③ 합의 안 되면 수사·소송·공정위 조정 (<a class="text-link" href="/guide/dispute.html">분쟁 해결 안내</a>)</li>
+              <li>사기 의심 메일: <a class="text-link" href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a></li>
+            </ul>
+          </div>
+        </form>
+
+        <div class="report-box" id="reportBox" style="margin-top:1rem">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnToggleReport" style="width:100%;border-color:rgba(248,113,113,0.45);color:#fca5a5">
+            문제 신고 (저퀄·표절·미작동)
+          </button>
+          <form id="reportForm" class="bid-form" hidden style="margin-top:0.65rem">
+            <p class="price-meta" style="margin:0 0 0.5rem;line-height:1.5">
+              <strong>사는 쪽(Lv2)</strong>만 신고할 수 있어요. 매물당 1회.
+              서로 다른 사람 신고가 <strong>3건</strong>이면 경매 자동 중단,
+              판매자 합산 <strong>5건</strong>이면 계정 자동 정지.
+            </p>
+            <label for="reportReason">신고 사유</label>
+            <select id="reportReason" required>
+              <option value="low_quality">저퀄리티 코드</option>
+              <option value="plagiarism">표절·도용 코드</option>
+              <option value="not_working">작동하지 않음</option>
+              <option value="fraud">사기·기망 의심</option>
+              <option value="other">기타</option>
+            </select>
+            <label for="reportDetail" style="margin-top:0.5rem;display:block">자세히 (선택)</label>
+            <textarea id="reportDetail" maxlength="1000" placeholder="예: 데모가 404, 다른 레포 복붙 의심 등" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
+            <div class="form-actions" style="margin-top:0.55rem">
+              <button class="btn btn-primary btn-sm" type="submit" id="reportSubmit">신고 보내기</button>
+            </div>
+            <p class="form-error" id="reportErr" hidden></p>
+            <p class="price-meta" id="reportOk" hidden style="color:#86efac"></p>
+          </form>
+        </div>
+
+        <div id="ownerActions" hidden style="margin-top:1rem">
+          <p class="price-meta"><strong>판매자</strong> · 정산 계좌(Lv3) 등록 후 팔기 확정</p>
+          <div class="safety-notice" role="note" style="margin-top:0.65rem">
+            <span class="safety-notice-title">판매자 보호</span>
+            입금(또는 안내된 확인) <strong>전</strong>에 소스·도메인·계정을 넘기지 마세요.
+            어긴 손해는 본인 책임이며 플랫폼이 배상하지 않습니다.
+          </div>
+          <button type="button" class="btn btn-primary" id="closeDealBtn">최고가에 팔기 확정</button>
+          <p class="form-error" id="closeErr" hidden></p>
+          <ul class="price-meta" id="transferList" style="margin-top:0.75rem;padding-left:1.1rem" hidden></ul>
+        </div>
+
+        <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem">사람들이 쓴 가격 (공개)</h3>
+        <ul class="bid-list" id="bidList"></ul>
+      </aside>
+    </div>
+
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain · 지금 가격은 모두 공개</p>
+    <p class="footer-copy">
+      <a href="/legal/terms.html">이용약관</a> ·
+      <a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>
+    </p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      var api = window.WakeAgainAPI;
+      var params = new URLSearchParams(location.search);
+      var id = params.get("id");
+      if (!id) {
+        document.getElementById("pTitle").textContent = "매물을 찾을 수 없습니다.";
+        return;
+      }
+
+      var lastPrice = null;
+      var pollMs = 4000;
+      var projectCache = null;
+      var countdownTimer = null;
+
+      function won(n) {
+        if (n == null || n === "") return "—";
+        return "₩" + Number(n).toLocaleString("ko-KR");
+      }
+
+      function flashPrice() {
+        var el = document.getElementById("priceCurrent");
+        el.classList.remove("flash");
+        void el.offsetWidth;
+        el.classList.add("flash");
+        setTimeout(function () { el.classList.remove("flash"); }, 600);
+      }
+
+      function fmtRemain(ms) {
+        if (ms <= 0) return "마감됨";
+        var s = Math.floor(ms / 1000);
+        var d = Math.floor(s / 86400);
+        s %= 86400;
+        var h = Math.floor(s / 3600);
+        s %= 3600;
+        var m = Math.floor(s / 60);
+        s %= 60;
+        if (d > 0) return d + "일 " + h + "시간 " + m + "분";
+        return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      }
+
+      function tickCountdown(endsAt) {
+        var el = document.getElementById("countdownLine");
+        if (!el || !endsAt) {
+          if (el) el.textContent = "";
+          return;
+        }
+        function run() {
+          var end = Date.parse(endsAt);
+          if (isNaN(end)) {
+            el.textContent = "마감 " + endsAt;
+            return;
+          }
+          el.textContent = "끝나는 때까지 " + fmtRemain(end - Date.now());
+        }
+        run();
+        if (countdownTimer) clearInterval(countdownTimer);
+        countdownTimer = setInterval(run, 1000);
+      }
+
+      function meIsOwner(p) {
+        var u = api.getUser();
+        return u && p && Number(u.id) === Number(p.owner_id);
+      }
+
+      function renderProject(p) {
+        projectCache = p;
+        document.title = (p.title || "매물") + " — WakeAgain";
+        document.getElementById("pTitle").textContent = p.title || "";
+        document.getElementById("pOne").textContent = p.one_liner || "";
+        document.getElementById("pStory").textContent = p.story || "";
+        document.getElementById("pDemo").textContent = "데모: " + (p.demo || "—");
+        document.getElementById("pStatus").textContent =
+          "형태 " + (p.product_type_label || p.product_type || "—") +
+          " · " + (p.status_label || p.status || "—") +
+          (p.demo_verified ? " · 데모 확인됨" : "") +
+          " · 리스팅 " + (p.listing_status || "—") +
+          (p.license_note ? " · 라이선스/조건 " + p.license_note : "");
+
+        var price = p.price_current != null ? p.price_current : p.price_start;
+        var priceEl = document.getElementById("priceCurrent");
+        if (lastPrice != null && Number(price) !== Number(lastPrice)) flashPrice();
+        lastPrice = price;
+        priceEl.textContent = won(price);
+
+        document.getElementById("priceStartLine").textContent =
+          "시작 가격 " + won(p.price_start) +
+          (p.price_buy_now != null ? " · 지금 바로 사기 " + won(p.price_buy_now) : "");
+        document.getElementById("bidCountLine").textContent =
+          "가격 쓴 횟수 " + (p.bid_count || 0) + "번 · 한 번에 올릴 최소 금액 " + won(p.min_increment || 10000);
+        document.getElementById("endsLine").textContent =
+          p.auction_ends_at ? "끝나는 시간 " + String(p.auction_ends_at).replace("T", " ").slice(0, 19) : "끝나는 시간 미정";
+        tickCountdown(p.auction_ends_at);
+        document.getElementById("nextMinLine").textContent =
+          (p.auction_status || "live") === "live" ? "다음에 쓸 수 있는 최소 가격 " + won(p.next_min_bid) : "";
+        document.getElementById("feeLine").textContent =
+          "팔리면 판매자 수수료 10% · 사는 사람은 합의 가격만";
+        if (p.seller) {
+          var cr = p.seller.credit;
+          var creditBit =
+            cr && cr.score != null
+              ? " · 신용 " + cr.score + " " + (cr.label || "")
+              : "";
+          document.getElementById("sellerLine").textContent =
+            "파는 사람 " + (p.seller.display_name || "—") +
+            " · 공개 프로젝트 " + (p.seller.approved_listings || 0) +
+            " · 성사 " + (p.seller.sold_count || 0) +
+            creditBit;
+          var idCard = document.getElementById("sellerIdentityCard");
+          var id = p.seller.identity;
+          if (idCard && id) {
+            idCard.hidden = false;
+            document.getElementById("sellerIdType").textContent =
+              "유형: " + (id.type_label || id.type || "—");
+            document.getElementById("sellerIdName").textContent =
+              (id.type === "business" ? "상호: " : "성명: ") + (id.name || "—");
+            var ceoEl = document.getElementById("sellerIdCeo");
+            if (id.ceo_name) {
+              ceoEl.hidden = false;
+              ceoEl.textContent = "대표자: " + id.ceo_name;
+            } else {
+              ceoEl.hidden = true;
+            }
+            var bizEl = document.getElementById("sellerIdBiz");
+            if (id.business_reg_no) {
+              bizEl.hidden = false;
+              bizEl.textContent = "사업자등록번호: " + id.business_reg_no;
+            } else {
+              bizEl.hidden = true;
+            }
+            document.getElementById("sellerIdMailOrder").textContent =
+              "통신판매업 신고: " +
+              (id.mail_order_report_no
+                ? id.mail_order_report_no
+                : id.mail_order_status_label || "미등록");
+            var revealed = !!id.contact_revealed;
+            document.getElementById("sellerIdContact").innerHTML =
+              "연락: " +
+              (id.contact_email
+                ? revealed
+                  ? '<a class="text-link" href="mailto:' +
+                    id.contact_email +
+                    '">' +
+                    id.contact_email +
+                    "</a>"
+                  : id.contact_email
+                : "—") +
+              (id.contact_phone ? " · " + id.contact_phone : "") +
+              (revealed
+                ? " <span class='muted fine'>(전체 공개 · 낙찰/본인)</span>"
+                : " <span class='muted fine'>(일부 가림 · 낙찰 후 전체)</span>");
+            var addrEl = document.getElementById("sellerIdAddr");
+            if (id.address) {
+              addrEl.hidden = false;
+              addrEl.textContent = "주소: " + id.address;
+            } else {
+              addrEl.hidden = true;
+            }
+            document.getElementById("sellerIdNote").textContent =
+              id.note_ko ||
+              "판매자 신고 정보(자기 입력)입니다. 운영자(코어랩스)는 통신판매중개자이며 거래 당사자가 아닙니다. 전화·이메일은 낙찰 구매자에게만 전체가 보입니다.";
+          } else if (idCard) {
+            idCard.hidden = false;
+            document.getElementById("sellerIdType").textContent =
+              "판매자 상세 신원 미등록 (이전 매물 또는 미완성 계정)";
+            document.getElementById("sellerIdName").textContent =
+              "표시 이름: " + (p.seller.display_name || "—");
+            document.getElementById("sellerIdCeo").hidden = true;
+            document.getElementById("sellerIdBiz").hidden = true;
+            document.getElementById("sellerIdMailOrder").textContent = "";
+            document.getElementById("sellerIdContact").textContent =
+              "문의: 앱 쪽지 또는 corelabs.studio@gmail.com (중개 문의)";
+            document.getElementById("sellerIdAddr").hidden = true;
+            document.getElementById("sellerIdNote").textContent =
+              "신규 매물부터 판매자 공개 정보(자기 신고)가 필수입니다. 운영자는 거래 당사자가 아닙니다.";
+          }
+        }
+
+        var paused = (p.auction_status || "") === "paused";
+        var live = (p.auction_status || "live") === "live" && p.listing_status === "approved";
+        var bidsN = p.bid_count || 0;
+        var sold = (p.auction_status || "") === "sold";
+        // Dynamic page atmosphere: quiet → live → hot competition
+        document.body.classList.toggle("auction-live", live);
+        document.body.classList.toggle("auction-hot", live && bidsN >= 1);
+        document.body.classList.toggle("auction-hotter", live && bidsN >= 3);
+        document.body.classList.toggle("auction-sold", sold);
+        var banS = document.getElementById("publicBannerStrong");
+        var banT = document.getElementById("publicBannerText");
+        if (banS && banT) {
+          if (sold) {
+            banS.textContent = "끝났어요 · 팔림";
+            banT.textContent = " — 이 프로젝트는 팔렸습니다. 돈 보내기와 넘기기를 진행하세요.";
+          } else if (paused) {
+            banS.textContent = "경매 중단";
+            banT.textContent =
+              " — 신고 누적 등으로 가격 쓰기·바로 사기가 멈췄습니다. 운영 검토 중입니다." +
+              (p.report_count ? " (신고 " + p.report_count + "건)" : "");
+          } else if (live && bidsN >= 3) {
+            banS.textContent = "입찰 중";
+            banT.textContent =
+              " — 지금 " + bidsN + "명이 가격을 썼어요. 가격이 실시간으로 올라갑니다. 누구나 볼 수 있어요.";
+          } else if (live && bidsN >= 1) {
+            banS.textContent = "가격 쓰기 진행 중";
+            banT.textContent =
+              " — 이미 가격을 쓴 사람이 있어요. 지금 가격은 이 사이트에 온 모든 사람이 볼 수 있어요.";
+          } else if (live) {
+            banS.textContent = "첫 입찰 대기";
+            banT.textContent =
+              " — 지금 가격은 누구나 볼 수 있어요. 첫 번째로 가격을 써 보세요.";
+          } else {
+            banS.textContent = "안내";
+            banT.textContent = " — 이 프로젝트의 판매 상태를 확인해 주세요.";
+          }
+        }
+        var badge = document.getElementById("liveBadge");
+        if (sold) {
+          badge.textContent = "SOLD";
+          badge.className = "badge ending";
+          var deal = document.getElementById("dealLine");
+          deal.hidden = false;
+          var fee = p.fee || {};
+          deal.innerHTML =
+            "성사 " + won(p.sold_price) +
+            (fee.fee != null ? " · 판매자 수수료 " + won(fee.fee) + " · 실수령 예상 " + won(fee.seller_net) : "");
+        } else if (paused) {
+          document.getElementById("dealLine").hidden = true;
+          badge.textContent = "PAUSED · 신고 중단";
+          badge.className = "badge ending";
+        } else {
+          document.getElementById("dealLine").hidden = true;
+          if (live && bidsN >= 3) {
+            badge.textContent = "입찰 중 · " + bidsN + "회";
+          } else if (live && bidsN >= 1) {
+            badge.textContent = "진행 중 · " + bidsN + "명이 가격 씀";
+          } else if (live) {
+            badge.textContent = "첫 입찰 대기";
+          } else {
+            badge.textContent = (p.auction_status || "—").toUpperCase();
+          }
+          badge.className = "badge " + (live ? "live" : "draft");
+        }
+
+        var bidInput = document.getElementById("bidAmount");
+        if (!bidInput.dataset.touched) {
+          bidInput.value = p.next_min_bid || p.price_start || "";
+          bidInput.min = p.next_min_bid || 0;
+        }
+        document.getElementById("bidBtn").disabled = !live;
+        var buyBtn = document.getElementById("buyNowBtn");
+        buyBtn.hidden = !(live && p.price_buy_now != null);
+        buyBtn.textContent = p.price_buy_now != null ? "즉시구매 " + won(p.price_buy_now) : "즉시구매";
+
+        var ownerBox = document.getElementById("ownerActions");
+        var isOwner = meIsOwner(p);
+        ownerBox.hidden = !(isOwner && p.listing_status === "approved" && (p.auction_status || "live") !== "sold");
+        document.getElementById("bidForm").style.display = isOwner ? "none" : "";
+        var reportBox = document.getElementById("reportBox");
+        if (reportBox) reportBox.hidden = !!isOwner;
+      }
+
+      function renderBids(bids) {
+        var ul = document.getElementById("bidList");
+        if (!bids || !bids.length) {
+          ul.innerHTML = "<li><span class='muted'>아직 입찰 없음 — 첫 호가가 전원에게 공개됩니다.</span></li>";
+          return;
+        }
+        ul.innerHTML = bids
+          .map(function (b) {
+            return (
+              "<li><span>" +
+              (b.bidder_label || "입찰자") +
+              " · " +
+              (b.created_at || "").replace("T", " ").slice(0, 19) +
+              "</span><span class='amt'>" +
+              won(b.amount) +
+              "</span></li>"
+            );
+          })
+          .join("");
+      }
+
+      async function refresh() {
+        try {
+          var data = await api.getProject(id);
+          renderProject(data.project);
+          var bids = await api.listBids(id);
+          renderBids(bids.bids || []);
+        } catch (e) {
+          document.getElementById("pTitle").textContent = e.message || "불러오기 실패";
+        }
+      }
+
+      document.getElementById("bidAmount").addEventListener("input", function () {
+        this.dataset.touched = "1";
+      });
+
+      document.getElementById("bidForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var err = document.getElementById("bidErr");
+        err.hidden = true;
+        if (!api.isLoggedIn()) {
+          location.href = "/app/#login";
+          return;
+        }
+        try {
+          await api.placeBid(id, document.getElementById("bidAmount").value);
+          document.getElementById("bidAmount").dataset.touched = "";
+          await refresh();
+        } catch (ex) {
+          if (ex.status === 401) { location.href = "/app/#login"; return; }
+          if (ex.code === "email_unverified" || ex.code === "profile_incomplete") {
+            location.href = "/app/#profile";
+            return;
+          }
+          err.hidden = false;
+          err.textContent = ex.message || "입찰 실패";
+        }
+      });
+
+      document.getElementById("buyNowBtn").addEventListener("click", async function () {
+        var err = document.getElementById("bidErr");
+        err.hidden = true;
+        if (!api.isLoggedIn()) { location.href = "/app/#login"; return; }
+        if (!confirm("즉시구매로 성사할까요? 구매자는 합의가만 부담하고, 판매자 수수료 10%가 안내됩니다.")) return;
+        try {
+          await api.buyNow(id);
+          await refresh();
+        } catch (ex) {
+          if (ex.code === "profile_incomplete" || ex.code === "email_unverified") {
+            location.href = "/app/#profile";
+            return;
+          }
+          err.hidden = false;
+          err.textContent = ex.message || "즉시구매 실패";
+        }
+      });
+
+      document.getElementById("closeDealBtn").addEventListener("click", async function () {
+        var err = document.getElementById("closeErr");
+        err.hidden = true;
+        if (!confirm("현재 최고 입찰가(또는 현재가)로 성사 확정할까요? 판매자 수수료 10%가 적용됩니다.")) return;
+        try {
+          var res = await api.closeDeal(id, { use_current_bid: true });
+          var tl = document.getElementById("transferList");
+          if (res.transfer_checklist) {
+            tl.hidden = false;
+            tl.innerHTML = res.transfer_checklist.map(function (t) { return "<li>" + t + "</li>"; }).join("");
+          }
+          await refresh();
+        } catch (ex) {
+          if (ex.code === "deal_not_ready") {
+            err.hidden = false;
+            err.textContent = "정산 계좌(Lv3)를 먼저 등록해 주세요. 앱 → 내 정보 → 정산";
+            return;
+          }
+          err.hidden = false;
+          err.textContent = ex.message || "성사 확정 실패";
+        }
+      });
+
+      async function loadMessages() {
+        var box = document.getElementById("msgBox");
+        if (!api.isLoggedIn()) {
+          box.hidden = false;
+          return;
+        }
+        try {
+          var data = await api.listMessages(id);
+          box.hidden = false;
+          var ul = document.getElementById("msgList");
+          var msgs = data.messages || [];
+          if (!msgs.length) {
+            ul.innerHTML = "<li><span class='muted'>아직 쪽지가 없습니다.</span></li>";
+          } else {
+            ul.innerHTML = msgs
+              .map(function (m) {
+                return (
+                  "<li><span><strong>" +
+                  (m.sender_label || "") +
+                  "</strong> · " +
+                  (m.created_at || "").replace("T", " ").slice(0, 16) +
+                  "<br/>" +
+                  String(m.body || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;") +
+                  "</span></li>"
+                );
+              })
+              .join("");
+          }
+        } catch (e) {
+          // not owner/bidder
+          document.getElementById("msgBox").hidden = true;
+        }
+      }
+
+      document.getElementById("msgForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var err = document.getElementById("msgErr");
+        err.hidden = true;
+        if (!api.isLoggedIn()) {
+          location.href = "/app/#login";
+          return;
+        }
+        try {
+          await api.postMessage(id, document.getElementById("msgBody").value.trim());
+          document.getElementById("msgBody").value = "";
+          await loadMessages();
+        } catch (ex) {
+          err.hidden = false;
+          err.textContent = ex.message || "전송 실패";
+        }
+      });
+
+      var btnToggleReport = document.getElementById("btnToggleReport");
+      var reportForm = document.getElementById("reportForm");
+      if (btnToggleReport && reportForm) {
+        btnToggleReport.addEventListener("click", function () {
+          reportForm.hidden = !reportForm.hidden;
+        });
+        reportForm.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          var err = document.getElementById("reportErr");
+          var ok = document.getElementById("reportOk");
+          err.hidden = true;
+          ok.hidden = true;
+          if (!api.isLoggedIn()) {
+            location.href = "/app/#login";
+            return;
+          }
+          var btn = document.getElementById("reportSubmit");
+          if (btn) btn.disabled = true;
+          try {
+            var res = await api.reportProject(
+              id,
+              document.getElementById("reportReason").value,
+              document.getElementById("reportDetail").value.trim()
+            );
+            ok.hidden = false;
+            ok.textContent = res.message_ko || "신고가 접수되었습니다.";
+            if (res.project && res.project.is_paused) {
+              ok.textContent += " (경매 자동 중단됨)";
+            }
+            await refresh();
+          } catch (ex) {
+            err.hidden = false;
+            err.textContent = ex.message || "신고 실패";
+          } finally {
+            if (btn) btn.disabled = false;
+          }
+        });
+      }
+
+      refresh().then(loadMessages);
+      setInterval(function () {
+        refresh().then(loadMessages);
+      }, pollMs);
+      document.getElementById("pollHint").textContent = pollMs / 1000 + "초마다 갱신 · 전원 공개";
+    })();
+  </script>
+</body>
+</html>

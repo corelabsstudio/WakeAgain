@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>지금 얼마나 만들었나요? — WakeAgain</title>
+  <meta name="description" content="돌아가는 초안·써 볼 수 있는 제품·공개했다가 멈춤 등 쉬운 상태 고르기와 시작 입찰가 안내." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="stylesheet" href="/legal/legal.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    .status-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.2rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    .status-card h2 { margin: 0 0 0.4rem; font-size: 1.15rem; }
+    .status-card .when { color: var(--muted); margin: 0 0 0.85rem; line-height: 1.55; }
+    .status-card h3 {
+      margin: 0.9rem 0 0.4rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--purple);
+    }
+    .status-card ul { margin: 0.25rem 0 0; padding-left: 1.15rem; color: var(--muted); }
+    .status-card li { margin: 0.28rem 0; line-height: 1.45; }
+    .status-card .no li { color: #f0a8a8; }
+    .price-row {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+      margin-top: 0.85rem; padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .price-row strong { color: var(--text); }
+    .intro-box {
+      background: var(--purple-soft);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.55;
+    }
+    .intro-box ol { margin: 0.5rem 0 0; padding-left: 1.2rem; color: var(--muted); }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="/app/#new">내 프로젝트 올리기</a>
+        <a href="/sell.html">빠른 접수</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/">홈</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page" style="max-width: 720px">
+    <p class="eyebrow">Guide · Status</p>
+    <h1 id="pageTitle">지금 얼마나 만들었나요?</h1>
+    <p class="legal-meta">어려운 용어 대신, 지금 상태를 고르면 시작 입찰가·구매자 이해가 쉬워집니다.</p>
+
+    <div class="intro-box" id="introBox">불러오는 중…</div>
+    <div id="statusList"></div>
+
+    <div class="legal-nav-links">
+      <a class="btn btn-primary" href="/app/#new">내 프로젝트 올리기</a>
+      <a class="btn btn-ghost" href="/">홈</a>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain · <a href="/legal/terms.html">이용약관</a></p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      function won(n) {
+        return "₩" + Number(n).toLocaleString("ko-KR");
+      }
+      function listHtml(items, cls) {
+        if (!items || !items.length) return "";
+        return (
+          "<ul class='" +
+          (cls || "") +
+          "'>" +
+          items
+            .map(function (t) {
+              return "<li>" + t + "</li>";
+            })
+            .join("") +
+          "</ul>"
+        );
+      }
+      async function load() {
+        var data;
+        try {
+          data = await window.WakeAgainAPI.pricing();
+        } catch (e) {
+          document.getElementById("introBox").textContent = "가이드를 불러오지 못했습니다.";
+          return;
+        }
+        var c = data.classification || {};
+        document.getElementById("pageTitle").textContent = c.title || "제품 상태 분류 기준";
+        var intro = document.getElementById("introBox");
+        intro.innerHTML =
+          "<p><strong>" +
+          (c.summary || "") +
+          "</strong></p>" +
+          (c.how_to_choose
+            ? "<p style='margin:0.65rem 0 0.25rem;font-weight:600'>고르는 순서</p><ol>" +
+              c.how_to_choose
+                .map(function (x) {
+                  return "<li>" + x + "</li>";
+                })
+                .join("") +
+              "</ol>"
+            : "") +
+          (c.honesty
+            ? "<p style='margin:0.75rem 0 0;font-size:0.9rem'>" + c.honesty + "</p>"
+            : "");
+
+        var root = document.getElementById("statusList");
+        root.innerHTML = (data.statuses || [])
+          .map(function (s) {
+            return (
+              "<article class='status-card' id='s-" +
+              (s.key || "") +
+              "'>" +
+              "<h2>" +
+              (s.label || s.status) +
+              "</h2>" +
+              "<p class='when'>" +
+              (s.when || s.blurb || "") +
+              "</p>" +
+              "<h3>이 상태로 고를 때</h3>" +
+              listHtml(s.criteria_yes) +
+              "<h3>이 상태가 아닐 때</h3>" +
+              listHtml(s.criteria_no, "no") +
+              "<h3>데모·증빙</h3>" +
+              "<p class='when' style='margin:0'>" +
+              (s.demo_expect || s.examples || "") +
+              "</p>" +
+              "<div class='price-row'>" +
+              "<span>권장 시작가 <strong>" +
+              won(s.suggest) +
+              "</strong></span>" +
+              "<span>최저 <strong>" +
+              won(s.min) +
+              "</strong></span>" +
+              "<span>호가 단위 <strong>" +
+              won(s.min_increment) +
+              "</strong></span>" +
+              "</div></article>"
+            );
+          })
+          .join("");
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

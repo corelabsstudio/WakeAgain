@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+*.log
+# www is generated — optional to ignore; keep for offline inspect
+# www/

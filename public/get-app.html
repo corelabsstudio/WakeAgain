@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>앱으로 사용하기 — WakeAgain</title>
+  <meta name="description" content="WakeAgain을 홈 화면에 설치해 앱처럼 사용하세요. 웹·앱 동일 계정. Play 스토어 심사 전에도 이용 가능." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/logo-mark.png" />
+  <style>
+    .get-app { max-width: 640px; }
+    .get-steps {
+      margin: 1.25rem 0 1.75rem;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.75rem;
+    }
+    .get-steps li {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .get-steps strong {
+      display: block;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+      font-size: 1rem;
+    }
+    .get-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin: 1rem 0 1.5rem;
+    }
+    .get-note {
+      margin: 1rem 0;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.08);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    .platform-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #e9d5ff;
+      margin-left: 0.35rem;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/">앱 열기</a>
+        <a href="/guide/">이용안내</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/app/">지금 사용</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="form-page get-app">
+    <p class="eyebrow">App · Install</p>
+    <h1>앱으로 사용하기</h1>
+    <p class="lede">
+      Play 스토어·App Store 등록 전에도, 사이트에서 <strong>홈 화면에 설치</strong>해
+      앱처럼 쓸 수 있습니다. <strong>웹과 같은 계정·같은 데이터</strong>입니다.
+    </p>
+
+    <div class="get-cta-row">
+      <button type="button" class="btn btn-primary btn-lg js-pwa-install" data-pwa-install id="btnInstallApp">
+        홈 화면에 설치
+      </button>
+      <a class="btn btn-ghost btn-lg" href="/app/">브라우저에서 바로 열기</a>
+    </div>
+
+    <div class="get-note" role="note">
+      <strong style="color:var(--text)">안내</strong><br />
+      · 설치에는 보통 <strong>HTTPS</strong> 접속이 필요합니다 (로컬은 localhost 예외).<br />
+      · Chrome·Edge(Android/PC)에서 「설치」가 가장 잘 뜹니다.<br />
+      · iPhone은 Safari <strong>공유 → 홈 화면에 추가</strong>를 사용합니다.<br />
+      · Google Play / App Store 정식 배포는 개발자 계정 심사 후 별도 진행합니다.
+    </div>
+
+    <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem">기기별 설치</h2>
+    <ol class="get-steps">
+      <li>
+        <strong>Android (Chrome) <span class="platform-badge">추천</span></strong>
+        위 <em>홈 화면에 설치</em> 버튼을 누르거나, 브라우저 메뉴(⋮) →
+        <em>앱 설치</em> / <em>홈 화면에 추가</em>.
+        설치 후 아이콘으로 실행하면 전체 화면 앱처럼 동작합니다.
+      </li>
+      <li>
+        <strong>iPhone / iPad (Safari)</strong>
+        Safari로 이 사이트를 연 뒤 → 하단 <em>공유</em> →
+        <em>홈 화면에 추가</em> → 추가.
+        (Chrome 앱 안에서는 제한될 수 있어 Safari 권장)
+      </li>
+      <li>
+        <strong>PC (Chrome / Edge)</strong>
+        주소창 오른쪽 설치 아이콘, 또는 메뉴 → <em>앱 설치</em> /
+        <em>WakeAgain 설치</em>.
+      </li>
+      <li>
+        <strong>스토어 앱 (준비 중)</strong>
+        Google Play · App Store 등록이 끝나면 이 페이지에
+        스토어 링크를 추가합니다. 지금은 웹 설치로 동일 기능을 쓸 수 있습니다.
+      </li>
+    </ol>
+
+    <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem">설치 후 할 수 있는 것</h2>
+    <ul class="get-steps">
+      <li>
+        <strong>가입 · 로그인 · 매물 · 입찰</strong>
+        웹과 동일한 API·계정을 사용합니다.
+      </li>
+      <li>
+        <strong>프로젝트 자랑 · 무료진단</strong>
+        쇼케이스와 진단도 같은 사이트에서 이어집니다.
+      </li>
+    </ul>
+
+    <div class="get-cta-row">
+      <a class="btn btn-primary" href="/app/#register">계정 만들고 시작</a>
+      <a class="btn btn-ghost" href="/showcase.html">자랑 보드</a>
+      <a class="btn btn-ghost" href="/">홈</a>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain ·
+      <a href="/legal/privacy.html">개인정보처리방침</a>
+    </p>
+  </footer>
+
+  <script src="/js/pwa-install.js"></script>
+</body>
+</html>

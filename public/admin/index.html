@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>매물 검수 — WakeAgain Admin</title>
+  <meta name="theme-color" content="#050508" />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 5.5rem 1.25rem 3rem; }
+    .admin-head { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.25rem; }
+    .admin-head h1 { margin: 0; font-size: 1.5rem; }
+    .key-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .key-row input {
+      border-radius: 10px; border: 1px solid var(--border-strong);
+      background: var(--card); color: var(--text); padding: 0.55rem 0.75rem; font: inherit; min-width: 14rem;
+    }
+    .counts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .counts button {
+      border-radius: 999px; border: 1px solid var(--border-strong);
+      background: var(--card); color: var(--muted); padding: 0.4rem 0.85rem; font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .counts button.is-on { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .admin-grid { display: grid; gap: 1rem; }
+    @media (min-width: 900px) { .admin-grid { grid-template-columns: 1fr 1.1fr; align-items: start; } }
+    .plist { display: grid; gap: 0.55rem; max-height: 70vh; overflow: auto; }
+    .pitem {
+      text-align: left; width: 100%; cursor: pointer;
+      border: 1px solid var(--border); background: var(--card); border-radius: 14px;
+      padding: 0.85rem 1rem; color: inherit; font: inherit;
+    }
+    .pitem.is-on { border-color: var(--purple); box-shadow: 0 0 0 1px rgba(168,85,247,0.35); }
+    .pitem strong { display: block; margin-bottom: 0.35rem; }
+    .pitem span { color: var(--muted); font-size: 0.875rem; }
+    .pitem .row-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
+    .tag {
+      display: inline-flex; align-items: center;
+      border-radius: 999px; padding: 0.2rem 0.55rem;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: -0.01em;
+    }
+    .tag-product {
+      background: rgba(168, 85, 247, 0.2);
+      color: #e9d5ff;
+      border: 1px solid rgba(168, 85, 247, 0.45);
+    }
+    .tag-review-pending { background: rgba(251, 191, 36, 0.15); color: #fcd34d; border: 1px solid rgba(251,191,36,0.35); }
+    .tag-review-approved { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.35); }
+    .tag-review-rejected { background: rgba(248, 113, 113, 0.12); color: #fecaca; border: 1px solid rgba(248,113,113,0.35); }
+    .tag-review-hold { background: rgba(96, 165, 250, 0.12); color: #93c5fd; border: 1px solid rgba(96,165,250,0.35); }
+    .status-callout {
+      margin: 0.75rem 0 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(12,12,16,0.9));
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+    .status-callout .label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--purple); margin: 0 0 0.35rem;
+    }
+    .status-callout .value {
+      font-size: 1.25rem; font-weight: 800; margin: 0 0 0.35rem; color: var(--text);
+    }
+    .status-callout .hint { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+    .kv { display: grid; gap: 0.35rem; margin: 0.5rem 0 0.75rem; }
+    .kv div {
+      display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.5rem;
+      font-size: 0.9rem; line-height: 1.45;
+    }
+    .kv .k { color: var(--muted-2); font-weight: 600; }
+    .kv .v { color: var(--text); word-break: keep-all; }
+    .panel {
+      border: 1px solid var(--border); background: var(--card); border-radius: 18px;
+      padding: 1.15rem 1.2rem 1.35rem;
+    }
+    .panel h2 { margin: 0 0 0.5rem; font-size: 1.2rem; word-break: keep-all; }
+    .meta { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 0.25rem 0; }
+    .story {
+      margin: 0.85rem 0; padding: 0.75rem 0.9rem; border-radius: 12px;
+      background: var(--bg-elev); color: var(--muted); white-space: pre-wrap; line-height: 1.6;
+      max-height: 160px; overflow: auto; font-size: 0.9rem;
+    }
+    .checks { display: grid; gap: 0.45rem; margin: 1rem 0; }
+    .checks label {
+      display: flex; gap: 0.55rem; align-items: flex-start;
+      margin: 0; font-weight: 500; color: var(--text); line-height: 1.4;
+    }
+    .checks input { margin-top: 0.25rem; width: auto; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .hint {
+      background: var(--purple-soft); border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 12px; padding: 0.75rem 0.9rem; font-size: 0.875rem; line-height: 1.5; margin-bottom: 1rem;
+    }
+    .empty { color: var(--muted); padding: 2rem 1rem; text-align: center; }
+    .err { color: #fecaca; font-size: 0.9rem; margin-top: 0.5rem; }
+    textarea.note {
+      width: 100%; min-height: 72px; border-radius: 12px; border: 1px solid var(--border-strong);
+      background: var(--bg-elev); color: var(--text); padding: 0.65rem 0.8rem; font: inherit; resize: vertical;
+    }
+    .reason-presets { margin: 0.45rem 0 0.55rem; }
+    .reason-presets .rp-label {
+      font-size: 0.8rem; font-weight: 700; color: var(--muted); margin: 0 0 0.4rem;
+    }
+    .reason-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .reason-chips button {
+      border-radius: 999px; border: 1px solid var(--border-strong);
+      background: var(--bg-elev); color: var(--text); font: inherit; font-size: 0.8rem; font-weight: 600;
+      padding: 0.35rem 0.7rem; cursor: pointer; line-height: 1.3; text-align: left;
+    }
+    .reason-chips button:hover { border-color: var(--purple); color: #e9d5ff; }
+    .reason-chips button.is-on {
+      background: var(--purple-soft); border-color: rgba(168,85,247,0.55); color: #e9d5ff;
+    }
+    .reason-presets .rp-hint { margin: 0.35rem 0 0; font-size: 0.78rem; color: var(--muted-2); }
+    .rev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin: 0.75rem 0 1.25rem;
+    }
+    .rev-card {
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      border-radius: 14px;
+      padding: 0.9rem 1rem;
+    }
+    .rev-card .lab {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin: 0 0 0.35rem;
+    }
+    .rev-card .num {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--text);
+    }
+    .rev-card .sub {
+      margin: 0.35rem 0 0;
+      font-size: 0.8rem;
+      color: var(--muted-2);
+      line-height: 1.4;
+    }
+    .rev-card.is-net .num { color: #6ee7b7; }
+    .rev-card.is-tax .num { color: #fcd34d; }
+    .rev-period {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .rev-bar-wrap { margin-top: 0.5rem; }
+    .rev-bar-row {
+      display: grid;
+      grid-template-columns: 3rem 1fr 5.5rem;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 0.35rem 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .rev-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    .rev-bar > i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #7c3aed, #e879f9);
+    }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+        <span style="margin-left:0.35rem;font-size:0.85rem;color:var(--muted);font-weight:600">Admin</span>
+      </a>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" href="/">사이트</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-wrap">
+    <div class="admin-head">
+      <div>
+        <p class="eyebrow" style="color:var(--purple);font-weight:700;font-size:0.8rem;letter-spacing:0.06em;margin:0 0 0.35rem">OPS · 코드 리뷰 아님</p>
+        <h1 id="pageTitle">매물 검수</h1>
+      </div>
+      <div class="key-row">
+        <label for="adminKey" class="meta">관리자 키</label>
+        <input id="adminKey" type="password" placeholder="X-Admin-Key" autocomplete="current-password" />
+        <button type="button" class="btn btn-primary btn-sm" id="btnLoad">불러오기</button>
+      </div>
+    </div>
+
+    <div class="counts" id="modeTabs" style="margin-bottom:0.75rem">
+      <button type="button" data-mode="projects" class="is-on">매물</button>
+      <button type="button" data-mode="reviews">후기</button>
+      <button type="button" data-mode="fees">수수료</button>
+      <button type="button" data-mode="revenue">매출</button>
+      <button type="button" data-mode="reports">신고</button>
+    </div>
+
+    <div class="hint" id="hintBox">
+      <strong>검수 = 코드 읽기·품질 보증이 아닙니다.</strong>
+      데모 클릭 → 상태·가격·스토리·사기 티만 보면 됩니다. 전부 체크되면 <strong>게시 허용</strong>.
+      관리 키는 환경변수 <code>ADMIN_SECRET</code> (브라우저에 기본 키를 노출하지 않습니다).
+    </div>
+
+    <div class="counts" id="counts"></div>
+    <p class="err" id="err" hidden></p>
+
+    <div class="admin-grid">
+      <section>
+        <div class="plist" id="list"><p class="empty">키 입력 후 불러오기를 누르세요.</p></div>
+      </section>
+      <section class="panel" id="detail">
+        <p class="empty">왼쪽에서 매물을 선택하세요.</p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var KEY = "wa_admin_key";
+      var state = {
+        mode: "projects",
+        status: "pending",
+        projects: [],
+        reviews: [],
+        checklist: [],
+        selected: null,
+        selectedReview: null,
+        counts: {},
+        reviewCounts: {},
+      };
+      var $ = function (id) { return document.getElementById(id); };
+
+      document.querySelectorAll("#modeTabs button").forEach(function (b) {
+        b.addEventListener("click", function () {
+          state.mode = b.getAttribute("data-mode");
+          document.querySelectorAll("#modeTabs button").forEach(function (x) {
+            x.classList.toggle("is-on", x === b);
+          });
+          state.selected = null;
+          state.selectedReview = null;
+          state.status = "pending";
+          load();
+        });
+      });
+
+      /* 반려·보류 시 사유란에 넣을 프리셋 (선택 시 자동 입력) */
+      var REASON_PRESETS = [
+        { id: "demo_fail", label: "데모 접속 불가", text: "데모 링크·영상이 열리지 않거나 404입니다. 접속 가능한 데모(URL/영상/스크린)를 넣은 뒤 다시 신청해 주세요." },
+        { id: "no_demo", label: "실행물 없음", text: "아이디어·문서만으로는 등록이 어렵습니다. 실행 가능한 데모 또는 동작 스크린/영상을 추가해 주세요." },
+        { id: "status_high", label: "상태 과장", text: "선택하신 제품 상태가 실제보다 높아 보입니다. 「돌아가는 초안」「써 볼 수 있는 제품」 등 쉬운 기준으로 한 단계 낮춰 수정 후 재신청해 주세요. (가이드: /guide/status.html)" },
+        { id: "price_high", label: "시작가 과다", text: "시작 입찰가가 상태·데모 근거에 비해 높게 느껴집니다. 상태별 권장 구간을 참고해 조정해 주세요." },
+        { id: "story_short", label: "스토리 부족", text: "「왜 만들었고 왜 멈췄는지」 스토리가 부족합니다. 2~3문장 이상으로 보강해 주세요." },
+        { id: "scam_risk", label: "과장·위험 문구", text: "수익 보장·과도한 홍보 문구 등 가이드에 맞지 않는 표현이 있습니다. 사실 위주로 수정해 주세요." },
+        { id: "rights", label: "양도·권리 불명확", text: "양도 가능한 자산 범위(코드/도메인/계정 등)가 불명확합니다. 포함 자산과 양도 가능 여부를 명확히 적어 주세요." },
+        { id: "dup", label: "중복·유사 매물", text: "이미 등록된 유사 매물과 중복으로 보입니다. 기존 매물을 수정하거나, 차이점을 스토리에 설명해 주세요." },
+        { id: "need_info", label: "추가 정보 요청", text: "검수를 위해 추가 정보가 필요합니다. 데모 접속 방법(계정/비밀번호 안내 등) 또는 보완 자료를 남겨 주세요." },
+        { id: "other", label: "기타(직접 작성)", text: "" },
+      ];
+
+      $("adminKey").value = localStorage.getItem(KEY) || "";
+
+      function key() {
+        var k = $("adminKey").value.trim();
+        localStorage.setItem(KEY, k);
+        return k;
+      }
+
+      function won(n) {
+        if (n == null) return "—";
+        return "₩" + Number(n).toLocaleString("ko-KR");
+      }
+
+      function showErr(msg) {
+        var el = $("err");
+        if (!msg) { el.hidden = true; el.textContent = ""; return; }
+        el.hidden = false;
+        el.textContent = msg;
+      }
+
+      async function api(path, opts) {
+        opts = opts || {};
+        var headers = Object.assign({ Accept: "application/json", "X-Admin-Key": key() }, opts.headers || {});
+        if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+        var res = await fetch(path, Object.assign({}, opts, { headers: headers }));
+        var data = null;
+        try { data = await res.json(); } catch (e) { data = {}; }
+        if (!res.ok) {
+          var d = data.detail;
+          var msg = typeof d === "string" ? d : (d && d.message) || res.statusText;
+          throw new Error(msg || "request failed");
+        }
+        return data;
+      }
+
+      function renderCounts() {
+        var c = state.mode === "reviews" ? state.reviewCounts || {} : state.counts || {};
+        var tabs =
+          state.mode === "reviews"
+            ? [
+                ["pending", "대기 " + (c.pending || 0)],
+                ["approved", "게시 " + (c.approved || 0)],
+                ["rejected", "반려 " + (c.rejected || 0)],
+                ["all", "전체"],
+              ]
+            : [
+                ["pending", "대기 " + (c.pending || 0)],
+                ["hold", "보류 " + (c.hold || 0)],
+                ["approved", "게시 " + (c.approved || 0)],
+                ["rejected", "반려 " + (c.rejected || 0)],
+                ["all", "전체"],
+              ];
+        $("counts").innerHTML = tabs
+          .map(function (t) {
+            return (
+              '<button type="button" data-st="' +
+              t[0] +
+              '" class="' +
+              (state.status === t[0] ? "is-on" : "") +
+              '">' +
+              t[1] +
+              "</button>"
+            );
+          })
+          .join("");
+        $("counts").querySelectorAll("button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            state.status = b.getAttribute("data-st");
+            load();
+          });
+        });
+      }
+
+      function reviewTagClass(ls) {
+        if (ls === "approved") return "tag-review-approved";
+        if (ls === "rejected") return "tag-review-rejected";
+        if (ls === "hold") return "tag-review-hold";
+        return "tag-review-pending";
+      }
+
+      function reviewLabel(ls) {
+        var map = {
+          pending: "검수 대기",
+          approved: "게시 허용",
+          rejected: "반려",
+          hold: "보류",
+        };
+        return map[ls] || ls || "—";
+      }
+
+      function productStatusLabel(s) {
+        return s && String(s).trim() ? String(s).trim() : "(미기입)";
+      }
+
+      function renderList() {
+        var list = $("list");
+        if (state.mode === "reviews") {
+          if (!state.reviews.length) {
+            list.innerHTML = '<p class="empty">이 탭에 후기가 없습니다.</p>';
+            return;
+          }
+          list.innerHTML = state.reviews
+            .map(function (r) {
+              var on = state.selectedReview && state.selectedReview.id === r.id ? " is-on" : "";
+              var side = r.side === "buyer" ? "구매" : "판매";
+              return (
+                '<button type="button" class="pitem' +
+                on +
+                '" data-rid="' +
+                r.id +
+                '"><strong>' +
+                escapeHtml(r.author_name) +
+                " · " +
+                side +
+                '</strong><div class="row-badges"><span class="tag ' +
+                reviewTagClass(r.listing_status) +
+                '">' +
+                escapeHtml(reviewLabel(r.listing_status)) +
+                "</span></div><span>" +
+                escapeHtml((r.body || "").slice(0, 48)) +
+                (r.body && r.body.length > 48 ? "…" : "") +
+                " · #" +
+                r.id +
+                "</span></button>"
+              );
+            })
+            .join("");
+          list.querySelectorAll(".pitem").forEach(function (b) {
+            b.addEventListener("click", function () {
+              var id = Number(b.getAttribute("data-rid"));
+              state.selectedReview = state.reviews.find(function (x) { return x.id === id; });
+              renderList();
+              renderDetail();
+            });
+          });
+          return;
+        }
+
+        if (!state.projects.length) {
+          list.innerHTML = '<p class="empty">이 탭에 매물이 없습니다.</p>';
+          return;
+        }
+        list.innerHTML = state.projects
+          .map(function (p) {
+            var on = state.selected && state.selected.id === p.id ? " is-on" : "";
+            var prod = productStatusLabel(p.status);
+            return (
+              '<button type="button" class="pitem' +
+              on +
+              '" data-id="' +
+              p.id +
+              '"><strong>' +
+              escapeHtml(p.title) +
+              '</strong><div class="row-badges">' +
+              '<span class="tag tag-product">제품 상태 · ' +
+              escapeHtml(prod) +
+              "</span>" +
+              '<span class="tag ' +
+              reviewTagClass(p.listing_status) +
+              '">' +
+              escapeHtml(reviewLabel(p.listing_status)) +
+              "</span></div><span>" +
+              won(p.price_start) +
+              " · #" +
+              p.id +
+              "</span></button>"
+            );
+          })
+          .join("");
+        list.querySelectorAll(".pitem").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var id = Number(b.getAttribute("data-id"));
+            state.selected = state.projects.find(function (x) { return x.id === id; });
+            renderList();
+            renderDetail();
+          });
+        });
+      }
+
+      function escapeHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderDetail() {
+        var box = $("detail");
+        if (state.mode === "reviews") {
+          var r = state.selectedReview;
+          if (!r) {
+            box.innerHTML = '<p class="empty">왼쪽에서 후기를 선택하세요.</p>';
+            return;
+          }
+          var side = r.side === "buyer" ? "구매" : "판매";
+          box.innerHTML =
+            "<h2>" +
+            escapeHtml(r.author_name) +
+            " · " +
+            side +
+            " 후기</h2>" +
+            '<p class="meta">' +
+            escapeHtml(r.role_label || "") +
+            (r.sold_price != null ? " · 성사가 " + won(r.sold_price) : "") +
+            "</p>" +
+            '<div class="story">' +
+            escapeHtml(r.body) +
+            "</div>" +
+            '<label class="meta" for="note">반려 시 메모 (선택)</label>' +
+            '<textarea class="note" id="note" placeholder="허위 성사가, 비방 등"></textarea>' +
+            '<div class="actions">' +
+            '<button type="button" class="btn btn-primary" id="btnApprove">게시 허용 (홈 공개)</button>' +
+            '<button type="button" class="btn btn-ghost" id="btnReject" style="border-color:rgba(248,113,113,0.5);color:#fecaca">반려</button>' +
+            "</div>" +
+            '<p class="err" id="detailErr" hidden></p>';
+
+          async function reviewStory(action) {
+            var err = $("detailErr");
+            err.hidden = true;
+            try {
+              await api("/api/v1/admin/reviews/" + r.id + "/review", {
+                method: "POST",
+                body: JSON.stringify({
+                  action: action,
+                  note: ($("note") && $("note").value) || "",
+                }),
+              });
+              state.selectedReview = null;
+              await load();
+            } catch (e) {
+              err.hidden = false;
+              err.textContent = e.message || "실패";
+            }
+          }
+          $("btnApprove").addEventListener("click", function () { reviewStory("approve"); });
+          $("btnReject").addEventListener("click", function () { reviewStory("reject"); });
+          return;
+        }
+
+        var p = state.selected;
+        if (!p) {
+          box.innerHTML = '<p class="empty">왼쪽에서 매물을 선택하세요.</p>';
+          return;
+        }
+        var checks = (state.checklist || [])
+          .map(function (c) {
+            return (
+              '<label><input type="checkbox" data-ck="' +
+              c.id +
+              '" /> <span>' +
+              escapeHtml(c.label) +
+              "</span></label>"
+            );
+          })
+          .join("");
+
+        var demoLink = p.demo && /^https?:\/\//i.test(p.demo.trim())
+          ? '<a class="btn btn-primary btn-sm" href="' + escapeHtml(p.demo.trim()) + '" target="_blank" rel="noopener">데모 열기</a>'
+          : "";
+
+        var prod = productStatusLabel(p.status);
+        box.innerHTML =
+          "<h2>" +
+          escapeHtml(p.title) +
+          "</h2>" +
+          '<p class="meta">' +
+          escapeHtml(p.one_liner) +
+          "</p>" +
+          '<div class="status-callout">' +
+          '<p class="label">판매자가 선택한 제품 상태</p>' +
+          '<p class="value">' +
+          escapeHtml(prod) +
+          "</p>" +
+          '<p class="hint">프로토타입 / 베타 / 출시됨·방치 / 기타 — 과하면 체크리스트에서 걸러 보류·반려하세요. ' +
+          '<a class="text-link" href="/guide/status.html" target="_blank" rel="noopener">분류 기준</a></p>' +
+          "</div>" +
+          '<div class="kv">' +
+          "<div><span class=\"k\">검수 상태</span><span class=\"v\"><span class=\"tag " +
+          reviewTagClass(p.listing_status) +
+          '">' +
+          escapeHtml(reviewLabel(p.listing_status)) +
+          " (" +
+          escapeHtml(p.listing_status || "") +
+          ")</span></span></div>" +
+          "<div><span class=\"k\">시작 입찰가</span><span class=\"v\">" +
+          won(p.price_start) +
+          " · 현재가 " +
+          won(p.price_current) +
+          "</span></div>" +
+          "<div><span class=\"k\">판매자</span><span class=\"v\">" +
+          escapeHtml(p.owner_label || "") +
+          " · " +
+          escapeHtml(p.owner_email || "") +
+          "</span></div>" +
+          "<div><span class=\"k\">데모</span><span class=\"v\">" +
+          escapeHtml(p.demo || "—") +
+          "</span></div>" +
+          "</div>" +
+          '<div class="actions" style="margin:0.5rem 0">' +
+          demoLink +
+          ' <a class="btn btn-ghost btn-sm" href="/project.html?id=' +
+          p.id +
+          '" target="_blank">상세 페이지</a></div>' +
+          '<div class="story">' +
+          escapeHtml(p.story || "") +
+          "</div>" +
+          "<h3 style='margin:0 0 0.35rem;font-size:0.95rem'>체크리스트 " +
+          "<span style='font-weight:500;color:var(--muted);font-size:0.85rem'>(제품 상태 «" +
+          escapeHtml(prod) +
+          "» 가 맞는지 포함)</span></h3>" +
+          '<div class="checks" id="ckBox">' +
+          checks +
+          "</div>" +
+          '<label class="meta" for="note">사유 / 메모 (반려·보류 시 권장)</label>' +
+          '<div class="reason-presets">' +
+          '<p class="rp-label">빠른 사유 선택 → 아래 칸에 자동 입력</p>' +
+          '<div class="reason-chips" id="reasonChips">' +
+          REASON_PRESETS.map(function (r) {
+            return (
+              '<button type="button" data-reason="' +
+              r.id +
+              '" title="' +
+              escapeHtml(r.text || "직접 작성") +
+              '">' +
+              escapeHtml(r.label) +
+              "</button>"
+            );
+          }).join("") +
+          "</div>" +
+          '<p class="rp-hint">칩을 누르면 사유란이 채워집니다. 같은 칩을 다시 누르면 비웁니다. 여러 개 쓰려면 Shift+클릭으로 이어서 붙입니다.</p>' +
+          "</div>" +
+          '<textarea class="note" id="note" placeholder="위 선택지를 누르거나, 직접 입력하세요"></textarea>' +
+          '<div class="actions">' +
+          '<button type="button" class="btn btn-primary" id="btnApprove">게시 허용 (공개)</button>' +
+          '<button type="button" class="btn btn-ghost" id="btnHold">보류</button>' +
+          '<button type="button" class="btn btn-ghost" id="btnReject" style="border-color:rgba(248,113,113,0.5);color:#fecaca">반려</button>' +
+          "</div>" +
+          '<p class="err" id="detailErr" hidden></p>';
+
+        // restore previous checklist if any
+        var prev = p.review_checklist || {};
+        box.querySelectorAll("input[data-ck]").forEach(function (inp) {
+          if (prev[inp.getAttribute("data-ck")]) inp.checked = true;
+        });
+        if (p.review_note) {
+          var noteEl0 = $("note");
+          if (noteEl0) noteEl0.value = p.review_note;
+        }
+
+        // reason preset chips
+        var activeReason = null;
+        box.querySelectorAll("#reasonChips button").forEach(function (btn) {
+          btn.addEventListener("click", function (ev) {
+            var id = btn.getAttribute("data-reason");
+            var preset = REASON_PRESETS.find(function (x) { return x.id === id; });
+            if (!preset) return;
+            var noteEl = $("note");
+            if (!noteEl) return;
+
+            // toggle off
+            if (activeReason === id && !ev.shiftKey) {
+              activeReason = null;
+              btn.classList.remove("is-on");
+              noteEl.value = "";
+              noteEl.focus();
+              return;
+            }
+
+            box.querySelectorAll("#reasonChips button").forEach(function (b) {
+              b.classList.remove("is-on");
+            });
+            btn.classList.add("is-on");
+            activeReason = id;
+
+            if (preset.id === "other") {
+              // keep focus for free text; don't wipe if already writing
+              if (!noteEl.value.trim()) noteEl.value = "";
+              noteEl.focus();
+              return;
+            }
+
+            if (ev.shiftKey && noteEl.value.trim()) {
+              noteEl.value = noteEl.value.replace(/\s+$/, "") + "\n\n" + preset.text;
+            } else {
+              noteEl.value = preset.text;
+            }
+            noteEl.focus();
+          });
+        });
+
+        function gatherChecklist() {
+          var o = {};
+          box.querySelectorAll("input[data-ck]").forEach(function (inp) {
+            o[inp.getAttribute("data-ck")] = inp.checked;
+          });
+          return o;
+        }
+
+        async function review(action) {
+          var err = $("detailErr");
+          err.hidden = true;
+          var checklist = gatherChecklist();
+          var noteVal = ($("note") && $("note").value) || "";
+          if ((action === "reject" || action === "hold") && !noteVal.trim()) {
+            err.hidden = false;
+            err.textContent = "반려·보류 시 위 사유 선택지 또는 직접 입력이 필요합니다.";
+            return;
+          }
+          if (action === "approve") {
+            var miss = (state.checklist || []).filter(function (c) { return !checklist[c.id]; });
+            if (miss.length) {
+              if (!confirm("체크 안 된 항목이 " + miss.length + "개 있습니다. 그래도 게시 허용할까요? (품질 보증 아님)")) return;
+            }
+          }
+          try {
+            await api("/api/v1/admin/projects/" + p.id + "/review", {
+              method: "POST",
+              body: JSON.stringify({
+                action: action,
+                note: noteVal,
+                checklist: checklist,
+              }),
+            });
+            state.selected = null;
+            await load();
+          } catch (e) {
+            err.hidden = false;
+            err.textContent = e.message || "실패";
+          }
+        }
+
+        $("btnApprove").addEventListener("click", function () { review("approve"); });
+        $("btnHold").addEventListener("click", function () { review("hold"); });
+        $("btnReject").addEventListener("click", function () { review("reject"); });
+      }
+
+      async function load() {
+        showErr("");
+        try {
+          if (state.mode !== "revenue") {
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "";
+          }
+          if (state.mode === "reviews") {
+            $("pageTitle").textContent = "후기 검수";
+            $("hintBox").innerHTML =
+              "<strong>후기 검수</strong> 허위 성사가·비방·스팸만 걸러 게시 허용하세요.";
+            var data = await api("/api/v1/admin/reviews?status=" + encodeURIComponent(state.status));
+            state.reviews = data.reviews || [];
+            state.reviewCounts = data.counts || {};
+            if (state.selectedReview) {
+              state.selectedReview =
+                state.reviews.find(function (x) { return x.id === state.selectedReview.id; }) || null;
+            }
+            renderCounts();
+            renderList();
+            renderDetail();
+          } else if (state.mode === "reports") {
+            $("pageTitle").textContent = "매물 신고";
+            $("hintBox").innerHTML =
+              "<strong>구매자 신고</strong> 저퀄·표절·미작동·사기. 서로 다른 신고 <strong>3건</strong> → 경매 자동 중단, 판매자 합산 <strong>5건</strong> → 계정 자동 정지. 여기서 처리·경매 재개·계정 해제를 합니다.";
+            if (["pending", "approved", "rejected", "hold"].indexOf(state.status) >= 0) {
+              state.status = "open";
+            }
+            var rdata = await api("/api/v1/admin/reports?status=" + encodeURIComponent(state.status));
+            state.reports = rdata.reports || [];
+            state.reportCounts = rdata.counts || {};
+            state.reportPolicy = rdata.policy || {};
+            $("counts").innerHTML =
+              '<button type="button" data-rs="open"' + (state.status === "open" ? ' class="is-on"' : "") + ">오픈 " + (state.reportCounts.open || 0) + "</button>" +
+              '<button type="button" data-rs="resolved"' + (state.status === "resolved" ? ' class="is-on"' : "") + ">처리 " + (state.reportCounts.resolved || 0) + "</button>" +
+              '<button type="button" data-rs="dismissed"' + (state.status === "dismissed" ? ' class="is-on"' : "") + ">기각 " + (state.reportCounts.dismissed || 0) + "</button>" +
+              '<button type="button" data-rs="all"' + (state.status === "all" ? ' class="is-on"' : "") + ">전체</button>";
+            $("counts").querySelectorAll("button").forEach(function (b) {
+              b.addEventListener("click", function () {
+                state.status = b.getAttribute("data-rs");
+                load();
+              });
+            });
+            var rlist = $("list");
+            if (!state.reports.length) {
+              rlist.innerHTML = '<p class="empty">신고 없음</p>';
+              $("detail").innerHTML = '<p class="empty">신고가 오면 여기에 표시됩니다.</p>';
+            } else {
+              rlist.innerHTML = state.reports
+                .map(function (r) {
+                  return (
+                    '<button type="button" class="pitem" data-rid="' +
+                    r.id +
+                    '"><strong>#' +
+                    r.id +
+                    " · " +
+                    escapeHtml(r.reason_label || r.reason) +
+                    "</strong><span>" +
+                    escapeHtml(r.project_title || "") +
+                    " · " +
+                    escapeHtml(r.status) +
+                    " · 경매 " +
+                    escapeHtml(r.auction_status || "") +
+                    "</span></button>"
+                  );
+                })
+                .join("");
+              rlist.querySelectorAll(".pitem").forEach(function (b) {
+                b.addEventListener("click", function () {
+                  var rid = Number(b.getAttribute("data-rid"));
+                  var r = state.reports.find(function (x) { return x.id === rid; });
+                  if (!r) return;
+                  $("detail").innerHTML =
+                    "<h2>신고 #" +
+                    r.id +
+                    "</h2>" +
+                    '<p class="meta"><strong>' +
+                    escapeHtml(r.reason_label || r.reason) +
+                    "</strong> · " +
+                    escapeHtml(r.status) +
+                    "</p>" +
+                    '<p class="meta">매물 <a href="/project.html?id=' +
+                    r.project_id +
+                    '" target="_blank" rel="noopener">' +
+                    escapeHtml(r.project_title || "#" + r.project_id) +
+                    "</a> · 경매 " +
+                    escapeHtml(r.auction_status || "") +
+                    "</p>" +
+                    '<p class="meta">신고자 ' +
+                    escapeHtml(r.reporter_email || "") +
+                    " · 판매자 " +
+                    escapeHtml(r.owner_email || "") +
+                    " (id " +
+                    r.owner_id +
+                    ")</p>" +
+                    '<p class="meta">' +
+                    escapeHtml(r.detail || "(상세 없음)") +
+                    "</p>" +
+                    '<p class="meta">' +
+                    escapeHtml(r.created_at || "") +
+                    "</p>" +
+                    '<div class="actions">' +
+                    (r.status === "open"
+                      ? '<button type="button" class="btn btn-primary btn-sm" id="btnRepResolve">처리 완료</button>' +
+                        '<button type="button" class="btn btn-ghost btn-sm" id="btnRepDismiss">기각</button>'
+                      : "") +
+                    (r.auction_status === "paused"
+                      ? '<button type="button" class="btn btn-primary btn-sm" id="btnResumeAuc">경매 재개</button>'
+                      : "") +
+                    '<button type="button" class="btn btn-ghost btn-sm" id="btnUnsuspend">판매자 정지 해제</button>' +
+                    '<button type="button" class="btn btn-ghost btn-sm" id="btnSuspend">판매자 정지</button>' +
+                    "</div>" +
+                    '<p class="err" id="detailErr" hidden></p>';
+                  function detailErr(msg) {
+                    var el = document.getElementById("detailErr");
+                    if (el) { el.hidden = false; el.textContent = msg; }
+                  }
+                  var br = document.getElementById("btnRepResolve");
+                  if (br) {
+                    br.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/reports/" + r.id + "/resolve", {
+                          method: "POST",
+                          body: JSON.stringify({ action: "resolve", note: "ops reviewed" }),
+                        });
+                        await load();
+                      } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                  var bd = document.getElementById("btnRepDismiss");
+                  if (bd) {
+                    bd.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/reports/" + r.id + "/resolve", {
+                          method: "POST",
+                          body: JSON.stringify({ action: "dismiss", note: "dismissed" }),
+                        });
+                        await load();
+                      } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                  var bres = document.getElementById("btnResumeAuc");
+                  if (bres) {
+                    bres.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/projects/" + r.project_id + "/resume-auction", {
+                          method: "POST",
+                          body: "{}",
+                        });
+                        await load();
+                      } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                  var bu = document.getElementById("btnUnsuspend");
+                  if (bu) {
+                    bu.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/users/" + r.owner_id + "/unsuspend", {
+                          method: "POST",
+                          body: "{}",
+                        });
+                        await load();
+                      } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                  var bs = document.getElementById("btnSuspend");
+                  if (bs) {
+                    bs.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/users/" + r.owner_id + "/suspend", {
+                          method: "POST",
+                          body: JSON.stringify({ reason: "운영 수동 정지 (신고 검토)" }),
+                        });
+                        await load();
+                      } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                });
+              });
+            }
+          } else if (state.mode === "fees") {
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "";
+            $("pageTitle").textContent = "수수료 장부";
+            $("hintBox").innerHTML =
+              "<strong>판매자 10%</strong> 성사 시 자동 생성. 입금 확인 후 「입금 확인」을 누르세요.";
+            $("counts").innerHTML = "";
+            var fees = await api("/api/v1/admin/fees?status=all");
+            state.feeInvoices = fees.invoices || [];
+            var list = $("list");
+            if (!state.feeInvoices.length) {
+              list.innerHTML = '<p class="empty">수수료 내역 없음</p>';
+              $("detail").innerHTML = '<p class="empty">성사 시 자동으로 쌓입니다.</p>';
+            } else {
+              list.innerHTML = state.feeInvoices
+                .map(function (f) {
+                  return (
+                    '<button type="button" class="pitem" data-fid="' +
+                    f.id +
+                    '"><strong>' +
+                    escapeHtml(f.project_title || "#" + f.project_id) +
+                    "</strong><span>수수료 ₩" +
+                    Number(f.fee_amount).toLocaleString("ko-KR") +
+                    " · " +
+                    f.status +
+                    " · " +
+                    escapeHtml(f.seller_email || "") +
+                    "</span></button>"
+                  );
+                })
+                .join("");
+              list.querySelectorAll(".pitem").forEach(function (b) {
+                b.addEventListener("click", function () {
+                  var fid = Number(b.getAttribute("data-fid"));
+                  var f = state.feeInvoices.find(function (x) { return x.id === fid; });
+                  if (!f) return;
+                  $("detail").innerHTML =
+                    "<h2>" +
+                    escapeHtml(f.project_title || "") +
+                    "</h2>" +
+                    '<p class="meta">거래 ₩' +
+                    Number(f.deal_amount).toLocaleString("ko-KR") +
+                    " · 수수료 <strong>₩" +
+                    Number(f.fee_amount).toLocaleString("ko-KR") +
+                    "</strong> (10%)</p>" +
+                    '<p class="meta">판매자 ' +
+                    escapeHtml(f.seller_email || "") +
+                    " · " +
+                    f.status +
+                    "</p>" +
+                    (f.status === "pending"
+                      ? '<div class="actions"><button type="button" class="btn btn-primary" id="btnFeePaid">입금 확인</button></div>'
+                      : '<p class="meta">입금 확인: ' +
+                        escapeHtml(f.paid_at || "") +
+                        "</p>") +
+                    '<p class="err" id="detailErr" hidden></p>';
+                  var btn = document.getElementById("btnFeePaid");
+                  if (btn) {
+                    btn.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/fees/" + f.id + "/paid", {
+                          method: "POST",
+                          body: "{}",
+                        });
+                        await load();
+                      } catch (e) {
+                        var err = document.getElementById("detailErr");
+                        if (err) {
+                          err.hidden = false;
+                          err.textContent = e.message || "실패";
+                        }
+                      }
+                    });
+                  }
+                });
+              });
+              $("detail").innerHTML = '<p class="empty">왼쪽에서 건을 선택하세요.</p>';
+            }
+          } else if (state.mode === "revenue") {
+            $("pageTitle").textContent = "매출 · 세금 · 순수익";
+            $("hintBox").innerHTML =
+              "<strong>한눈에 보기</strong> 판매자 수수료(10%) 장부 기준. 부가세 10%는 입금 확인분을 「부가세 포함」으로 역산. " +
+              "종합소득세 등은 포함하지 않습니다. 세무 신고 전 세무사 확인 필수.";
+            $("counts").innerHTML = "";
+            var rev = await api("/api/v1/admin/revenue");
+            var periods = rev.periods || {};
+            var note = (rev.assumptions && rev.assumptions.note_ko) || "";
+
+            function won(n) {
+              return "₩" + Number(n || 0).toLocaleString("ko-KR");
+            }
+            function periodBlock(key, p) {
+              if (!p) return "";
+              return (
+                '<div class="panel" style="margin-bottom:0.85rem">' +
+                '<p class="rev-period">' +
+                escapeHtml(p.label || key) +
+                "</p>" +
+                '<div class="rev-grid">' +
+                '<div class="rev-card"><p class="lab">수수료 입금(매출)</p><p class="num">' +
+                won(p.fee_paid) +
+                '</p><p class="sub">입금 확인 ' +
+                (p.deals_paid || 0) +
+                "건</p></div>" +
+                '<div class="rev-card"><p class="lab">미수 수수료</p><p class="num">' +
+                won(p.fee_pending) +
+                '</p><p class="sub">청구 대기 ' +
+                (p.deals_pending_fee || 0) +
+                "건</p></div>" +
+                '<div class="rev-card is-tax"><p class="lab">부가세 추정(10%)</p><p class="num">' +
+                won(p.vat_on_paid) +
+                '</p><p class="sub">입금분 역산 · 납부 예정 참고</p></div>' +
+                '<div class="rev-card is-net"><p class="lab">순수익 추정</p><p class="num">' +
+                won(p.net_after_vat_paid) +
+                '</p><p class="sub">입금 수수료 − 부가세 (소득세 별도)</p></div>' +
+                '<div class="rev-card"><p class="lab">거래액(성사 GMV)</p><p class="num">' +
+                won(p.gmv_paid) +
+                '</p><p class="sub">수수료 입금 확정 건 기준</p></div>' +
+                '<div class="rev-card"><p class="lab">공급가액 추정</p><p class="num">' +
+                won(p.supply_on_paid) +
+                '</p><p class="sub">부가세 제외 수수료</p></div>' +
+                "</div></div>"
+              );
+            }
+
+            var series = rev.series_days || [];
+            var maxFee = 1;
+            series.forEach(function (d) {
+              if ((d.fee_paid || 0) > maxFee) maxFee = d.fee_paid;
+            });
+            var bars =
+              '<div class="panel"><p class="rev-period">최근 14일 · 입금 수수료</p><div class="rev-bar-wrap">' +
+              series
+                .map(function (d) {
+                  var w = Math.round(((d.fee_paid || 0) / maxFee) * 100);
+                  return (
+                    '<div class="rev-bar-row"><span>' +
+                    escapeHtml(d.label) +
+                    '</span><div class="rev-bar"><i style="width:' +
+                    w +
+                    '%"></i></div><span>' +
+                    won(d.fee_paid) +
+                    "</span></div>"
+                  );
+                })
+                .join("") +
+              "</div></div>";
+
+            $("list").innerHTML =
+              periodBlock("day", periods.day) +
+              periodBlock("week", periods.week) +
+              periodBlock("month", periods.month);
+            $("detail").innerHTML =
+              periodBlock("all", periods.all) +
+              bars +
+              '<p class="meta" style="margin-top:1rem;line-height:1.55">' +
+              escapeHtml(note) +
+              "<br />기준 시각: " +
+              escapeHtml(rev.as_of || "") +
+              "</p>";
+            // revenue uses full width — stack panels
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
+          } else {
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "";
+            $("pageTitle").textContent = "매물 검수";
+            $("hintBox").innerHTML =
+              "<strong>검수 = 코드 읽기·품질 보증이 아닙니다.</strong> 데모 클릭 → 상태·가격·스토리·사기 티. 키는 <code>ADMIN_SECRET</code>.";
+            var dataP = await api("/api/v1/admin/projects?status=" + encodeURIComponent(state.status));
+            state.projects = dataP.projects || [];
+            state.counts = dataP.counts || {};
+            state.checklist = dataP.checklist || [];
+            if (state.selected) {
+              state.selected = state.projects.find(function (x) { return x.id === state.selected.id; }) || null;
+            }
+            renderCounts();
+            renderList();
+            renderDetail();
+          }
+        } catch (e) {
+          showErr(e.message || "불러오기 실패");
+        }
+      }
+
+      $("btnLoad").addEventListener("click", load);
+      $("adminKey").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") load();
+      });
+    })();
+  </script>
+</body>
+</html>

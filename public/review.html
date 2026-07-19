@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>후기 작성 — WakeAgain</title>
+  <meta name="description" content="WakeAgain 이용 후기를 남겨 주세요. 검수 후 사이트에 공개됩니다." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/#list">마켓플레이스</a>
+        <a href="/#stories">후기</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/">홈</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="form-page">
+    <p class="eyebrow">후기</p>
+    <h1>이용 후기 남기기</h1>
+    <p class="lede">팔았거나 샀던 경험을 짧게 적어 주세요. 게시판이 아니라 <strong>후기 한 건</strong>만 받습니다. 운영 검수 후 홈에 공개됩니다 (보통 1~2영업일).</p>
+
+    <div class="review-sla-banner" role="note">
+      <strong>안내</strong>
+      <p>허위 성사가·타인 비방은 반려됩니다. 성사 금액은 선택 사항이며, 공개되어도 되는 범위만 적어 주세요.</p>
+    </div>
+
+    <form class="form-card" id="reviewForm" novalidate>
+      <label for="side">나는 <span class="req">*</span></label>
+      <select id="side" name="side" required>
+        <option value="seller">판매자</option>
+        <option value="buyer">구매자</option>
+      </select>
+
+      <label for="author_name">표시 이름 <span class="req">*</span></label>
+      <input id="author_name" name="author_name" required maxlength="40" placeholder="예: 김도윤 / 익명 가능" autocomplete="nickname" />
+
+      <label for="role_label">한 줄 소개 (선택)</label>
+      <input id="role_label" name="role_label" maxlength="80" placeholder="예: 백엔드 개발자 · 사이드 2년" />
+
+      <label for="sold_price">성사가 (원, 선택 · 공개됨)</label>
+      <input id="sold_price" name="sold_price" type="number" min="0" step="10000" inputmode="numeric" placeholder="비공개하려면 비워 두세요" />
+
+      <label for="body">후기 본문 <span class="req">*</span></label>
+      <textarea id="body" name="body" required maxlength="1500" minlength="20" placeholder="무엇을 올렸고, 어떤 경험이었는지 (20자 이상)"></textarea>
+
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit">후기 남기기</button>
+        <a class="btn btn-ghost" href="/">취소</a>
+      </div>
+      <p class="note">제출 후 검수 대기 → 게시 허용되면 홈 「후기」 섹션에 표시됩니다.</p>
+      <p class="form-error" id="formError" hidden></p>
+    </form>
+
+    <div class="success-panel" id="ok" hidden>
+      <h2>후기가 접수됐어요.</h2>
+      <p>운영 검수 후 공개됩니다. 보통 1~2영업일입니다.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/">홈으로</a>
+        <a class="btn btn-ghost" href="/app/#list">마켓 보기</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <p class="footer-broker-notice">
+      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
+      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+    </p>
+    <p class="footer-copy">© 2026 CoreLabs · WakeAgain · <a href="/legal/terms.html">이용약관</a></p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      var form = document.getElementById("reviewForm");
+      var ok = document.getElementById("ok");
+      var err = document.getElementById("formError");
+      var api = window.WakeAgainAPI;
+      if (api && api.getUser()) {
+        var u = api.getUser();
+        var name = document.getElementById("author_name");
+        if (name && !name.value) name.value = u.display_name || u.real_name || "";
+      }
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        err.hidden = true;
+        if (!form.reportValidity()) return;
+        var btn = form.querySelector('button[type="submit"]');
+        var prev = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "보내는 중…";
+        try {
+          var price = document.getElementById("sold_price").value;
+          await api.createReview({
+            author_name: document.getElementById("author_name").value.trim(),
+            role_label: document.getElementById("role_label").value.trim(),
+            body: document.getElementById("body").value.trim(),
+            side: document.getElementById("side").value,
+            sold_price: price === "" ? null : Number(price),
+          });
+          form.hidden = true;
+          ok.hidden = false;
+          ok.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (ex) {
+          err.hidden = false;
+          err.textContent = ex.message || "제출에 실패했습니다.";
+        } finally {
+          btn.disabled = false;
+          btn.textContent = prev;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
