@@ -14,6 +14,19 @@
 | 카피라이트 | © 2026 CoreLabs. All rights reserved. |
 | **관리자 검수** | `/admin/` · 헤더 `X-Admin-Key` · 환경변수 `ADMIN_SECRET` (**운영 필수 변경**. 로컬 개발 기본값만 문서 참고) |
 
+## 실배포 전 10점 게이트
+
+사업자·PG·SNS키·실유저·실배포를 **제외**한 만점 기준:
+
+```powershell
+cd C:\Users\hysoo\projects\WakeAgain
+python _predeploy_gate.py
+```
+
+- 점수표: [`docs/PRE_DEPLOY_10.md`](./docs/PRE_DEPLOY_10.md)
+- 통과: `PRE-DEPLOY SCORE: 10.0/10`
+- 로컬 시크릿: 최초 실행 시 `.env` 자동 생성
+
 ## 로컬 실행
 
 ```powershell

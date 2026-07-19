@@ -95,11 +95,12 @@ r_sc = cl.post(
     },
 )
 ok("showcase requires diag_score", r_sc.status_code == 400, r_sc.text[:80])
+sc_title = f"스모크 자랑 {random.randint(100000, 999999)}"
 r_sc2 = cl.post(
     "/api/v1/showcases",
     json={
         "author_name": "스모크",
-        "title": "스모크 자랑",
+        "title": sc_title,
         "one_liner": "진단 후 자랑",
         "story": "선택 한줄",
         "status_key": "prototype",

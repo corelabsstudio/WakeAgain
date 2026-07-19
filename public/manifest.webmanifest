@@ -50,9 +50,14 @@
       "description": "매물 등록"
     },
     {
-      "name": "자랑하기",
+      "name": "무료진단",
+      "url": "/diagnose.html",
+      "description": "시작가 힌트 후 자랑 등록"
+    },
+    {
+      "name": "자랑 보드",
       "url": "/showcase.html",
-      "description": "프로젝트 쇼케이스"
+      "description": "프로젝트 쇼케이스 피드"
     }
   ]
 }

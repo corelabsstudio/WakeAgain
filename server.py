@@ -5,6 +5,14 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+# Load .env BEFORE wakeagain.* reads secrets at import time
+from wakeagain.envutil import ensure_local_env, load_dotenv
+
+ROOT = Path(__file__).resolve().parent
+PUBLIC = ROOT / "public"
+ensure_local_env()
+load_dotenv(override=False)
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -15,9 +23,6 @@ from wakeagain import __version__
 from wakeagain.api import router as api_router
 from wakeagain.db import DATA, init_db
 from wakeagain import scheduler as auction_scheduler
-
-ROOT = Path(__file__).resolve().parent
-PUBLIC = ROOT / "public"
 
 # Allow web origin + Capacitor/Android/iOS WebView
 _default_origins = [

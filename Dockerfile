@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py .
 COPY wakeagain ./wakeagain
 COPY public ./public
+# Optional: bake non-secret defaults only; secrets via Railway Variables
+ENV AUCTION_SCHEDULER=1
+ENV EMAIL_DEV_MODE=0
 
 RUN mkdir -p /data
 VOLUME ["/data"]
