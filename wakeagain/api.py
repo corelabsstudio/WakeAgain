@@ -292,6 +292,8 @@ def health():
 @router.get("/config")
 def client_config():
     """Clients (web / Play / App Store) read this once at boot."""
+    from wakeagain.global_config import public_global_config
+
     return {
         "brand": "WakeAgain",
         "operator": {
@@ -300,9 +302,13 @@ def client_config():
             "contact_email": "corelabs.studio@gmail.com",
             "copyright": "© 2026 CoreLabs. All rights reserved.",
         },
+        "global": public_global_config(),
         "legal": {
             "terms": "/legal/terms.html",
+            "terms_en": "/legal/terms.en.html",
             "privacy": "/legal/privacy.html",
+            "controlling_locale": "ko",
+            "note_en": "Korean terms control until region-specific counsel review.",
         },
         "api_version": "v1",
         "version": __version__,

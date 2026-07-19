@@ -7,6 +7,11 @@
   <meta name="description" content="매일 수많은 프로젝트가 만들어집니다. 많은 제품들이 세상 밖으로 나오지 않습니다. WakeAgain은 잠든 프로젝트에 다시 한 번 기회를 줍니다." />
   <meta property="og:title" content="WakeAgain — 프로젝트에 두 번째 기회를 주세요." />
   <meta property="og:description" content="잠든 앱·프로토타입·웹·SaaS·도구를 경매로 다시 연결합니다." />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <link rel="alternate" hreflang="ko" href="/" />
+  <link rel="alternate" hreflang="en" href="/?lang=en" />
+  <link rel="alternate" hreflang="x-default" href="/" />
   <meta name="theme-color" content="#050508" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,7 +26,7 @@
 </head>
 <body>
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
-  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <a class="skip-link" href="#main" data-i18n="skip">본문으로 건너뛰기</a>
 
   <!-- FLOATING PILL NAV -->
   <header class="nav-pill-wrap">
@@ -31,15 +36,24 @@
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
       <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓플레이스</a>
-        <a href="/showcase.html">자랑하기</a>
-        <a href="/guide/">이용안내</a>
-        <a href="#metrics">숫자로 보기</a>
+        <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/showcase.html" data-i18n="nav.showcase">자랑하기</a>
+        <a href="/guide/" data-i18n="nav.guide">이용안내</a>
+        <a href="#metrics" data-i18n="nav.metrics">숫자로 보기</a>
       </nav>
       <div class="nav-actions">
-        <a class="nav-login" href="/app/#login" id="navAuthLink">로그인</a>
-        <a class="btn btn-ghost btn-sm" href="/get-app.html">앱 설치</a>
-        <a class="btn btn-primary btn-sm" href="/app/#new">내 프로젝트 올리기</a>
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
+          <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
+        </div>
+        <select class="cur-select" data-currency-switch aria-label="Currency" title="Display currency">
+          <option value="KRW">₩ KRW</option>
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+        </select>
+        <a class="nav-login" href="/app/#login" id="navAuthLink" data-i18n="nav.login">로그인</a>
+        <a class="btn btn-ghost btn-sm" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
+        <a class="btn btn-primary btn-sm" href="/app/#new" data-i18n="nav.list">내 프로젝트 올리기</a>
       </div>
     </div>
   </header>
@@ -52,21 +66,21 @@
         <div class="hero-copy">
           <p class="hero-badge">
             <span class="hero-badge-dot" aria-hidden="true"></span>
-            잠든 프로젝트를 다시 깨우는 곳
+            <span data-i18n="hero.badge">잠든 프로젝트를 다시 깨우는 곳</span>
           </p>
           <h1 class="hero-title hero-title--sparkle">
-            <span class="hero-title-line">멈춰버린 프로젝트에</span><br />
-            <span class="grad">숨을 불어넣다.</span>
+            <span class="hero-title-line" data-i18n="hero.title1">멈춰버린 프로젝트에</span><br />
+            <span class="grad" data-i18n="hero.title2">숨을 불어넣다.</span>
           </h1>
-          <p class="hero-sub">
-            완성되지 못한 코드, 방치된 도메인, 잠자고 있는 API.<br />
-            당신의 <em>“실패한 시도”</em>는 누군가에게 <em>“완벽한 시작”</em>이 됩니다.
+          <p class="hero-sub" data-i18n="hero.sub">
+            완성되지 못한 코드, 방치된 도메인, 잠자고 있는 API.
+            당신의 “실패한 시도”는 누군가에게 “완벽한 시작”이 됩니다.
           </p>
           <div class="hero-cta">
             <a class="btn btn-white btn-lg btn-stack" href="/diagnose.html">
               <span class="btn-stack-text">
-                <span class="btn-stack-main">내 프로젝트는 얼마일까?</span>
-                <span class="btn-stack-sub">(30초 무료 진단)</span>
+                <span class="btn-stack-main" data-i18n="hero.cta_main">내 프로젝트는 얼마일까?</span>
+                <span class="btn-stack-sub" data-i18n="hero.cta_sub">(30초 무료 진단)</span>
               </span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
@@ -75,18 +89,18 @@
             <ul class="hero-stats" aria-label="실제 숫자">
               <li>
                 <strong>—</strong>
-                <span>올라온 프로젝트</span>
+                <span data-i18n="hero.stat_projects">올라온 프로젝트</span>
               </li>
               <li>
                 <strong>—</strong>
-                <span>관심 있어요</span>
+                <span data-i18n="hero.stat_interest">관심 있어요</span>
               </li>
               <li>
-                <strong>무료</strong>
-                <span>올리는 비용</span>
+                <strong data-i18n="hero.stat_free_val">무료</strong>
+                <span data-i18n="hero.stat_free">올리는 비용</span>
               </li>
             </ul>
-            <p class="hero-stats-note muted fine">실제 숫자만 보여 줍니다</p>
+            <p class="hero-stats-note muted fine" data-i18n="hero.stats_note">실제 숫자만 보여 줍니다</p>
           </div>
         </div>
 
@@ -100,26 +114,27 @@
               <div class="live-icon">T</div>
               <div>
                 <strong>TraceDraft</strong>
-                <p>AI 인터뷰 → 블로그 초안 · 웹앱</p>
+                <p>AI interview → blog draft · web app</p>
               </div>
             </div>
             <div class="live-metrics">
               <div>
-                <span class="label">현재 입찰가</span>
-                <strong class="mono">₩720,000</strong>
+                <span class="label" data-i18n="live.price">현재 입찰가</span>
+                <strong class="mono" data-money-krw="720000">₩720,000</strong>
               </div>
               <div>
-                <span class="label">남은 시간</span>
+                <span class="label" data-i18n="live.time">남은 시간</span>
                 <strong class="mono timer" data-seconds="172800">2일 00:00:00</strong>
               </div>
             </div>
             <div class="live-progress">
               <div class="live-progress-bar"><span style="--w:68%"></span></div>
-              <p>시작가 대비 · 5명이 가격 씀</p>
+              <p data-i18n="live.progress">시작가 대비 · 5명이 가격 씀</p>
             </div>
             <div class="live-toast">
               <span class="pulse-dot"></span>
-              방금 입찰 · ₩720,000 · 김** · 보기
+              <span data-i18n="live.toast">방금 입찰 · 보기</span>
+              · <span data-money-krw="720000">₩720,000</span>
             </div>
           </article>
         </div>
@@ -419,6 +434,7 @@
     <a class="btn btn-primary" href="/app/#new">내 프로젝트 올리기</a>
   </div>
 
+  <script src="/js/i18n.js"></script>
   <script src="/js/pwa-install.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/listings.js"></script>
@@ -428,6 +444,20 @@
   <script src="/js/motion.js"></script>
   <script>
     (function () {
+      /* ?lang=en|ko deep link */
+      try {
+        var q = new URLSearchParams(location.search || "");
+        var L = (q.get("lang") || "").toLowerCase();
+        if ((L === "en" || L === "ko") && window.WakeAgainI18n) {
+          window.WakeAgainI18n.setLang(L);
+        }
+        if (window.WakeAgainAPI && window.WakeAgainAPI.request && window.WakeAgainI18n) {
+          window.WakeAgainAPI.request("/api/v1/config").then(function (cfg) {
+            window.WakeAgainI18n.ingestConfig(cfg);
+            window.WakeAgainI18n.apply(document);
+          }).catch(function () {});
+        }
+      } catch (e) {}
       /* nav: show account if session exists */
       try {
         var api = window.WakeAgainAPI;

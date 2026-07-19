@@ -27,6 +27,10 @@
       <span class="brand-name">Wake<span class="brand-again">Again</span></span>
     </a>
     <div class="app-top-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
+        <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
+      </div>
       <button type="button" class="user-chip" id="userChip" hidden title="내 정보">
         <span class="user-avatar" id="userAvatar" aria-hidden="true">?</span>
         <span class="user-chip-text">
@@ -35,13 +39,13 @@
         </span>
       </button>
       <span id="trustBadge" class="trust-badge" hidden></span>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnNotif" hidden>알림 <span id="notifBadge" class="notif-dot" hidden></span></button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnFees" hidden>수수료</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnProfile" hidden>내 정보</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" hidden>로그아웃</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin">로그인</button>
-      <a class="btn btn-ghost btn-sm" href="/get-app.html">앱 설치</a>
-      <a class="btn btn-ghost btn-sm" href="/">사이트</a>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnNotif" hidden><span data-i18n="nav.notif">알림</span> <span id="notifBadge" class="notif-dot" hidden></span></button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnFees" hidden data-i18n="nav.fees">수수료</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnProfile" hidden data-i18n="nav.profile">내 정보</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login">로그인</button>
+      <a class="btn btn-ghost btn-sm" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
+      <a class="btn btn-ghost btn-sm" href="/" data-i18n="nav.site">사이트</a>
     </div>
   </header>
 
@@ -49,13 +53,13 @@
     <!-- Auth -->
     <section id="viewAuth" class="app-panel">
       <p class="eyebrow">Web · Play · App Store</p>
-      <h1>쉽게 시작. 거래는 확실하게.</h1>
-      <p class="lede">웹·폰 같은 계정. 누구나 올리고 가격을 쓸 수 있지만, <strong>낙찰되면 안내에 따른 빠른 입금·신원 확인</strong>으로 거래를 끝냅니다. (1시간 자동 타이머는 PG 연동 후)</p>
+      <h1 data-i18n="app.auth_title">쉽게 시작. 거래는 확실하게.</h1>
+      <p class="lede" data-i18n="app.auth_lede">웹·폰 같은 계정. 누구나 올리고 가격을 쓸 수 있지만, 낙찰되면 안내에 따른 빠른 입금·신원 확인으로 거래를 끝냅니다.</p>
       <p class="auth-need" id="authNeedNote" hidden></p>
 
       <div class="auth-tabs">
-        <button type="button" class="tab is-on" data-tab="login">로그인</button>
-        <button type="button" class="tab" data-tab="register">가입</button>
+        <button type="button" class="tab is-on" data-tab="login" data-i18n="app.login">로그인</button>
+        <button type="button" class="tab" data-tab="register" data-i18n="app.register">가입</button>
       </div>
 
       <div class="social-login" id="socialLoginBox">
@@ -75,9 +79,9 @@
       </div>
 
       <form id="formLogin" class="form-card app-form">
-        <label for="loginEmail">이메일</label>
+        <label for="loginEmail" data-i18n="app.email">이메일</label>
         <input id="loginEmail" type="email" required autocomplete="email" placeholder="you@email.com" />
-        <label for="loginPass">비밀번호</label>
+        <label for="loginPass" data-i18n="app.password">비밀번호</label>
         <div class="pw-field">
           <input id="loginPass" type="password" required minlength="8" autocomplete="current-password" />
           <button type="button" class="pw-toggle" data-pw-target="loginPass" aria-label="비밀번호 보기" aria-pressed="false" title="비밀번호 보기"></button>
@@ -500,9 +504,22 @@
     <p>© 2026 CoreLabs · WakeAgain · Powered by CoreLabs</p>
   </footer>
 
+  <script src="/js/i18n.js"></script>
   <script src="/js/pwa-install.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/demo-help.js"></script>
   <script src="/app/app.js"></script>
+  <script>
+    (function () {
+      try {
+        if (window.WakeAgainAPI && window.WakeAgainI18n) {
+          window.WakeAgainAPI.request("/api/v1/config").then(function (cfg) {
+            window.WakeAgainI18n.ingestConfig(cfg);
+            window.WakeAgainI18n.apply(document);
+          }).catch(function () {});
+        }
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

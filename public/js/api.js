@@ -74,6 +74,16 @@
     const opts = options || {};
     const headers = Object.assign({ Accept: "application/json" }, opts.headers || {});
     if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+    // Locale hint for future localized API messages
+    try {
+      const lang =
+        (global.WakeAgainI18n && global.WakeAgainI18n.getLang && global.WakeAgainI18n.getLang()) ||
+        localStorage.getItem("wa_lang") ||
+        (navigator.language || "ko").slice(0, 2);
+      if (!headers["Accept-Language"]) {
+        headers["Accept-Language"] = lang === "en" ? "en,ko;q=0.8" : "ko,en;q=0.8";
+      }
+    } catch (e) {}
     const t = token();
     if (t) headers.Authorization = "Bearer " + t;
     const url = apiBase() + path;

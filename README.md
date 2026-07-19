@@ -14,6 +14,12 @@
 | 카피라이트 | © 2026 CoreLabs. All rights reserved. |
 | **관리자 검수** | `/admin/` · 헤더 `X-Admin-Key` · 환경변수 `ADMIN_SECRET` (**운영 필수 변경**. 로컬 개발 기본값만 문서 참고) |
 
+## 글로벌 준비
+
+- KO/EN UI · 표시 통화 전환: [`docs/GLOBAL.md`](./docs/GLOBAL.md)
+- 랜딩·앱 헤더 **KO | EN** 스위치
+- 금액 표시 USD/EUR 가능 (DB·정산은 KRW)
+
 ## 실배포 전 10점 게이트
 
 사업자·PG·SNS키·실유저·실배포를 **제외**한 만점 기준:
