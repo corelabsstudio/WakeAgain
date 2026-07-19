@@ -257,7 +257,11 @@
         <a href="/app/#list">앱</a>
       </nav>
       <div class="nav-actions">
-        <a class="nav-login" href="/app/#login">로그인</a>
+                <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
+          <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
+        </div>
+<a class="nav-login" href="/app/#login">로그인</a>
         <a class="btn btn-primary btn-sm" href="/app/#new">내 프로젝트 올리기</a>
       </div>
     </div>
@@ -423,6 +427,9 @@
       <a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>
     </p>
   </footer>
+  <script src="/js/i18n-messages.js"></script>
+  <script src="/js/i18n.js"></script>
+
 
   <script src="/js/api.js"></script>
   <script>

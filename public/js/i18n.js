@@ -263,6 +263,19 @@
     },
   };
 
+  // Merge supplemental dictionaries (i18n-messages.js)
+  try {
+    var extra = global.WA_I18N_EXTRA;
+    if (extra) {
+      ["ko", "en"].forEach(function (loc) {
+        if (!extra[loc]) return;
+        Object.keys(extra[loc]).forEach(function (k) {
+          STR[loc][k] = extra[loc][k];
+        });
+      });
+    }
+  } catch (e) {}
+
   var fx = { KRW: 1, USD: 1350, EUR: 1450 };
   var curMeta = {
     KRW: { symbol: "₩", decimals: 0, locale: "ko-KR" },
@@ -292,12 +305,18 @@
   var state = { lang: detectLang(), currency: "KRW" };
   state.currency = detectCurrency(state.lang);
 
-  function t(key) {
+  function t(key, vars) {
     var pack = STR[state.lang] || STR.ko;
-    if (pack[key] != null) return pack[key];
-    if (STR.en[key] != null) return STR.en[key];
-    if (STR.ko[key] != null) return STR.ko[key];
-    return key;
+    var val = pack[key];
+    if (val == null && STR.en[key] != null) val = STR.en[key];
+    if (val == null && STR.ko[key] != null) val = STR.ko[key];
+    if (val == null) val = key;
+    if (vars && typeof vars === "object") {
+      Object.keys(vars).forEach(function (k) {
+        val = String(val).split("{" + k + "}").join(String(vars[k]));
+      });
+    }
+    return val;
   }
 
   function formatMoney(amountKrw) {

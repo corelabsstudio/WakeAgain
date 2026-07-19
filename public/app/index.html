@@ -43,7 +43,7 @@
       <button type="button" class="btn btn-ghost btn-sm" id="btnFees" hidden data-i18n="nav.fees">수수료</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnProfile" hidden data-i18n="nav.profile">내 정보</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login">로그인</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login" data-i18n="app.login_submit">로그인</button>
       <a class="btn btn-ghost btn-sm" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
       <a class="btn btn-ghost btn-sm" href="/" data-i18n="nav.site">사이트</a>
     </div>
@@ -63,11 +63,11 @@
       </div>
 
       <div class="social-login" id="socialLoginBox">
-        <p class="social-login-label muted fine">SNS로 빠르게 시작 (카카오 · 구글 · 깃허브)</p>
+        <p class="social-login-label muted fine"><span data-i18n="common.sns_label">SNS로 빠르게 시작 (카카오 · 구글 · 깃허브)</span></p>
         <div class="social-login-btns" id="socialLoginBtns">
-          <a class="btn btn-social btn-kakao" data-provider="kakao" href="/api/v1/auth/oauth/kakao/start" hidden>카카오로 계속</a>
-          <a class="btn btn-social btn-google" data-provider="google" href="/api/v1/auth/oauth/google/start" hidden>Google로 계속</a>
-          <a class="btn btn-social btn-github" data-provider="github" href="/api/v1/auth/oauth/github/start" hidden>GitHub로 계속</a>
+          <a class="btn btn-social btn-kakao" data-provider="kakao" href="/api/v1/auth/oauth/kakao/start" hidden data-i18n="common.kakao">카카오로 계속</a>
+          <a class="btn btn-social btn-google" data-provider="google" href="/api/v1/auth/oauth/google/start" hidden data-i18n="common.google">Google로 계속</a>
+          <a class="btn btn-social btn-github" data-provider="github" href="/api/v1/auth/oauth/github/start" hidden data-i18n="common.github">GitHub로 계속</a>
         </div>
         <p class="note fine muted" id="socialLoginHint">
           SNS는 가입·로그인만 쉽게 합니다. <strong>만 14세 확인 · 실명·휴대폰(Lv2) · 계좌(Lv3)</strong>는 그대로 필요합니다.
@@ -75,7 +75,7 @@
         <p class="note fine muted" id="socialLoginOff" hidden>
           SNS 로그인이 아직 서버에 설정되지 않았습니다. 아래 이메일로 가입·로그인하세요.
         </p>
-        <div class="auth-divider" aria-hidden="true"><span>또는 이메일</span></div>
+        <div class="auth-divider" aria-hidden="true"><span><span data-i18n="common.or_email">또는 이메일</span></span></div>
       </div>
 
       <form id="formLogin" class="form-card app-form">
@@ -88,7 +88,7 @@
         </div>
         <div class="form-actions">
           <button class="btn btn-primary btn-lg" type="submit">로그인</button>
-          <button class="btn btn-ghost" type="button" id="btnShowReset">비밀번호 찾기</button>
+          <button class="btn btn-ghost" type="button" id="btnShowReset" data-i18n="app.find_pw">비밀번호 찾기</button>
         </div>
         <p class="form-error" id="loginErr" hidden></p>
       </form>
@@ -109,27 +109,27 @@
           <p class="dev-code" id="resetDevCode"></p>
         </div>
         <div class="form-actions">
-          <button class="btn btn-ghost" type="button" id="btnResetReq">코드 받기</button>
-          <button class="btn btn-primary" type="submit">비밀번호 변경</button>
-          <button class="btn btn-ghost" type="button" id="btnResetBack">로그인으로</button>
+          <button class="btn btn-ghost" type="button" id="btnResetReq" data-i18n="app.reset_code">코드 받기</button>
+          <button class="btn btn-primary" type="submit" data-i18n="app.reset_save">비밀번호 변경</button>
+          <button class="btn btn-ghost" type="button" id="btnResetBack" data-i18n="app.reset_back">로그인으로</button>
         </div>
         <p class="form-error" id="resetErr" hidden></p>
       </form>
 
       <form id="formRegister" class="form-card app-form" hidden>
-        <label for="regName">표시 이름 (선택)</label>
+        <label for="regName" data-i18n="app.reg_name">표시 이름 (선택)</label>
         <input id="regName" maxlength="80" autocomplete="nickname" placeholder="공개 닉네임" />
         <label for="regEmail">이메일</label>
         <input id="regEmail" type="email" required autocomplete="email" placeholder="you@email.com" />
-        <label for="regBirth">생년월일</label>
+        <label for="regBirth" data-i18n="app.reg_birth">생년월일</label>
         <input id="regBirth" type="date" required autocomplete="bday" />
         <p class="note fine muted">만 14세 미만은 가입할 수 없습니다. 생년월일은 나이 확인에만 쓰이며 공개되지 않습니다.</p>
-        <label for="regPass">비밀번호 (8자 이상)</label>
+        <label for="regPass" data-i18n="app.reg_pass">비밀번호 (8자 이상)</label>
         <div class="pw-field">
           <input id="regPass" type="password" required minlength="8" autocomplete="new-password" />
           <button type="button" class="pw-toggle" data-pw-target="regPass" aria-label="비밀번호 보기" aria-pressed="false" title="비밀번호 보기"></button>
         </div>
-        <label for="regPass2">비밀번호 재입력</label>
+        <label for="regPass2" data-i18n="app.reg_pass2">비밀번호 재입력</label>
         <div class="pw-field">
           <input id="regPass2" type="password" required minlength="8" autocomplete="new-password" />
           <button type="button" class="pw-toggle" data-pw-target="regPass2" aria-label="비밀번호 보기" aria-pressed="false" title="비밀번호 보기"></button>
@@ -184,18 +184,18 @@
     <!-- Email verify -->
     <section id="viewVerify" class="app-panel" hidden>
       <p class="eyebrow">신뢰 Lv1</p>
-      <h1>이메일 인증</h1>
+      <h1 data-i18n="app.verify_title">이메일 인증</h1>
       <p class="lede">계정 이메일로 보낸 6자리 코드를 입력하세요. 매물 등록 전에 필수입니다.</p>
       <div class="dev-code-box" id="devCodeBox" hidden>
         <p class="fine"><strong>개발 모드</strong> — 메일 연동 전 인증 코드:</p>
         <p class="dev-code" id="devCodeText"></p>
       </div>
       <form id="formVerify" class="form-card app-form">
-        <label for="verifyCode">인증 코드</label>
+        <label for="verifyCode" data-i18n="app.verify_code">인증 코드</label>
         <input id="verifyCode" inputmode="numeric" pattern="[0-9]*" maxlength="8" required placeholder="6자리" autocomplete="one-time-code" />
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">인증 확인</button>
-          <button class="btn btn-ghost" type="button" id="btnResendCode">코드 다시 받기</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.verify_submit">인증 확인</button>
+          <button class="btn btn-ghost" type="button" id="btnResendCode" data-i18n="app.verify_resend">코드 다시 받기</button>
         </div>
         <p class="form-error" id="verifyErr" hidden></p>
       </form>
@@ -478,7 +478,7 @@
           <span>팔리면 <strong>판매자 수수료 10%</strong> · 사는 사람은 합의 가격만 내는 것에 동의합니다. *</span>
         </label>
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">올리기 요청하기</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.create_submit">올리기 요청하기</button>
         </div>
         <p class="form-error" id="projErr" hidden></p>
       </form>
@@ -486,9 +486,9 @@
   </main>
 
   <nav class="app-tabbar" id="tabbar" hidden>
-    <button type="button" class="tabbar-item is-on" data-go="list">프로젝트</button>
-    <button type="button" class="tabbar-item" data-go="new">올리기</button>
-    <button type="button" class="tabbar-item" data-go="profile">내 정보</button>
+    <button type="button" class="tabbar-item is-on" data-go="list" data-i18n="app.tab_projects">프로젝트</button>
+    <button type="button" class="tabbar-item" data-go="new" data-i18n="app.tab_new">올리기</button>
+    <button type="button" class="tabbar-item" data-go="profile" data-i18n="app.tab_me">내 정보</button>
   </nav>
 
   <footer class="app-legal-foot">
@@ -504,6 +504,7 @@
     <p>© 2026 CoreLabs · WakeAgain · Powered by CoreLabs</p>
   </footer>
 
+  <script src="/js/i18n-messages.js"></script>
   <script src="/js/i18n.js"></script>
   <script src="/js/pwa-install.js"></script>
   <script src="/js/api.js"></script>

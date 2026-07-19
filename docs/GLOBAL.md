@@ -6,12 +6,21 @@
 
 | Area | Status |
 |------|--------|
-| UI language KO / EN | `public/js/i18n.js` · `data-i18n` · lang switcher |
+| UI language KO / EN | `i18n.js` + `i18n-messages.js` · `data-i18n` · **KO\|EN on all major pages** |
+| Landing full copy | Hero → CTA → footer translated |
+| App shell | Auth + trust banners + list badges + fees via `t()` in `app.js` |
+| Diagnose flow | All 5 questions + options + result CTAs |
 | Display currency KRW / USD / EUR | Display-only FX in `/api/v1/config` → `global.fx_display_only` |
 | Regions KR + GLOBAL | Config surface for age gate / timezone notes |
 | Server timestamps | UTC (existing) |
 | API config | `global` block in `GET /api/v1/config` |
 | English legal stub | `/legal/terms.en.html` (summary · KR terms still controlling until counsel) |
+
+### How full translation works
+1. User taps **EN** (any page with lang switch) → `localStorage.wa_lang=en`
+2. `WakeAgainI18n.apply()` rewrites every `[data-i18n]` node
+3. Dynamic UI (`app.js`, listings) calls `t("key")` / rebuilds on `wa:langchange`
+4. Add new strings: extend `_gen_i18n_extra.py` → `python _gen_i18n_extra.py`
 
 ## What is not ready (by design)
 

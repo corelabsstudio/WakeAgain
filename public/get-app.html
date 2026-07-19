@@ -82,7 +82,11 @@
         <a href="/guide/">이용안내</a>
       </nav>
       <div class="nav-actions">
-        <a class="btn btn-primary btn-sm" href="/app/">지금 사용</a>
+                <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
+          <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
+        </div>
+<a class="btn btn-primary btn-sm" href="/app/">지금 사용</a>
       </div>
     </div>
   </header>
@@ -163,6 +167,9 @@
       <a href="/legal/privacy.html">개인정보처리방침</a>
     </p>
   </footer>
+  <script src="/js/i18n-messages.js"></script>
+  <script src="/js/i18n.js"></script>
+
 
   <script src="/js/pwa-install.js"></script>
 </body>

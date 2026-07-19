@@ -6,7 +6,28 @@
     return;
   }
 
+  function t(key, fallback, vars) {
+    try {
+      if (window.WakeAgainI18n && window.WakeAgainI18n.t) {
+        var v = window.WakeAgainI18n.t(key, vars);
+        if (v && v !== key) return v;
+      }
+    } catch (e) {}
+    if (fallback == null) return key;
+    if (vars && typeof fallback === "string") {
+      Object.keys(vars).forEach(function (k) {
+        fallback = fallback.split("{" + k + "}").join(String(vars[k]));
+      });
+    }
+    return fallback;
+  }
+
   const $ = (id) => document.getElementById(id);
+  function money(n) {
+    if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) return window.WakeAgainI18n.formatMoney(n);
+    return "₩" + Number(n).toLocaleString("ko-KR");
+  }
+
   const views = {
     auth: $("viewAuth"),
     age: $("viewAge"),
@@ -94,10 +115,10 @@
     // Positive “done” language — avoid “확인” sounding like pending/risk
     // Display as Lv0…Lv3 (not L0…L3)
     const map = {
-      0: "Lv0 · 가입",
-      1: "Lv1 · 이메일 완료",
-      2: "Lv2 · 인증 완료",
-      3: "Lv3 · 거래 준비 완료",
+      0: t("app.lv0", "Lv0 · 가입"),
+      1: t("app.lv1", "Lv1 · 이메일 완료"),
+      2: t("app.lv2", "Lv2 · 인증 완료"),
+      3: t("app.lv3", "Lv3 · 거래 준비 완료"),
     };
     return map[level] != null ? map[level] : "Lv" + level;
   }
@@ -219,7 +240,7 @@
       });
     } catch (e) {
       empty.hidden = false;
-      empty.textContent = e.message || "알림을 불러오지 못했습니다.";
+      empty.textContent = e.message || t("app.notif_fail", "알림을 불러오지 못했습니다.");
     }
   }
 
@@ -294,7 +315,7 @@
       if (gate) {
         gate.hidden = false;
         gate.textContent =
-          "로그인하면 매물 등록·내 매물이 가능합니다. 등록 전 이메일 인증과 실명·휴대폰 확인이 필요합니다.";
+          t("app.need_login_list", "로그인하면 매물 등록·내 매물이 가능합니다. 등록 전 이메일 인증과 실명·휴대폰 확인이 필요합니다.");
       }
       if (banner) banner.hidden = true;
       return;
@@ -305,7 +326,7 @@
     if (t.can_list && t.deal_ready) {
       banner.hidden = false;
       banner.className = "trust-banner is-ok";
-      banner.innerHTML = "신뢰 Lv3 · 거래 준비 완료. 성사 단계에서 정산 계좌를 사용합니다.";
+      banner.innerHTML = t("app.banner_l3", "신뢰 Lv3 · 거래 준비 완료. 성사 단계에서 정산 계좌를 사용합니다.");
     } else if (t.can_list) {
       banner.hidden = false;
       banner.className = "trust-banner";
@@ -404,7 +425,7 @@
       if (note) {
         note.hidden = false;
         note.textContent =
-          "매물 등록에는 로그인 · 이메일 인증 · 실명·휴대폰 · 판매자 공개 정보가 필요합니다.";
+          t("app.need_gates", "매물 등록에는 로그인 · 이메일 인증 · 실명·휴대폰 · 판매자 공개 정보가 필요합니다.");
       }
       return false;
     }
@@ -508,24 +529,24 @@
       let badgeText = "LIVE";
       let badgeCls = "";
       if (ls === "pending") {
-        badgeText = "검토중";
+        badgeText = t("app.badge_pending", "검토중");
         badgeCls = "is-wait";
       } else if (ls === "hold") {
-        badgeText = "보류";
+        badgeText = t("app.badge_hold", "보류");
         badgeCls = "is-wait";
       } else if (ls === "rejected") {
-        badgeText = "반려";
+        badgeText = t("app.badge_rejected", "반려");
         badgeCls = "is-bad";
       } else if (aStatus === "sold") {
-        badgeText = "성사";
+        badgeText = t("app.badge_sold", "성사");
         badgeCls = "is-sold";
       } else if (aStatus === "ended") {
-        badgeText = "종료";
+        badgeText = t("app.badge_ended", "종료");
         badgeCls = "is-wait";
       } else if (bids > 0) {
-        badgeText = "입찰 중";
+        badgeText = t("app.badge_live", "입찰 중");
       } else if (ls === "approved") {
-        badgeText = "공개";
+        badgeText = t("app.badge_open", "공개");
       }
       badge.textContent = badgeText;
       if (badgeCls) badge.classList.add(badgeCls);
@@ -533,13 +554,13 @@
       const priceLabel = el.querySelector(".p-card-price span");
       const priceVal = el.querySelector(".p-card-price strong");
       if (aStatus === "sold") {
-        priceLabel.textContent = "팔린 가격";
+        priceLabel.textContent = t("app.price_sold", "팔린 가격");
         priceVal.textContent =
           cur != null || p.sold_price != null
             ? "₩" + Number(p.sold_price != null ? p.sold_price : cur).toLocaleString("ko-KR")
             : "—";
       } else {
-        priceLabel.textContent = bids > 0 ? "지금 가격" : "시작 가격";
+        priceLabel.textContent = bids > 0 ? t("app.price_now", "지금 가격") : t("app.price_start", "시작 가격");
         priceVal.textContent =
           cur != null ? "₩" + Number(cur).toLocaleString("ko-KR") : "—";
       }
@@ -547,18 +568,18 @@
       el.querySelector(".p-meta").textContent = [
         typeBit,
         p.status_label || p.status || "",
-        bids > 0 ? "가격 " + bids + "번 씀" : "아직 가격 없음",
+        bids > 0 ? t("app.bids_n", "가격 {n}번 씀", { n: bids }) : t("app.bids_none", "아직 가격 없음"),
       ]
         .filter(Boolean)
         .join(" · ");
 
-      let liveText = "첫 입찰 대기";
-      if (ls === "pending") liveText = "검토 중 · 아직 비공개";
-      else if (ls === "hold") liveText = "잠깐 보류";
-      else if (ls === "rejected") liveText = "다시 고쳐 주세요";
-      else if (aStatus === "sold") liveText = "팔렸어요";
-      else if (aStatus === "ended") liveText = "끝났어요";
-      else if (ls === "approved") liveText = bids > 0 ? "입찰 중" : "첫 입찰 대기";
+      let liveText = t("app.live_wait", "첫 입찰 대기");
+      if (ls === "pending") liveText = t("app.live_pending", "검토 중 · 아직 비공개");
+      else if (ls === "hold") liveText = t("app.live_hold", "잠깐 보류");
+      else if (ls === "rejected") liveText = t("app.live_reject", "다시 고쳐 주세요");
+      else if (aStatus === "sold") liveText = t("app.live_sold", "팔렸어요");
+      else if (aStatus === "ended") liveText = t("app.live_ended", "끝났어요");
+      else if (ls === "approved") liveText = bids > 0 ? t("app.badge_live", "입찰 중") : t("app.live_wait", "첫 입찰 대기");
       el.querySelector(".p-live").textContent = liveText;
 
       el.addEventListener("click", () => {
@@ -595,15 +616,15 @@
         empty.hidden = projects.length > 0;
         empty.textContent =
           feed === "mine"
-            ? "아직 올린 프로젝트가 없습니다."
-            : "아직 공개 매물이 없습니다. 첫 프로젝트를 올려 보세요.";
+            ? t("app.empty_mine", "아직 올린 프로젝트가 없습니다.")
+            : t("app.empty_all", "아직 공개 매물이 없습니다. 첫 프로젝트를 올려 보세요.");
       }
       appendProjectCards(projects);
       listOffset += projects.length;
       if (more) more.hidden = !data.has_more;
     } catch (e) {
       empty.hidden = false;
-      empty.textContent = e.message || "불러오기에 실패했습니다.";
+      empty.textContent = e.message || t("app.load_fail", "불러오기에 실패했습니다.");
       if (more) more.hidden = true;
     }
   }
@@ -624,7 +645,7 @@
       empty.hidden = inv.length > 0;
       if (!inv.length) {
         empty.textContent =
-          "아직 수수료 청구 내역이 없습니다. 매물이 성사되면 여기에 표시됩니다.";
+          t("app.fees_empty", "아직 수수료 청구 내역이 없습니다. 매물이 성사되면 여기에 표시됩니다.");
       }
       inv.forEach((f) => {
         const el = document.createElement("article");
@@ -636,7 +657,7 @@
           "<p class='p-meta'></p><p class='p-live'></p></div>";
         el.querySelector("h3").textContent = f.project_title || "매물 #" + f.project_id;
         el.querySelector(".p-card-badge").textContent =
-          f.status === "paid" ? "확인됨" : "대기";
+          f.status === "paid" ? t("app.fee_paid", "확인됨") : t("app.fee_wait", "대기");
         if (f.status === "paid") el.querySelector(".p-card-badge").classList.add("is-sold");
         else el.querySelector(".p-card-badge").classList.add("is-wait");
         el.querySelector(".p-card-price strong").textContent =
@@ -645,8 +666,8 @@
           "거래 ₩" + Number(f.deal_amount).toLocaleString("ko-KR");
         el.querySelector(".p-live").textContent =
           f.status === "paid"
-            ? "입금 확인됨 (운영자)"
-            : "입금 대기 · 운영자 확인 · corelabs.studio@gmail.com";
+            ? t("app.fee_paid_note", "입금 확인됨 (운영자)")
+            : t("app.fee_wait_note", "입금 대기 · 운영자 확인") + " · corelabs.studio@gmail.com";
         list.appendChild(el);
       });
     } catch (e) {
@@ -679,8 +700,8 @@
       input.type = show ? "text" : "password";
       btn.classList.toggle("is-on", show);
       btn.setAttribute("aria-pressed", show ? "true" : "false");
-      btn.setAttribute("aria-label", show ? "비밀번호 숨기기" : "비밀번호 보기");
-      btn.title = show ? "비밀번호 숨기기" : "비밀번호 보기";
+      btn.setAttribute("aria-label", show ? t("app.pw_hide", "비밀번호 숨기기") : t("app.pw_show", "비밀번호 보기"));
+      btn.title = show ? t("app.pw_hide", "비밀번호 숨기기") : t("app.pw_show", "비밀번호 보기");
     });
   });
 
@@ -693,7 +714,7 @@
       await api.login($("loginEmail").value.trim(), $("loginPass").value);
       await afterAuthSuccess();
     } catch (err) {
-      showErr($("loginErr"), err.message || "로그인에 실패했습니다.");
+      showErr($("loginErr"), err.message || t("app.login_fail", "로그인에 실패했습니다."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -718,7 +739,7 @@
         $("resetDevCode").textContent = data.dev_email_code;
         $("resetCode").value = data.dev_email_code;
       }
-      showErr($("resetErr"), "코드를 발급했습니다." + (data.dev_email_code ? " (개발 모드)" : ""));
+      showErr($("resetErr"), t("app.reset_sent", "코드를 발급했습니다.") + (data.dev_email_code ? " (개발 모드)" : ""));
     } catch (err) {
       showErr($("resetErr"), err.message || "실패");
     }
@@ -732,7 +753,7 @@
         $("resetCode").value.trim(),
         $("resetPass").value
       );
-      showErr($("resetErr"), "변경 완료. 로그인해 주세요.");
+      showErr($("resetErr"), t("app.reset_ok", "변경 완료. 로그인해 주세요."));
       $("formReset").hidden = true;
       $("formLogin").hidden = false;
     } catch (err) {
@@ -759,7 +780,7 @@
     showErr($("regErr"));
     const terms = $("regTerms");
     if (terms && !terms.checked) {
-      showErr($("regErr"), "이용약관 및 개인정보처리방침에 동의해 주세요.");
+      showErr($("regErr"), t("app.reg_terms_err", "이용약관 및 개인정보처리방침에 동의해 주세요."));
       return;
     }
     const pass = $("regPass") ? $("regPass").value : "";
@@ -767,7 +788,7 @@
     const birth = $("regBirth") ? $("regBirth").value.trim() : "";
     const ageOk = $("regAge14") ? $("regAge14").checked : false;
     if (!birth) {
-      showErr($("regErr"), "생년월일을 입력해 주세요.");
+      showErr($("regErr"), t("app.reg_birth_err", "생년월일을 입력해 주세요."));
       if ($("regBirth")) $("regBirth").focus();
       return;
     }
@@ -782,23 +803,23 @@
       const m = today.getMonth() + 1 - bm;
       if (m < 0 || (m === 0 && today.getDate() < bd)) age -= 1;
       if (age < 14) {
-        showErr($("regErr"), "만 14세 미만은 WakeAgain에 가입할 수 없습니다.");
+        showErr($("regErr"), t("app.reg_under14", "만 14세 미만은 WakeAgain에 가입할 수 없습니다."));
         return;
       }
     } catch (_) {
-      showErr($("regErr"), "생년월일을 다시 확인해 주세요.");
+      showErr($("regErr"), t("app.reg_birth_bad", "생년월일을 다시 확인해 주세요."));
       return;
     }
     if (!ageOk) {
-      showErr($("regErr"), "만 14세 이상임을 확인해 주세요.");
+      showErr($("regErr"), t("app.reg_age_check", "만 14세 이상임을 확인해 주세요."));
       return;
     }
     if (pass.length < 8) {
-      showErr($("regErr"), "비밀번호는 8자 이상이어야 합니다.");
+      showErr($("regErr"), t("app.reg_pass_len", "비밀번호는 8자 이상이어야 합니다."));
       return;
     }
     if (pass !== pass2) {
-      showErr($("regErr"), "비밀번호가 서로 다릅니다. 다시 입력해 주세요.");
+      showErr($("regErr"), t("app.reg_pass_match", "비밀번호가 서로 다릅니다. 다시 입력해 주세요."));
       if ($("regPass2")) $("regPass2").focus();
       return;
     }
@@ -815,7 +836,7 @@
       pendingAfterAuth = pendingAfterAuth || "create";
       await afterAuthSuccess();
     } catch (err) {
-      showErr($("regErr"), err.message || "가입에 실패했습니다.");
+      showErr($("regErr"), err.message || t("app.reg_fail", "가입에 실패했습니다."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -838,7 +859,7 @@
         await afterAuthSuccess();
       }
     } catch (err) {
-      showErr($("verifyErr"), err.message || "인증 실패");
+      showErr($("verifyErr"), err.message || t("app.verify_fail", "인증 실패"));
     }
   });
 
@@ -847,7 +868,7 @@
     try {
       await api.resendVerify();
       showDevCode();
-      showErr($("verifyErr"), "새 코드를 발급했습니다." + (api.getDevCode() ? " (개발 모드 코드 표시)" : ""));
+      showErr($("verifyErr"), t("app.verify_resent", "새 코드를 발급했습니다.") + (api.getDevCode() ? " (개발 모드 코드 표시)" : ""));
     } catch (err) {
       showErr($("verifyErr"), err.message || "재발송 실패");
     }
@@ -884,7 +905,7 @@
         showDevCode();
         setView("verify");
       }
-      showErr($("profErr"), err.message || "저장 실패");
+      showErr($("profErr"), err.message || t("app.save_fail", "저장 실패"));
     }
   });
 
@@ -921,7 +942,7 @@
         await loadProjects();
       }
     } catch (err) {
-      showErr($("sidErr"), err.message || "저장 실패");
+      showErr($("sidErr"), err.message || t("app.save_fail", "저장 실패"));
     }
   });
 
@@ -937,7 +958,7 @@
       });
       await loadProjects();
     } catch (err) {
-      showErr($("setErr"), err.message || "저장 실패");
+      showErr($("setErr"), err.message || t("app.save_fail", "저장 실패"));
     }
   });
 
@@ -1355,18 +1376,18 @@
       const birth = $("ageBirth") ? $("ageBirth").value.trim() : "";
       const ok14 = $("ageConfirm14") && $("ageConfirm14").checked;
       if (!birth) {
-        showErr($("ageErr"), "생년월일을 입력해 주세요.");
+        showErr($("ageErr"), t("app.reg_birth_err", "생년월일을 입력해 주세요."));
         return;
       }
       if (!ok14) {
-        showErr($("ageErr"), "만 14세 이상임을 확인해 주세요.");
+        showErr($("ageErr"), t("app.reg_age_check", "만 14세 이상임을 확인해 주세요."));
         return;
       }
       try {
         await api.setBirthDate(birth, true);
         await afterAuthSuccess();
       } catch (err) {
-        showErr($("ageErr"), err.message || "저장 실패");
+        showErr($("ageErr"), err.message || t("app.save_fail", "저장 실패"));
       }
     });
   }
@@ -1430,4 +1451,18 @@
     }
     await applyRoute();
   })();
+
+  document.addEventListener("wa:langchange", function () {
+    try {
+      if (window.WakeAgainI18n) window.WakeAgainI18n.apply(document);
+    } catch (e) {}
+    try {
+      syncChrome();
+    } catch (e) {}
+  });
+  document.addEventListener("wa:currencychange", function () {
+    try {
+      if (window.WakeAgainI18n) window.WakeAgainI18n.apply(document);
+    } catch (e) {}
+  });
 })();

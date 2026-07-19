@@ -24,7 +24,11 @@
         <a href="/app/">앱</a>
       </nav>
       <div class="nav-actions">
-        <a class="btn btn-primary btn-sm" href="/">홈</a>
+                <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
+          <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
+        </div>
+<a class="btn btn-primary btn-sm" href="/">홈</a>
       </div>
     </div>
   </header>
@@ -107,5 +111,7 @@
       <a href="/guide/dispute.html">분쟁 해결 안내</a>
     </p>
   </footer>
+  <script src="/js/i18n-messages.js"></script>
+  <script src="/js/i18n.js"></script>
 </body>
 </html>
