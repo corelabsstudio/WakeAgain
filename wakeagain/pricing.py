@@ -15,7 +15,9 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
     "prototype": {
         "key": "prototype",
         "label": "돌아가는 초안",
+        "label_en": "Working prototype",
         "blurb": "아직 덜 만들었지만, 화면·데모로 ‘돌아가는 것’은 볼 수 있어요. 시작가는 낮게.",
+        "blurb_en": "Not finished, but you can see something runnable (screen/demo). Keep the start price low.",
         "suggest": 150_000,
         "min": 50_000,
         "max_soft": 5_000_000,
@@ -37,7 +39,9 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
     "beta": {
         "key": "beta",
         "label": "써 볼 수 있는 제품",
+        "label_en": "Usable product",
         "blurb": "남에게 써 보라고 줄 수 있는 형태입니다. 아직 정식 성장 단계는 아니어도 됩니다.",
+        "blurb_en": "Something you can hand to someone to try. Pre-growth is fine.",
         "suggest": 400_000,
         "min": 150_000,
         "max_soft": 15_000_000,
@@ -59,7 +63,9 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
     "launched": {
         "key": "launched",
         "label": "공개했다가 멈춤",
+        "label_en": "Launched, then paused",
         "blurb": "한 번 세상에 나갔거나 나갈 준비가 됐는데, 지금은 운영이 멈춘 상태. 시작가는 조금 높게.",
+        "blurb_en": "Shipped or ship-ready once; ops paused now. Start price a bit higher.",
         "suggest": 800_000,
         "min": 300_000,
         "max_soft": 50_000_000,
@@ -81,7 +87,9 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
     "other": {
         "key": "other",
         "label": "그 외 (도구·코드·자료)",
+        "label_en": "Other (tools · code · assets)",
         "blurb": "완성형 앱/사이트가 아니라 부품·도구·자료에 가깝습니다.",
+        "blurb_en": "Closer to parts, tools, or assets than a finished app/site.",
         "suggest": 200_000,
         "min": 50_000,
         "max_soft": 20_000_000,
@@ -170,21 +178,26 @@ def pricing_for(status: str) -> dict[str, Any]:
     return dict(STATUS_PRICING[key], status=key)
 
 
-def status_label(status: str | None) -> str:
+def status_label(status: str | None, *, lang: str = "ko") -> str:
     key = normalize_status(status or "")
-    return STATUS_PRICING[key]["label"]
+    band = STATUS_PRICING[key]
+    if (lang or "ko").lower().startswith("en"):
+        return str(band.get("label_en") or band["label"])
+    return str(band["label"])
 
 
 def _status_public(k: str, v: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": k,
         "label": v["label"],
+        "label_en": v.get("label_en") or v["label"],
         "key": v["key"],
         "suggest": v["suggest"],
         "min": v["min"],
         "max_soft": v["max_soft"],
         "min_increment": v["min_increment"],
         "blurb": v["blurb"],
+        "blurb_en": v.get("blurb_en") or v["blurb"],
         "examples": v["examples"],
         "when": v.get("when", ""),
         "criteria_yes": list(v.get("criteria_yes") or []),

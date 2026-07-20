@@ -374,7 +374,12 @@ def client_config():
             "terms_article": "제12조 · 제14조",
         },
         "product_types": [
-            {"key": k, "label": v} for k, v in database.PRODUCT_TYPES.items()
+            {
+                "key": k,
+                "label": v,
+                "label_en": database.PRODUCT_TYPES_EN.get(k, v),
+            }
+            for k, v in database.PRODUCT_TYPES.items()
         ],
         "metrics_policy": {
             "mode": "live_counts",

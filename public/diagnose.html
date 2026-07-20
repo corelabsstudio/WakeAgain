@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>내 프로젝트는 얼마일까? (30초 무료 진단) — WakeAgain</title>
+  <title data-i18n="diag.doc_title">내 프로젝트는 얼마일까? (30초 무료 진단) — WakeAgain</title>
   <meta name="description" content="내 프로젝트는 얼마일까? 30초 무료 진단. 시작가 힌트와 올리기 전 체크리스트. 가입 없이 바로." />
   <meta name="theme-color" content="#050508" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -78,16 +78,16 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓플레이스</a>
-        <a href="/sell.html">내 프로젝트 올리기</a>
+      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="메뉴">
+        <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/sell.html" data-i18n="nav.list">내 프로젝트 올리기</a>
       </nav>
       <div class="nav-actions">
-                <div class="lang-switch" role="group" aria-label="Language">
+        <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
         </div>
-<a class="btn btn-primary btn-sm" href="/app/#list">마켓플레이스 보기</a>
+        <a class="btn btn-primary btn-sm" href="/app/#list" data-i18n="nav.more_market">마켓플레이스 보기</a>
       </div>
     </div>
   </header>
@@ -167,13 +167,13 @@
       <p class="muted" id="diagVerdict" style="line-height:1.5"></p>
 
       <div class="diag-price-box">
-        <p class="muted fine" style="margin:0 0 0.35rem">시작가 힌트 (대략) <span id="diagStatusLabel"></span></p>
+        <p class="muted fine" style="margin:0 0 0.35rem"><span data-i18n="diag.price_hint_approx">시작가 힌트 (대략)</span> <span id="diagStatusLabel"></span></p>
         <p style="margin:0"><strong id="diagPrice">—</strong></p>
         <p class="muted fine" id="diagPriceRange" style="margin:0.4rem 0 0"></p>
         <p class="muted fine" id="diagPriceNote" style="margin:0.35rem 0 0;line-height:1.45"></p>
       </div>
 
-      <p class="muted fine" style="margin:0 0 0.25rem"><strong>다음에 할 일</strong></p>
+      <p class="muted fine" style="margin:0 0 0.25rem"><strong data-i18n="diag.next_steps">다음에 할 일</strong></p>
       <ul class="diag-list" id="diagChecks"></ul>
 
       <div class="diag-cta">
@@ -187,52 +187,62 @@
 
   <footer class="site-footer compact-footer">
     <p class="footer-broker-notice">
-      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
-      <span class="footer-broker-sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
+      <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
+      <span class="footer-broker-sub" data-i18n="footer.broker_sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
     </p>
     <p class="footer-copy">© 2026 CoreLabs · WakeAgain ·
-      <a href="/diagnose.html">내 프로젝트는 얼마일까?</a>
+      <a href="/diagnose.html" data-i18n="diag.title">내 프로젝트는 얼마일까?</a>
     </p>
   </footer>
 
+  <script src="/js/i18n-messages.js?v=20260720c"></script>
+  <script src="/js/i18n.js?v=20260720c"></script>
   <script>
     (function () {
+      function tt(key, vars) {
+        return window.WakeAgainI18n && window.WakeAgainI18n.t
+          ? window.WakeAgainI18n.t(key, vars)
+          : key;
+      }
+
       var answers = {};
       var step = 0;
       var TOTAL = 5;
-      // pricing.py 와 맞춘 정적 구간 (클라이언트만)
-      var STATUS_BANDS = {
-        prototype: {
-          label: "돌아가는 초안",
-          suggest: 150000,
-          min: 50000,
-          max_soft: 5000000,
-          blurb: "아직 덜 만들었지만 돌아가는 흔적이 있으면 시작가는 낮게.",
-        },
-        beta: {
-          label: "써 볼 수 있는 제품",
-          suggest: 400000,
-          min: 150000,
-          max_soft: 15000000,
-          blurb: "남에게 써 보라 줄 수 있는 형태. 정식 성장 전이어도 됨.",
-        },
-        launched: {
-          label: "공개했다가 멈춤",
-          suggest: 800000,
-          min: 300000,
-          max_soft: 50000000,
-          blurb: "한 번 나갔거나 나갈 준비가 됐는데 지금은 멈춘 상태.",
-        },
-        other: {
-          label: "그 외 (도구·코드·자료)",
-          suggest: 200000,
-          min: 50000,
-          max_soft: 20000000,
-          blurb: "완성형 앱보다 부품·도구·자료에 가깝습니다.",
-        },
-      };
+      var lastResult = null;
 
-      /** 만원 단위로 뭉뚱그리되, 칸을 촘촘히 해서 결과가 비슷하게 안 나오게 */
+      function statusBands() {
+        return {
+          prototype: {
+            labelKey: "diag.st_proto",
+            suggest: 150000,
+            min: 50000,
+            max_soft: 5000000,
+            blurbKey: "diag.blurb_proto",
+          },
+          beta: {
+            labelKey: "diag.st_beta",
+            suggest: 400000,
+            min: 150000,
+            max_soft: 15000000,
+            blurbKey: "diag.blurb_beta",
+          },
+          launched: {
+            labelKey: "diag.st_launched",
+            suggest: 800000,
+            min: 300000,
+            max_soft: 50000000,
+            blurbKey: "diag.blurb_launched",
+          },
+          other: {
+            labelKey: "diag.st_other",
+            suggest: 200000,
+            min: 50000,
+            max_soft: 20000000,
+            blurbKey: "diag.blurb_other",
+          },
+        };
+      }
+
       function manUnit(n) {
         return Math.max(1, Math.round(Number(n) / 10000));
       }
@@ -241,26 +251,21 @@
         var a = manUnit(lo);
         var b = manUnit(hi);
         if (b < a) {
-          var t = a;
+          var t0 = a;
           a = b;
-          b = t;
+          b = t0;
         }
-        // 최소 폭 약 5만, 최대 폭 약 15만 원대 말 (깐깐한 구간)
         if (b - a < 5) b = a + 5;
         if (b - a > 15) b = a + 15;
         if (a < 5) {
-          return "대략 " + a + "만~" + b + "만 원 근처 (낮은 편)";
+          return tt("diag.band_approx_low", { a: a, b: b });
         }
         if (a >= 100) {
-          return "대략 " + a + "만~" + b + "만 원 근처 (높은 편 · 근거 필요할 수 있음)";
+          return tt("diag.band_approx_high", { a: a, b: b });
         }
-        return "대략 " + a + "만~" + b + "만 원 근처";
+        return tt("diag.band_approx", { a: a, b: b });
       }
 
-      /**
-       * 답변마다 중심가가 갈리도록 깐깐하게 조정.
-       * 넓은 min~max_soft 전체는 쓰지 않음 (다들 비슷한 넓은 구간이 되는 문제 방지).
-       */
       function computePriceHint(score) {
         var st = answers.status || "prototype";
         var band = bandFor(st);
@@ -269,13 +274,11 @@
         var cap = Number(band.max_soft) || 5000000;
         var m = 1;
 
-        // 상태 (이미 base에 반영되지만 추가 분리)
         if (st === "prototype") m *= 0.92;
         else if (st === "beta") m *= 1.0;
         else if (st === "launched") m *= 1.08;
         else m *= 0.95;
 
-        // 제품 형태
         var pt = answers.ptype || "other";
         if (pt === "webapp" || pt === "saas") m *= 1.12;
         else if (pt === "mobile") m *= 1.08;
@@ -285,20 +288,17 @@
         else if (pt === "game") m *= 0.88;
         else m *= 0.85;
 
-        // 데모 (가장 크게 갈림)
         var demo = answers.demo || "none";
         if (demo === "live") m *= 1.22;
         else if (demo === "video") m *= 1.05;
         else if (demo === "screen") m *= 0.78;
         else m *= 0.55;
 
-        // 라이선스
         var lic = answers.license || "unknown";
         if (lic === "clear") m *= 1.1;
         else if (lic === "mixed") m *= 0.82;
         else m *= 0.7;
 
-        // 멈춘 이유 (소폭)
         var why = answers.why || "other";
         if (why === "marketing") m *= 1.06;
         else if (why === "time") m *= 1.0;
@@ -306,21 +306,18 @@
         else if (why === "pivot") m *= 0.9;
         else m *= 0.96;
 
-        // 준비도 점수 → 중심 이동 + 구간 폭
         var s = Number(score) || 50;
-        m *= 0.7 + (s / 100) * 0.55; // 점수 낮으면 더 낮게
+        m *= 0.7 + (s / 100) * 0.55;
 
         var center = Math.round((base * m) / 10000) * 10000;
         center = Math.max(floor, Math.min(cap, center));
 
-        // 구간 폭: 준비 잘 될수록 좁게 (깐깐), 애매하면 조금 넓되 최대 제한
         var spread;
         if (s >= 75 && demo === "live" && lic === "clear") spread = 0.12;
         else if (s >= 60) spread = 0.18;
         else if (s >= 45) spread = 0.22;
         else spread = 0.28;
 
-        // 데모 없음·라이선스 불명은 상단을 더 깎음
         var lo = center * (1 - spread);
         var hi = center * (1 + spread * 0.85);
         if (demo === "none" || demo === "screen") hi = Math.min(hi, center * 1.08);
@@ -330,7 +327,6 @@
         hi = Math.max(lo + 50000, Math.round(hi / 10000) * 10000);
         hi = Math.min(cap, hi);
 
-        // 최종 폭이 너무 넓으면 중심 기준으로 다시 조임 (최대 약 20만 원 폭)
         if (hi - lo > 200000) {
           lo = Math.max(floor, center - 100000);
           hi = Math.min(cap, center + 100000);
@@ -366,13 +362,14 @@
 
       document.querySelectorAll(".diag-opts").forEach(function (box) {
         box.addEventListener("click", function (e) {
-          var t = e.target;
-          if (t && t.tagName === "BUTTON") pick(t);
+          var tEl = e.target;
+          if (tEl && tEl.tagName === "BUTTON") pick(tEl);
         });
       });
 
       function bandFor(status) {
-        return STATUS_BANDS[status] || STATUS_BANDS.prototype;
+        var bands = statusBands();
+        return bands[status] || bands.prototype;
       }
 
       function computeScore() {
@@ -389,80 +386,84 @@
 
         if (demo === "live") {
           score += 22;
-          checks.push({ ok: true, t: "데모(주소·설치) 있음 — 검수·관심에 유리" });
+          checks.push({ ok: true, key: "diag.ck_demo_live" });
         } else if (demo === "video") {
           score += 16;
-          checks.push({ ok: true, t: "영상 데모 OK — WakeAgain에서 허용" });
+          checks.push({ ok: true, key: "diag.ck_demo_video" });
         } else if (demo === "screen") {
           score += 6;
-          checks.push({ ok: false, t: "스크린만으로는 약함 → 짧은 화면 녹화를 추가하세요" });
+          checks.push({ ok: false, key: "diag.ck_demo_screen" });
         } else {
           score -= 8;
-          checks.push({ ok: false, t: "데모 없음 → 등록이 어렵거나 반려될 수 있음" });
+          checks.push({ ok: false, key: "diag.ck_demo_none" });
         }
 
         if (lic === "clear") {
           score += 14;
-          checks.push({ ok: true, t: "라이선스·권한이 비교적 명확" });
+          checks.push({ ok: true, key: "diag.ck_lic_clear" });
         } else if (lic === "mixed") {
           score += 2;
-          checks.push({ ok: false, t: "섞인 코드 정리·출처 표시 후 올리기" });
+          checks.push({ ok: false, key: "diag.ck_lic_mixed" });
         } else {
           score -= 4;
-          checks.push({ ok: false, t: "라이선스 확인 필요 (MIT/GPL 등 또는 사유 양도 조건)" });
+          checks.push({ ok: false, key: "diag.ck_lic_unknown" });
         }
 
         if (answers.why === "marketing") {
           score += 6;
-          checks.push({ ok: true, t: "‘홍보 실패’ 스토리는 구매자에게 설득력 있음" });
+          checks.push({ ok: true, key: "diag.ck_why_mkt" });
         } else {
           score += 2;
         }
 
         if (answers.ptype === "other" && st !== "other") {
-          checks.push({ ok: false, t: "형태와 상태를 한 번 더 맞춰 보세요" });
+          checks.push({ ok: false, key: "diag.ck_ptype" });
         }
 
         score = Math.max(8, Math.min(96, score));
         return { score: score, checks: checks };
       }
 
-      function showResult() {
-        var st = answers.status || "prototype";
-        var r = computeScore();
-        var price = computePriceHint(r.score);
+      function paintResult(r, price) {
         var band = price.band;
-
         var verdict = "";
-        if (r.score >= 72)
-          verdict = "올리기 준비가 꽤 됩니다. 데모·한 줄 소개만 다듬고 등록해 보세요.";
-        else if (r.score >= 50)
-          verdict = "가능성은 있습니다. 아래 체크를 채우면 반응이 좋아질 수 있어요.";
-        else if (r.score >= 35)
-          verdict = "지금은 준비가 부족합니다. 데모·권한부터 보강한 뒤 올리는 걸 권합니다.";
-        else
-          verdict = "실행 흔적·권한이 약하면 장터 적합도가 낮습니다. 최소 데모부터 만드세요.";
+        if (r.score >= 72) verdict = tt("diag.v_ready");
+        else if (r.score >= 50) verdict = tt("diag.v_ok");
+        else if (r.score >= 35) verdict = tt("diag.v_low");
+        else verdict = tt("diag.v_poor");
 
-        document.getElementById("diagScore").textContent = r.score + "점";
+        document.getElementById("diagScore").textContent = tt("diag.score_pts", { n: r.score });
         document.getElementById("diagVerdict").textContent = verdict;
-        document.getElementById("diagStatusLabel").textContent = "· " + (band.label || st);
-        document.getElementById("diagPrice").textContent = "시작가 힌트: " + softBand(price.lo, price.hi);
-        document.getElementById("diagPriceRange").textContent =
-          "답변(상태·데모·라이선스·준비도)에 맞춰 구간을 좁힌 가이드입니다. 다들 같은 금액이 나오지 않게 조정했습니다.";
+        document.getElementById("diagStatusLabel").textContent =
+          "· " + tt(band.labelKey || "diag.st_proto");
+        document.getElementById("diagPrice").textContent = tt("diag.price_line", {
+          range: softBand(price.lo, price.hi),
+        });
+        document.getElementById("diagPriceRange").textContent = tt("diag.price_range_note");
         document.getElementById("diagPriceNote").textContent =
-          (band.blurb || "") +
-          " 정확한 낙찰가는 모릅니다. 시작만 대략 잡아 보세요. 판매 보증이 아닙니다.";
+          tt(band.blurbKey || "diag.blurb_proto") + tt("diag.price_note_tail");
 
         var ul = document.getElementById("diagChecks");
         ul.innerHTML = r.checks
           .map(function (c) {
-            return '<li class="' + (c.ok ? "ok" : "bad") + '">' + c.t + "</li>";
+            return '<li class="' + (c.ok ? "ok" : "bad") + '">' + tt(c.key) + "</li>";
           })
           .join("");
         ul.innerHTML +=
-          '<li class="ok">등록 비용 무료 · 팔리면 판매자 수수료 10%</li>' +
-          '<li class="ok">판매자 공개 정보·실명 확인 후 등록 (중개 고지)</li>';
+          '<li class="ok">' +
+          tt("diag.ck_fee") +
+          "</li>" +
+          '<li class="ok">' +
+          tt("diag.ck_id") +
+          "</li>";
+      }
 
+      function showResult() {
+        var st = answers.status || "prototype";
+        var r = computeScore();
+        var price = computePriceHint(r.score);
+        lastResult = { r: r, price: price, st: st };
+        paintResult(r, price);
         setStep(5);
         try {
           sessionStorage.setItem(
@@ -502,6 +503,7 @@
 
       document.getElementById("diagRetry").addEventListener("click", function () {
         answers = {};
+        lastResult = null;
         try {
           sessionStorage.removeItem("wa_diag_showcase");
           sessionStorage.removeItem("wa_diag");
@@ -512,10 +514,14 @@
         setStep(0);
       });
 
+      document.addEventListener("wa:langchange", function () {
+        if (lastResult && step === 5) {
+          paintResult(lastResult.r, lastResult.price);
+        }
+      });
+
       setStep(0);
     })();
   </script>
-  <script src="/js/i18n-messages.js"></script>
-  <script src="/js/i18n.js"></script>
 </body>
 </html>

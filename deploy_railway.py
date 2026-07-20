@@ -153,14 +153,24 @@ def main() -> int:
             print("Trying railway up with RAILWAY_PROJECT_ID...")
             os.environ["RAILWAY_PROJECT_ID"] = pid
 
-    # Production variables
-    if args.set_vars or True:
-        app_secret = secrets.token_urlsafe(48)
-        admin_secret = secrets.token_urlsafe(32)
-        # Prefer CLI variable set if linked
+    # Production variables — only when explicitly requested.
+    # Default deploy must NOT rotate APP_SECRET/JWT_SECRET/ADMIN_SECRET (logs everyone out).
+    if args.set_vars:
+        secrets_path = ROOT / ".launch" / "production-secrets.local.txt"
+        existing: dict[str, str] = {}
+        if secrets_path.is_file():
+            for line in secrets_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                existing[k.strip()] = v.strip()
+
+        app_secret = existing.get("APP_SECRET") or secrets.token_urlsafe(48)
+        admin_secret = existing.get("ADMIN_SECRET") or secrets.token_urlsafe(32)
         vars_pairs = {
             "APP_SECRET": app_secret,
-            "JWT_SECRET": app_secret,
+            "JWT_SECRET": existing.get("JWT_SECRET") or app_secret,
             "ADMIN_SECRET": admin_secret,
             "EMAIL_DEV_MODE": "0",
             "AUCTION_SCHEDULER": "1",
@@ -168,12 +178,10 @@ def main() -> int:
             "ALLOWED_ORIGINS": "*",
             "DATA_DIR": "/data",
         }
-        # Save secrets locally (not committed)
-        secrets_path = ROOT / ".launch" / "production-secrets.local.txt"
         secrets_path.parent.mkdir(parents=True, exist_ok=True)
         secrets_path.write_text(
             "\n".join(f"{k}={v}" for k, v in vars_pairs.items())
-            + "\n# Keep offline. Set same values in Railway Variables if CLI set fails.\n",
+            + "\n# Keep offline. Reuse on --set-vars; never commit.\n",
             encoding="utf-8",
         )
         print(f"Wrote local secrets mirror: {secrets_path} (gitignored)")
@@ -187,8 +195,10 @@ def main() -> int:
                 print(f"  warn set {k}: {(r.stderr or r.stdout)[:200]}")
             else:
                 print(f"  set {k}")
+    else:
+        print("Skipping variable rotation (default). Pass --set-vars only when intentionally resetting env.")
 
-    # Deploy
+    # Deploy current working tree (latest local files)
     print("Deploying (railway up)...")
     up = run(["railway", "up", "--detach"], capture_output=True, text=True)
     print(up.stdout)
@@ -204,7 +214,8 @@ def main() -> int:
     print(dom.stdout or dom.stderr)
 
     print("\nDone. Open Railway dashboard for build logs.")
-    print("Health: https://<your-domain>/health")
+    print("Live: https://web-production-8ee81.up.railway.app/")
+    print("Health: https://web-production-8ee81.up.railway.app/health")
     return 0
 
 

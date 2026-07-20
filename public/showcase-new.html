@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>자랑 등록하기 — WakeAgain</title>
+  <title data-i18n="sc.new_doc_title">자랑 등록하기 — WakeAgain</title>
   <meta name="description" content="프로젝트를 자랑 보드에 올립니다. 판매 매물이 아닙니다." />
   <meta name="theme-color" content="#050508" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -46,108 +46,112 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓플레이스</a>
-        <a href="/showcase.html">자랑하기</a>
-        <a href="/guide/">이용안내</a>
+      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="메뉴">
+        <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/showcase.html" data-i18n="nav.showcase">자랑하기</a>
+        <a href="/guide/" data-i18n="nav.guide">이용안내</a>
       </nav>
       <div class="nav-actions">
-                <div class="lang-switch" role="group" aria-label="Language">
+        <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
         </div>
-<a class="btn btn-ghost btn-sm" href="/showcase.html">보드 보기</a>
+        <a class="btn btn-ghost btn-sm" href="/showcase.html" data-i18n="sc.board">보드 보기</a>
       </div>
     </div>
   </header>
 
   <main class="form-page showcase-new-page">
-    <a class="sc-back" href="/showcase.html">← 자랑 보드</a>
-    <h1>자랑 등록하기</h1>
-    <p class="muted fine" style="margin:0 0 1rem;line-height:1.45">
+    <a class="sc-back" href="/showcase.html" data-i18n="sc.back">← 자랑 보드</a>
+    <h1 data-i18n="sc.new_title">자랑 등록하기</h1>
+    <p class="muted fine" style="margin:0 0 1rem;line-height:1.45" data-i18n="sc.tip">
       자신만의 특별한 기능·아이디어 본문은 적지 마세요. 누구나 비슷하게 구현할 수 있습니다.
     </p>
 
     <div id="scGate" hidden>
       <div class="hero-cta" style="margin-top:0.5rem">
-        <a class="btn btn-primary" href="/diagnose.html">무료진단</a>
-        <a class="btn btn-ghost" href="/showcase.html">보드 보기</a>
+        <a class="btn btn-primary" href="/diagnose.html" data-i18n="sc.gate">무료진단</a>
+        <a class="btn btn-ghost" href="/showcase.html" data-i18n="sc.board">보드 보기</a>
       </div>
     </div>
 
     <form class="form-card" id="scForm" novalidate>
-      <label for="scName">표시 이름 <span class="req">*</span></label>
-      <input id="scName" required maxlength="40" placeholder="예: 김도윤 / 익명" autocomplete="nickname" />
+      <label for="scName"><span data-i18n="sc.name">표시 이름</span> <span class="req">*</span></label>
+      <input id="scName" required maxlength="40" placeholder="예: 김도윤 / 익명" data-i18n-placeholder="sc.name_ph" autocomplete="nickname" />
 
-      <label for="scTitle">프로젝트 이름 <span class="req">*</span></label>
-      <input id="scTitle" required maxlength="80" placeholder="예: ShopPulse" />
+      <label for="scTitle"><span data-i18n="sc.proj">프로젝트 이름</span> <span class="req">*</span></label>
+      <input id="scTitle" required maxlength="80" placeholder="예: ShopPulse" data-i18n-placeholder="sc.proj_ph" />
 
-      <label for="scOne">한 줄 소개 <span class="req">*</span></label>
-      <input id="scOne" required maxlength="120" placeholder="예: 잠든 SaaS 초안" />
+      <label for="scOne"><span data-i18n="sc.one">한 줄 소개</span> <span class="req">*</span></label>
+      <input id="scOne" required maxlength="120" placeholder="예: 잠든 SaaS 초안" data-i18n-placeholder="sc.one_ph" />
 
-      <label for="scStatus">지금 상태</label>
+      <label for="scStatus" data-i18n="sc.status">지금 상태</label>
       <select id="scStatus">
-        <option value="prototype">돌아가는 초안</option>
-        <option value="beta">써 볼 수 있는 제품</option>
-        <option value="launched">공개했다가 멈춤</option>
-        <option value="other">그 외</option>
+        <option value="prototype" data-i18n="sell.status_proto">돌아가는 초안</option>
+        <option value="beta" data-i18n="sell.status_beta">써 볼 수 있는 제품</option>
+        <option value="launched" data-i18n="sell.status_launched">공개했다가 멈춤</option>
+        <option value="other" data-i18n="sc.status_other_short">그 외</option>
       </select>
 
-      <label for="scType">제품 형태</label>
+      <label for="scType" data-i18n="sc.type">제품 형태</label>
       <select id="scType">
-        <option value="webapp">웹 앱 / SaaS</option>
-        <option value="website">웹사이트</option>
-        <option value="mobile">모바일 앱</option>
-        <option value="desktop">데스크톱</option>
-        <option value="api">API / 백엔드</option>
-        <option value="game">게임</option>
-        <option value="other">기타</option>
+        <option value="webapp" data-i18n="sell.type_webapp">웹 앱 / SaaS</option>
+        <option value="website" data-i18n="sell.type_website">웹사이트</option>
+        <option value="mobile" data-i18n="sell.type_mobile">모바일 앱</option>
+        <option value="desktop" data-i18n="diag.q1_desktop">데스크톱</option>
+        <option value="api" data-i18n="diag.q1_api">API / 백엔드</option>
+        <option value="game" data-i18n="sell.type_game">게임</option>
+        <option value="other" data-i18n="sell.type_other">기타</option>
       </select>
 
-      <label for="scStory">하고싶은 말 (선택)</label>
-      <input id="scStory" maxlength="120" placeholder="기능·비법 말고, 짧게 한 줄" />
+      <label for="scStory" data-i18n="sc.story">하고싶은 말 (선택)</label>
+      <input id="scStory" maxlength="120" placeholder="기능·비법 말고, 짧게 한 줄" data-i18n-placeholder="sc.story_ph" />
 
-      <label for="scDemo">데모 (선택)</label>
-      <input id="scDemo" maxlength="1000" placeholder="링크만 (선택)" />
+      <label for="scDemo" data-i18n="sc.demo">데모 (선택)</label>
+      <input id="scDemo" maxlength="1000" placeholder="링크만 (선택)" data-i18n-placeholder="sc.demo_ph" />
 
-      <label for="scPrice">시작가 힌트 (원, 선택)</label>
-      <input id="scPrice" type="number" min="0" max="100000000" step="10000" inputmode="numeric" placeholder="진단 힌트가 있으면 자동 입력" />
+      <label for="scPrice" data-i18n="sc.price">시작가 힌트 (원, 선택)</label>
+      <input id="scPrice" type="number" min="0" max="100000000" step="10000" inputmode="numeric" placeholder="진단 힌트가 있으면 자동 입력" data-i18n-placeholder="sc.price_ph" />
 
       <input type="hidden" id="scDiag" value="" />
 
       <div class="form-actions">
-        <button class="btn btn-primary btn-lg" type="submit">자랑 등록하기</button>
-        <a class="btn btn-ghost" href="/showcase.html">취소</a>
+        <button class="btn btn-primary btn-lg" type="submit" data-i18n="sc.submit">자랑 등록하기</button>
+        <a class="btn btn-ghost" href="/showcase.html" data-i18n="sc.cancel">취소</a>
       </div>
       <p class="form-error" id="scErr" hidden></p>
     </form>
 
     <div class="success-panel" id="scOk" hidden>
-      <h2>등록됐어요.</h2>
+      <h2 data-i18n="sc.ok">등록됐어요.</h2>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="/showcase.html">보드 보기</a>
-        <a class="btn btn-ghost" href="/app/#new">마켓에 올리기</a>
+        <a class="btn btn-primary" href="/showcase.html" data-i18n="sc.board">보드 보기</a>
+        <a class="btn btn-ghost" href="/app/#new" data-i18n="sc.ok_market">마켓에 올리기</a>
       </div>
     </div>
   </main>
 
   <footer class="site-footer compact-footer">
     <p class="footer-broker-notice">
-      본 플랫폼은 <strong>통신판매중개자</strong>이며, 거래되는 상품의 품질과 내용은 <strong>판매자</strong>가 책임집니다.
-      <span class="footer-broker-sub">쇼케이스는 판매 매물이 아닙니다. WakeAgain(코어랩스)은 품질·사기를 보증하지 않습니다.</span>
+      <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
+      <span class="footer-broker-sub" data-i18n="sc.footer_sub">쇼케이스는 판매 매물이 아닙니다. WakeAgain(코어랩스)은 품질·사기를 보증하지 않습니다.</span>
     </p>
     <p class="footer-copy">© 2026 CoreLabs · WakeAgain ·
-      <a href="/legal/terms.html">이용약관</a> ·
-      <a href="/showcase.html">자랑 보드</a>
+      <a href="/legal/terms.html" data-i18n="footer.terms">이용약관</a> ·
+      <a href="/showcase.html" data-i18n="diag.board">자랑 보드</a>
     </p>
   </footer>
-  <script src="/js/i18n-messages.js"></script>
-  <script src="/js/i18n.js"></script>
-
+  <script src="/js/i18n-messages.js?v=20260720c"></script>
+  <script src="/js/i18n.js?v=20260720c"></script>
 
   <script src="/js/api.js"></script>
   <script>
     (function () {
+      function tt(key, vars) {
+        return window.WakeAgainI18n && window.WakeAgainI18n.t
+          ? window.WakeAgainI18n.t(key, vars)
+          : key;
+      }
       var api = window.WakeAgainAPI;
       var form = document.getElementById("scForm");
       var err = document.getElementById("scErr");
@@ -207,7 +211,7 @@
         var diagVal = document.getElementById("scDiag").value;
         if (diagVal === "" || diagVal == null) {
           err.hidden = false;
-          err.textContent = "무료진단이 필요합니다.";
+          err.textContent = tt("sc.need_diag");
           return;
         }
         var payload = {
@@ -236,7 +240,7 @@
           ok.hidden = false;
         } catch (ex) {
           err.hidden = false;
-          err.textContent = (ex && ex.message) || "등록에 실패했습니다.";
+          err.textContent = (ex && ex.message) || tt("sc.fail");
         }
         if (btn) btn.disabled = false;
       });

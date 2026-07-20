@@ -847,6 +847,57 @@ PRODUCT_TYPES: dict[str, str] = {
     "other": "기타",
 }
 
+PRODUCT_TYPES_EN: dict[str, str] = {
+    "website": "Website",
+    "webapp": "Web app / SaaS",
+    "mobile": "Mobile app",
+    "desktop": "Desktop",
+    "api": "API / SDK / backend",
+    "game": "Game",
+    "other": "Other",
+}
+
+# Demo / seed listings — EN copy for marketplace UI when lang=en (seller-authored KO kept)
+LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
+    "ShopPulse": {
+        "one_liner_en": "Order & shipping alerts for small shops — KakaoTalk draft",
+        "story_en": (
+            "A weekend-built order-alert service for neighborhood shops. "
+            "Three shops used it for two weeks, then it paused. "
+            "No time to market — handing off Kakao alimtalk code and a simple dashboard."
+        ),
+    },
+    "ReceiptFold": {
+        "one_liner_en": "Receipt photo → auto expense categories · mobile beta",
+        "story_en": (
+            "Personal expense app in Flutter. OCR via external API; "
+            "category rules are rule-based. Stopped just before store submit after a job change."
+        ),
+    },
+    "MeetNotes Lite": {
+        "one_liner_en": "Upload meeting audio → summary & action items draft",
+        "story_en": (
+            "Next.js prototype: Whisper API + prompts for summaries. "
+            "One-page UI, no payments or teams — but a running screen, not just a PDF idea."
+        ),
+    },
+    "csv-kit": {
+        "one_liner_en": "CSV merge, dedupe & column-mapping CLI toolkit",
+        "story_en": (
+            "Python CLI for data cleanup. pip-installable with a README. "
+            "Terminal only — no GUI. Side project I'm transferring for lack of maintainer time."
+        ),
+    },
+    "TraceDraft": {
+        "one_liner_en": "AI interview answers → blog draft web tool",
+        "story_en": (
+            "Answer 5–7 questions and get a blog post draft. "
+            "Prompting and edit UI included; two real posts shipped from it. "
+            "Day job got busy — not scaling further."
+        ),
+    },
+}
+
 
 def normalize_product_type(value: str | None) -> str:
     raw = (value or "").strip().lower()
@@ -883,7 +934,11 @@ def normalize_product_type(value: str | None) -> str:
 
 def product_type_public(key: str | None) -> dict:
     k = normalize_product_type(key)
-    return {"key": k, "label": PRODUCT_TYPES.get(k, PRODUCT_TYPES["other"])}
+    return {
+        "key": k,
+        "label": PRODUCT_TYPES.get(k, PRODUCT_TYPES["other"]),
+        "label_en": PRODUCT_TYPES_EN.get(k, PRODUCT_TYPES_EN["other"]),
+    }
 
 
 def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
@@ -909,16 +964,23 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     sold_price = _row_get(row, "sold_price")
     fee = fee_breakdown(sold_price if sold_price is not None else price_current)
     ptype = product_type_public(_row_get(row, "product_type"))
+    status_raw = _row_get(row, "status")
+    title = row["title"] or ""
+    demo_i18n = LISTING_DEMO_I18N.get(title) or {}
     data = {
         "id": row["id"],
         "owner_id": row["owner_id"],
-        "title": row["title"],
+        "title": title,
         "one_liner": row["one_liner"],
+        "one_liner_en": demo_i18n.get("one_liner_en") or "",
         "status": row["status"],
-        "status_label": price_policy.status_label(_row_get(row, "status")),
+        "status_label": price_policy.status_label(status_raw, lang="ko"),
+        "status_label_en": price_policy.status_label(status_raw, lang="en"),
         "product_type": ptype["key"],
         "product_type_label": ptype["label"],
+        "product_type_label_en": ptype["label_en"],
         "story": row["story"],
+        "story_en": demo_i18n.get("story_en") or "",
         "demo": row["demo"],
         "assets": assets,
         "price_start": price_start,
@@ -1416,24 +1478,31 @@ def showcase_to_dict(row: sqlite3.Row) -> dict:
 
     status_key = (g("status_key") or "prototype") or "prototype"
     st = price_policy.STATUS_PRICING.get(status_key) or {}
-    ptype = (g("product_type") or "other") or "other"
+    ptype = normalize_product_type(g("product_type") or "other")
+    title = g("title") or ""
+    demo_i18n = LISTING_DEMO_I18N.get(title) or {}
     return {
         "id": row["id"],
         "author_name": g("author_name") or "",
-        "title": g("title") or "",
+        "title": title,
         "one_liner": g("one_liner") or "",
+        "one_liner_en": demo_i18n.get("one_liner_en") or "",
         "story": g("story") or "",
+        "story_en": demo_i18n.get("story_en") or "",
         "demo": g("demo") or "",
         "status_key": status_key,
         "status_label": st.get("label") or status_key,
+        "status_label_en": st.get("label_en") or st.get("label") or status_key,
         "product_type": ptype,
-        "product_type_label": PRODUCT_TYPES.get(ptype, ptype),
+        "product_type_label": PRODUCT_TYPES.get(ptype, PRODUCT_TYPES["other"]),
+        "product_type_label_en": PRODUCT_TYPES_EN.get(ptype, PRODUCT_TYPES_EN["other"]),
         "price_hint": g("price_hint"),
         "diag_score": g("diag_score"),
         "cheer_count": int(g("cheer_count") or 0),
         "listing_status": g("listing_status") or "approved",
         "created_at": g("created_at") or "",
         "note_ko": "쇼케이스(자랑)입니다. 판매 중 매물이 아니며 플랫폼 보증이 아닙니다.",
+        "note_en": "Showcase only — not a for-sale listing. Not platform-guaranteed.",
     }
 
 

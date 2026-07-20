@@ -1,5 +1,5 @@
 /* WakeAgain PWA — app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v2";
+const CACHE = "wakeagain-shell-v4";
 const PRECACHE = [
   "/app/",
   "/app/index.html",
@@ -62,7 +62,23 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets: cache first, then network
+  // JS/CSS: network first so i18n & UI fixes ship without stale labels
+  if (url.pathname.startsWith("/js/") || url.pathname.endsWith(".css") || url.pathname.endsWith(".js")) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Other assets: cache first, then network
   event.respondWith(
     caches.match(req).then((hit) => {
       if (hit) return hit;

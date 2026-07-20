@@ -517,13 +517,21 @@
         "<p class='p-meta'></p>" +
         "<p class='p-live'></p>" +
         "</div>";
-      el.querySelector("h3").textContent = p.title || "—";
-      el.querySelector(".p-one").textContent = p.one_liner || "";
       const cur = p.price_current != null ? p.price_current : p.price_start;
       const bids = p.bid_count || 0;
-      const typeBit = p.product_type_label || "";
+      const enLang =
+        window.WakeAgainI18n &&
+        window.WakeAgainI18n.getLang &&
+        window.WakeAgainI18n.getLang() === "en";
+      const typeBit =
+        (enLang && p.product_type_label_en) || p.product_type_label || "";
+      const statusBit =
+        (enLang && p.status_label_en) || p.status_label || p.status || "";
+      const oneLine = (enLang && p.one_liner_en) || p.one_liner || "";
       const ls = p.listing_status || "";
       const aStatus = p.auction_status || "live";
+      el.querySelector("h3").textContent = p.title || "—";
+      el.querySelector(".p-one").textContent = oneLine;
 
       const badge = el.querySelector(".p-card-badge");
       let badgeText = "LIVE";
@@ -567,7 +575,7 @@
 
       el.querySelector(".p-meta").textContent = [
         typeBit,
-        p.status_label || p.status || "",
+        statusBit,
         bids > 0 ? t("app.bids_n", "가격 {n}번 씀", { n: bids }) : t("app.bids_none", "아직 가격 없음"),
       ]
         .filter(Boolean)
@@ -1068,6 +1076,24 @@
         : "");
   }
 
+  function isEnUi() {
+    return !!(
+      window.WakeAgainI18n &&
+      window.WakeAgainI18n.getLang &&
+      window.WakeAgainI18n.getLang() === "en"
+    );
+  }
+
+  function bandLabel(band) {
+    if (!band) return "";
+    return (isEnUi() && band.label_en) || band.label || band.status || "";
+  }
+
+  function bandBlurb(band) {
+    if (!band) return "";
+    return (isEnUi() && band.blurb_en) || band.blurb || "";
+  }
+
   function applyPriceGuide(forceSuggest) {
     const st = $("pStatus") && $("pStatus").value;
     const band = bandForStatus(st);
@@ -1075,31 +1101,47 @@
     const hint = $("pPriceHint");
     const price = $("pPrice");
     const criteria = $("pStatusCriteria");
+    const en = isEnUi();
     if (!band) {
-      if (guide) guide.textContent = "상태에 따라 시작 입찰가 구간이 달라집니다.";
+      if (guide)
+        guide.textContent = en
+          ? "Start bid range depends on product status."
+          : "상태에 따라 시작 입찰가 구간이 달라집니다.";
       if (criteria) criteria.hidden = true;
       return;
     }
     renderCriteria(criteria, band);
     if (guide) {
+      const moneyFn =
+        window.WakeAgainI18n && window.WakeAgainI18n.formatMoney
+          ? (n) => window.WakeAgainI18n.formatMoney(n)
+          : (n) => "₩" + Number(n).toLocaleString(en ? "en-US" : "ko-KR");
       guide.innerHTML =
         "<strong>" +
-        (band.label || band.status) +
+        bandLabel(band) +
         "</strong> — " +
-        band.blurb +
-        "<br/>권장 <strong>₩" +
-        Number(band.suggest).toLocaleString("ko-KR") +
-        "</strong> · 최저 ₩" +
-        Number(band.min).toLocaleString("ko-KR") +
-        " · 호가 단위 ₩" +
-        Number(band.min_increment).toLocaleString("ko-KR");
+        bandBlurb(band) +
+        "<br/>" +
+        (en ? "Suggested " : "권장 ") +
+        "<strong>" +
+        moneyFn(band.suggest) +
+        "</strong> · " +
+        (en ? "min " : "최저 ") +
+        moneyFn(band.min) +
+        " · " +
+        (en ? "step " : "호가 단위 ") +
+        moneyFn(band.min_increment);
     }
     if (hint) {
+      const moneyFn =
+        window.WakeAgainI18n && window.WakeAgainI18n.formatMoney
+          ? (n) => window.WakeAgainI18n.formatMoney(n)
+          : (n) => "₩" + Number(n).toLocaleString(en ? "en-US" : "ko-KR");
       hint.textContent =
         (band.examples || "") +
-        " · 권장 상단 약 ₩" +
-        Number(band.max_soft).toLocaleString("ko-KR") +
-        " (초과 시 경고만)";
+        (en ? " · soft cap ~ " : " · 권장 상단 약 ") +
+        moneyFn(band.max_soft) +
+        (en ? " (warn only if over)" : " (초과 시 경고만)");
     }
     if (price) {
       price.min = band.min;
@@ -1458,6 +1500,12 @@
     } catch (e) {}
     try {
       syncChrome();
+    } catch (e) {}
+    try {
+      applyPriceGuide(false);
+    } catch (e) {}
+    try {
+      if (api.isLoggedIn()) loadProjects();
     } catch (e) {}
   });
   document.addEventListener("wa:currencychange", function () {

@@ -75,9 +75,13 @@ function wire(id) {
 
     const btn = form.querySelector('button[type="submit"]');
     const prev = btn ? btn.textContent : "";
+    const t =
+      window.WakeAgainI18n && window.WakeAgainI18n.t
+        ? window.WakeAgainI18n.t.bind(window.WakeAgainI18n)
+        : (k) => k;
     if (btn) {
       btn.disabled = true;
-      btn.textContent = "보내는 중…";
+      btn.textContent = t("common.sending");
     }
     try {
       await submitForm(form);
@@ -88,7 +92,7 @@ function wire(id) {
       }
     } catch (err) {
       const msg =
-        "접수에 실패했어요. 잠시 후 다시 시도해 주세요." +
+        t("common.submit_fail") +
         (err && err.message ? "\n" + err.message : "");
       if (errBox) {
         errBox.hidden = false;
@@ -122,36 +126,55 @@ wire("buyForm");
   } catch (e) {
     return;
   }
+  function t(key, vars) {
+    if (window.WakeAgainI18n && window.WakeAgainI18n.t) {
+      return window.WakeAgainI18n.t(key, vars);
+    }
+    return key;
+  }
+  function money(n) {
+    if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) {
+      return window.WakeAgainI18n.formatMoney(n);
+    }
+    return "₩" + Number(n).toLocaleString("ko-KR");
+  }
   function renderCriteria(band) {
     if (!criteria || !band) return;
     criteria.hidden = false;
     const yes = (band.criteria_yes || [])
       .slice(0, 4)
-      .map((t) => "<li>" + t + "</li>")
+      .map((line) => "<li>" + line + "</li>")
       .join("");
     const no = (band.criteria_no || [])
       .slice(0, 3)
-      .map((t) => "<li>" + t + "</li>")
+      .map((line) => "<li>" + line + "</li>")
       .join("");
     criteria.innerHTML =
       "<p class='sc-when'>" +
       (band.when || band.blurb || "") +
       "</p>" +
-      (yes ? "<div class='sc-label'>이럴 때 선택</div><ul>" + yes + "</ul>" : "") +
-      (no ? "<div class='sc-label'>아닐 때</div><ul>" + no + "</ul>" : "") +
+      (yes
+        ? "<div class='sc-label'>" + t("sell.criteria_yes") + "</div><ul>" + yes + "</ul>"
+        : "") +
+      (no
+        ? "<div class='sc-label'>" + t("sell.criteria_no") + "</div><ul>" + no + "</ul>"
+        : "") +
       (band.demo_expect
-        ? "<div class='sc-label'>데모</div><p class='sc-when' style='margin:0'>" +
+        ? "<div class='sc-label'>" +
+          t("sell.criteria_demo") +
+          "</div><p class='sc-when' style='margin:0'>" +
           band.demo_expect +
           "</p>"
         : "");
   }
   function apply(force) {
+    if (!bands) return;
     const st = statusEl.value;
     const band = (bands.statuses || []).find(
       (s) => s.status === st || s.key === st || s.label === st
     );
     if (!band) {
-      if (guide) guide.textContent = "지금 상태를 고르면 희망 시작가 권장 구간이 나옵니다.";
+      if (guide) guide.textContent = t("sell.price_pick_status");
       if (criteria) criteria.hidden = true;
       return;
     }
@@ -162,22 +185,27 @@ wire("buyForm");
         (band.label || band.status) +
         "</strong> — " +
         band.blurb +
-        " · 권장 <strong>₩" +
-        Number(band.suggest).toLocaleString("ko-KR") +
-        "</strong> (최저 ₩" +
-        Number(band.min).toLocaleString("ko-KR") +
+        " · " +
+        t("sell.price_suggest") +
+        " <strong>" +
+        money(band.suggest) +
+        "</strong> (" +
+        t("sell.price_min") +
+        " " +
+        money(band.min) +
         ")";
     }
     if (hint) {
-      hint.textContent =
-        (band.examples || "") +
-        " · 계정 등록 시 서버가 상태별 최저가를 검사합니다.";
+      hint.textContent = (band.examples || "") + " · " + t("sell.price_server_check");
     }
     priceEl.min = band.min;
     priceEl.step = band.min_increment;
     if (force || !priceEl.value) priceEl.value = band.suggest;
-    priceEl.placeholder = "권장 " + band.suggest;
+    priceEl.placeholder = t("sell.price_ph_suggest", { n: band.suggest });
   }
   statusEl.addEventListener("change", () => apply(true));
+  document.addEventListener("wa:langchange", () => {
+    if (statusEl.value) apply(false);
+  });
   if (statusEl.value) apply(true);
 })();

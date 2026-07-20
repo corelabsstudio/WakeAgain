@@ -1,11 +1,32 @@
 /**
  * Home page — public showcase feed (anyone can browse, FOMO / inspiration).
- * Not marketplace listings.
+ * Not marketplace listings. KO/EN aware.
  */
 (function () {
   var grid = document.getElementById("homeShowcaseGrid");
   if (!grid) return;
   var api = window.WakeAgainAPI;
+
+  function isEn() {
+    return !!(window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en");
+  }
+
+  function tt(key, ko, en) {
+    try {
+      if (window.WakeAgainI18n && window.WakeAgainI18n.t) {
+        var v = window.WakeAgainI18n.t(key);
+        if (v && v !== key) return v;
+      }
+    } catch (e) {}
+    return isEn() ? en : ko;
+  }
+
+  function money(n) {
+    if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) {
+      return window.WakeAgainI18n.formatMoney(n);
+    }
+    return "₩" + Number(n).toLocaleString(isEn() ? "en-US" : "ko-KR");
+  }
 
   function esc(s) {
     return String(s || "")
@@ -16,33 +37,43 @@
   }
 
   function card(s) {
-    var price =
-      s.price_hint != null
-        ? "₩" + Number(s.price_hint).toLocaleString("ko-KR")
-        : null;
+    var price = s.price_hint != null ? money(s.price_hint) : null;
+    var st = (isEn() && s.status_label_en) || s.status_label || "";
+    var pt = (isEn() && s.product_type_label_en) || s.product_type_label || "";
+    var one = (isEn() && s.one_liner_en) || s.one_liner || "";
+    var story = (isEn() && s.story_en) || s.story || "";
     var tags = "";
-    if (s.status_label) tags += "<span>" + esc(s.status_label) + "</span>";
-    if (s.product_type_label) tags += "<span>" + esc(s.product_type_label) + "</span>";
-    if (price) tags += "<span>힌트 " + price + "</span>";
+    if (st) tags += "<span>" + esc(st) + "</span>";
+    if (pt) tags += "<span>" + esc(pt) + "</span>";
+    if (price) {
+      tags +=
+        "<span>" +
+        tt("showcase.hint", "힌트", "Hint") +
+        " " +
+        price +
+        "</span>";
+    }
     return (
       '<article class="home-sc-card">' +
       "<h3>" +
       esc(s.title) +
       "</h3>" +
       '<p class="home-sc-one">' +
-      esc(s.one_liner) +
+      esc(one) +
       "</p>" +
-      ((s.story || "").trim()
-        ? '<p class="home-sc-story">' + esc(s.story) + "</p>"
+      (String(story).trim()
+        ? '<p class="home-sc-story">' + esc(story) + "</p>"
         : "") +
       '<div class="home-sc-meta">' +
       tags +
       "</div>" +
       '<div class="home-sc-foot">' +
       "<span>" +
-      esc(s.author_name || "익명") +
+      esc(s.author_name || tt("showcase.anon", "익명", "Anonymous")) +
       "</span>" +
-      "<span>응원 " +
+      "<span>" +
+      tt("showcase.cheer", "응원", "Cheers") +
+      " " +
       (s.cheer_count || 0) +
       "</span>" +
       "</div></article>"
@@ -60,23 +91,21 @@
       }
       var list = (data && data.showcases) || [];
       if (!list.length) {
-        var en0 = window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en";
         grid.innerHTML =
           '<div class="empty-state" style="grid-column:1/-1">' +
-          (en0 ? "No showcases yet. " : "아직 자랑이 없어요. ") +
+          tt("showcase.empty", "아직 자랑이 없어요. ", "No showcases yet. ") +
           '<a class="text-link" href="/diagnose.html">' +
-          (en0 ? "Free diagnose" : "무료진단") +
+          tt("diag.cta", "무료진단", "Free diagnose") +
           "</a></div>";
         return;
       }
       grid.innerHTML = list.map(card).join("");
     } catch (e) {
-      var en1 = window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en";
       grid.innerHTML =
         '<div class="empty-state" style="grid-column:1/-1">' +
-        (en1 ? "Could not load. " : "불러오지 못했어요. ") +
+        tt("showcase.load_fail", "불러오지 못했어요. ", "Could not load. ") +
         '<a class="text-link" href="/showcase.html">' +
-        (en1 ? "Board" : "보드") +
+        tt("showcase.board", "보드", "Board") +
         "</a></div>";
     }
   }
