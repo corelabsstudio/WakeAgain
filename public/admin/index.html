@@ -6,6 +6,10 @@
   <title>매물 검수 — WakeAgain Admin</title>
   <meta name="theme-color" content="#050508" />
   <meta name="robots" content="noindex,nofollow" />
+  <link rel="manifest" href="/admin/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/logo-mark-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="WA Admin" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -193,6 +197,7 @@
         <span style="margin-left:0.35rem;font-size:0.85rem;color:var(--muted);font-weight:600">Admin</span>
       </a>
       <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" href="/admin/install.html">관리자 앱</a>
         <a class="btn btn-ghost btn-sm" href="/">사이트</a>
       </div>
     </div>
@@ -240,6 +245,13 @@
 
   <script>
     (function () {
+      // Admin PWA shell (scope /admin/ only — separate from public app)
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/admin/sw.js", { scope: "/admin/" }).catch(function () {});
+        });
+      }
+
       var KEY = "wa_admin_key";
       var state = {
         mode: "projects",

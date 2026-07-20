@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>관리자 앱 설치 — WakeAgain Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#050508" />
+  <link rel="manifest" href="/admin/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/logo-mark-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="WA Admin" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260720a" />
+  <link rel="stylesheet" href="/ux9.css?v=20260720a" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    .ai-wrap { max-width: 560px; margin: 0 auto; padding: 5.5rem 1.25rem 3rem; }
+    .ai-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 18px;
+      padding: 1.25rem 1.3rem 1.4rem;
+      margin: 1rem 0;
+    }
+    .ai-card h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+    .ai-card p { margin: 0 0 0.75rem; color: var(--muted); line-height: 1.55; font-size: 0.92rem; }
+    .key-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0; }
+    .key-row input {
+      flex: 1 1 12rem;
+      border-radius: 10px; border: 1px solid var(--border-strong);
+      background: var(--bg-elev); color: var(--text); padding: 0.6rem 0.75rem; font: inherit;
+    }
+    .status {
+      margin: 0.75rem 0 0;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: rgba(168, 85, 247, 0.1);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .status[data-kind="warn"] {
+      border-color: rgba(251, 191, 36, 0.45);
+      background: rgba(251, 191, 36, 0.1);
+      color: #fde68a;
+    }
+    .status[data-kind="ok"] {
+      border-color: rgba(52, 211, 153, 0.4);
+      background: rgba(52, 211, 153, 0.1);
+      color: #a7f3d0;
+    }
+    .status[data-kind="err"] {
+      border-color: rgba(248, 113, 113, 0.45);
+      background: rgba(248, 113, 113, 0.1);
+      color: #fecaca;
+    }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
+    .locked .need-auth { opacity: 0.45; pointer-events: none; }
+    .steps { margin: 0.75rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.9rem; line-height: 1.55; }
+    .badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em;
+      padding: 0.2rem 0.55rem; border-radius: 999px;
+      background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.4); color: #e9d5ff;
+    }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/admin/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+        <span style="margin-left:0.35rem;font-size:0.85rem;color:var(--muted);font-weight:600">Admin</span>
+      </a>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" href="/admin/">검수 화면</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="ai-wrap" id="main">
+    <p class="eyebrow" style="color:var(--purple);font-weight:700;font-size:0.8rem;letter-spacing:0.06em;margin:0 0 0.35rem">
+      OPS · <span class="badge">관리자 전용</span>
+    </p>
+    <h1 style="margin:0 0 0.5rem;font-size:1.55rem">관리자 앱 설치</h1>
+    <p style="margin:0;color:var(--muted);line-height:1.55">
+      공개 사용자 앱과 <strong style="color:var(--text)">완전히 분리</strong>된 운영용 홈 화면 앱입니다.
+      <strong style="color:var(--text)">관리자 키</strong>가 맞을 때만 설치 UI가 열립니다.
+      (Play/App 스토어 APK가 아니라 홈 화면 PWA · 카카오톡 안에서는 설치 불가)
+    </p>
+
+    <section class="ai-card" id="gateCard">
+      <h2>1. 관리자 키 확인</h2>
+      <p>서버 <code>ADMIN_SECRET</code> 과 같은 키를 입력하세요. 키는 이 기기에만 저장됩니다.</p>
+      <div class="key-row">
+        <input id="adminKey" type="password" placeholder="X-Admin-Key" autocomplete="current-password" />
+        <button type="button" class="btn btn-primary btn-sm" id="btnVerify">확인</button>
+      </div>
+      <p class="status" id="gateStatus" data-kind="info">키를 입력한 뒤 확인을 누르세요.</p>
+    </section>
+
+    <section class="ai-card locked" id="installCard">
+      <h2>2. 홈 화면에 관리자 앱 추가</h2>
+      <p class="need-auth">키가 확인되면 아래 버튼으로 설치합니다. 설치 후 아이콘 이름은 <strong style="color:var(--text)">WA Admin</strong> 입니다.</p>
+      <div class="cta-row need-auth">
+        <button type="button" class="btn btn-primary" id="btnInstall" disabled>관리자 앱 설치</button>
+        <a class="btn btn-ghost" href="/admin/">검수 화면 열기</a>
+      </div>
+      <ol class="steps">
+        <li><strong>Android Chrome</strong> — 설치 버튼 또는 메뉴(⋮) → 앱 설치 / 홈 화면에 추가</li>
+        <li><strong>iPhone</strong> — Safari로 이 페이지 → 공유 → 홈 화면에 추가</li>
+        <li><strong>카카오톡 인앱</strong> — 메뉴 → 다른 브라우저로 연 뒤 설치</li>
+      </ol>
+      <p class="status" id="installStatus" hidden></p>
+    </section>
+
+    <section class="ai-card">
+      <h2>보안 안내</h2>
+      <p>
+        · 이 주소(<code>/admin/install.html</code>)는 사이트 메뉴에 노출하지 않습니다.<br />
+        · 설치 자체는 “파일 잠금 다운로드”가 아니라, <strong style="color:var(--text)">키 없는 사람은 API·검수를 쓸 수 없음</strong>으로 보호합니다.<br />
+        · 폰을 잃어버리면 홈 화면 앱 삭제 + <code>ADMIN_SECRET</code> 교체를 권장합니다.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var KEY = "wa_admin_key";
+      var deferred = null;
+      var unlocked = false;
+
+      var $ = function (id) { return document.getElementById(id); };
+      $("adminKey").value = localStorage.getItem(KEY) || "";
+
+      function setStatus(id, msg, kind) {
+        var el = $(id);
+        if (!el) return;
+        if (!msg) {
+          el.hidden = true;
+          el.textContent = "";
+          return;
+        }
+        el.hidden = false;
+        el.textContent = msg;
+        el.setAttribute("data-kind", kind || "info");
+      }
+
+      function isStandalone() {
+        return (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true
+        );
+      }
+
+      function isInAppBrowser() {
+        var u = (navigator.userAgent || "") + " " + (navigator.vendor || "");
+        return /KAKAOTALK|FBAN|FBAV|Instagram|Line\/|NAVER\(|Naver|DaumApps/i.test(u);
+      }
+
+      function isIos() {
+        var u = navigator.userAgent || "";
+        return /iPhone|iPad|iPod/i.test(u) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      }
+
+      function unlockUi(ok) {
+        unlocked = !!ok;
+        $("installCard").classList.toggle("locked", !ok);
+        $("btnInstall").disabled = !ok;
+      }
+
+      function registerAdminSw() {
+        if (!("serviceWorker" in navigator)) return Promise.resolve();
+        return navigator.serviceWorker.register("/admin/sw.js", { scope: "/admin/" }).catch(function () {});
+      }
+
+      async function verify() {
+        var key = $("adminKey").value.trim();
+        if (!key) {
+          setStatus("gateStatus", "관리자 키를 입력하세요.", "warn");
+          unlockUi(false);
+          return;
+        }
+        localStorage.setItem(KEY, key);
+        setStatus("gateStatus", "확인 중…", "info");
+        try {
+          var res = await fetch("/api/v1/admin/session", {
+            headers: { Accept: "application/json", "X-Admin-Key": key },
+          });
+          var data = {};
+          try { data = await res.json(); } catch (e) {}
+          if (!res.ok) {
+            throw new Error((data && data.detail) || "키가 올바르지 않습니다.");
+          }
+          setStatus("gateStatus", "관리자 확인됨. 아래 설치를 진행하세요.", "ok");
+          unlockUi(true);
+          await registerAdminSw();
+          if (isStandalone()) {
+            setStatus("installStatus", "이미 관리자 앱(홈 화면)으로 실행 중입니다.", "ok");
+          } else if (isInAppBrowser()) {
+            setStatus(
+              "installStatus",
+              "카카오톡 등 앱 안에서는 설치가 안 됩니다. 메뉴 → 다른 브라우저(Chrome/Safari)로 연 뒤 다시 시도하세요.",
+              "warn"
+            );
+          } else if (deferred) {
+            setStatus("installStatus", "설치 준비됨. 「관리자 앱 설치」를 누르세요.", "ok");
+          } else if (isIos()) {
+            setStatus(
+              "installStatus",
+              "iPhone: Safari 공유 → 홈 화면에 추가. (이름이 WA Admin으로 보이면 성공)",
+              "info"
+            );
+          } else {
+            setStatus(
+              "installStatus",
+              "브라우저가 설치 프롬프트를 아직 안 보냈을 수 있습니다. 메뉴(⋮) → 앱 설치 / 홈 화면에 추가를 쓰거나 잠시 후 다시 눌러 보세요.",
+              "info"
+            );
+          }
+        } catch (err) {
+          unlockUi(false);
+          setStatus("gateStatus", err.message || "인증 실패", "err");
+        }
+      }
+
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        deferred = e;
+        if (unlocked) {
+          setStatus("installStatus", "설치 준비됨. 「관리자 앱 설치」를 누르세요.", "ok");
+        }
+      });
+
+      window.addEventListener("appinstalled", function () {
+        deferred = null;
+        setStatus("installStatus", "관리자 앱이 설치됐습니다. 홈 화면의 WA Admin 아이콘으로 여세요.", "ok");
+      });
+
+      $("btnVerify").addEventListener("click", verify);
+      $("adminKey").addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") verify();
+      });
+
+      $("btnInstall").addEventListener("click", function () {
+        if (!unlocked) {
+          setStatus("installStatus", "먼저 관리자 키를 확인하세요.", "warn");
+          return;
+        }
+        if (isInAppBrowser()) {
+          setStatus(
+            "installStatus",
+            "앱 안 브라우저에서는 설치 불가. 외부 Chrome/Safari로 열어 주세요.",
+            "warn"
+          );
+          return;
+        }
+        if (deferred) {
+          deferred.prompt();
+          deferred.userChoice.finally(function () { deferred = null; });
+          return;
+        }
+        if (isIos()) {
+          setStatus(
+            "installStatus",
+            "iPhone: Safari 하단 공유 → 「홈 화면에 추가」→ 추가.",
+            "info"
+          );
+          return;
+        }
+        setStatus(
+          "installStatus",
+          "자동 설치 창이 없으면 브라우저 메뉴에서 「앱 설치」또는 「홈 화면에 추가」를 선택하세요.",
+          "info"
+        );
+      });
+
+      // Auto-verify if key already stored
+      if ($("adminKey").value.trim()) {
+        verify();
+      } else {
+        registerAdminSw();
+      }
+    })();
+  </script>
+</body>
+</html>

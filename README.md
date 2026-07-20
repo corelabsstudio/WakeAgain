@@ -13,6 +13,7 @@
 | 약관 · 개인정보 | `/legal/terms.html` · `/legal/privacy.html` |
 | 카피라이트 | © 2026 CoreLabs. All rights reserved. |
 | **관리자 검수** | `/admin/` · 헤더 `X-Admin-Key` · 환경변수 `ADMIN_SECRET` (**운영 필수 변경**. 로컬 개발 기본값만 문서 참고) |
+| **관리자 전용 앱** | `/admin/install.html` · 공개 앱과 분리된 PWA (`WA Admin`) · **관리자 키 확인 후에만** 설치 UI 개방 · 사이트 메뉴 미노출 |
 
 ## 글로벌 준비
 

@@ -136,6 +136,7 @@
 - [x] **법적 표기 (RoadLog 정렬):** 이용약관 · 개인정보처리방침 · © CoreLabs · corelabs.studio@gmail.com
 - [x] **공개 실시간 경매:** 입찰 현재가 방문객 전원 공개 · `/project.html` · `/api/v1/auctions/live` 폴링
 - [x] **관리자 검수 페이지:** `/admin/` 체크리스트 · 승인/보류/반려 · 공개는 approved만
+- [x] **관리자 전용 PWA:** `/admin/install.html` · manifest `WA Admin` · SW scope `/admin/` · `GET /api/v1/admin/session` 키 게이트
 - [x] PROGRESS 갱신 · 배포 준비 메모
 
 ### 공개 경매 (제품 결정)

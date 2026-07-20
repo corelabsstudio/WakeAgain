@@ -2208,6 +2208,17 @@ class AdminReviewIn(BaseModel):
     checklist: dict[str, bool] = Field(default_factory=dict)
 
 
+@router.get("/admin/session")
+def admin_session(_: None = Depends(require_admin)):
+    """Lightweight admin key check for ops UI / admin PWA install gate."""
+    return {
+        "ok": True,
+        "role": "admin",
+        "service": "WakeAgain",
+        "surface": "admin",
+    }
+
+
 @router.get("/admin/checklist")
 def admin_checklist(_: None = Depends(require_admin)):
     return {
