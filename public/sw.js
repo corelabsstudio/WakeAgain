@@ -1,5 +1,5 @@
 /* WakeAgain PWA — app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v5";
+const CACHE = "wakeagain-shell-v6";
 const PRECACHE = [
   "/app/",
   "/app/index.html",
@@ -7,9 +7,11 @@ const PRECACHE = [
   "/app/app.js",
   "/styles.css",
   "/js/api.js",
+  "/js/pwa-install.js",
   "/manifest.webmanifest",
   "/assets/logo-mark.png",
-  "/assets/logo-mark-256.png",
+  "/assets/logo-mark-192.png",
+  "/assets/logo-mark-512.png",
   "/favicon.svg",
   "/get-app.html",
 ];

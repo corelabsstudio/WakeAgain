@@ -68,6 +68,42 @@
       margin-left: 0.35rem;
       vertical-align: middle;
     }
+    #pwaInstallStatus {
+      margin: 0.75rem 0 0;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: rgba(168, 85, 247, 0.1);
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    #pwaInstallStatus[data-kind="warn"] {
+      border-color: rgba(251, 191, 36, 0.45);
+      background: rgba(251, 191, 36, 0.1);
+      color: #fde68a;
+    }
+    #pwaInstallStatus[data-kind="ok"] {
+      border-color: rgba(52, 211, 153, 0.4);
+      background: rgba(52, 211, 153, 0.1);
+      color: #a7f3d0;
+    }
+    .pwa-inapp-banner {
+      margin: 0 0 1.25rem;
+      padding: 1rem 1.1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      background: rgba(251, 191, 36, 0.12);
+      color: #fde68a;
+      line-height: 1.55;
+    }
+    .pwa-inapp-banner strong {
+      display: block;
+      color: #fef3c7;
+      margin-bottom: 0.4rem;
+    }
+    .pwa-inapp-banner p { margin: 0 0 0.75rem; color: #fde68a; }
+    .pwa-inapp-banner .btn { margin-top: 0.15rem; }
   </style>
 </head>
 <body class="form-body">
@@ -95,27 +131,29 @@
     <p class="eyebrow" data-i18n="getapp.eyebrow">App · Install</p>
     <h1 data-i18n="getapp.title">앱으로 사용하기</h1>
     <p class="lede" data-i18n="getapp.lede_html" data-i18n-html>
-      Play 스토어·App Store 등록 전에도, 사이트에서 <strong>홈 화면에 설치</strong>해
-      앱처럼 쓸 수 있습니다. <strong>웹과 같은 계정·같은 데이터</strong>입니다.
+      지금은 스토어 APK 다운로드가 아니라, <strong>홈 화면에 바로가기(PWA)</strong>로
+      앱처럼 쓰는 방식입니다. <strong>웹과 같은 계정·같은 데이터</strong>입니다.
+      Google Play / App Store 정식 앱은 준비 중입니다.
     </p>
 
-    <div class="get-cta-row">
+    <div class="get-cta-row" id="install">
       <button type="button" class="btn btn-primary btn-lg js-pwa-install" data-pwa-install id="btnInstallApp" data-i18n="getapp.install">
         홈 화면에 설치
       </button>
       <a class="btn btn-ghost btn-lg" href="/app/" data-i18n="getapp.open_browser">브라우저에서 바로 열기</a>
     </div>
+    <p id="pwaInstallStatus" hidden role="status" aria-live="polite"></p>
 
     <div class="get-note" role="note" data-i18n="getapp.note_html" data-i18n-html>
       <strong style="color:var(--text)">안내</strong><br />
-      · 설치에는 보통 <strong>HTTPS</strong> 접속이 필요합니다 (로컬은 localhost 예외).<br />
-      · Chrome·Edge(Android/PC)에서 「설치」가 가장 잘 뜹니다.<br />
-      · iPhone은 Safari <strong>공유 → 홈 화면에 추가</strong>를 사용합니다.<br />
-      · Google Play / App Store 정식 배포는 개발자 계정 심사 후 별도 진행합니다.
+      · <strong>카카오톡·인스타 등 앱 안에서 연 화면</strong>에서는 설치가 안 됩니다 → 메뉴에서 Chrome/Safari로 여세요.<br />
+      · Android Chrome: 「홈 화면에 설치」또는 메뉴(⋮) → 앱 설치.<br />
+      · iPhone: <strong>Safari</strong> → 공유 → 홈 화면에 추가.<br />
+      · Play / App Store 다운로드 파일은 아직 없습니다 (심사·등록 후 연결 예정).
     </div>
 
     <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem" data-i18n="getapp.h_device">기기별 설치</h2>
-    <ol class="get-steps">
+    <ol class="get-steps" id="getAppSteps">
       <li>
         <strong data-i18n="getapp.android_t_html" data-i18n-html>Android (Chrome) <span class="platform-badge">추천</span></strong>
         <span data-i18n="getapp.android_d_html" data-i18n-html>위 <em>홈 화면에 설치</em> 버튼을 누르거나, 브라우저 메뉴(⋮) →
@@ -167,9 +205,8 @@
       <a href="/legal/privacy.html" data-i18n="footer.privacy">개인정보처리방침</a>
     </p>
   </footer>
-  <script src="/js/i18n-messages.js?v=20260720c"></script>
-  <script src="/js/i18n.js?v=20260720c"></script>
-
-  <script src="/js/pwa-install.js"></script>
+  <script src="/js/i18n-messages.js?v=20260720p"></script>
+  <script src="/js/i18n.js?v=20260720p"></script>
+  <script src="/js/pwa-install.js?v=20260720p"></script>
 </body>
 </html>
