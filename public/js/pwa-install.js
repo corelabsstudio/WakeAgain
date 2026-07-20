@@ -120,7 +120,13 @@
     });
   }
 
+  function isGetAppPage() {
+    return /\/get-app\.html$/i.test(location.pathname || "");
+  }
+
+  /** In-app browser banner: only on install guide page — never on landing/main. */
   function showInAppBanner() {
+    if (!isGetAppPage()) return;
     if (!isInAppBrowser() || isStandalone()) return;
     if (document.getElementById("pwaInAppBanner")) return;
     var ban = document.createElement("div");
@@ -178,6 +184,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     showInAppBanner();
     updateButtons();
+    // Status text only exists on get-app.html — never inject UI on main landing
+    if (!isGetAppPage()) return;
     if (isStandalone()) {
       setStatus(t("getapp.already", "이미 앱(홈 화면)으로 실행 중입니다."), "ok");
     } else if (isInAppBrowser()) {
