@@ -1844,10 +1844,45 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .footer-inner { grid-template-columns: 1fr; }
 }
 
+/* Dual label: full on desktop, short on small screens */
+.nav-cta-list .label-short { display: none; }
+.nav-cta-list .label-full { display: inline; }
+
 @media (max-width: 720px) {
+  .nav-pill-wrap {
+    top: max(0.55rem, env(safe-area-inset-top, 0px));
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
   .nav-links { display: none; }
-  .nav-actions { border-left: 0; padding-left: 0; }
+  .nav-actions {
+    border-left: 0;
+    padding-left: 0;
+    gap: 0.3rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
   .nav-login { display: none; }
+  /* Secondary top CTAs eat width — bottom sticky bar (or short primary) is enough */
+  .nav-actions > .btn-ghost { display: none; }
+  .nav-cta-list .label-full { display: none; }
+  .nav-cta-list .label-short { display: inline; }
+  .nav-actions > .btn-primary,
+  .nav-actions > .nav-cta-list {
+    flex-shrink: 0;
+    white-space: nowrap;
+    max-width: none;
+    overflow: visible;
+    font-size: 0.8125rem;
+    padding: 0.45rem 0.72rem;
+    min-height: 2.25rem;
+  }
+  /* Landing has bottom mobile-cta with full labels — free top bar for brand + lang */
+  body:has(.mobile-cta) .nav-actions > .btn {
+    display: none !important;
+  }
+  .nav-pill .brand-name { font-size: 1rem; }
   .hero { padding-top: 6.5rem; }
   .hero-title { font-size: clamp(2.1rem, 9vw, 2.7rem); }
   .metrics-grid { grid-template-columns: 1fr; }
@@ -1860,6 +1895,14 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .footer-cols { grid-template-columns: 1fr; }
   .hero-stats-block { column-gap: 1.1rem; }
   .listing-card { flex-direction: column; }
+  .nav-pill {
+    gap: 0.35rem;
+    padding: 0.35rem 0.4rem 0.35rem 0.55rem;
+  }
+  .lang-btn {
+    min-width: 1.75rem;
+    padding: 0.2rem 0.35rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

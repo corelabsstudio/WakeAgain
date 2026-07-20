@@ -540,11 +540,15 @@
 @media (max-width: 720px) {
   .nav-pill {
     width: calc(100% - 1rem);
+    max-width: calc(100% - 1rem);
     justify-content: space-between;
     padding: 0.4rem 0.45rem 0.4rem 0.6rem;
+    gap: 0.4rem;
+    /* Never clip the primary CTA text on narrow phones */
+    overflow: visible;
   }
-  .nav-actions .btn-sm {
-    padding: 0.5rem 0.8rem;
+  .nav-actions .btn-sm:not(.nav-cta-list) {
+    padding: 0.45rem 0.7rem;
   }
   .form-page {
     padding-left: 1rem;
