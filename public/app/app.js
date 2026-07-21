@@ -311,6 +311,26 @@
       const c = u.credit;
       if ($("creditScoreNum")) $("creditScoreNum").textContent = (c.score != null ? c.score : "—") + "점";
       if ($("creditGradeLabel")) $("creditGradeLabel").textContent = c.label ? "· " + c.label : "";
+      const br = c.buyer_rank || null;
+      const rankLine = $("buyerRankLine");
+      if (rankLine && $("buyerRankBadge")) {
+        if (br && br.label) {
+          rankLine.hidden = false;
+          $("buyerRankBadge").textContent = br.label;
+          $("buyerRankBadge").setAttribute("data-rank", br.key || "");
+          $("buyerRankBadge").classList.toggle("is-caution", !!br.caution);
+          if ($("buyerRankMeta")) {
+            const next =
+              br.next_min != null
+                ? " · 다음 「" + (br.next_label || "") + "」까지 성사 " + Math.max(0, br.next_min - (br.bought_complete || 0)) + "건"
+                : " · 최고 구매 배지";
+            $("buyerRankMeta").textContent =
+              "구매 성사 " + (br.bought_complete || 0) + "건" + (br.key === "scout" ? " · 첫 성사부터 배지" : next);
+          }
+        } else {
+          rankLine.hidden = true;
+        }
+      }
       const cnt = c.counts || {};
       if ($("creditCounts")) {
         $("creditCounts").textContent =

@@ -1398,9 +1398,26 @@
         }
         ul.innerHTML = bids
           .map(function (b) {
+            var br = b.buyer_rank;
+            var badge = "";
+            if (br && br.label) {
+              badge =
+                " <span class='wa-buyer-badge" +
+                (br.caution ? " is-caution" : "") +
+                "' data-rank='" +
+                (br.key || "") +
+                "' title='" +
+                t("구매 성사 ", "Completed buys ") +
+                (br.bought_complete || 0) +
+                t("건", "") +
+                "'>" +
+                br.label +
+                "</span>";
+            }
             return (
               "<li><span>" +
               (b.bidder_label || t("입찰자", "Bidder")) +
+              badge +
               " · " +
               (b.created_at || "").replace("T", " ").slice(0, 19) +
               "</span><span class='amt'>" +

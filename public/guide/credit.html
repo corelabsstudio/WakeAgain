@@ -89,11 +89,27 @@
       <li>낙찰 후 <strong>미입금</strong>이 운영에 기록될 때 (−40)</li>
     </ul>
 
+    <h2>구매자 뱃지 (헤비 구매자 등)</h2>
+    <p class="muted" style="line-height:1.55">
+      <strong>구매 성사 횟수</strong>가 늘수록 다른 이용자·판매자에게 보이는 배지가 올라갑니다.
+      신용 점수·Lv(자격)과 <strong>별개</strong>이며, 「이 사람은 실제로 사서 끝낸 사람」 신호입니다. 보증이 아닙니다.
+    </p>
+    <table class="score-table">
+      <thead><tr><th>성사(구매)</th><th>배지</th><th>남에게 보이는 것</th></tr></thead>
+      <tbody>
+        <tr><td>0건</td><td>구매 준비 중</td><td>배지 없음 (구경·관심)</td></tr>
+        <tr><td>1건+</td><td>첫 구매 완료</td><td>입찰·프로필 배지</td></tr>
+        <tr><td>3건+</td><td>단골 구매자</td><td>성사 건수 공개</td></tr>
+        <tr><td>5건+</td><td><strong>헤비 구매자</strong></td><td>강조 배지 · 판매자에게 눈에 띔</td></tr>
+        <tr><td>10건+</td><td><strong>파워 바이어</strong></td><td>최고 구매 배지</td></tr>
+      </tbody>
+    </table>
+
     <h2>고지</h2>
     <p class="muted" style="line-height:1.6">
       입찰은 결제 의사, 안내된 입금 기한 준수, 미입금 시 차순위 전환에 대한 동의로 봅니다.
       (1시간 자동 타이머·2순위 자동은 PG 연동 후 적용. 지금은 운영 안내 기준.)
-      미입금은 사이트 내 신용 점수에 반영될 수 있습니다. 점수는 매물·프로필에 등급으로 표시됩니다.
+      미입금은 사이트 내 신용 점수에 반영될 수 있습니다. 점수·구매 배지는 매물·프로필·입찰 목록에 표시됩니다.
     </p>
 
     <p class="fine muted" style="margin-top:2rem">API: <code>GET /api/v1/credit-policy</code> · 문서: TRUST.md</p>

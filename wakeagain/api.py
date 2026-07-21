@@ -98,7 +98,16 @@ def _issue_email_code(conn, user_id: int) -> str:
     return code
 
 
-def _require_trust(user: dict, need: Literal["list", "bid", "deal"]) -> None:
+def _require_trust(
+    user: dict, need: Literal["list", "bid", "fulfill", "deal"]
+) -> None:
+    """Trust gates.
+
+    - bid: Lv1 email only (low friction auction entry)
+    - fulfill: Lv2 real name+phone (after award — pay / accept)
+    - list: Lv2 + seller public identity
+    - deal: Lv3 settlement (seller payout / close-deal)
+    """
     trust = user.get("trust") or {}
     if need == "list" and not trust.get("can_list"):
         if not trust.get("email_verified"):
@@ -137,11 +146,38 @@ def _require_trust(user: dict, need: Literal["list", "bid", "deal"]) -> None:
             },
         )
     if need == "bid" and not trust.get("can_bid"):
+        if not trust.get("email_verified"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "email_unverified",
+                    "message": "가격 쓰기(입찰)에는 이메일 인증만 있으면 됩니다. 먼저 이메일을 확인해 주세요.",
+                    "trust": trust,
+                },
+            )
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "bid_not_allowed",
+                "message": "지금은 입찰할 수 없습니다. 계정 상태를 확인해 주세요.",
+                "trust": trust,
+            },
+        )
+    if need == "fulfill" and not trust.get("can_fulfill_purchase"):
+        if not trust.get("email_verified"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "email_unverified",
+                    "message": "이메일 인증이 필요합니다.",
+                    "trust": trust,
+                },
+            )
         raise HTTPException(
             status_code=403,
             detail={
                 "code": "profile_incomplete",
-                "message": "입찰에는 이메일 인증과 실명·휴대폰 확인이 필요합니다.",
+                "message": "낙찰 후 결제·인수에는 실명·휴대폰(Lv2) 확인이 필요합니다. 앱 → 내 정보에서 완료해 주세요.",
                 "trust": trust,
             },
         )
@@ -150,7 +186,7 @@ def _require_trust(user: dict, need: Literal["list", "bid", "deal"]) -> None:
             status_code=403,
             detail={
                 "code": "deal_not_ready",
-                "message": "성사·이전 전 정산 계좌(예금주·은행·계좌)를 등록해 주세요.",
+                "message": "정산·이전 확정 전 정산 계좌(예금주·은행·계좌, Lv3)를 등록해 주세요.",
                 "trust": trust,
             },
         )
@@ -358,19 +394,21 @@ def client_config():
             "message_ko": "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의(낙찰)가만 부담. 등록·관심·입찰 무료. (이용약관 제13조)",
         },
         "payment_policy": {
-            "stage": "pre_pg",
+            "stage": "pg_required_for_ops",
             "auto_award_on_expiry": True,
             "background_scheduler": True,
             "payment_link_auto": False,
-            "one_hour_timer_auto": False,
+            "one_hour_timer_auto": True,
             "second_bidder_auto": False,
-            "message_ko": (
-                "낙찰 후 대금은 회사·판매자 안내에 따라 신속히 지급해야 합니다. "
-                "미입금 시 낙찰 무효 및 차순위 전환이 이뤄질 수 있습니다. "
-                "1시간 타이머·결제 링크·2순위 자동은 PG(결제) 연동 후 적용됩니다. "
-                "현재는 운영 안내·수동 처리가 포함됩니다."
+            "buyer_protection": True,
+            "no_pre_pg_fallback": True,
+            "deal": database.deal_policy_public(),
+            "message_ko": database.deal_policy_public()["message_ko"],
+            "note_ko": (
+                "실거래·입금 확인은 PG 연동 후 운영. "
+                "PG 없을 때 쓸 수동 입금·차선책 제품 기능은 추가하지 않음."
             ),
-            "target_after_pg_ko": "PG 도입 후 목표: 낙찰 후 1시간 이내 입금, 미입금 시 차순위 자동 전환.",
+            "target_after_pg_ko": "PG: 결제 링크 · 웹훅→paid · 1시간 만료 · 인수/자동확정 후 정산.",
             "terms_article": "제12조 · 제14조",
         },
         "product_types": [
@@ -395,12 +433,23 @@ def client_config():
         },
         "trust_policy": {
             "doc": "TRUST.md",
+            "friction_note_ko": (
+                "입찰은 Lv1(이메일)만. 실명·휴대폰(Lv2)은 낙찰 후 결제·인수 때, "
+                "계좌(Lv3)는 판매자 정산·성사 확정 때 요구합니다."
+            ),
             "levels": [
                 {"level": 0, "code": "Lv0", "name": "가입", "can": ["browse", "interest"]},
-                {"level": 1, "code": "Lv1", "name": "이메일 인증", "can": ["profile"]},
-                {"level": 2, "code": "Lv2", "name": "신원 확인", "can": ["list", "bid"]},
-                {"level": 3, "code": "Lv3", "name": "거래 준비", "can": ["close_deal"]},
+                {"level": 1, "code": "Lv1", "name": "이메일 인증", "can": ["bid", "profile"]},
+                {
+                    "level": 2,
+                    "code": "Lv2",
+                    "name": "신원 확인",
+                    "can": ["list", "fulfill_purchase", "report"],
+                },
+                {"level": 3, "code": "Lv3", "name": "거래 준비", "can": ["close_deal", "settlement"]},
             ],
+            "bid_requires": ["email_verified"],
+            "fulfill_requires": ["email_verified", "real_name", "phone"],
             "list_requires": [
                 "email_verified",
                 "real_name",
@@ -500,6 +549,7 @@ def client_config():
             "message_ko": database.CREDIT_RULES["note_ko"],
             "public_guide": "/guide/credit.html",
         },
+        "buyer_rank_policy": database.buyer_rank_policy(),
     }
 
 
@@ -1242,7 +1292,9 @@ def list_bids(project_id: int):
             raise HTTPException(status_code=404, detail="not found")
         rows = conn.execute(
             """
-            SELECT b.*, u.display_name
+            SELECT b.*, u.display_name,
+                   COALESCE(u.credit_bought, 0) AS credit_bought,
+                   COALESCE(u.credit_defaults, 0) AS credit_defaults
             FROM bids b
             JOIN users u ON u.id = b.bidder_id
             WHERE b.project_id = ?
@@ -1367,7 +1419,7 @@ def report_project(
 
 @router.post("/projects/{project_id}/bids")
 def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_user)):
-    """Place a bid. Requires L2. Price becomes public immediately for all visitors."""
+    """Place a bid. Requires Lv1 (email). Lv2 is required only after award for pay/accept."""
     with database.db() as conn:
         row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
     user = database.user_to_dict(row_u)
@@ -1425,18 +1477,31 @@ def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_use
         conn.execute(
             """
             UPDATE projects
-            SET price_current = ?, bid_count = COALESCE(bid_count, 0) + 1, updated_at = ?
+            SET price_current = ?, updated_at = ?
             WHERE id = ?
             """,
             (amount, now, project_id),
         )
-        # optional: hit buy_now → end
+        database.refresh_project_bid_stats(conn, project_id)
+        # optional: hit buy_now → finalize (payment deadline starts)
         if buy_now is not None and amount >= int(buy_now):
-            conn.execute(
-                "UPDATE projects SET auction_status = 'sold', updated_at = ? WHERE id = ?",
-                (now, project_id),
+            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+            row = database.finalize_sale(
+                conn,
+                row,
+                sold_price=amount,
+                buyer_id=user["id"],
+                note="즉시구매가 도달 · 자동 성사",
             )
-        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        else:
+            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+            database.notify(
+                conn,
+                int(row["owner_id"]),
+                "새 입찰",
+                f"「{row['title']}」에 ₩{amount:,} 입찰이 들어왔습니다.",
+                f"/project.html?id={project_id}",
+            )
         bid_row = conn.execute(
             """
             SELECT b.*, u.display_name FROM bids b
@@ -1444,14 +1509,6 @@ def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_use
             """,
             (bid_id,),
         ).fetchone()
-        # notify seller
-        database.notify(
-            conn,
-            int(row["owner_id"]),
-            "새 입찰",
-            f"「{row['title']}」에 ₩{amount:,} 입찰이 들어왔습니다.",
-            f"/project.html?id={project_id}",
-        )
     return {
         "ok": True,
         "bid": database.bid_to_public(bid_row),
@@ -1499,10 +1556,7 @@ def buy_now(project_id: int, user: dict = Depends(get_current_user)):
             """,
             (project_id, user["id"], buy, now),
         )
-        conn.execute(
-            "UPDATE projects SET bid_count = COALESCE(bid_count, 0) + 1 WHERE id = ?",
-            (project_id,),
-        )
+        database.refresh_project_bid_stats(conn, project_id)
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         row = database.finalize_sale(
             conn, row, sold_price=buy, buyer_id=user["id"], note="즉시구매"
@@ -1566,12 +1620,114 @@ def close_deal(
         "project": database.project_to_dict(row, include_private=True),
         "fee": database.fee_breakdown(sold_price),
         "transfer_checklist": [
-            "합의 금액·포함 자산 범위 문서화",
-            "대금 수령 확인 (구매자)",
-            "판매자 수수료 10% 정산 (앱 알림·수수료 장부 확인)",
-            "코드·도메인·계정 이전",
-            "이전 완료 후 양측 확인",
+            "구매자 PG 결제(기한 내) → 웹훅으로 입금 확인",
+            "판매자: 프로젝트 이전 후 「이전 완료」",
+            "구매자: 검수 후 「인수하기」(또는 기한 내 이의 없으면 자동 확정)",
+            "확정 후 판매자 정산 · 판매자 수수료 10%",
+            "입금 확인 전 코드·도메인·계정 이전 금지",
         ],
+        "deal_policy": database.deal_policy_public(),
+    }
+
+
+class DealNoteIn(BaseModel):
+    note: str = Field(default="", max_length=800)
+
+
+@router.post("/projects/{project_id}/deal/mark-transferred")
+def deal_mark_transferred(
+    project_id: int,
+    body: DealNoteIn | None = None,
+    user: dict = Depends(get_current_user),
+):
+    """Seller: assets handed over → start buyer inspection clock."""
+    note = (body.note if body else "") or "이전 완료"
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        if int(row["owner_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="seller only")
+        try:
+            row = database.mark_deal_transferred(conn, row, note=note.strip())
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=False),
+        "deal_policy": database.deal_policy_public(),
+    }
+
+
+@router.post("/projects/{project_id}/deal/accept")
+def deal_buyer_accept(
+    project_id: int,
+    body: DealNoteIn | None = None,
+    user: dict = Depends(get_current_user),
+):
+    """Buyer: inspect OK → confirm takeover; seller settlement released. Needs Lv2."""
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    _require_trust(user, "fulfill")
+
+    note = (body.note if body else "") or "구매자 인수 확정"
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+        if not buyer_id or int(buyer_id) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="buyer only")
+        status = (row["deal_status"] if "deal_status" in row.keys() else None) or ""
+        if status != "inspection":
+            raise HTTPException(
+                status_code=400,
+                detail="이전·검수 단계에서만 인수할 수 있습니다. 판매자 「이전 완료」 후 이용해 주세요.",
+            )
+        try:
+            row = database.settle_complete(
+                conn, row, reason="buyer_accept", note=note.strip()
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=False),
+        "deal_policy": database.deal_policy_public(),
+        "message_ko": "인수가 확정되었습니다. 판매자 정산이 진행됩니다.",
+    }
+
+
+@router.post("/projects/{project_id}/deal/dispute")
+def deal_dispute(
+    project_id: int,
+    body: DealNoteIn,
+    user: dict = Depends(get_current_user),
+):
+    """Buyer or seller: raise dispute during payment/inspection (stops auto-settle)."""
+    note = (body.note or "").strip()
+    if len(note) < 5:
+        raise HTTPException(status_code=400, detail="이의 사유를 5자 이상 적어 주세요.")
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        uid = int(user["id"])
+        buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+        owner_id = int(row["owner_id"])
+        if uid != owner_id and (not buyer_id or uid != int(buyer_id)):
+            raise HTTPException(status_code=403, detail="buyer or seller only")
+        try:
+            row = database.mark_deal_disputed(
+                conn, row, note=note, by_user_id=uid
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=False),
+        "message_ko": "이의가 접수되었습니다. 자동 확정이 중지되며 운영이 검토합니다.",
     }
 
 
@@ -2005,6 +2161,7 @@ def credit_policy_public():
             f"낙찰 후 미입금 1회 {database.CREDIT_RULES['default_unpaid']} (하한 0)",
             "최종 점수는 0~100으로 자동 반영 · 신뢰 레벨(Lv0~Lv3)과 별개",
         ],
+        "buyer_rank": database.buyer_rank_policy(),
         "guide_url": "/guide/credit.html",
     }
 

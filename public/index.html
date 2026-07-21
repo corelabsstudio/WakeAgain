@@ -41,8 +41,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20260721g" />
-  <link rel="stylesheet" href="/ux9.css?v=20260721e" />
+  <link rel="stylesheet" href="/styles.css?v=20260722c" />
+  <link rel="stylesheet" href="/ux9.css?v=20260722c" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -291,6 +291,48 @@
           <h4 data-i18n="buyers.m4_t">안전결제 절차</h4>
           <p data-i18n="buyers.m4_p">PG 결제 확인 전 이전 금지, 인수 확정(또는 48시간 자동 확정) 후 정산. 신원(Lv)·신고도 함께. 보증·보험은 아니지만 혼자 직거래보다 단계가 분명합니다.</p>
         </article>
+      </div>
+
+      <!-- Buyer rank ladder — public status that grows with completed buys -->
+      <div class="buyer-rank-block reveal" id="buyerRank">
+        <p class="buyers-why-title" data-i18n="buyers.rank_title">살수록 보이는 구매자 뱃지</p>
+        <p class="center-lead buyers-rank-lead" data-i18n="buyers.rank_lead">
+          구경만 하는 사람과, 실제로 사서 끝낸 사람은 다릅니다.
+          구매가 <strong>성사될수록</strong> 다른 유저·판매자에게 보이는 배지가 올라갑니다.
+          「헤비 구매자」는 허세가 아니라 <strong>성사 기록</strong>입니다.
+        </p>
+        <div class="buyer-rank-grid stagger-kids">
+          <article class="glass-card buyer-rank-card" data-rank="scout">
+            <span class="buyer-rank-badge" data-i18n="buyers.rank_scout_b">구매 준비 중</span>
+            <p class="buyer-rank-need" data-i18n="buyers.rank_scout_n">성사 0건</p>
+            <p class="buyer-rank-perk" data-i18n="buyers.rank_scout_p">관심 등록·입찰 시작. 첫 성사부터 배지가 붙습니다.</p>
+          </article>
+          <article class="glass-card buyer-rank-card" data-rank="starter">
+            <span class="buyer-rank-badge" data-i18n="buyers.rank_starter_b">첫 구매 완료</span>
+            <p class="buyer-rank-need" data-i18n="buyers.rank_starter_n">성사 1건+</p>
+            <p class="buyer-rank-perk" data-i18n="buyers.rank_starter_p">입찰 내역·프로필에 「첫 구매 완료」 배지.</p>
+          </article>
+          <article class="glass-card buyer-rank-card" data-rank="regular">
+            <span class="buyer-rank-badge" data-i18n="buyers.rank_regular_b">단골 구매자</span>
+            <p class="buyer-rank-need" data-i18n="buyers.rank_regular_n">성사 3건+</p>
+            <p class="buyer-rank-perk" data-i18n="buyers.rank_regular_p">성사 건수 공개 · 반복 구매 신호.</p>
+          </article>
+          <article class="glass-card buyer-rank-card is-highlight" data-rank="heavy">
+            <span class="buyer-rank-badge" data-i18n="buyers.rank_heavy_b">헤비 구매자</span>
+            <p class="buyer-rank-need" data-i18n="buyers.rank_heavy_n">성사 5건+</p>
+            <p class="buyer-rank-perk" data-i18n="buyers.rank_heavy_p">강조 배지. 판매자에게 “실제로 사는 사람”으로 보입니다.</p>
+          </article>
+          <article class="glass-card buyer-rank-card is-top" data-rank="whale">
+            <span class="buyer-rank-badge" data-i18n="buyers.rank_whale_b">파워 바이어</span>
+            <p class="buyer-rank-need" data-i18n="buyers.rank_whale_n">성사 10건+</p>
+            <p class="buyer-rank-perk" data-i18n="buyers.rank_whale_p">최고 구매 배지 · 프로필·입찰에서 가장 눈에 띕니다.</p>
+          </article>
+        </div>
+        <p class="buyers-rank-note muted fine" data-i18n="buyers.rank_note">
+          배지는 성사(구매 완료) 횟수 기준 · 미입금 이력이 있으면 주의 표시가 붙을 수 있습니다.
+          신용 점수·Lv(자격)과 별개이며 보증·보험이 아닙니다.
+          <a class="text-link" href="/guide/credit.html">점수·배지 안내</a>
+        </p>
       </div>
 
       <p class="buyers-note" data-i18n="buyers.note">
@@ -604,7 +646,7 @@
 
   <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260720c"></script>
-  <script src="/js/i18n.js?v=20260721e"></script>
+  <script src="/js/i18n.js?v=20260722c"></script>
   <script src="/js/pwa-install.js?v=20260720q"></script>
   <script src="/js/api.js"></script>
   <script src="/js/listings.js?v=20260720d"></script>

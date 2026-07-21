@@ -269,8 +269,11 @@ h1, h2, h3, h4 {
   font-size: 1.12rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1;
+  /* >1 so descenders (g, y) aren't clipped; padding for gradient text paint */
+  line-height: 1.2;
+  padding-bottom: 0.12em;
   white-space: nowrap;
+  overflow: visible;
 }
 .brand-name .brand-again {
   background: linear-gradient(105deg, #e9d5ff 0%, #c084fc 40%, #a855f7 70%, #f0abfc 100%);
@@ -278,6 +281,10 @@ h1, h2, h3, h4 {
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  /* gradient + clip often crops descenders without a little line-box room */
+  line-height: 1.2;
+  padding-bottom: 0.08em;
+  overflow: visible;
 }
 .nav-pill .brand-mark {
   width: 34px;
@@ -302,13 +309,16 @@ h1, h2, h3, h4 {
   letter-spacing: -0.045em;
 }
 
-/* Hero / CTA: XL logo moment */
+/* Hero / CTA: XL logo moment — centered above the CTA copy (not left-floating) */
 .brand--xl {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.85rem;
   text-align: center;
+  width: max-content;
+  max-width: 100%;
   margin: 0 auto 1.5rem;
 }
 .brand--xl .brand-mark {
@@ -320,6 +330,8 @@ h1, h2, h3, h4 {
 .brand--xl .brand-name {
   font-size: 1.65rem;
   letter-spacing: -0.05em;
+  line-height: 1.25;
+  padding-bottom: 0.15em;
 }
 @media (min-width: 768px) {
   .brand--xl .brand-mark {
@@ -526,9 +538,20 @@ h1, h2, h3, h4 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.65rem;
 }
 .hero-cta.center { justify-content: center; }
+.hero-cta-benefit {
+  margin: 0 0 1.65rem;
+  max-width: 28rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.hero-cta-benefit strong {
+  color: #e9d5ff;
+  font-weight: 700;
+}
 /* 3 stats in a row; note sits under the middle column (관심 있어요) */
 .hero-stats-block {
   display: grid;
@@ -920,6 +943,410 @@ p, li, label, .lede, .center-lead, .manifesto p {
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(0.85rem, 1.4vw, 1.35rem);
 }
+
+/* Buyer-first: make vs buy */
+.buyers-section {
+  position: relative;
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.buyers-section::before {
+  content: "";
+  position: absolute;
+  inset: 0 -4vw;
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, rgba(168, 85, 247, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(52, 211, 153, 0.08), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.buyers-section > * { position: relative; z-index: 1; }
+.buyers-eyebrow {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  margin: 0 0 0.75rem;
+}
+/* Disclaimer + managed 4-step process (warm trust, not cold liability only) */
+.safety-pair {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+  align-items: stretch;
+}
+.safety-manage {
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  background:
+    linear-gradient(160deg, rgba(88, 28, 135, 0.28), rgba(15, 15, 22, 0.7)),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(52, 211, 153, 0.1), transparent 50%);
+}
+.safety-manage-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #a7f3d0;
+}
+.safety-manage-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+.safety-manage-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  counter-reset: sm;
+}
+.safety-manage-steps li {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  gap: 0.55rem 0.65rem;
+  align-items: start;
+  padding: 0.5rem 0.55rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.safety-manage-steps .sm-n {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #0f0f14;
+  background: linear-gradient(135deg, #c4b5fd, #6ee7b7);
+  grid-row: span 2;
+  align-self: center;
+}
+.safety-manage-steps strong {
+  font-size: 0.86rem;
+  color: #f3e8ff;
+  font-weight: 700;
+}
+.safety-manage-steps .sm-desc {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
+  grid-column: 2;
+}
+.safety-manage-foot {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted-2);
+}
+.safety-pair .safety-notice {
+  margin: 0;
+  height: 100%;
+}
+.safety-pair-wrap {
+  max-width: 56rem;
+  margin: 1.5rem auto 0;
+}
+@media (max-width: 800px) {
+  .safety-pair { grid-template-columns: 1fr; }
+}
+
+.safe-pay-banner {
+  max-width: 52rem;
+  margin: 0 auto 1.75rem;
+  padding: 1.15rem 1.25rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  background:
+    linear-gradient(135deg, rgba(6, 78, 59, 0.35), rgba(15, 15, 22, 0.75)),
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(52, 211, 153, 0.12), transparent 55%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.safe-pay-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #022c22;
+  background: linear-gradient(90deg, #6ee7b7, #34d399);
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.55rem;
+}
+.safe-pay-title {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ecfdf5;
+  line-height: 1.4;
+}
+.safe-pay-body {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.safe-pay-body strong { color: #a7f3d0; font-weight: 700; }
+.safe-pay-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+.safe-pay-steps li {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #d1fae5;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+@media (max-width: 800px) {
+  .safe-pay-steps { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .safe-pay-steps { grid-template-columns: 1fr; }
+}
+.buyers-section .center-title .grad,
+.buyers-section .grad {
+  background: linear-gradient(120deg, #e9d5ff 0%, #a78bfa 40%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.makebuy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.85rem, 1.4vw, 1.35rem);
+  margin: 1.75rem 0 2rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.makebuy-card {
+  position: relative;
+  overflow: hidden;
+}
+.makebuy-card.is-preferred {
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.15), 0 12px 40px rgba(88, 28, 135, 0.2);
+}
+.makebuy-card.is-preferred::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, #c084fc, #34d399);
+  border-radius: 0 12px 12px 0;
+}
+.makebuy-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted-2);
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+.makebuy-card.is-preferred .makebuy-label {
+  color: #c4b5fd;
+}
+.makebuy-card h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1.15rem;
+}
+.makebuy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.makebuy-list li {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  padding-left: 1.15rem;
+  position: relative;
+}
+.makebuy-list li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: var(--muted-2);
+}
+.makebuy-card.is-preferred .makebuy-list li::before {
+  content: "✓";
+  color: #86efac;
+  font-size: 0.8rem;
+}
+.buyers-why-title {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0.5rem 0 1rem;
+  color: var(--text);
+}
+.buyers-merits {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.75rem, 1.2vw, 1.1rem);
+}
+.buyer-merit {
+  padding: 1.15rem 1.1rem !important;
+}
+.buyer-merit-n {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #a78bfa;
+  margin-bottom: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+.buyer-merit h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.98rem;
+  color: var(--text);
+}
+.buyer-merit p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.buyers-note {
+  max-width: 52rem;
+  margin: 1.5rem auto 0;
+  text-align: center;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--muted-2);
+}
+.buyers-cta { flex-wrap: wrap; gap: 0.65rem; }
+
+/* Buyer rank ladder (home) */
+.buyer-rank-block {
+  margin: 2.25rem auto 0;
+  max-width: 68rem;
+}
+.buyers-rank-lead {
+  margin-bottom: 1.25rem !important;
+}
+.buyer-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+}
+.buyer-rank-card {
+  padding: 1rem 0.9rem !important;
+  text-align: left;
+  border: 1px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.buyer-rank-card.is-highlight {
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.2), 0 12px 40px rgba(88, 28, 135, 0.18);
+}
+.buyer-rank-card.is-top {
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.18), 0 12px 40px rgba(180, 120, 20, 0.12);
+}
+.buyer-rank-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.18);
+  color: #ddd6fe;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  margin-bottom: 0.5rem;
+}
+.buyer-rank-card[data-rank="heavy"] .buyer-rank-badge {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.45), rgba(168, 85, 247, 0.35));
+  color: #f5f3ff;
+}
+.buyer-rank-card[data-rank="whale"] .buyer-rank-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(234, 179, 8, 0.28));
+  color: #fef3c7;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+.buyer-rank-need {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a78bfa;
+  font-variant-numeric: tabular-nums;
+}
+.buyer-rank-perk {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.buyers-rank-note {
+  margin: 1rem auto 0;
+  max-width: 40rem;
+  text-align: center;
+  line-height: 1.55;
+}
+
+/* Inline buyer badge (bids / profile) */
+.wa-buyer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  background: rgba(124, 58, 237, 0.16);
+  color: #e9d5ff;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.wa-buyer-badge[data-rank="starter"] { background: rgba(96, 165, 250, 0.15); border-color: rgba(96, 165, 250, 0.35); color: #bfdbfe; }
+.wa-buyer-badge[data-rank="regular"] { background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.35); color: #a7f3d0; }
+.wa-buyer-badge[data-rank="heavy"] { background: rgba(167, 139, 250, 0.22); border-color: rgba(192, 132, 252, 0.5); color: #f3e8ff; }
+.wa-buyer-badge[data-rank="whale"] { background: rgba(245, 158, 11, 0.18); border-color: rgba(251, 191, 36, 0.5); color: #fde68a; }
+.wa-buyer-badge.is-caution { opacity: 0.85; border-style: dashed; }
+
+@media (max-width: 1100px) {
+  .buyer-rank-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .buyers-merits { grid-template-columns: repeat(2, 1fr); }
+  .buyer-rank-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .makebuy-grid { grid-template-columns: 1fr; }
+  .buyers-merits { grid-template-columns: 1fr; }
+  .buyer-rank-grid { grid-template-columns: 1fr; }
+  .makebuy-card.is-preferred::after {
+    width: 100%;
+    height: 3px;
+    top: auto; bottom: 0; right: 0;
+    border-radius: 0 0 12px 12px;
+    background: linear-gradient(90deg, #c084fc, #34d399);
+  }
+}
 .metric-rows {
   list-style: none;
   margin: 1.1rem 0 0;
@@ -1181,6 +1608,12 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .final-cta {
   padding-top: 4.5rem;
   padding-bottom: 4.5rem;
+  text-align: center;
+}
+.final-cta .brand--xl {
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
 }
 .final-cta .hero-cta { margin-bottom: 1rem; }
 
@@ -1399,6 +1832,77 @@ p, li, label, .lede, .center-lead, .manifesto p {
   margin-top: 0.85rem;
 }
 .footer-operator { margin: 0.75rem 0 0.35rem; }
+
+/* CoreLabs company mark (parent studio — not product WA mark) */
+.corelabs-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.85rem 0 0.4rem;
+  text-decoration: none;
+  color: inherit;
+}
+.corelabs-brand img,
+.corelabs-mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.corelabs-brand--lockup img {
+  width: auto;
+  height: 36px;
+  max-width: min(220px, 70vw);
+  border-radius: 0;
+  object-fit: contain;
+  object-position: left center;
+  /* lockup PNG has large empty margins — scale so mark+wordmark fully visible */
+  overflow: visible;
+}
+.corelabs-brand .corelabs-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--muted);
+}
+.footer-brand .corelabs-brand {
+  margin-top: 1rem;
+}
+.footer-brand .corelabs-brand--lockup img {
+  height: 40px;
+  max-width: 240px;
+  filter: none;
+  opacity: 0.95;
+}
+.footer-cols .corelabs-brand {
+  margin: 0.15rem 0 0.5rem;
+}
+.footer-bottom .corelabs-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  margin: 0 0 0.75rem;
+  flex-wrap: wrap;
+}
+.compact-footer .corelabs-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0 0.65rem;
+}
+.compact-footer .corelabs-mark {
+  width: 22px;
+  height: 22px;
+}
+.compact-footer .corelabs-brand--lockup img {
+  height: 28px;
+  max-width: 180px;
+}
+
 .footer-contact {
   display: inline-flex;
   align-items: center;

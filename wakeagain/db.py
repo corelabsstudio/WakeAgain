@@ -7,7 +7,7 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from wakeagain import pricing as price_policy
@@ -292,6 +292,8 @@ def init_db() -> None:
             {
                 "price_current": "INTEGER",
                 "bid_count": "INTEGER NOT NULL DEFAULT 0",
+                # Unique people who placed at least one bid (not total bid events)
+                "bidder_count": "INTEGER NOT NULL DEFAULT 0",
                 "min_increment": "INTEGER NOT NULL DEFAULT 10000",
                 "auction_ends_at": "TEXT",
                 "auction_status": "TEXT DEFAULT 'live'",  # live | ended | sold | paused
@@ -303,6 +305,16 @@ def init_db() -> None:
                 "sold_at": "TEXT",
                 "buyer_id": "INTEGER",
                 "deal_note": "TEXT",
+                # Buyer-protection deal flow (game-trade style escrow steps)
+                # awaiting_payment | paid | inspection | completed | disputed | payment_default
+                "deal_status": "TEXT",
+                "payment_deadline_at": "TEXT",
+                "paid_at": "TEXT",
+                "transfer_started_at": "TEXT",
+                "inspection_deadline_at": "TEXT",
+                "buyer_accepted_at": "TEXT",
+                "settled_at": "TEXT",
+                "deal_dispute_note": "TEXT",
                 # website | webapp | mobile | desktop | api | game | other
                 "product_type": "TEXT DEFAULT 'other'",
                 "report_count": "INTEGER NOT NULL DEFAULT 0",
@@ -337,9 +349,33 @@ def init_db() -> None:
             UPDATE projects
             SET price_current = COALESCE(price_current, price_start, 0),
                 bid_count = COALESCE(bid_count, 0),
+                bidder_count = COALESCE(bidder_count, 0),
                 min_increment = COALESCE(min_increment, 10000),
                 auction_status = COALESCE(auction_status, 'live')
             WHERE price_current IS NULL OR bid_count IS NULL
+            """
+        )
+        # Unique bidders from real bid rows; demo seeds (no bid rows) mirror bid_count
+        conn.execute(
+            """
+            UPDATE projects
+            SET bidder_count = (
+              SELECT COUNT(DISTINCT bidder_id)
+              FROM bids
+              WHERE bids.project_id = projects.id
+            )
+            WHERE EXISTS (
+              SELECT 1 FROM bids WHERE bids.project_id = projects.id
+            )
+            """
+        )
+        conn.execute(
+            """
+            UPDATE projects
+            SET bidder_count = COALESCE(bid_count, 0)
+            WHERE NOT EXISTS (
+              SELECT 1 FROM bids WHERE bids.project_id = projects.id
+            )
             """
         )
 
@@ -433,6 +469,72 @@ def credit_grade(score: int) -> dict:
     else:
         key, label = "risk", "주의"
     return {"score": s, "grade": key, "label": label}
+
+
+# Buyer rank — public badge from completed purchases (separate from Lv / credit grade).
+# Visible to sellers & others as social proof; not a payment guarantee.
+BUYER_RANK_TIERS = (
+    # min_bought, key, label_ko, short_perk_ko
+    (10, "whale", "파워 바이어", "최고 구매 배지 · 입찰·프로필에 강조 표시"),
+    (5, "heavy", "헤비 구매자", "헤비 배지 · 판매자에게 눈에 띄는 구매 신호"),
+    (3, "regular", "단골 구매자", "단골 배지 · 성사 건수 공개"),
+    (1, "starter", "첫 구매 완료", "첫 성사 배지"),
+    (0, "scout", "구매 준비 중", "구경·관심 등록 · 첫 성사 후 배지 성장"),
+)
+
+
+def buyer_rank(bought_complete: int = 0, defaults: int = 0) -> dict:
+    """Public buyer ladder from completed buys. Defaults dim the badge tone."""
+    n = max(0, int(bought_complete or 0))
+    d = max(0, int(defaults or 0))
+    key, label, perk = "scout", "구매 준비 중", BUYER_RANK_TIERS[-1][3]
+    min_need = 0
+    for min_b, k, lab, p in BUYER_RANK_TIERS:
+        if n >= min_b:
+            key, label, perk = k, lab, p
+            min_need = min_b
+            break
+    # next tier progress
+    next_min = None
+    next_label = None
+    for min_b, k, lab, _p in reversed(BUYER_RANK_TIERS):
+        if min_b > n:
+            next_min = min_b
+            next_label = lab
+            break
+    return {
+        "key": key,
+        "label": label,
+        "bought_complete": n,
+        "defaults": d,
+        "perk": perk,
+        "tier_min": min_need,
+        "next_min": next_min,
+        "next_label": next_label,
+        "caution": d > 0,
+        "public": True,
+        "note": "성사(구매) 횟수 기반 공개 배지. 보증·보험 아님.",
+    }
+
+
+def buyer_rank_policy() -> dict:
+    return {
+        "doc": "구매 성사 횟수에 따른 공개 배지 (헤비 구매자 등). 신용 점수·Lv와 별개.",
+        "tiers": [
+            {
+                "min_bought": t[0],
+                "key": t[1],
+                "label": t[2],
+                "perk": t[3],
+            }
+            for t in reversed(BUYER_RANK_TIERS)
+        ],
+        "note_ko": (
+            "구매가 성사될수록 다른 이용자·판매자에게 보이는 배지가 올라갑니다. "
+            "헤비 구매자·파워 바이어는 ‘이 사람은 실제로 사는 사람’ 신호입니다. "
+            "미입금 이력이 있으면 주의 표시가 붙을 수 있습니다. 보증이 아닙니다."
+        ),
+    }
 
 
 def compute_credit(row: sqlite3.Row | dict, trust: dict | None = None) -> dict:
@@ -551,15 +653,18 @@ def public_credit_summary(row: sqlite3.Row | dict | None) -> dict | None:
     if not row:
         return None
     credit = compute_credit(row)
+    bought = credit["counts"]["bought_complete"]
+    defaults = credit["counts"]["defaults"]
     return {
         "score": credit["score"],
         "grade": credit["grade"],
         "label": credit["label"],
         "counts": {
             "sold_as_seller": credit["counts"]["sold_as_seller"],
-            "bought_complete": credit["counts"]["bought_complete"],
-            "defaults": credit["counts"]["defaults"],
+            "bought_complete": bought,
+            "defaults": defaults,
         },
+        "buyer_rank": buyer_rank(bought, defaults),
     }
 
 
@@ -624,7 +729,10 @@ def compute_trust(row: sqlite3.Row | dict) -> dict:
         "can_interest": not suspended,
         # 매물 올리기 = Lv2 + 판매자 공개 신원 (중개자 고지 의무)
         "can_list": profile_ok and seller_ok and not suspended,
-        "can_bid": profile_ok and not suspended,
+        # 입찰 = Lv1(이메일)만 — 실명·휴대폰(Lv2)은 낙찰 후 결제·이전 단계
+        "can_bid": email_verified and not suspended,
+        # 낙찰 후 결제·인수 등 구매 이행
+        "can_fulfill_purchase": profile_ok and not suspended,
         "can_close_deal": deal_ready and not suspended,
         "can_report": profile_ok and not suspended,
         "missing": missing,
@@ -951,6 +1059,12 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     if price_current is None:
         price_current = price_start
     bid_count = int(_row_get(row, "bid_count", 0) or 0)
+    # Unique bidders; fall back to bid_count only if column missing on very old rows
+    bidder_raw = _row_get(row, "bidder_count")
+    if bidder_raw is None:
+        bidder_count = bid_count
+    else:
+        bidder_count = int(bidder_raw or 0)
     min_inc = int(_row_get(row, "min_increment", 10000) or 10000)
     auction_status = (_row_get(row, "auction_status") or "live") or "live"
     ends = _row_get(row, "auction_ends_at") or ""
@@ -987,6 +1101,7 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "price_current": price_current,
         "price_buy_now": _row_get(row, "price_buy_now"),
         "bid_count": bid_count,
+        "bidder_count": bidder_count,
         "min_increment": min_inc,
         "next_min_bid": next_min,
         "auction_ends_at": ends,
@@ -1002,6 +1117,15 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "sold_at": _row_get(row, "sold_at") or "",
         "buyer_id": _row_get(row, "buyer_id"),
         "deal_note": _row_get(row, "deal_note") or "",
+        "deal_status": _row_get(row, "deal_status") or "",
+        "payment_deadline_at": _row_get(row, "payment_deadline_at") or "",
+        "paid_at": _row_get(row, "paid_at") or "",
+        "transfer_started_at": _row_get(row, "transfer_started_at") or "",
+        "inspection_deadline_at": _row_get(row, "inspection_deadline_at") or "",
+        "buyer_accepted_at": _row_get(row, "buyer_accepted_at") or "",
+        "settled_at": _row_get(row, "settled_at") or "",
+        "deal_dispute_note": _row_get(row, "deal_dispute_note") or "",
+        "deal_policy": deal_policy_public(),
         "fee": fee,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
@@ -1311,6 +1435,48 @@ def create_fee_invoice(
     return fee_invoice_to_dict(row)
 
 
+def deal_payment_hours() -> int:
+    try:
+        return max(1, min(int(os.environ.get("DEAL_PAYMENT_HOURS") or "1"), 48))
+    except ValueError:
+        return 1
+
+
+def deal_inspection_hours() -> int:
+    """Auto-accept window after transfer (default 48h, clamp 24–72)."""
+    try:
+        return max(24, min(int(os.environ.get("DEAL_INSPECTION_HOURS") or "48"), 72))
+    except ValueError:
+        return 48
+
+
+def deal_policy_public() -> dict:
+    pay_h = deal_payment_hours()
+    insp_h = deal_inspection_hours()
+    return {
+        "payment_hours": pay_h,
+        "inspection_hours": insp_h,
+        "stages": [
+            "awaiting_payment",
+            "paid",
+            "inspection",
+            "completed",
+        ],
+        "message_ko": (
+            f"낙찰 후 PG로 {pay_h}시간 이내 결제 → 입금 확인 후 판매자 이전 → 구매자 검수 후 「인수하기」. "
+            f"이전(수령) 후 {insp_h}시간 안에 이의가 없으면 자동 구매 확정·정산. "
+            "입금 확인 전 코드·계정 이전 금지. 대금은 인수(또는 자동 확정) 후 판매자에게 정산됩니다."
+        ),
+        "message_en": (
+            f"Pay via PG within {pay_h}h of award → seller transfers after payment confirmed → "
+            f"buyer inspects and accepts. No dispute within {insp_h}h → auto-confirm & settle. "
+            "No asset handoff before payment. Seller is paid after accept (or auto-accept)."
+        ),
+        "buyer_accept_label_ko": "인수하기",
+        "no_transfer_before_payment_ko": "입금 확인 전 코드·도메인·계정 이전 금지",
+    }
+
+
 def finalize_sale(
     conn: sqlite3.Connection,
     row: sqlite3.Row,
@@ -1319,47 +1485,365 @@ def finalize_sale(
     buyer_id: int | None,
     note: str,
 ) -> sqlite3.Row:
-    """Mark project sold, invoice fee, notify parties."""
+    """Mark project sold, open fee invoice (held), start payment deadline."""
     now = _now()
+    now_dt = datetime.now(timezone.utc)
+    pay_deadline = (now_dt + timedelta(hours=deal_payment_hours())).isoformat(timespec="seconds")
     pid = int(row["id"])
     owner_id = int(row["owner_id"])
+    pay_h = deal_payment_hours()
+    insp_h = deal_inspection_hours()
     conn.execute(
         """
         UPDATE projects SET
           auction_status = 'sold', sold_price = ?, sold_at = ?, buyer_id = ?,
-          price_current = ?, deal_note = ?, updated_at = ?
+          price_current = ?, deal_note = ?, updated_at = ?,
+          deal_status = 'awaiting_payment',
+          payment_deadline_at = ?,
+          paid_at = NULL,
+          transfer_started_at = NULL,
+          inspection_deadline_at = NULL,
+          buyer_accepted_at = NULL,
+          settled_at = NULL,
+          deal_dispute_note = NULL
         WHERE id = ?
         """,
-        (sold_price, now, buyer_id, sold_price, (note or "성사")[:500], now, pid),
+        (
+            sold_price,
+            now,
+            buyer_id,
+            sold_price,
+            (note or "성사")[:500],
+            now,
+            pay_deadline,
+            pid,
+        ),
     )
     inv = create_fee_invoice(
         conn,
         project_id=pid,
         seller_id=owner_id,
         deal_amount=sold_price,
-        note=note or "성사 수수료",
+        note=note or "성사 수수료(정산 보류)",
     )
     fee = inv["fee_amount"]
     notify(
         conn,
         owner_id,
-        "성사 · 수수료 안내",
-        f"「{row['title']}」 성사 ₩{sold_price:,}. 판매자 수수료 ₩{fee:,} (10%). 이전 절차를 진행하세요.",
+        "성사 · 입금 대기",
+        f"「{row['title']}」 성사 ₩{sold_price:,}. 구매자 {pay_h}시간 내 입금 후, "
+        f"이전→검수(최대 {insp_h}시간)·인수 확정 시 정산됩니다. 수수료 ₩{fee:,} (10%).",
         f"/project.html?id={pid}",
     )
     if buyer_id:
         notify(
             conn,
             int(buyer_id),
-            "성사 확정 (구매)",
-            f"「{row['title']}」이(가) ₩{sold_price:,} 로 성사되었습니다. 판매자와 이전을 진행하세요.",
+            "낙찰 · 결제 안내",
+            f"「{row['title']}」 ₩{sold_price:,} 낙찰. {pay_h}시간 이내 PG 결제해 주세요. "
+            f"결제·인수 전 실명·휴대폰(Lv2)이 필요합니다. "
+            f"결제 확인 후 이전·검수, 「인수하기」 또는 {insp_h}시간 무이의 시 자동 확정·정산.",
             f"/project.html?id={pid}",
         )
-    # Auto credit: seller sale + buyer purchase (on-time flag when payment flow exists)
+    # Credit for sale/purchase applied at settle_complete (not at award)
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def mark_deal_paid(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    note: str = "",
+) -> sqlite3.Row:
+    """Mark payment confirmed (call only from PG webhook / payment success handler).
+
+    No admin/manual product path — pre-PG fallbacks are not supported.
+    Buyer must be Lv2 (real name + phone) before payment is accepted.
+    """
+    status = (_row_get(row, "deal_status") or "") or ""
+    if status not in ("awaiting_payment", ""):
+        if status == "paid":
+            return row
+        raise ValueError("not awaiting payment")
+    buyer_id = _row_get(row, "buyer_id")
+    if buyer_id:
+        bu = conn.execute("SELECT * FROM users WHERE id = ?", (int(buyer_id),)).fetchone()
+        if bu:
+            tr = compute_trust(bu)
+            if not tr.get("can_fulfill_purchase"):
+                raise ValueError(
+                    "buyer must complete Lv2 (real name + phone) before payment confirmation"
+                )
+    now = _now()
+    pid = int(row["id"])
+    conn.execute(
+        """
+        UPDATE projects SET
+          deal_status = 'paid',
+          paid_at = ?,
+          deal_note = COALESCE(?, deal_note),
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (now, (note or "입금 확인")[:500], now, pid),
+    )
+    owner_id = int(row["owner_id"])
+    buyer_id = _row_get(row, "buyer_id")
+    notify(
+        conn,
+        owner_id,
+        "입금 확인 · 이전 가능",
+        f"「{row['title']}」 입금이 확인되었습니다. 프로젝트를 이전한 뒤 「이전 완료」를 눌러 주세요.",
+        f"/project.html?id={pid}",
+    )
+    if buyer_id:
+        notify(
+            conn,
+            int(buyer_id),
+            "입금 확인됨",
+            f"「{row['title']}」 입금이 확인되었습니다. 판매자 이전 후 검수하고 「인수하기」를 눌러 주세요.",
+            f"/project.html?id={pid}",
+        )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def mark_deal_transferred(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    note: str = "",
+) -> sqlite3.Row:
+    """Seller finished handoff → inspection window starts."""
+    status = (_row_get(row, "deal_status") or "") or ""
+    if status not in ("paid", "inspection"):
+        raise ValueError("payment must be confirmed before transfer")
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat(timespec="seconds")
+    insp_deadline = (now_dt + timedelta(hours=deal_inspection_hours())).isoformat(
+        timespec="seconds"
+    )
+    pid = int(row["id"])
+    insp_h = deal_inspection_hours()
+    conn.execute(
+        """
+        UPDATE projects SET
+          deal_status = 'inspection',
+          transfer_started_at = COALESCE(transfer_started_at, ?),
+          inspection_deadline_at = ?,
+          deal_note = COALESCE(?, deal_note),
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (now, insp_deadline, (note or "이전 완료 · 검수 중")[:500], now, pid),
+    )
+    buyer_id = _row_get(row, "buyer_id")
+    if buyer_id:
+        notify(
+            conn,
+            int(buyer_id),
+            "이전 완료 · 검수",
+            f"「{row['title']}」 이전이 완료되었습니다. 검수 후 「인수하기」를 눌러 주세요. "
+            f"{insp_h}시간 내 이의가 없으면 자동 확정·정산됩니다.",
+            f"/project.html?id={pid}",
+        )
+    notify(
+        conn,
+        int(row["owner_id"]),
+        "검수 대기",
+        f"「{row['title']}」 구매자 검수 중입니다. 인수 또는 {insp_h}시간 후 자동 확정 시 정산됩니다.",
+        f"/project.html?id={pid}",
+    )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def settle_complete(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    reason: str = "buyer_accept",
+    note: str = "",
+) -> sqlite3.Row:
+    """Release settlement to seller after accept or auto-confirm."""
+    status = (_row_get(row, "deal_status") or "") or ""
+    if status == "completed":
+        return row
+    if status != "inspection":
+        raise ValueError("not in inspection — seller must mark transfer first")
+    now = _now()
+    pid = int(row["id"])
+    owner_id = int(row["owner_id"])
+    buyer_id = _row_get(row, "buyer_id")
+    sold_price = int(_row_get(row, "sold_price") or 0)
+    fee = fee_breakdown(sold_price)
+    conn.execute(
+        """
+        UPDATE projects SET
+          deal_status = 'completed',
+          buyer_accepted_at = COALESCE(buyer_accepted_at, ?),
+          settled_at = ?,
+          deal_note = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            now,
+            now,
+            (note or f"정산 완료 ({reason})")[:500],
+            now,
+            pid,
+        ),
+    )
+    # Credit once on successful settlement
     credit_bump(conn, owner_id, sold=1)
     if buyer_id:
-        credit_bump(conn, int(buyer_id), bought=1, on_time=1)
+        on_time = 1
+        pay_deadline = _parse_iso(str(_row_get(row, "payment_deadline_at") or ""))
+        paid_at = _parse_iso(str(_row_get(row, "paid_at") or ""))
+        if pay_deadline and paid_at and paid_at > pay_deadline:
+            on_time = 0
+        credit_bump(conn, int(buyer_id), bought=1, on_time=on_time)
+    notify(
+        conn,
+        owner_id,
+        "정산 완료",
+        f"「{row['title']}」 구매 확정. 판매 대금 정산 진행(합의가 ₩{sold_price:,} · 수수료 ₩{fee['fee']:,}).",
+        f"/project.html?id={pid}",
+    )
+    if buyer_id:
+        notify(
+            conn,
+            int(buyer_id),
+            "인수·구매 확정",
+            f"「{row['title']}」 구매가 확정되었습니다. 이용해 주셔서 감사합니다.",
+            f"/project.html?id={pid}",
+        )
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def mark_deal_disputed(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    note: str,
+    by_user_id: int,
+) -> sqlite3.Row:
+    status = (_row_get(row, "deal_status") or "") or ""
+    if status not in ("paid", "inspection", "awaiting_payment"):
+        raise ValueError("cannot dispute in this status")
+    now = _now()
+    pid = int(row["id"])
+    conn.execute(
+        """
+        UPDATE projects SET
+          deal_status = 'disputed',
+          deal_dispute_note = ?,
+          deal_note = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        ((note or "")[:800], f"이의 제기 (user {by_user_id})"[:500], now, pid),
+    )
+    notify(
+        conn,
+        int(row["owner_id"]),
+        "거래 이의 제기",
+        f"「{row['title']}」 거래에 이의가 접수되었습니다. 운영이 검토합니다.",
+        f"/project.html?id={pid}",
+    )
+    buyer_id = _row_get(row, "buyer_id")
+    if buyer_id and int(buyer_id) != int(by_user_id):
+        notify(
+            conn,
+            int(buyer_id),
+            "거래 이의 제기",
+            f"「{row['title']}」 거래 이의가 접수되었습니다.",
+            f"/project.html?id={pid}",
+        )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def void_for_nonpayment(conn: sqlite3.Connection, row: sqlite3.Row) -> sqlite3.Row:
+    """Buyer missed payment deadline → void award, credit penalty, end listing."""
+    now = _now()
+    pid = int(row["id"])
+    buyer_id = _row_get(row, "buyer_id")
+    owner_id = int(row["owner_id"])
+    conn.execute(
+        """
+        UPDATE projects SET
+          deal_status = 'payment_default',
+          auction_status = 'ended',
+          deal_note = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        ("입금 기한 초과 · 낙찰 무효", now, pid),
+    )
+    # cancel open fee invoice
+    conn.execute(
+        """
+        UPDATE fee_invoices SET status = 'cancelled', note = '입금 기한 초과'
+        WHERE project_id = ? AND status = 'pending'
+        """,
+        (pid,),
+    )
+    if buyer_id:
+        credit_bump(conn, int(buyer_id), defaults=1)
+        notify(
+            conn,
+            int(buyer_id),
+            "입금 기한 초과",
+            f"「{row['title']}」 입금 기한이 지나 낙찰이 무효 처리되었습니다. 사이트 내 신용 점수가 반영됩니다.",
+            f"/project.html?id={pid}",
+        )
+    notify(
+        conn,
+        owner_id,
+        "구매자 미입금",
+        f"「{row['title']}」 구매자가 기한 내 입금하지 않아 낙찰이 무효 처리되었습니다.",
+        f"/project.html?id={pid}",
+    )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def process_deal_deadlines(conn: sqlite3.Connection) -> dict[str, int]:
+    """Payment timeout + inspection auto-accept. Returns counts."""
+    now = datetime.now(timezone.utc)
+    out = {"payment_default": 0, "auto_settled": 0}
+    # unpaid
+    rows = conn.execute(
+        """
+        SELECT * FROM projects
+        WHERE deal_status = 'awaiting_payment'
+          AND payment_deadline_at IS NOT NULL
+          AND payment_deadline_at != ''
+        """
+    ).fetchall()
+    for row in rows:
+        dl = _parse_iso(str(row["payment_deadline_at"] or ""))
+        if dl and now > dl:
+            void_for_nonpayment(conn, row)
+            out["payment_default"] += 1
+    # inspection auto complete
+    rows2 = conn.execute(
+        """
+        SELECT * FROM projects
+        WHERE deal_status = 'inspection'
+          AND inspection_deadline_at IS NOT NULL
+          AND inspection_deadline_at != ''
+        """
+    ).fetchall()
+    for row in rows2:
+        dl = _parse_iso(str(row["inspection_deadline_at"] or ""))
+        if dl and now > dl:
+            settle_complete(
+                conn,
+                row,
+                reason="auto_accept",
+                note=f"검수 기한({deal_inspection_hours()}시간) 내 이의 없음 · 자동 구매 확정·정산",
+            )
+            out["auto_settled"] += 1
+    return out
 
 
 def _parse_iso(ts: str) -> datetime | None:
@@ -1425,13 +1909,18 @@ def process_expired_auctions(conn: sqlite3.Connection) -> int:
     return n
 
 
-def bid_to_public(row: sqlite3.Row) -> dict:
-    """Public bid ticker — no email/phone. display_name only."""
-    name = ""
-    try:
-        name = (row["display_name"] or "").strip()
-    except (IndexError, KeyError):
-        name = ""
+def bid_to_public(row: sqlite3.Row | dict) -> dict:
+    """Public bid ticker — no email/phone. display_name + optional buyer rank badge."""
+
+    def _g(key: str, default=None):
+        try:
+            if isinstance(row, dict):
+                return row.get(key, default)
+            return row[key] if key in row.keys() else default
+        except (IndexError, KeyError):
+            return default
+
+    name = (_g("display_name") or "").strip() if _g("display_name") is not None else ""
     if not name:
         name = "입찰자"
     # soft anonymize: first char + **
@@ -1439,13 +1928,25 @@ def bid_to_public(row: sqlite3.Row) -> dict:
         public_name = name[0] + "**"
     else:
         public_name = name + "**"
-    return {
-        "id": row["id"],
-        "project_id": row["project_id"],
-        "amount": row["amount"],
+    bought = int(_g("credit_bought") or 0)
+    defaults = int(_g("credit_defaults") or 0)
+    rank = buyer_rank(bought, defaults)
+    out = {
+        "id": _g("id"),
+        "project_id": _g("project_id"),
+        "amount": _g("amount"),
         "bidder_label": public_name,
-        "created_at": row["created_at"],
+        "created_at": _g("created_at"),
+        "buyer_rank": None,
     }
+    if rank["key"] != "scout":
+        out["buyer_rank"] = {
+            "key": rank["key"],
+            "label": rank["label"],
+            "bought_complete": rank["bought_complete"],
+            "caution": rank["caution"],
+        }
+    return out
 
 
 def review_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
@@ -1516,6 +2017,7 @@ def auction_snapshot(row: sqlite3.Row) -> dict:
         "price_start": p["price_start"],
         "price_current": p["price_current"],
         "bid_count": p["bid_count"],
+        "bidder_count": p["bidder_count"],
         "min_increment": p["min_increment"],
         "next_min_bid": p["next_min_bid"],
         "auction_ends_at": p["auction_ends_at"],
@@ -1524,3 +2026,30 @@ def auction_snapshot(row: sqlite3.Row) -> dict:
         "updated_at": p["updated_at"],
         "status": p["status"],
     }
+
+
+def refresh_project_bid_stats(conn: sqlite3.Connection, project_id: int) -> None:
+    """Sync bid_count (events) and bidder_count (unique people) from bids table."""
+    stats = conn.execute(
+        """
+        SELECT COUNT(*) AS n, COUNT(DISTINCT bidder_id) AS u
+        FROM bids
+        WHERE project_id = ?
+        """,
+        (project_id,),
+    ).fetchone()
+    conn.execute(
+        """
+        UPDATE projects
+        SET bid_count = ?,
+            bidder_count = ?,
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            int(stats["n"] or 0),
+            int(stats["u"] or 0),
+            _now(),
+            project_id,
+        ),
+    )
