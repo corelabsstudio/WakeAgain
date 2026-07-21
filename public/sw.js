@@ -1,6 +1,8 @@
 /* WakeAgain PWA — app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v6";
+const CACHE = "wakeagain-shell-v7";
 const PRECACHE = [
+  "/",
+  "/index.html",
   "/app/",
   "/app/index.html",
   "/app/app.css",
