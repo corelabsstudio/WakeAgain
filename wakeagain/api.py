@@ -1147,11 +1147,19 @@ def auctions_live():
         snaps = []
         for r in rows:
             r = _refresh_auction_ended(conn, r)
-            snaps.append(database.auction_snapshot(r))
+            top = None
+            try:
+                if int(r["bid_count"] or 0) > 0:
+                    top = database.top_bid_public(conn, int(r["id"]))
+            except Exception:
+                top = None
+            snaps.append(database.auction_snapshot(r, top_bid=top))
         # recent public bid ticker (last 20 across board)
         recent = conn.execute(
             """
-            SELECT b.*, u.display_name
+            SELECT b.*, u.display_name,
+                   COALESCE(u.credit_bought, 0) AS credit_bought,
+                   COALESCE(u.credit_defaults, 0) AS credit_defaults
             FROM bids b
             JOIN users u ON u.id = b.bidder_id
             JOIN projects p ON p.id = b.project_id
@@ -1298,16 +1306,24 @@ def list_bids(project_id: int):
             FROM bids b
             JOIN users u ON u.id = b.bidder_id
             WHERE b.project_id = ?
-            ORDER BY b.id DESC
+            ORDER BY b.amount DESC, b.id DESC
             LIMIT 100
             """,
             (project_id,),
         ).fetchall()
+    bids = []
+    for i, r in enumerate(rows):
+        pub = database.bid_to_public(r)
+        pub["rank"] = i + 1
+        pub["is_top"] = i == 0
+        bids.append(pub)
     return {
         "ok": True,
         "project_id": project_id,
-        "bids": [database.bid_to_public(r) for r in rows],
+        "bids": bids,
+        "top_bidder": bids[0] if bids else None,
         "public": True,
+        "note_ko": "입찰 금액·공개 닉네임·구매 배지는 전원에게 공개됩니다. 이메일·실명·연락처는 비공개입니다.",
     }
 
 

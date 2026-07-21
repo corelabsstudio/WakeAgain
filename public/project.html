@@ -235,18 +235,90 @@
     }
     .chat-offplatform-warn p strong { display: inline; color: #fca5a5; font-weight: 700; }
     .chat-msg-list { max-height: 200px; }
-    .bid-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; max-height: 280px; overflow: auto; }
+    .top-bidder-card {
+      margin: 0.85rem 0 0.35rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: 14px;
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      background: linear-gradient(145deg, rgba(124, 58, 237, 0.16), rgba(15, 15, 22, 0.55));
+    }
+    .top-bidder-kicker {
+      margin: 0 0 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c4b5fd;
+    }
+    .top-bidder-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .top-bidder-rank {
+      font-size: 0.8rem;
+      font-weight: 900;
+      color: #fde68a;
+      min-width: 1.6rem;
+    }
+    .top-bidder-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.5rem;
+    }
+    .top-bidder-name {
+      font-size: 1.05rem;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .top-bidder-amt {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--purple);
+      font-size: 1.05rem;
+    }
+    .top-bidder-note { margin: 0.45rem 0 0; }
+    .bid-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; max-height: 320px; overflow: auto; }
     .bid-list li {
-      display: flex; justify-content: space-between; gap: 0.75rem;
+      display: flex; justify-content: space-between; gap: 0.75rem; align-items: center;
       padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--bg-elev);
       border: 1px solid var(--border); font-size: 0.9rem;
       transition: border-color 0.2s ease, background 0.2s ease;
     }
+    .bid-list li.is-top {
+      border-color: rgba(251, 191, 36, 0.45);
+      background: rgba(251, 191, 36, 0.08);
+    }
+    .bid-list .bid-rank {
+      display: inline-block;
+      min-width: 1.5rem;
+      font-weight: 800;
+      font-size: 0.78rem;
+      color: #a78bfa;
+      margin-right: 0.25rem;
+    }
+    .bid-list li.is-top .bid-rank { color: #fde68a; }
+    .bid-list .bid-handle { font-weight: 700; color: var(--text); }
     .auction-page.auction-hot .bid-list li:first-child {
       border-color: rgba(192, 132, 252, 0.45);
       background: rgba(168, 85, 247, 0.1);
     }
     .bid-list .amt { font-weight: 700; color: var(--purple); font-variant-numeric: tabular-nums; }
+    .wa-buyer-badge {
+      display: inline-flex; align-items: center;
+      font-size: 0.68rem; font-weight: 800;
+      padding: 0.1rem 0.4rem; border-radius: 999px;
+      border: 1px solid rgba(167, 139, 250, 0.4);
+      background: rgba(124, 58, 237, 0.16); color: #e9d5ff;
+      vertical-align: middle;
+    }
+    .wa-buyer-badge[data-rank="heavy"] { background: rgba(167, 139, 250, 0.25); color: #f5f3ff; }
+    .wa-buyer-badge[data-rank="whale"] { background: rgba(245, 158, 11, 0.18); border-color: rgba(251, 191, 36, 0.5); color: #fde68a; }
+    .wa-buyer-badge.is-caution { border-style: dashed; opacity: 0.9; }
     .auction-mentions {
       margin: 0.85rem 0 0.35rem;
       border-radius: 14px;
@@ -594,6 +666,20 @@
         <p class="price-meta" id="nextMinLine"></p>
         <p class="price-meta" id="feeLine"></p>
         <p class="price-meta" id="sellerLine"></p>
+
+        <!-- Top bidder — public handle + buyer badge (no live presence list needed) -->
+        <div class="top-bidder-card" id="topBidderCard" hidden>
+          <p class="top-bidder-kicker" data-i18n="proj.top_bidder_kicker">현재 최고 입찰자 (공개)</p>
+          <div class="top-bidder-row">
+            <span class="top-bidder-rank" aria-hidden="true">#1</span>
+            <div class="top-bidder-main">
+              <strong class="top-bidder-name" id="topBidderName">—</strong>
+              <span class="wa-buyer-badge" id="topBidderBadge" hidden data-rank=""></span>
+            </div>
+            <span class="top-bidder-amt" id="topBidderAmt">—</span>
+          </div>
+          <p class="top-bidder-note muted fine" data-i18n="proj.top_bidder_note">닉네임·구매 배지만 공개 · 이메일·실명 비공개</p>
+        </div>
         <div class="seller-identity-card" id="sellerIdentityCard" hidden>
           <strong class="seller-identity-title" data-i18n="proj.seller_info">판매자 정보 (구매자 확인용)</strong>
           <p class="price-meta" id="sellerIdType"></p>
@@ -740,8 +826,9 @@
           <ul class="price-meta" id="transferList" style="margin-top:0.75rem;padding-left:1.1rem" hidden></ul>
         </div>
 
-        <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem" data-i18n="proj.bids_title">사람들이 쓴 가격 (공개)</h3>
-        <ul class="bid-list" id="bidList"></ul>
+        <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem" data-i18n="proj.bids_title">입찰 순위 (공개 · 높은 가격 순)</h3>
+        <p class="price-meta" style="margin:0 0 0.5rem" data-i18n="proj.bids_sub">상위 입찰자 닉네임과 구매 배지가 매물에 표시됩니다. 접속 인원 목록은 쓰지 않습니다.</p>
+        <ul class="bid-list bid-leaderboard" id="bidList"></ul>
       </aside>
     </div>
 
@@ -1390,37 +1477,80 @@
         renderDealProtect(p);
       }
 
-      function renderBids(bids) {
-        var ul = document.getElementById("bidList");
-        if (!bids || !bids.length) {
-          ul.innerHTML = "<li><span class='muted'>" + t("아직 입찰 없음 — 첫 호가가 전원에게 공개됩니다.", "No bids yet — the first bid is public.") + "</span></li>";
+      function buyerBadgeHtml(br) {
+        if (!br || !br.label) return "";
+        return (
+          " <span class='wa-buyer-badge" +
+          (br.caution ? " is-caution" : "") +
+          "' data-rank='" +
+          (br.key || "") +
+          "' title='" +
+          t("구매 성사 ", "Completed buys ") +
+          (br.bought_complete || 0) +
+          t("건", "") +
+          "'>" +
+          br.label +
+          "</span>"
+        );
+      }
+
+      function renderTopBidder(top) {
+        var card = document.getElementById("topBidderCard");
+        if (!card) return;
+        if (!top || !top.bidder_label) {
+          card.hidden = true;
           return;
         }
-        ul.innerHTML = bids
-          .map(function (b) {
-            var br = b.buyer_rank;
-            var badge = "";
-            if (br && br.label) {
-              badge =
-                " <span class='wa-buyer-badge" +
-                (br.caution ? " is-caution" : "") +
-                "' data-rank='" +
-                (br.key || "") +
-                "' title='" +
-                t("구매 성사 ", "Completed buys ") +
-                (br.bought_complete || 0) +
-                t("건", "") +
-                "'>" +
-                br.label +
-                "</span>";
-            }
+        card.hidden = false;
+        var nameEl = document.getElementById("topBidderName");
+        var badgeEl = document.getElementById("topBidderBadge");
+        var amtEl = document.getElementById("topBidderAmt");
+        if (nameEl) nameEl.textContent = top.bidder_label;
+        if (amtEl) amtEl.textContent = won(top.amount);
+        if (badgeEl) {
+          var br = top.buyer_rank;
+          if (br && br.label) {
+            badgeEl.hidden = false;
+            badgeEl.textContent = br.label;
+            badgeEl.setAttribute("data-rank", br.key || "");
+            badgeEl.classList.toggle("is-caution", !!br.caution);
+          } else {
+            badgeEl.hidden = true;
+            badgeEl.textContent = "";
+          }
+        }
+      }
+
+      function renderBids(bids) {
+        var ul = document.getElementById("bidList");
+        // highest first
+        var sorted = (bids || []).slice().sort(function (a, b) {
+          return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+        });
+        renderTopBidder(sorted[0] || null);
+        if (!sorted.length) {
+          ul.innerHTML =
+            "<li><span class='muted'>" +
+            t("아직 입찰 없음 — 첫 호가와 닉네임이 전원에게 공개됩니다.", "No bids yet — first bid and handle are public.") +
+            "</span></li>";
+          return;
+        }
+        ul.innerHTML = sorted
+          .map(function (b, i) {
+            var rank = b.rank || i + 1;
+            var isTop = rank === 1 || b.is_top;
             return (
-              "<li><span>" +
+              "<li class='" +
+              (isTop ? "is-top" : "") +
+              "'><span><span class='bid-rank'>#" +
+              rank +
+              "</span><span class='bid-handle'>" +
               (b.bidder_label || t("입찰자", "Bidder")) +
-              badge +
-              " · " +
-              (b.created_at || "").replace("T", " ").slice(0, 19) +
-              "</span><span class='amt'>" +
+              "</span>" +
+              buyerBadgeHtml(b.buyer_rank) +
+              " <span class='muted fine'>· " +
+              (b.created_at || "").replace("T", " ").slice(0, 16) +
+              "</span></span><span class='amt'>" +
               won(b.amount) +
               "</span></li>"
             );

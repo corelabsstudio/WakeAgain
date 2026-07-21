@@ -23,6 +23,7 @@
       price_start: 890000,
       price_current: 1120000,
       bid_count: 4,
+      bidder_count: 4,
       cats: "saas",
       icon: "violet",
     },
@@ -39,6 +40,7 @@
       price_start: 450000,
       price_current: 450000,
       bid_count: 0,
+      bidder_count: 0,
       cats: "mobile",
       icon: "green",
     },
@@ -55,6 +57,7 @@
       price_start: 320000,
       price_current: 380000,
       bid_count: 2,
+      bidder_count: 2,
       cats: "saas ai",
       icon: "purple",
     },
@@ -71,6 +74,7 @@
       price_start: 180000,
       price_current: 210000,
       bid_count: 1,
+      bidder_count: 1,
       cats: "saas",
       icon: "violet",
     },
@@ -87,6 +91,7 @@
       price_start: 550000,
       price_current: 720000,
       bid_count: 5,
+      bidder_count: 5,
       cats: "saas ai",
       icon: "blue",
     },
@@ -191,9 +196,16 @@
     const a = (p.auction_status || "live").toLowerCase();
     if (a === "sold") return { cls: "ending", text: tt("list.badge_sold", isEn() ? "Sold" : "팔림") };
     if (a === "ended") return { cls: "draft", text: tt("list.badge_ended", isEn() ? "Ended" : "끝남") };
-    if ((p.bid_count || 0) > 0) return { cls: "live", text: tt("list.badge_live", isEn() ? "Bidding" : "입찰 중") };
+    if (bidderCount(p) > 0) return { cls: "live", text: tt("list.badge_live", isEn() ? "Bidding" : "입찰 중") };
     if (p.listing_status === "pending") return { cls: "draft", text: tt("list.badge_review", isEn() ? "In review" : "검토 중") };
     return { cls: "live", text: tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기") };
+  }
+
+  /** Unique people who bid (not total bid events). */
+  function bidderCount(p) {
+    if (p == null) return 0;
+    if (p.bidder_count != null) return Number(p.bidder_count) || 0;
+    return Number(p.bid_count) || 0;
   }
 
   function formatPrice(p) {
@@ -201,7 +213,7 @@
     if (p.listing_status === "preview") {
       const cur = p.price_current != null ? p.price_current : p.price_start;
       return {
-        label: (p.bid_count || 0) > 0 ? tt("list.price_now", en ? "Current" : "지금 가격") : tt("list.price_start", en ? "Start" : "시작 가격"),
+        label: bidderCount(p) > 0 ? tt("list.price_now", en ? "Current" : "지금 가격") : tt("list.price_start", en ? "Start" : "시작 가격"),
         value: money(cur),
       };
     }
@@ -209,7 +221,7 @@
     if (cur != null) {
       return {
         label:
-          (p.bid_count || 0) > 0
+          bidderCount(p) > 0
             ? tt("list.price_now_pub", en ? "Current · public" : "지금 가격 · 공개")
             : tt("list.price_start_pub", en ? "Start · public" : "시작 가격 · 공개"),
         value: money(cur),
@@ -225,11 +237,18 @@
     return "/project.html?id=" + encodeURIComponent(p.id);
   }
 
-  function bidNoteText(bids) {
-    if (bids > 0) {
-      return isEn()
-        ? bids + " bids · public"
-        : bids + "명이 가격 씀 · 모두 공개";
+  function bidNoteText(bidders, top) {
+    if (bidders > 0) {
+      const base = isEn()
+        ? bidders + " bidders · public"
+        : bidders + "명 입찰 · 모두 공개";
+      if (top && top.label) {
+        const rank = top.buyer_rank && top.buyer_rank.label ? " · " + top.buyer_rank.label : "";
+        return isEn()
+          ? "Lead " + top.label + rank + " · " + base
+          : "최고 " + top.label + rank + " · " + base;
+      }
+      return base;
     }
     return tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기");
   }
@@ -240,11 +259,12 @@
     const price = formatPrice(p);
     const href = detailHref(p);
     const cats = p.cats || inferCats(p);
-    const bids = p.bid_count || 0;
+    const bids = bidderCount(p);
     const title = escapeHtml(p.title || "Untitled");
     const line = escapeHtml(oneLiner(p));
     const st = escapeHtml(statusLabel(p));
-    const bidNote = `<span class="listing-bid-note">${bidNoteText(bids)}</span>`;
+    const top = p.top_bidder || null;
+    const bidNote = `<span class="listing-bid-note">${escapeHtml(bidNoteText(bids, top))}</span>`;
     const ptype = escapeHtml(typeLabel(p));
     const typeBit =
       (ptype ? `<span class="listing-type-tag">${ptype}</span>` : "") +
@@ -358,7 +378,7 @@
     pool.sort(function (a, b) {
       const pd = heroPrice(b) - heroPrice(a);
       if (pd !== 0) return pd;
-      const bd = (b.bid_count || 0) - (a.bid_count || 0);
+      const bd = bidderCount(b) - bidderCount(a);
       if (bd !== 0) return bd;
       const ea = a.auction_ends_at ? Date.parse(a.auction_ends_at) : Infinity;
       const eb = b.auction_ends_at ? Date.parse(b.auction_ends_at) : Infinity;
@@ -447,10 +467,10 @@
     if (name) name.textContent = first.title || "—";
     if (sub) {
       if (fromApi) {
-        var bc = first.bid_count || 0;
+        var bc = bidderCount(first);
         sub.textContent = isEn()
-          ? bc + " bids · " + (first.auction_status || "live")
-          : bc + "회 입찰 · " + (first.auction_status || "live");
+          ? bc + " bidders · " + (first.auction_status || "live")
+          : bc + "명 입찰 · " + (first.auction_status || "live");
       } else {
         sub.textContent = oneLiner(first);
       }
@@ -469,7 +489,7 @@
     const badgeEl = card.querySelector(".live-badge");
     if (badgeEl) {
       const label =
-        fromApi && (first.bid_count || 0) > 0
+        fromApi && bidderCount(first) > 0
           ? "AUCTION LIVE"
           : fromApi
             ? "LISTED · PUBLIC"
@@ -539,11 +559,11 @@
       }
       const note = card.querySelector(".listing-bid-note");
       if (note) {
-        note.textContent = bidNoteText(a.bid_count || 0);
+        note.textContent = bidNoteText(bidderCount(a));
       }
       const badgeEl = card.querySelector(".badge");
       if (badgeEl) {
-        if ((a.bid_count || 0) > 0) {
+        if (bidderCount(a) > 0) {
           badgeEl.textContent = tt("list.badge_live", isEn() ? "Bidding" : "입찰 중");
           badgeEl.className = "badge live";
         } else if (

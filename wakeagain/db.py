@@ -1909,8 +1909,26 @@ def process_expired_auctions(conn: sqlite3.Connection) -> int:
     return n
 
 
+def public_bidder_handle(display_name: str | None, bidder_id: int | None = None) -> str:
+    """
+    Public nickname for auction boards.
+    Full display_name is OK (not email/phone). Email-like names are masked.
+    """
+    name = (display_name or "").strip()
+    if not name:
+        return f"입찰자#{int(bidder_id)}" if bidder_id else "입찰자"
+    if "@" in name:
+        local = name.split("@", 1)[0].strip() or "user"
+        if len(local) <= 2:
+            return local[0] + "**"
+        return local[:2] + "***"
+    if len(name) > 24:
+        return name[:24] + "…"
+    return name
+
+
 def bid_to_public(row: sqlite3.Row | dict) -> dict:
-    """Public bid ticker — no email/phone. display_name + optional buyer rank badge."""
+    """Public bid ticker — public handle + amount + optional buyer rank badge."""
 
     def _g(key: str, default=None):
         try:
@@ -1920,14 +1938,8 @@ def bid_to_public(row: sqlite3.Row | dict) -> dict:
         except (IndexError, KeyError):
             return default
 
-    name = (_g("display_name") or "").strip() if _g("display_name") is not None else ""
-    if not name:
-        name = "입찰자"
-    # soft anonymize: first char + **
-    if len(name) >= 2:
-        public_name = name[0] + "**"
-    else:
-        public_name = name + "**"
+    bidder_id = _g("bidder_id")
+    public_name = public_bidder_handle(_g("display_name"), int(bidder_id) if bidder_id else None)
     bought = int(_g("credit_bought") or 0)
     defaults = int(_g("credit_defaults") or 0)
     rank = buyer_rank(bought, defaults)
@@ -1937,6 +1949,7 @@ def bid_to_public(row: sqlite3.Row | dict) -> dict:
         "amount": _g("amount"),
         "bidder_label": public_name,
         "created_at": _g("created_at"),
+        "is_top": bool(_g("is_top")),
         "buyer_rank": None,
     }
     if rank["key"] != "scout":
@@ -1947,6 +1960,28 @@ def bid_to_public(row: sqlite3.Row | dict) -> dict:
             "caution": rank["caution"],
         }
     return out
+
+
+def top_bid_public(conn: sqlite3.Connection, project_id: int) -> dict | None:
+    """Highest bid for a listing — for price panel & marketplace cards."""
+    row = conn.execute(
+        """
+        SELECT b.*, u.display_name,
+               COALESCE(u.credit_bought, 0) AS credit_bought,
+               COALESCE(u.credit_defaults, 0) AS credit_defaults
+        FROM bids b
+        JOIN users u ON u.id = b.bidder_id
+        WHERE b.project_id = ?
+        ORDER BY b.amount DESC, b.id DESC
+        LIMIT 1
+        """,
+        (int(project_id),),
+    ).fetchone()
+    if not row:
+        return None
+    pub = bid_to_public(row)
+    pub["is_top"] = True
+    return pub
 
 
 def review_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
@@ -2007,10 +2042,10 @@ def showcase_to_dict(row: sqlite3.Row) -> dict:
     }
 
 
-def auction_snapshot(row: sqlite3.Row) -> dict:
+def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
     """Lightweight public payload for polling live boards."""
     p = project_to_dict(row, include_private=False)
-    return {
+    out = {
         "id": p["id"],
         "title": p["title"],
         "one_liner": p["one_liner"],
@@ -2025,7 +2060,15 @@ def auction_snapshot(row: sqlite3.Row) -> dict:
         "listing_status": p["listing_status"],
         "updated_at": p["updated_at"],
         "status": p["status"],
+        "top_bidder": None,
     }
+    if top_bid:
+        out["top_bidder"] = {
+            "label": top_bid.get("bidder_label"),
+            "amount": top_bid.get("amount"),
+            "buyer_rank": top_bid.get("buyer_rank"),
+        }
+    return out
 
 
 def refresh_project_bid_stats(conn: sqlite3.Connection, project_id: int) -> None:
