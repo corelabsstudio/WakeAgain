@@ -605,6 +605,7 @@ def compute_credit(row: sqlite3.Row | dict, trust: dict | None = None) -> dict:
             "on_time_payments": on_time,
             "defaults": defaults,
         },
+        "buyer_rank": buyer_rank(bought, defaults),
         "rules": CREDIT_RULES,
     }
 
@@ -858,6 +859,7 @@ def user_to_dict(row: sqlite3.Row, *, public: bool = False) -> dict:
             "grade": credit["grade"],
             "label": credit["label"],
             "counts": credit["counts"],
+            "buyer_rank": credit.get("buyer_rank"),
         },
     }
     if public:
