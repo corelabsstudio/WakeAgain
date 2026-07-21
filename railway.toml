@@ -1,9 +1,10 @@
 [build]
-# Railway Builder enum: HEROKU | NIXPACKS | PAKETO | RAILPACK (no DOCKERFILE enum)
-# RAILPACK auto-detects Dockerfile in repo root
-builder = "RAILPACK"
+# Prefer Dockerfile so PORT is expanded via shell CMD (nixpacks/$PORT literal breaks uvicorn).
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
+startCommand = "sh -c 'exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}'"
