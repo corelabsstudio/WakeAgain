@@ -46,6 +46,22 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
+  <!-- Installed PWA / app mode: open app shell, not marketing homepage -->
+  <script>
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search || "");
+        var standalone =
+          (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+          window.navigator.standalone === true;
+        // ?landing=1 keeps marketing page even in standalone (debug)
+        if (q.get("landing") === "1") return;
+        if (standalone || q.get("source") === "pwa") {
+          location.replace("/app/" + (location.hash || "#list"));
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
