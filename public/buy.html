@@ -45,7 +45,7 @@
     <p class="eyebrow" data-i18n="buy.eyebrow">구매자 · 관심 등록</p>
     <h1 data-i18n="buy.title">관심 등록하기</h1>
     <p class="lede" data-i18n="buy.lede_html" data-i18n-html>맞는 카드가 모이면 알려 드립니다. <strong>경량 관심 등록</strong>은 이메일만으로 가능합니다. 이후 <strong>입찰·성사</strong> 단계에서는 이메일 인증과 실명·휴대폰(및 정산) 확인이 필요합니다.</p>
-    <p class="trust-inline-note muted fine" data-i18n="buy.trust_html" data-i18n-html><a class="text-link" href="/app/#register">계정 만들기</a> · 입찰 준비 시 신원 확인(Lv2)</p>
+    <p class="trust-inline-note muted fine" data-i18n="buy.trust_html" data-i18n-html><a class="text-link" href="/app/#register">계정 만들기</a> · 입찰은 이메일 인증(Lv1) · 낙찰 후 결제·인수 때 실명·휴대폰(Lv2)</p>
 
     <form class="form-card" id="buyForm" novalidate>
       <input type="hidden" name="type" value="buy" />
@@ -100,7 +100,11 @@
   </main>
 
   <footer class="site-footer compact-footer">
-    <p class="footer-broker-notice">
+        <div class="corelabs-brand-row">
+      <img class="corelabs-mark" src="/assets/corelabs-logo-mark-light.png" alt="CoreLabs" width="22" height="22" loading="lazy" decoding="async" />
+      <span class="muted fine">운영 · 코어랩스(CoreLabs)</span>
+    </div>
+<p class="footer-broker-notice">
       <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
       <span class="footer-broker-sub" data-i18n="footer.broker_sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
     </p>
@@ -112,6 +116,7 @@
     </p>
     <p class="footer-copy muted" data-i18n="footer.op_short">운영 코어랩스(CoreLabs) · Powered by CoreLabs</p>
   </footer>
+  <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260720c"></script>
   <script src="/js/i18n.js?v=20260720c"></script>
 

@@ -126,7 +126,7 @@
     <h2 style="font-size:1.15rem;margin:1.5rem 0 0.65rem">한 줄 흐름</h2>
     <ol class="guide-steps">
       <li><strong>올리기</strong> — 데모·시작가 등록 → 형식 검수 후 공개 (등록 무료)</li>
-      <li><strong>가격 쓰기</strong> — 지금 가격·남은 시간 보고 입찰 (Lv2 신원 필요)</li>
+      <li><strong>가격 쓰기</strong> — 지금 가격·남은 시간 보고 입찰 (이메일 인증 Lv1이면 가능)</li>
       <li><strong>입금·이전</strong> — 낙찰 후 안내에 따라 빠르게 입금 → 확인 후 자산 이전</li>
     </ol>
 
@@ -141,7 +141,7 @@
     <h2 style="font-size:1.15rem;margin:1.5rem 0 0.65rem">살 때 (구매자)</h2>
     <ol class="guide-steps">
       <li>마켓에서 지금 가격·남은 시간·데모를 확인</li>
-      <li>입찰은 <strong>Lv2</strong> (실명·휴대폰) 필요 · 즉시구매는 판매자가 <strong>선택</strong>으로 켠 매물만</li>
+      <li>입찰은 <strong>Lv1</strong> (이메일 인증) · 낙찰 후 결제·인수는 <strong>Lv2</strong> (실명·휴대폰) · 즉시구매는 판매자가 <strong>선택</strong>으로 켠 매물만</li>
       <li>낙찰되면 회사·판매자 안내에 따라 <strong>빠르게 입금</strong> (1시간 자동 타이머는 PG 연동 후)</li>
       <li>미입금 시 낙찰 무효·다음 순위 전환 가능 · 사이트 내 신용 점수 반영 가능</li>
     </ol>
@@ -149,9 +149,9 @@
     <h2 style="font-size:1.15rem;margin:1.5rem 0 0.65rem">신원 단계 (Lv)</h2>
     <table class="guide-table">
       <tr><th>Lv0 가입</th><td>이메일·비밀번호 · 공개 매물 열람 · 관심 등록</td></tr>
-      <tr><th>Lv1 이메일</th><td>이메일 인증 완료 · 프로필 입력</td></tr>
-      <tr><th>Lv2 신원</th><td>실명·휴대폰 · 매물 등록·입찰</td></tr>
-      <tr><th>Lv3 정산 계좌</th><td>예금주·은행·계좌 · 성사·이전·수수료 단계</td></tr>
+      <tr><th>Lv1 이메일</th><td>이메일 인증 · <strong>입찰</strong> · 관심</td></tr>
+      <tr><th>Lv2 신원</th><td>실명·휴대폰 · 매물 등록 · <strong>낙찰 후 결제·인수</strong></td></tr>
+      <tr><th>Lv3 정산 계좌</th><td>예금주·은행·계좌 · 판매자 정산·성사 확정</td></tr>
     </table>
 
     <h2 style="font-size:1.15rem;margin:1.5rem 0 0.65rem">즉시구매 (선택)</h2>
@@ -216,7 +216,11 @@
   </main>
 
   <footer class="site-footer compact-footer">
-    <p class="footer-broker-notice">
+        <div class="corelabs-brand-row">
+      <img class="corelabs-mark" src="/assets/corelabs-logo-mark-light.png" alt="CoreLabs" width="22" height="22" loading="lazy" decoding="async" />
+      <span class="muted fine">운영 · 코어랩스(CoreLabs)</span>
+    </div>
+<p class="footer-broker-notice">
       <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
       <span class="footer-broker-sub" data-i18n="footer.broker_sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
     </p>
@@ -225,6 +229,7 @@
       <a href="/legal/terms.html" data-i18n="footer.terms">이용약관</a>
     </p>
   </footer>
+  <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260720c"></script>
   <script src="/js/i18n.js?v=20260720c"></script>
 </body>

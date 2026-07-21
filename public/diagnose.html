@@ -53,6 +53,52 @@
     .diag-price-box {
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     }
+    .diag-disclaimer {
+      margin: 0 0 1.1rem;
+      padding: 0.95rem 1rem 1.05rem;
+      border-radius: 14px;
+      border: 2px solid rgba(251, 191, 36, 0.55);
+      background: linear-gradient(145deg, rgba(120, 53, 15, 0.45), rgba(15, 15, 22, 0.92));
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+    }
+    .diag-disclaimer-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #1c1917;
+      background: linear-gradient(90deg, #fcd34d, #fbbf24);
+      padding: 0.28rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+    .diag-disclaimer-title {
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fef3c7;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+    .diag-disclaimer-body {
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: #f5f5f4;
+      word-break: keep-all;
+    }
+    .diag-disclaimer-body strong { color: #fde68a; font-weight: 800; }
+    .diag-disclaimer--compact {
+      margin: 0.75rem 0 0;
+      padding: 0.65rem 0.75rem;
+      border-width: 1px;
+      border-color: rgba(251, 191, 36, 0.4);
+    }
+    .diag-disclaimer--compact .diag-disclaimer-title {
+      font-size: 0.9rem;
+      margin: 0;
+    }
     .diag-result-score {
       font-size: 2.4rem; font-weight: 800; margin: 0.25rem 0;
       background: linear-gradient(120deg, var(--purple), var(--pink));
@@ -95,8 +141,8 @@
   <main class="legal-page diag-wrap">
     <p class="eyebrow" data-i18n="diag.eyebrow">30초 무료 진단 · 가입 불필요</p>
     <h1 data-i18n="diag.title">내 프로젝트는 얼마일까?</h1>
-    <p class="lede" style="line-height:1.55" data-i18n="diag.lede">
-      다섯 질문에 답하면 올리기 준비도와 시작가 힌트를 바로 알려 드립니다. 과장 없는 가이드일 뿐, 판매 보증이 아닙니다.
+    <p class="lede" style="line-height:1.55" data-i18n="diag.lede" data-i18n-html>
+      30초면 끝 — <strong>시작가 힌트</strong>로 가격 감을 잡고, <strong>올리기 준비도</strong>로 지금 올릴지·손볼지 바로 판단하세요. 과장 없는 가이드일 뿐, 판매 보증이 아닙니다.
     </p>
 
     <div class="diag-progress" aria-hidden="true"><i id="diagBar"></i></div>
@@ -162,6 +208,19 @@
     <!-- Result -->
     <section class="diag-step form-card" data-step="5" id="step5">
       <p class="eyebrow" data-i18n="diag.result">결과</p>
+
+      <div class="diag-disclaimer" role="note" aria-label="진단 면책">
+        <span class="diag-disclaimer-badge" data-i18n="diag.disclaimer_badge">감정가 아님 · 면책</span>
+        <p class="diag-disclaimer-title" data-i18n="diag.disclaimer_title">
+          이 진단은 통계에 기반한 힌트이며, 실제 거래 가격과 무관합니다.
+        </p>
+        <p class="diag-disclaimer-body" data-i18n="diag.disclaimer_body" data-i18n-html>
+          공식 감정·시세·판매 보장이 <strong>아닙니다</strong>.
+          시작가·준비도는 입력 답변과 내부 가이드 구간으로 만든 <strong>참고용 힌트</strong>일 뿐입니다.
+          실제 낙찰·합의 가격은 시장·데모·경쟁 입찰에 따라 달라집니다.
+        </p>
+      </div>
+
       <p class="muted fine" id="diagLabel" data-i18n="diag.label_ready">올리기 준비도</p>
       <p class="diag-result-score" id="diagScore">—</p>
       <p class="muted" id="diagVerdict" style="line-height:1.5"></p>
@@ -171,10 +230,27 @@
         <p style="margin:0"><strong id="diagPrice">—</strong></p>
         <p class="muted fine" id="diagPriceRange" style="margin:0.4rem 0 0"></p>
         <p class="muted fine" id="diagPriceNote" style="margin:0.35rem 0 0;line-height:1.45"></p>
+        <div class="diag-disclaimer diag-disclaimer--compact" role="note">
+          <p class="diag-disclaimer-title" data-i18n="diag.disclaimer_title">
+            이 진단은 통계에 기반한 힌트이며, 실제 거래 가격과 무관합니다.
+          </p>
+        </div>
       </div>
 
       <p class="muted fine" style="margin:0 0 0.25rem"><strong data-i18n="diag.next_steps">다음에 할 일</strong></p>
       <ul class="diag-list" id="diagChecks"></ul>
+
+      <div class="diag-disclaimer" role="note" style="margin-top:1.15rem">
+        <span class="diag-disclaimer-badge" data-i18n="diag.disclaimer_badge">감정가 아님 · 면책</span>
+        <p class="diag-disclaimer-title" data-i18n="diag.disclaimer_title">
+          이 진단은 통계에 기반한 힌트이며, 실제 거래 가격과 무관합니다.
+        </p>
+        <p class="diag-disclaimer-body" data-i18n="diag.disclaimer_body" data-i18n-html>
+          공식 감정·시세·판매 보장이 <strong>아닙니다</strong>.
+          시작가·준비도는 입력 답변과 내부 가이드 구간으로 만든 <strong>참고용 힌트</strong>일 뿐입니다.
+          실제 낙찰·합의 가격은 시장·데모·경쟁 입찰에 따라 달라집니다.
+        </p>
+      </div>
 
       <div class="diag-cta">
         <a class="btn btn-primary btn-lg" href="/showcase-new.html" id="diagShowcase" data-i18n="diag.showcase">자랑 등록하기</a>
@@ -186,7 +262,11 @@
   </main>
 
   <footer class="site-footer compact-footer">
-    <p class="footer-broker-notice">
+        <div class="corelabs-brand-row">
+      <img class="corelabs-mark" src="/assets/corelabs-logo-mark-light.png" alt="CoreLabs" width="22" height="22" loading="lazy" decoding="async" />
+      <span class="muted fine">운영 · 코어랩스(CoreLabs)</span>
+    </div>
+<p class="footer-broker-notice">
       <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
       <span class="footer-broker-sub" data-i18n="footer.broker_sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
     </p>
@@ -195,8 +275,9 @@
     </p>
   </footer>
 
-  <script src="/js/i18n-messages.js?v=20260720c"></script>
-  <script src="/js/i18n.js?v=20260720c"></script>
+  <script src="/js/ui-sound.js?v=20260722a"></script>
+  <script src="/js/i18n-messages.js?v=20260721h"></script>
+  <script src="/js/i18n.js?v=20260721h"></script>
   <script>
     (function () {
       function tt(key, vars) {
