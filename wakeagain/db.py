@@ -1764,12 +1764,88 @@ def mark_deal_disputed(
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
 
 
+def second_bidder_auto_enabled() -> bool:
+    """When primary winner misses payment, re-award to next highest unique bidder."""
+    raw = (os.environ.get("SECOND_BIDDER_AUTO") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def next_bid_after_default(
+    conn: sqlite3.Connection, project_id: int, excluded_buyer_id: int | None
+) -> sqlite3.Row | None:
+    """Highest bid from a different bidder than the defaulted winner."""
+    if excluded_buyer_id is None:
+        return conn.execute(
+            """
+            SELECT * FROM bids WHERE project_id = ?
+            ORDER BY amount DESC, id DESC LIMIT 1
+            """,
+            (int(project_id),),
+        ).fetchone()
+    return conn.execute(
+        """
+        SELECT * FROM bids
+        WHERE project_id = ? AND bidder_id != ?
+        ORDER BY amount DESC, id DESC
+        LIMIT 1
+        """,
+        (int(project_id), int(excluded_buyer_id)),
+    ).fetchone()
+
+
+def reaward_to_next_bidder(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    excluded_buyer_id: int | None,
+) -> sqlite3.Row | None:
+    """
+    After payment default: offer sale to next-highest unique bidder.
+    Returns re-awarded project row, or None if no eligible second bid.
+    """
+    pid = int(row["id"])
+    nxt = next_bid_after_default(conn, pid, excluded_buyer_id)
+    if not nxt:
+        return None
+    amount = int(nxt["amount"])
+    bidder_id = int(nxt["bidder_id"])
+    if amount <= 0:
+        return None
+    awarded = finalize_sale(
+        conn,
+        row,
+        sold_price=amount,
+        buyer_id=bidder_id,
+        note="1순위 미입금 · 차순위 자동 낙찰",
+    )
+    # Tag note for clarity
+    conn.execute(
+        """
+        UPDATE projects SET deal_note = ?
+        WHERE id = ?
+        """,
+        (
+            f"1순위 미입금 → 차순위 자동 낙찰 ₩{amount:,} (bidder#{bidder_id})",
+            pid,
+        ),
+    )
+    notify(
+        conn,
+        int(row["owner_id"]),
+        "차순위 자동 낙찰",
+        f"「{row['title']}」 1순위 미입금으로 차순위 ₩{amount:,} 에 자동 낙찰되었습니다. 새 구매자 입금 대기.",
+        f"/project.html?id={pid}",
+    )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone() or awarded
+
+
 def void_for_nonpayment(conn: sqlite3.Connection, row: sqlite3.Row) -> sqlite3.Row:
-    """Buyer missed payment deadline → void award, credit penalty, end listing."""
+    """Buyer missed payment deadline → void award, credit penalty; optional 2nd bidder re-award."""
     now = _now()
     pid = int(row["id"])
     buyer_id = _row_get(row, "buyer_id")
     owner_id = int(row["owner_id"])
+    title = row["title"]
     conn.execute(
         """
         UPDATE projects SET
@@ -1795,23 +1871,32 @@ def void_for_nonpayment(conn: sqlite3.Connection, row: sqlite3.Row) -> sqlite3.R
             conn,
             int(buyer_id),
             "입금 기한 초과",
-            f"「{row['title']}」 입금 기한이 지나 낙찰이 무효 처리되었습니다. 사이트 내 신용 점수가 반영됩니다.",
+            f"「{title}」 입금 기한이 지나 낙찰이 무효 처리되었습니다. 사이트 내 신용 점수가 반영됩니다.",
             f"/project.html?id={pid}",
         )
     notify(
         conn,
         owner_id,
         "구매자 미입금",
-        f"「{row['title']}」 구매자가 기한 내 입금하지 않아 낙찰이 무효 처리되었습니다.",
+        f"「{title}」 구매자가 기한 내 입금하지 않아 낙찰이 무효 처리되었습니다.",
         f"/project.html?id={pid}",
     )
-    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+    # Second-chance: next highest unique bidder gets a fresh payment window
+    if second_bidder_auto_enabled() and buyer_id:
+        reawarded = reaward_to_next_bidder(
+            conn, row, excluded_buyer_id=int(buyer_id)
+        )
+        if reawarded is not None:
+            return reawarded
+    return row
 
 
 def process_deal_deadlines(conn: sqlite3.Connection) -> dict[str, int]:
     """Payment timeout + inspection auto-accept. Returns counts."""
     now = datetime.now(timezone.utc)
-    out = {"payment_default": 0, "auto_settled": 0}
+    out = {"payment_default": 0, "auto_settled": 0, "second_bidder_awards": 0}
     # unpaid
     rows = conn.execute(
         """
@@ -1824,8 +1909,18 @@ def process_deal_deadlines(conn: sqlite3.Connection) -> dict[str, int]:
     for row in rows:
         dl = _parse_iso(str(row["payment_deadline_at"] or ""))
         if dl and now > dl:
-            void_for_nonpayment(conn, row)
+            before_buyer = _row_get(row, "buyer_id")
+            after = void_for_nonpayment(conn, row)
             out["payment_default"] += 1
+            after_buyer = _row_get(after, "buyer_id") if after else None
+            after_status = (_row_get(after, "deal_status") or "") if after else ""
+            if (
+                after_status == "awaiting_payment"
+                and after_buyer
+                and before_buyer
+                and int(after_buyer) != int(before_buyer)
+            ):
+                out["second_bidder_awards"] += 1
     # inspection auto complete
     rows2 = conn.execute(
         """

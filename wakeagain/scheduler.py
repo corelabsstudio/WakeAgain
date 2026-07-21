@@ -49,12 +49,14 @@ def status() -> dict[str, Any]:
 
 
 def run_once() -> int:
-    """Process expired auctions once. Returns number closed."""
+    """Process expired auctions + deal deadlines (pay / auto-settle)."""
     closed = 0
+    deals: dict = {}
     err: str | None = None
     try:
         with database.db() as conn:
             closed = int(database.process_expired_auctions(conn) or 0)
+            deals = database.process_deal_deadlines(conn) or {}
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
         traceback.print_exc()
@@ -62,11 +64,22 @@ def run_once() -> int:
     with _lock:
         _state["last_run_at"] = now
         _state["last_closed"] = closed
+        _state["last_deals"] = deals
         _state["last_ok"] = err is None
         _state["last_error"] = err
         _state["runs"] = int(_state.get("runs") or 0) + 1
     if closed:
         print(f"[WakeAgain] scheduler: closed {closed} auction(s)")
+    if deals and (
+        deals.get("payment_default")
+        or deals.get("auto_settled")
+        or deals.get("second_bidder_awards")
+    ):
+        print(
+            f"[WakeAgain] scheduler deals: default={deals.get('payment_default', 0)} "
+            f"auto_settled={deals.get('auto_settled', 0)} "
+            f"second={deals.get('second_bidder_awards', 0)}"
+        )
     return closed
 
 

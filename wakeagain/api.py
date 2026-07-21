@@ -399,7 +399,7 @@ def client_config():
             "background_scheduler": True,
             "payment_link_auto": False,
             "one_hour_timer_auto": True,
-            "second_bidder_auto": False,
+            "second_bidder_auto": database.second_bidder_auto_enabled(),
             "buyer_protection": True,
             "no_pre_pg_fallback": True,
             "deal": database.deal_policy_public(),
@@ -1490,27 +1490,42 @@ def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_use
             (project_id, user["id"], amount, now),
         )
         bid_id = int(cur.lastrowid)
+        # Race-safe: price_current always reflects MAX bid (not last writer wins)
         conn.execute(
             """
             UPDATE projects
-            SET price_current = ?, updated_at = ?
+            SET price_current = (
+                  SELECT COALESCE(MAX(amount), ?)
+                  FROM bids WHERE project_id = ?
+                ),
+                updated_at = ?
             WHERE id = ?
             """,
-            (amount, now, project_id),
+            (int(row["price_start"] or amount), project_id, now, project_id),
         )
         database.refresh_project_bid_stats(conn, project_id)
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        current = int(row["price_current"] or 0)
         # optional: hit buy_now → finalize (payment deadline starts)
-        if buy_now is not None and amount >= int(buy_now):
-            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
-            row = database.finalize_sale(
-                conn,
-                row,
-                sold_price=amount,
-                buyer_id=user["id"],
-                note="즉시구매가 도달 · 자동 성사",
-            )
+        # only if this bid is still the winning (max) amount
+        if buy_now is not None and amount >= int(buy_now) and current >= int(buy_now):
+            # winner = highest bid holder
+            top = conn.execute(
+                """
+                SELECT * FROM bids WHERE project_id = ?
+                ORDER BY amount DESC, id DESC LIMIT 1
+                """,
+                (project_id,),
+            ).fetchone()
+            if top:
+                row = database.finalize_sale(
+                    conn,
+                    row,
+                    sold_price=int(top["amount"]),
+                    buyer_id=int(top["bidder_id"]),
+                    note="즉시구매가 도달 · 자동 성사",
+                )
         else:
-            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
             database.notify(
                 conn,
                 int(row["owner_id"]),
@@ -1518,6 +1533,7 @@ def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_use
                 f"「{row['title']}」에 ₩{amount:,} 입찰이 들어왔습니다.",
                 f"/project.html?id={project_id}",
             )
+            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         bid_row = conn.execute(
             """
             SELECT b.*, u.display_name FROM bids b
