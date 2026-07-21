@@ -626,6 +626,25 @@
   margin: 0.75rem 0 0;
   font-size: 0.85rem;
 }
+.remember-login,
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted, #a1a1aa);
+  cursor: pointer;
+  user-select: none;
+}
+.remember-login input,
+.check-row input {
+  margin-top: 0.15rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--purple, #7c3aed);
+  flex-shrink: 0;
+}
 /* SNS login */
 .social-login {
   margin: 0 0 1.1rem;

@@ -57,7 +57,7 @@
         // ?landing=1 keeps marketing page even in standalone (debug)
         if (q.get("landing") === "1") return;
         if (standalone || q.get("source") === "pwa") {
-          location.replace("/app/" + (location.hash || "#list"));
+          location.replace("/app/?source=pwa#login");
         }
       } catch (e) {}
     })();

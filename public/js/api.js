@@ -7,6 +7,8 @@
   const STORAGE_USER = "wa_user";
   const STORAGE_API = "wa_api_base";
   const STORAGE_DEV_CODE = "wa_dev_email_code";
+  /** Device-local saved email/password for "remember login" (not the session token). */
+  const STORAGE_SAVED_LOGIN = "wa_saved_login";
 
   function apiBase() {
     const saved = localStorage.getItem(STORAGE_API);
@@ -114,6 +116,43 @@
     return data;
   }
 
+  function getSavedLogin() {
+    try {
+      const raw = localStorage.getItem(STORAGE_SAVED_LOGIN);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return null;
+      return {
+        email: String(o.email || "").trim(),
+        password: String(o.password || ""),
+        remember: o.remember !== false,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function setSavedLogin(email, password) {
+    const e = String(email || "").trim();
+    if (!e) {
+      localStorage.removeItem(STORAGE_SAVED_LOGIN);
+      return;
+    }
+    localStorage.setItem(
+      STORAGE_SAVED_LOGIN,
+      JSON.stringify({
+        email: e,
+        password: String(password || ""),
+        remember: true,
+        saved_at: Date.now(),
+      })
+    );
+  }
+
+  function clearSavedLogin() {
+    localStorage.removeItem(STORAGE_SAVED_LOGIN);
+  }
+
   const api = {
     apiBase,
     request,
@@ -124,12 +163,16 @@
     token,
     getUser,
     getDevCode,
+    getSavedLogin,
+    setSavedLogin,
+    clearSavedLogin,
     clearDevCode() {
       setDevCode(null);
     },
     clearSession() {
       setSession(null, null);
       setDevCode(null);
+      // keep saved login credentials for next open
     },
     trust() {
       const u = getUser();
@@ -201,6 +244,24 @@
         method: "POST",
         body: JSON.stringify(payload || { use_current_bid: true }),
       });
+    },
+    async dealMarkTransferred(projectId, note) {
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/deal/mark-transferred",
+        { method: "POST", body: JSON.stringify({ note: note || "" }) }
+      );
+    },
+    async dealAccept(projectId, note) {
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/deal/accept",
+        { method: "POST", body: JSON.stringify({ note: note || "" }) }
+      );
+    },
+    async dealDispute(projectId, note) {
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/deal/dispute",
+        { method: "POST", body: JSON.stringify({ note: note || "" }) }
+      );
     },
     async listNotifications() {
       return request("/api/v1/notifications");

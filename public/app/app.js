@@ -105,6 +105,41 @@
     $("formRegister").hidden = tab !== "register";
     if ($("formReset")) $("formReset").hidden = true;
     history.replaceState(null, "", tab === "register" ? "#register" : "#login");
+    if (tab === "login") fillSavedLoginForm();
+  }
+
+  function isAppLaunch() {
+    try {
+      const q = new URLSearchParams(location.search || "");
+      const standalone =
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        window.navigator.standalone === true;
+      const native =
+        window.Capacitor &&
+        window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform();
+      return standalone || native || q.get("source") === "pwa";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Prefill email/password from "로그인 정보 저장" on this device. */
+  function fillSavedLoginForm() {
+    if (!$("loginEmail")) return;
+    let saved = null;
+    try {
+      saved = api.getSavedLogin && api.getSavedLogin();
+    } catch (e) {
+      saved = null;
+    }
+    if (!saved || !saved.email) {
+      if ($("loginRemember")) $("loginRemember").checked = false;
+      return;
+    }
+    $("loginEmail").value = saved.email;
+    if ($("loginPass") && saved.password) $("loginPass").value = saved.password;
+    if ($("loginRemember")) $("loginRemember").checked = true;
   }
 
   function trustOf(user) {
@@ -159,9 +194,9 @@
       if (prof) prof.hidden = false;
       if (notif) notif.hidden = false;
       if (fees) fees.hidden = false;
-      const t = trustOf(u);
+      const trust = trustOf(u);
       const c = u.credit || {};
-      const level = t.level != null ? Number(t.level) : 0;
+      const level = trust.level != null ? Number(trust.level) : 0;
       if (badge) {
         badge.hidden = false;
         badge.className = "trust-badge trust-badge--l" + Math.min(3, Math.max(0, level));
@@ -175,7 +210,7 @@
         badge.title =
           "신뢰 레벨(자격) Lv" +
           level +
-          (t.label ? " · " + t.label : "") +
+          (trust.label ? " · " + trust.label : "") +
           (c.score != null ? " / 사이트 내 신용 점수 " + c.score + (c.label ? " " + c.label : "") : "") +
           " · 자세한 산식은 사이트 내 신용 점수 안내";
       }
@@ -321,13 +356,13 @@
       return;
     }
     if (gate) gate.hidden = true;
-    const t = trustOf(u);
+    const trust = trustOf(u);
     if (!banner) return;
-    if (t.can_list && t.deal_ready) {
+    if (trust.can_list && trust.deal_ready) {
       banner.hidden = false;
       banner.className = "trust-banner is-ok";
       banner.innerHTML = t("app.banner_l3", "신뢰 Lv3 · 거래 준비 완료. 성사 단계에서 정산 계좌를 사용합니다.");
-    } else if (t.can_list) {
+    } else if (trust.can_list) {
       banner.hidden = false;
       banner.className = "trust-banner";
       banner.innerHTML =
@@ -335,7 +370,7 @@
       setTimeout(() => {
         $("bannerSettle")?.addEventListener("click", () => setView("settle"));
       }, 0);
-    } else if (!t.email_verified) {
+    } else if (!trust.email_verified) {
       banner.hidden = false;
       banner.className = "trust-banner is-warn";
       banner.innerHTML =
@@ -346,7 +381,7 @@
           setView("verify");
         });
       }, 0);
-    } else if (!t.profile_complete) {
+    } else if (!trust.profile_complete) {
       banner.hidden = false;
       banner.className = "trust-banner is-warn";
       banner.innerHTML =
@@ -430,26 +465,26 @@
       return false;
     }
     const u = api.getUser();
-    const t = trustOf(u);
-    if (!t.email_verified) {
+    const trust = trustOf(u);
+    if (!trust.email_verified) {
       pendingAfterAuth = "create";
       showDevCode();
       setView("verify");
       return false;
     }
-    if (!t.profile_complete) {
+    if (!trust.profile_complete) {
       pendingAfterAuth = "create";
       fillProfileForm(u);
       setView("profile");
       return false;
     }
-    if (!t.seller_identity_complete) {
+    if (!trust.seller_identity_complete) {
       pendingAfterAuth = "create";
       fillSellerIdForm(u);
       setView("sellerId");
       return false;
     }
-    if (!t.can_list) {
+    if (!trust.can_list) {
       pendingAfterAuth = "create";
       fillProfileForm(u);
       setView("profile");
@@ -460,7 +495,7 @@
 
   async function afterAuthSuccess() {
     const u = api.getUser();
-    const t = trustOf(u);
+    const trust = trustOf(u);
     const next = pendingAfterAuth;
     pendingAfterAuth = null;
     const note = $("authNeedNote");
@@ -472,22 +507,22 @@
       return;
     }
 
-    if (!t.email_verified) {
+    if (!trust.email_verified) {
       showDevCode();
       setView("verify");
       return;
     }
-    if (next === "create" && !t.profile_complete) {
+    if (next === "create" && !trust.profile_complete) {
       fillProfileForm(u);
       setView("profile");
       return;
     }
-    if (next === "create" && !t.seller_identity_complete) {
+    if (next === "create" && !trust.seller_identity_complete) {
       fillSellerIdForm(u);
       setView("sellerId");
       return;
     }
-    if (next === "create" && t.can_list) {
+    if (next === "create" && trust.can_list) {
       setView("create");
       return;
     }
@@ -518,7 +553,8 @@
         "<p class='p-live'></p>" +
         "</div>";
       const cur = p.price_current != null ? p.price_current : p.price_start;
-      const bids = p.bid_count || 0;
+      const bids =
+        p.bidder_count != null ? Number(p.bidder_count) || 0 : Number(p.bid_count) || 0;
       const enLang =
         window.WakeAgainI18n &&
         window.WakeAgainI18n.getLang &&
@@ -576,7 +612,9 @@
       el.querySelector(".p-meta").textContent = [
         typeBit,
         statusBit,
-        bids > 0 ? t("app.bids_n", "가격 {n}번 씀", { n: bids }) : t("app.bids_none", "아직 가격 없음"),
+        bids > 0
+          ? t("app.bids_n", "입찰자 {n}명", { n: bids })
+          : t("app.bids_none", "아직 입찰자 없음"),
       ]
         .filter(Boolean)
         .join(" · ");
@@ -691,10 +729,10 @@
 
   // 가입: 생년월일 max = 오늘, 힌트용 min 나이 경계는 서버가 최종 판단
   if ($("regBirth")) {
-    const t = new Date();
-    const yyyy = t.getFullYear();
-    const mm = String(t.getMonth() + 1).padStart(2, "0");
-    const dd = String(t.getDate()).padStart(2, "0");
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
     $("regBirth").setAttribute("max", yyyy + "-" + mm + "-" + dd);
   }
 
@@ -718,8 +756,15 @@
     showErr($("loginErr"));
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
+    const email = $("loginEmail").value.trim();
+    const pass = $("loginPass").value;
+    const remember = !!($("loginRemember") && $("loginRemember").checked);
     try {
-      await api.login($("loginEmail").value.trim(), $("loginPass").value);
+      await api.login(email, pass);
+      try {
+        if (remember) api.setSavedLogin(email, pass);
+        else api.clearSavedLogin();
+      } catch (e2) {}
       await afterAuthSuccess();
     } catch (err) {
       showErr($("loginErr"), err.message || t("app.login_fail", "로그인에 실패했습니다."));
@@ -856,11 +901,11 @@
     try {
       await api.verifyEmail($("verifyCode").value.trim());
       const u = api.getUser();
-      const t = trustOf(u);
-      if (!t.profile_complete) {
+      const trust = trustOf(u);
+      if (!trust.profile_complete) {
         fillProfileForm(u);
         setView("profile");
-      } else if (!t.seller_identity_complete) {
+      } else if (!trust.seller_identity_complete) {
         fillSellerIdForm(u);
         setView("sellerId");
       } else {
@@ -893,16 +938,16 @@
         display_name: $("profDisplay").value.trim(),
       });
       const u = api.getUser();
-      const t = trustOf(u);
+      const trust = trustOf(u);
       if (pendingAfterAuth === "create") {
-        if (!t.seller_identity_complete) {
+        if (!trust.seller_identity_complete) {
           fillSellerIdForm(u);
           setView("sellerId");
         } else {
           pendingAfterAuth = null;
           setView("create");
         }
-      } else if (!t.seller_identity_complete && (u.role === "seller" || u.role === "both")) {
+      } else if (!trust.seller_identity_complete && (u.role === "seller" || u.role === "both")) {
         fillSellerIdForm(u);
         setView("sellerId");
       } else {
@@ -978,6 +1023,7 @@
     });
     setView("auth");
     switchAuthTab("login");
+    fillSavedLoginForm();
     syncChrome();
   });
 
@@ -985,6 +1031,7 @@
     pendingAfterAuth = "list";
     setView("auth");
     switchAuthTab("login");
+    fillSavedLoginForm();
   });
 
   async function openProfile() {
@@ -993,8 +1040,8 @@
       return;
     }
     const u = api.getUser();
-    const t = trustOf(u);
-    if (!t.email_verified) {
+    const trust = trustOf(u);
+    if (!trust.email_verified) {
       showDevCode();
       setView("verify");
       return;
@@ -1353,8 +1400,8 @@
     }
     if (route === "profile") {
       if (await ensureSession()) {
-        const t = trustOf(api.getUser());
-        if (!t.email_verified) {
+        const trust = trustOf(api.getUser());
+        if (!trust.email_verified) {
           showDevCode();
           setView("verify");
         } else {
@@ -1366,11 +1413,11 @@
     }
     if (route === "seller") {
       if (await ensureSession()) {
-        const t = trustOf(api.getUser());
-        if (!t.email_verified) {
+        const trust = trustOf(api.getUser());
+        if (!trust.email_verified) {
           showDevCode();
           setView("verify");
-        } else if (!t.profile_complete) {
+        } else if (!trust.profile_complete) {
           fillProfileForm(api.getUser());
           setView("profile");
         } else {
@@ -1406,10 +1453,10 @@
 
   if ($("formAge")) {
     if ($("ageBirth")) {
-      const t = new Date();
-      const yyyy = t.getFullYear();
-      const mm = String(t.getMonth() + 1).padStart(2, "0");
-      const dd = String(t.getDate()).padStart(2, "0");
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
       $("ageBirth").setAttribute("max", yyyy + "-" + mm + "-" + dd);
     }
     $("formAge").addEventListener("submit", async (e) => {
@@ -1485,12 +1532,31 @@
     } catch (e) {
       console.warn("pricing", e);
     }
-    await ensureSession();
+    const sessionOk = await ensureSession();
     const u0 = api.getUser();
-    if (api.isLoggedIn() && u0 && (u0.needs_age_gate || !u0.birth_date)) {
+    if (sessionOk && u0 && (u0.needs_age_gate || !u0.birth_date)) {
       setView("age");
       return;
     }
+
+    // App / PWA launch: land on login when signed out; if session exists, open marketplace
+    if (isAppLaunch()) {
+      if (!sessionOk) {
+        history.replaceState(null, "", location.pathname + location.search + "#login");
+        setView("auth");
+        switchAuthTab("login");
+        fillSavedLoginForm();
+        return;
+      }
+      // signed in: avoid stuck on #login from start_url
+      const h0 = (location.hash || "").replace(/^#/, "").toLowerCase();
+      if (!h0 || h0 === "login" || h0 === "auth") {
+        history.replaceState(null, "", location.pathname + location.search + "#list");
+      }
+    } else {
+      fillSavedLoginForm();
+    }
+
     await applyRoute();
   })();
 

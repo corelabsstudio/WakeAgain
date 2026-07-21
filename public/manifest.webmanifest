@@ -3,7 +3,7 @@
   "name": "WakeAgain",
   "short_name": "WakeAgain",
   "description": "잠든 프로젝트를 다시 깨우는 곳. 웹·앱 동일 계정.",
-  "start_url": "/app/?source=pwa",
+  "start_url": "/app/?source=pwa#login",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
