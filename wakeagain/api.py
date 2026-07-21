@@ -23,11 +23,22 @@ from wakeagain.auth import (
     hash_password,
     verify_password,
 )
+from wakeagain.mailer import (
+    send_password_reset_code,
+    send_verification_code,
+    smtp_configured,
+)
 
 router = APIRouter(prefix="/api/v1")
 
-# Dev: return email codes in API when SMTP not wired. Set EMAIL_DEV_MODE=0 in production.
+# Dev: return email codes in API JSON. Production should use SMTP + EMAIL_DEV_MODE=0.
 EMAIL_DEV_MODE = os.environ.get("EMAIL_DEV_MODE", "1").strip() not in {"0", "false", "False"}
+# If SMTP missing/fails, still return code in API so users are not stuck (ops misconfig).
+EMAIL_CODE_FALLBACK = os.environ.get("EMAIL_CODE_FALLBACK", "1").strip() not in {
+    "0",
+    "false",
+    "False",
+}
 EMAIL_CODE_MINUTES = int(os.environ.get("EMAIL_CODE_MINUTES", "30"))
 
 # 개인정보 보호법: 만 14세 미만 아동 개인정보 처리 제한 → WakeAgain은 가입 자체를 거절
@@ -96,6 +107,46 @@ def _issue_email_code(conn, user_id: int) -> str:
         (_hash_code(code), _code_expiry_iso(), user_id),
     )
     return code
+
+
+def _deliver_verify_code(email: str, code: str) -> dict[str, Any]:
+    """
+    Try SMTP first (when configured and not pure dev mode).
+    Always safe-return flags for the client UI.
+    """
+    email = (email or "").strip().lower()
+    out: dict[str, Any] = {
+        "email_sent": False,
+        "email_configured": smtp_configured(),
+        "email_dev_mode": EMAIL_DEV_MODE,
+    }
+    if EMAIL_DEV_MODE:
+        out["dev_email_code"] = code
+        out["dev_note"] = "EMAIL_DEV_MODE: 화면에 코드 표시 (SMTP 생략 가능)"
+        # Still try SMTP if configured so real inboxes work in hybrid ops
+        if smtp_configured():
+            out["email_sent"] = send_verification_code(email, code)
+        return out
+
+    if not smtp_configured():
+        out["warning"] = (
+            "SMTP가 설정되지 않아 메일을 보낼 수 없습니다. "
+            "Railway에 SMTP_HOST/SMTP_FROM/SMTP_USER/SMTP_PASS 를 넣거나, "
+            "일시적으로 EMAIL_DEV_MODE=1 로 화면 코드를 쓰세요."
+        )
+        if EMAIL_CODE_FALLBACK:
+            out["dev_email_code"] = code
+            out["dev_note"] = "SMTP 미설정 · 폴백으로 화면에 코드 표시"
+        return out
+
+    sent = send_verification_code(email, code)
+    out["email_sent"] = sent
+    if not sent:
+        out["warning"] = "메일 서버 전송에 실패했습니다. 잠시 후 다시 시도하거나 관리자에게 문의하세요."
+        if EMAIL_CODE_FALLBACK:
+            out["dev_email_code"] = code
+            out["dev_note"] = "SMTP 실패 · 폴백으로 화면에 코드 표시"
+    return out
 
 
 def _require_trust(
@@ -192,11 +243,28 @@ def _require_trust(
         )
 
 
-def _auth_payload(user: dict, token: str, *, dev_code: str | None = None) -> dict:
+def _auth_payload(
+    user: dict,
+    token: str,
+    *,
+    dev_code: str | None = None,
+    mail_meta: dict | None = None,
+) -> dict:
     out: dict[str, Any] = {"ok": True, "token": token, "user": user}
-    if dev_code and EMAIL_DEV_MODE:
+    if mail_meta:
+        for k in (
+            "email_sent",
+            "email_configured",
+            "email_dev_mode",
+            "dev_email_code",
+            "dev_note",
+            "warning",
+        ):
+            if k in mail_meta and mail_meta[k] is not None:
+                out[k] = mail_meta[k]
+    elif dev_code and (EMAIL_DEV_MODE or EMAIL_CODE_FALLBACK):
         out["dev_email_code"] = dev_code
-        out["dev_note"] = "EMAIL_DEV_MODE: 운영에서는 메일 발송으로 대체하고 이 필드를 끄세요."
+        out["dev_note"] = "EMAIL_DEV_MODE/FALLBACK: 화면에 코드 표시"
     return out
 
 
@@ -479,6 +547,8 @@ def client_config():
             },
             "message": "큰돈이 오갈 수 있는 장입니다. 매물 등록·입찰 전 이메일 인증과 실명·연락처를 확인합니다.",
             "email_dev_mode": EMAIL_DEV_MODE,
+            "email_smtp_configured": smtp_configured(),
+            "email_code_fallback": EMAIL_CODE_FALLBACK,
             "min_age_years": MIN_AGE_YEARS,
             "age_gate": {
                 "min_years": MIN_AGE_YEARS,
@@ -631,7 +701,8 @@ def register(body: RegisterIn):
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     user = database.user_to_dict(row)
     token = create_token(user["id"], user["email"])
-    return _auth_payload(user, token, dev_code=code)
+    mail_meta = _deliver_verify_code(user["email"], code)
+    return _auth_payload(user, token, mail_meta=mail_meta)
 
 
 @router.post("/auth/login")
@@ -665,13 +736,14 @@ def login(body: LoginIn):
                 },
             )
         # re-issue code if not verified (convenient for returning users)
-        dev_code = None
+        mail_meta = None
         if not int(row["email_verified"] or 0):
-            dev_code = _issue_email_code(conn, int(row["id"]))
+            code = _issue_email_code(conn, int(row["id"]))
             row = conn.execute("SELECT * FROM users WHERE id = ?", (row["id"],)).fetchone()
+            mail_meta = _deliver_verify_code(row["email"], code)
     user = database.user_to_dict(row)
     token = create_token(user["id"], user["email"])
-    return _auth_payload(user, token, dev_code=dev_code)
+    return _auth_payload(user, token, mail_meta=mail_meta)
 
 
 class BirthDateIn(BaseModel):
@@ -866,7 +938,7 @@ def verify_email(body: VerifyEmailIn, user: dict = Depends(get_current_user)):
 @router.post("/auth/password-reset/request")
 def password_reset_request(body: PasswordResetRequestIn):
     email = body.email.strip().lower()
-    dev_code = None
+    mail_meta: dict[str, Any] | None = None
     with database.db() as conn:
         row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         if row:
@@ -875,16 +947,34 @@ def password_reset_request(body: PasswordResetRequestIn):
                 "UPDATE users SET reset_code_hash = ?, reset_code_expires = ? WHERE id = ?",
                 (_hash_code(code), _code_expiry_iso(), row["id"]),
             )
+            # deliver
             if EMAIL_DEV_MODE:
-                dev_code = code
+                mail_meta = {
+                    "email_sent": smtp_configured() and send_password_reset_code(email, code),
+                    "email_configured": smtp_configured(),
+                    "dev_email_code": code,
+                    "dev_note": "EMAIL_DEV_MODE",
+                }
+            elif smtp_configured():
+                sent = send_password_reset_code(email, code)
+                mail_meta = {"email_sent": sent, "email_configured": True}
+                if not sent and EMAIL_CODE_FALLBACK:
+                    mail_meta["dev_email_code"] = code
+                    mail_meta["dev_note"] = "SMTP 실패 폴백"
+            elif EMAIL_CODE_FALLBACK:
+                mail_meta = {
+                    "email_sent": False,
+                    "email_configured": False,
+                    "dev_email_code": code,
+                    "dev_note": "SMTP 미설정 폴백",
+                }
     # Always ok (no email enumeration)
     out: dict[str, Any] = {
         "ok": True,
         "message": "등록된 이메일이면 재설정 코드를 발급했습니다.",
     }
-    if dev_code and EMAIL_DEV_MODE:
-        out["dev_email_code"] = dev_code
-        out["dev_note"] = "EMAIL_DEV_MODE"
+    if mail_meta:
+        out.update({k: v for k, v in mail_meta.items() if v is not None})
     return out
 
 
@@ -930,10 +1020,16 @@ def resend_verify(user: dict = Depends(get_current_user)):
             return {"ok": True, "already": True, "user": database.user_to_dict(row)}
         code = _issue_email_code(conn, user["id"])
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+        email = row["email"]
+    mail_meta = _deliver_verify_code(email, code)
     out: dict[str, Any] = {"ok": True, "user": database.user_to_dict(row)}
-    if EMAIL_DEV_MODE:
-        out["dev_email_code"] = code
-        out["dev_note"] = "EMAIL_DEV_MODE"
+    out.update({k: v for k, v in mail_meta.items() if v is not None})
+    if mail_meta.get("email_sent"):
+        out["message"] = "인증 메일을 다시 보냈습니다. 받은편지함·스팸함을 확인해 주세요."
+    elif mail_meta.get("dev_email_code"):
+        out["message"] = "코드를 다시 발급했습니다. (메일 미연결 시 화면에 표시)"
+    else:
+        out["message"] = mail_meta.get("warning") or "코드를 발급했습니다."
     return out
 
 

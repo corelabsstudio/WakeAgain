@@ -116,6 +116,11 @@
     return data;
   }
 
+  function applyMailMeta(data) {
+    if (data && data.dev_email_code) setDevCode(data.dev_email_code);
+    return data;
+  }
+
   function getSavedLogin() {
     try {
       const raw = localStorage.getItem(STORAGE_SAVED_LOGIN);

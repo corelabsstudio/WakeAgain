@@ -279,14 +279,20 @@
     }
   }
 
-  function showDevCode() {
+  function showDevCode(extraMsg) {
     const box = $("devCodeBox");
     const text = $("devCodeText");
     const code = api.getDevCode();
+    const note = $("devCodeNote");
     if (code && box && text) {
       box.hidden = false;
       text.textContent = code;
-      $("verifyCode").value = code;
+      if ($("verifyCode")) $("verifyCode").value = code;
+      if (note) {
+        note.textContent =
+          extraMsg ||
+          "메일 서버 미연결·개발 모드에서는 코드가 여기에 표시됩니다. 받은편지함에도 없을 수 있어요.";
+      }
     } else if (box) {
       box.hidden = true;
     }
@@ -939,9 +945,16 @@
   $("btnResendCode").addEventListener("click", async () => {
     showErr($("verifyErr"));
     try {
-      await api.resendVerify();
-      showDevCode();
-      showErr($("verifyErr"), t("app.verify_resent", "새 코드를 발급했습니다.") + (api.getDevCode() ? " (개발 모드 코드 표시)" : ""));
+      const data = await api.resendVerify();
+      showDevCode(data && data.warning);
+      let msg =
+        (data && data.message) ||
+        t("app.verify_resent", "새 코드를 발급했습니다.");
+      if (data && data.email_sent) msg += " · 메일 발송됨 (스팸함 확인)";
+      else if (api.getDevCode()) msg += " · 화면에 코드 표시";
+      else if (data && data.warning) msg += " · " + data.warning;
+      // use non-error tone: clear then set as status on verifyErr with soft style
+      showErr($("verifyErr"), msg);
     } catch (err) {
       showErr($("verifyErr"), err.message || "재발송 실패");
     }
