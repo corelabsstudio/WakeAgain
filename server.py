@@ -162,6 +162,8 @@ def health_root():
         "ready": ready,
         "service": "WakeAgain",
         "version": __version__,
+        # durability probe marker — must not affect data; redeploy smoke only
+        "build_probe": "durability-e2e-2026-07-22",
         "channels": ["web", "android", "ios"],
         "data_dir": str(DATA),
         "data": {
