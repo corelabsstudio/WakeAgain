@@ -89,7 +89,9 @@ body::before {
   background-size: 28px 28px;
   opacity: 0.45;
 }
-main, header, footer, .mobile-cta, .scroll-progress, .nav-pill-wrap { position: relative; z-index: 1; }
+/* app-top is sticky (PWA compact header) — do not force relative on it */
+main, header:not(.app-top), footer, .mobile-cta, .scroll-progress, .nav-pill-wrap { position: relative; z-index: 1; }
+header.app-top { position: sticky; top: 0; z-index: 50; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }

@@ -11,22 +11,33 @@
     }
   }
 
+  function markNative() {
+    document.documentElement.classList.add("is-native-app");
+    if (document.body) document.body.classList.add("is-native-app");
+  }
+
   async function run() {
     var Cap = window.Capacitor;
     if (!Cap || typeof Cap.isNativePlatform !== "function" || !Cap.isNativePlatform()) {
       return;
     }
-    document.documentElement.classList.add("is-native-app");
-    document.body && document.body.classList.add("is-native-app");
+    markNative();
 
     try {
       var StatusBar = Cap.Plugins && Cap.Plugins.StatusBar;
       if (StatusBar) {
+        // Overlay + CSS safe-area on .app-top only (avoid body double padding / giant top bar)
+        if (StatusBar.setOverlaysWebView) {
+          await StatusBar.setOverlaysWebView({ overlay: true });
+        }
         if (StatusBar.setStyle) {
           await StatusBar.setStyle({ style: "DARK" });
         }
         if (StatusBar.setBackgroundColor) {
           await StatusBar.setBackgroundColor({ color: "#050508" });
+        }
+        if (StatusBar.show) {
+          await StatusBar.show();
         }
       }
     } catch (e) {
@@ -60,6 +71,15 @@
   }
 
   ready(function () {
+    // Class ASAP so first paint uses compact native CSS
+    try {
+      var Cap = window.Capacitor;
+      if (Cap && typeof Cap.isNativePlatform === "function" && Cap.isNativePlatform()) {
+        markNative();
+      }
+    } catch (e) {
+      /* ignore */
+    }
     // Capacitor injects bridge slightly after load
     setTimeout(run, 50);
     setTimeout(run, 400);

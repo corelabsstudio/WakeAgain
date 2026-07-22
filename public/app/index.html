@@ -5,15 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#050508" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>WakeAgain App</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/ux9.css" />
-  <link rel="stylesheet" href="/app/app.css?v=20260722b" />
+  <!-- Critical: compact top bar (beats stale SW/CSS cache; styles.css header{position:relative} override) -->
+  <style id="wa-topbar-fix">
+    header.app-top {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 50 !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 0.4rem !important;
+      min-height: 3.1rem !important;
+      max-height: calc(3.5rem + env(safe-area-inset-top, 0px)) !important;
+      padding: calc(0.45rem + env(safe-area-inset-top, 0px)) 0.65rem 0.45rem !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      background: rgba(5, 5, 8, 0.94) !important;
+    }
+    header.app-top .app-top-actions {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      gap: 0.25rem !important;
+      overflow: hidden !important;
+    }
+    body.app-body {
+      padding-top: 0 !important;
+      margin: 0 !important;
+    }
+    @media (max-width: 900px) {
+      header.app-top .app-top-hide-sm,
+      header.app-top #trustBadge,
+      header.app-top #btnFees,
+      header.app-top #btnProfile,
+      header.app-top #btnLogout,
+      header.app-top a[href="/get-app.html"],
+      header.app-top a[href="/"],
+      header.app-top a[href="../get-app.html"],
+      header.app-top a[href="../index.html"] {
+        display: none !important;
+      }
+      header.app-top .user-chip-meta { display: none !important; }
+      header.app-top .user-chip { max-width: min(7rem, 32vw) !important; }
+    }
+  </style>
+  <link rel="stylesheet" href="/styles.css?v=20260723-topbar" />
+  <link rel="stylesheet" href="/ux9.css?v=20260723-topbar" />
+  <link rel="stylesheet" href="/app/app.css?v=20260723-topbar2" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -38,14 +88,14 @@
           <span class="user-chip-meta" id="userChipMeta"></span>
         </span>
       </button>
-      <span id="trustBadge" class="trust-badge" hidden></span>
+      <span id="trustBadge" class="trust-badge app-top-hide-sm" hidden></span>
       <button type="button" class="btn btn-ghost btn-sm" id="btnNotif" hidden><span data-i18n="nav.notif">알림</span> <span id="notifBadge" class="notif-dot" hidden></span></button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnFees" hidden data-i18n="nav.fees">수수료</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnProfile" hidden data-i18n="nav.profile">내 정보</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
+      <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnFees" hidden data-i18n="nav.fees">수수료</button>
+      <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnProfile" hidden data-i18n="nav.profile">내 정보</button>
+      <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login" data-i18n="app.login_submit">로그인</button>
-      <a class="btn btn-ghost btn-sm" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
-      <a class="btn btn-ghost btn-sm" href="/" data-i18n="nav.site">사이트</a>
+      <a class="btn btn-ghost btn-sm app-top-hide-sm app-top-hide-native" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
+      <a class="btn btn-ghost btn-sm app-top-hide-sm app-top-hide-native" href="/" data-i18n="nav.site">사이트</a>
     </div>
   </header>
 
@@ -90,30 +140,61 @@
           <input id="loginRemember" type="checkbox" />
           <span data-i18n="app.remember_login">로그인 정보 저장 (이 기기)</span>
         </label>
-        <div class="form-actions">
+        <div class="form-actions form-actions-stack">
           <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.login_submit">로그인</button>
-          <button class="btn btn-ghost" type="button" id="btnShowReset" data-i18n="app.find_pw">비밀번호 찾기</button>
+          <div class="auth-help-links">
+            <button class="btn btn-ghost btn-sm" type="button" id="btnShowFindId" data-i18n="app.find_id">아이디 찾기</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="btnShowReset" data-i18n="app.find_pw">비밀번호 찾기</button>
+          </div>
         </div>
         <p class="form-error" id="loginErr" hidden></p>
       </form>
 
+      <form id="formFindId" class="form-card app-form" hidden>
+        <p class="note muted fine" data-i18n="app.find_id_hint">
+          프로필에 등록한 <strong>실명</strong>과 <strong>휴대폰 번호</strong>로 가입 이메일
+          <strong>힌트(일부 마스킹)</strong>를 찾습니다. 보안상 전체 주소는 표시하지 않습니다.
+          실명·휴대폰을 아직 넣지 않았다면 이 기능으로 찾을 수 없습니다.
+        </p>
+        <label for="findIdName" data-i18n="app.find_id_name">실명</label>
+        <input id="findIdName" type="text" required minlength="2" maxlength="40" autocomplete="name" placeholder="홍길동" />
+        <label for="findIdPhone" data-i18n="app.find_id_phone">휴대폰 번호</label>
+        <input id="findIdPhone" type="tel" required minlength="10" maxlength="20" autocomplete="tel" placeholder="01012345678" inputmode="tel" />
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" data-i18n="app.find_id_submit">이메일 찾기</button>
+          <button class="btn btn-ghost" type="button" id="btnFindIdBack" data-i18n="app.reset_back">로그인으로</button>
+        </div>
+        <p class="form-error" id="findIdErr" hidden></p>
+        <div class="dev-code-box" id="findIdResult" hidden>
+          <p class="fine"><strong data-i18n="app.find_id_result_label">찾은 이메일 힌트</strong></p>
+          <p class="dev-code" id="findIdEmail"></p>
+          <button class="btn btn-ghost btn-sm" type="button" id="btnFindIdUse" data-i18n="app.find_id_use">로그인 화면으로</button>
+        </div>
+      </form>
+
       <form id="formReset" class="form-card app-form" hidden>
-        <p class="note muted fine">등록 이메일로 재설정 코드를 받습니다. (개발 모드: 화면에 코드 표시)</p>
+        <p class="note muted fine" data-i18n="app.reset_hint">
+          가입 이메일로 재설정 코드를 보냅니다. 메일이 오지 않으면 스팸함을 확인하세요.
+          운영 환경에서는 보안상 화면에 코드를 표시하지 않습니다.
+        </p>
         <label for="resetEmail">이메일</label>
         <input id="resetEmail" type="email" required autocomplete="email" />
+        <div class="form-actions">
+          <button class="btn btn-primary" type="button" id="btnResetReq" data-i18n="app.reset_code">코드 받기</button>
+        </div>
+        <div class="dev-code-box" id="resetDevBox" hidden>
+          <p class="fine"><strong id="resetDevLabel">재설정 코드</strong></p>
+          <p class="dev-code" id="resetDevCode"></p>
+          <p class="fine muted" id="resetDevNote" hidden></p>
+        </div>
         <label for="resetCode">코드</label>
-        <input id="resetCode" inputmode="numeric" maxlength="8" />
+        <input id="resetCode" inputmode="numeric" maxlength="8" autocomplete="one-time-code" />
         <label for="resetPass">새 비밀번호 (8자+)</label>
         <div class="pw-field">
           <input id="resetPass" type="password" minlength="8" autocomplete="new-password" />
           <button type="button" class="pw-toggle" data-pw-target="resetPass" aria-label="비밀번호 보기" aria-pressed="false" title="비밀번호 보기"></button>
         </div>
-        <div class="dev-code-box" id="resetDevBox" hidden>
-          <p class="fine"><strong>개발 모드 코드</strong></p>
-          <p class="dev-code" id="resetDevCode"></p>
-        </div>
         <div class="form-actions">
-          <button class="btn btn-ghost" type="button" id="btnResetReq" data-i18n="app.reset_code">코드 받기</button>
           <button class="btn btn-primary" type="submit" data-i18n="app.reset_save">비밀번호 변경</button>
           <button class="btn btn-ghost" type="button" id="btnResetBack" data-i18n="app.reset_back">로그인으로</button>
         </div>
@@ -293,6 +374,8 @@
           <button class="btn btn-primary btn-lg" type="submit">저장하고 계속</button>
           <button class="btn btn-ghost" type="button" id="btnGoSellerId">판매자 공개 정보</button>
           <button class="btn btn-ghost" type="button" id="btnGoSettle">정산 계좌 (Lv3)</button>
+          <button class="btn btn-ghost" type="button" id="btnFeesFromProfile" data-i18n="nav.fees">수수료</button>
+          <button class="btn btn-ghost" type="button" id="btnLogoutFromProfile" data-i18n="nav.logout">로그아웃</button>
         </div>
         <p class="form-error" id="profErr" hidden></p>
       </form>
@@ -518,10 +601,10 @@
   <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260722b"></script>
   <script src="/js/i18n.js?v=20260722b"></script>
-  <script src="/js/pwa-install.js?v=20260720q"></script>
-  <script src="/js/api.js?v=20260722c"></script>
-  <script src="/js/demo-help.js"></script>
-  <script src="/app/app.js?v=20260722c"></script>
+  <script src="/js/pwa-install.js?v=20260723-topbar"></script>
+  <script src="/js/api.js?v=20260723-topbar"></script>
+  <script src="/js/demo-help.js?v=20260723-topbar"></script>
+  <script src="/app/app.js?v=20260723-topbar"></script>
   <script>
     (function () {
       try {

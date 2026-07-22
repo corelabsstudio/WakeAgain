@@ -1,22 +1,36 @@
 /* WakeAgain app shell — purple system aligned with landing */
 .app-body {
   padding-bottom: 5rem;
+  padding-top: 0;
   background: var(--bg);
 }
+/* header.app-top — specificity beats styles.css header { position: relative } */
+header.app-top,
 .app-top {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 50;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: rgba(5, 5, 8, 0.86);
+  gap: 0.5rem;
+  /* 한 줄 고정 — wrap 시 폰에서 상단바가 화면 절반을 가리던 버그 방지 */
+  min-height: 3.25rem;
+  max-height: calc(3.6rem + env(safe-area-inset-top, 0px));
+  padding: 0.55rem 0.75rem;
+  padding-top: calc(0.55rem + env(safe-area-inset-top, 0px));
+  overflow: hidden;
+  box-sizing: border-box;
+  background: rgba(5, 5, 8, 0.92);
   backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.app-top > .brand {
+  flex-shrink: 0;
+  min-width: 0;
 }
 .app-top .brand-mark {
   width: 36px;
@@ -141,9 +155,66 @@
 .app-top-actions {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+/* 좁은 화면·네이티브: 상단 2차 액션 숨김 (내 정보 탭·프로필에서 접근) */
+@media (max-width: 720px) {
+  .app-top {
+    max-height: calc(3.6rem + env(safe-area-inset-top, 0px));
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+  .app-top .brand-name {
+    font-size: 1rem;
+  }
+  .app-top .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .app-top-actions {
+    gap: 0.25rem;
+  }
+  .app-top-hide-sm {
+    display: none !important;
+  }
+  .app-top .btn-sm {
+    padding: 0.32rem 0.5rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+  .app-top .lang-switch {
+    flex-shrink: 0;
+  }
+  .app-top .lang-btn {
+    padding: 0.28rem 0.4rem;
+    font-size: 0.72rem;
+  }
+  .user-chip {
+    max-width: min(7.5rem, 34vw);
+    padding: 0.2rem 0.45rem 0.2rem 0.2rem;
+  }
+  .user-chip-meta {
+    display: none;
+  }
+  .user-avatar {
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: 0.7rem;
+  }
+  .user-chip-name {
+    font-size: 0.8rem;
+  }
+}
+/* Capacitor / 설치된 앱: 웹 전용 링크 숨김 */
+html.is-native-app .app-top-hide-native,
+body.is-native-app .app-top-hide-native {
+  display: none !important;
 }
 /* Account chip — name must read clearly (not muted ghost text) */
 .user-chip {
@@ -293,6 +364,22 @@
 }
 .app-form {
   margin-top: 0.5rem;
+}
+.auth-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+.auth-help-links .btn {
+  flex: 1 1 auto;
+  min-width: 7.5rem;
+}
+.form-actions-stack {
+  flex-direction: column;
+  align-items: stretch;
 }
 /* Password field + show/hide eye */
 .pw-field {
@@ -896,16 +983,23 @@
 }
 .safety-notice li { margin: 0.2rem 0; }
 
-/* Capacitor safe areas */
+/* Capacitor / notch safe areas
+   상단은 sticky .app-top 에만 inset (body 이중 패딩 금지).
+   하단은 body + tabbar.
+*/
 html.is-native-app body.app-body,
 body.is-native-app.app-body {
-  padding-top: env(safe-area-inset-top, 0);
+  padding-top: 0;
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 .app-top {
-  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  padding-top: calc(0.55rem + env(safe-area-inset-top, 0px));
+}
+html.is-native-app .app-top,
+body.is-native-app .app-top {
+  max-height: calc(3.6rem + env(safe-area-inset-top, 0px));
 }
 .app-tabbar {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
 }
 

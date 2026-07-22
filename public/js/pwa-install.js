@@ -151,11 +151,52 @@
     document.getElementById("pwaOpenExternal").addEventListener("click", openExternalHint);
   }
 
-  // SW register
+  // SW register + force activate new shell (top-bar / CSS fixes)
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/sw.js").catch(function () {
-        /* ignore */
+      navigator.serviceWorker
+        .register("/sw.js?v=12")
+        .then(function (reg) {
+          try {
+            if (reg.update) reg.update();
+          } catch (e) {
+            /* ignore */
+          }
+          // New worker waiting → activate immediately
+          if (reg.waiting) {
+            try {
+              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          reg.addEventListener("updatefound", function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener("statechange", function () {
+              if (nw.state === "installed" && navigator.serviceWorker.controller) {
+                try {
+                  nw.postMessage({ type: "SKIP_WAITING" });
+                } catch (e) {
+                  /* ignore */
+                }
+              }
+            });
+          });
+        })
+        .catch(function () {
+          /* ignore */
+        });
+      // Reload once when controller changes to new SW
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (refreshing) return;
+        refreshing = true;
+        try {
+          window.location.reload();
+        } catch (e) {
+          /* ignore */
+        }
       });
     });
   }

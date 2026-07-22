@@ -104,8 +104,17 @@
     $("formLogin").hidden = tab !== "login";
     $("formRegister").hidden = tab !== "register";
     if ($("formReset")) $("formReset").hidden = true;
+    if ($("formFindId")) $("formFindId").hidden = true;
     history.replaceState(null, "", tab === "register" ? "#register" : "#login");
     if (tab === "login") fillSavedLoginForm();
+  }
+
+  function hideAuthExtraForms() {
+    if ($("formReset")) $("formReset").hidden = true;
+    if ($("formFindId")) $("formFindId").hidden = true;
+    if ($("findIdResult")) $("findIdResult").hidden = true;
+    showErr($("findIdErr"));
+    showErr($("resetErr"));
   }
 
   function isAppLaunch() {
@@ -802,25 +811,139 @@
   $("btnShowReset")?.addEventListener("click", () => {
     $("formLogin").hidden = true;
     $("formRegister").hidden = true;
+    if ($("formFindId")) $("formFindId").hidden = true;
     $("formReset").hidden = false;
     $("resetEmail").value = $("loginEmail").value || "";
   });
+  $("btnShowFindId")?.addEventListener("click", () => {
+    $("formLogin").hidden = true;
+    $("formRegister").hidden = true;
+    if ($("formReset")) $("formReset").hidden = true;
+    $("formFindId").hidden = false;
+    if ($("findIdResult")) $("findIdResult").hidden = true;
+    showErr($("findIdErr"));
+  });
+  $("btnFindIdBack")?.addEventListener("click", () => {
+    hideAuthExtraForms();
+    $("formFindId").hidden = true;
+    $("formLogin").hidden = false;
+  });
+  $("formFindId")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showErr($("findIdErr"));
+    if ($("findIdResult")) $("findIdResult").hidden = true;
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    try {
+      const data = await api.findEmail(
+        $("findIdName").value.trim(),
+        $("findIdPhone").value.trim()
+      );
+      if (data.found) {
+        // API returns masked only (privacy). Prefer email_masked / emails_masked.
+        const list =
+          Array.isArray(data.emails_masked) && data.emails_masked.length
+            ? data.emails_masked
+            : Array.isArray(data.emails) && data.emails.length
+              ? data.emails
+              : data.email_masked
+                ? [data.email_masked]
+                : data.email
+                  ? [data.email]
+                  : [];
+        if (!list.length) {
+          showErr(
+            $("findIdErr"),
+            data.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다.")
+          );
+        } else {
+          $("findIdEmail").textContent = list.join("\n");
+          $("findIdResult").hidden = false;
+          // Do not store full email for auto-fill (API no longer returns it).
+          if ($("findIdResult")) $("findIdResult").dataset.email = "";
+          showErr(
+            $("findIdErr"),
+            data.message ||
+              t(
+                "app.find_id_ok",
+                "가입 이메일 힌트를 찾았습니다. 일부만 표시됩니다."
+              )
+          );
+        }
+      } else {
+        showErr(
+          $("findIdErr"),
+          data.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다.")
+        );
+      }
+    } catch (err) {
+      showErr($("findIdErr"), err.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다."));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+  $("btnFindIdUse")?.addEventListener("click", () => {
+    // Full address is not returned (masked only). Go to login and let user type it.
+    hideAuthExtraForms();
+    $("formFindId").hidden = true;
+    $("formLogin").hidden = false;
+    if ($("loginEmail")) {
+      $("loginEmail").value = "";
+      $("loginEmail").focus();
+      $("loginEmail").placeholder =
+        t("app.find_id_login_hint", "힌트를 보고 전체 이메일을 입력");
+    }
+  });
   $("btnResetBack")?.addEventListener("click", () => {
     $("formReset").hidden = true;
+    if ($("formFindId")) $("formFindId").hidden = true;
     $("formLogin").hidden = false;
   });
   $("btnResetReq")?.addEventListener("click", async () => {
     showErr($("resetErr"));
+    if ($("resetDevBox")) $("resetDevBox").hidden = true;
+    if ($("resetDevNote")) {
+      $("resetDevNote").hidden = true;
+      $("resetDevNote").textContent = "";
+    }
+    const btn = $("btnResetReq");
+    if (btn) btn.disabled = true;
     try {
       const data = await api.passwordResetRequest($("resetEmail").value.trim());
       if (data.dev_email_code) {
         $("resetDevBox").hidden = false;
         $("resetDevCode").textContent = data.dev_email_code;
         $("resetCode").value = data.dev_email_code;
+        if ($("resetDevLabel")) {
+          $("resetDevLabel").textContent = data.email_sent
+            ? t("app.reset_code_also", "화면에 표시된 코드 (메일에도 발송)")
+            : t("app.reset_code_screen", "재설정 코드 (이 화면에서 입력)");
+        }
+        if ($("resetDevNote") && (data.warning || data.dev_note)) {
+          $("resetDevNote").hidden = false;
+          $("resetDevNote").textContent = data.warning || data.dev_note || "";
+        }
       }
-      showErr($("resetErr"), t("app.reset_sent", "코드를 발급했습니다.") + (data.dev_email_code ? " (개발 모드)" : ""));
+      let msg = "";
+      if (data.email_sent) {
+        msg = t("app.reset_sent_mail", "메일을 보냈습니다. 받은편지함·스팸함을 확인해 주세요.");
+      } else if (data.dev_email_code) {
+        msg =
+          data.warning ||
+          t("app.reset_sent_screen", "메일 대신 화면에 코드를 표시했습니다. 아래 코드를 입력하세요.");
+      } else if (data.warning) {
+        msg = data.warning;
+      } else {
+        msg = t(
+          "app.reset_sent",
+          "등록된 이메일이면 재설정 코드를 발급했습니다. 메일이 오지 않으면 스팸함을 확인하거나, 가입 이메일을 다시 확인해 주세요."
+        );
+      }
+      showErr($("resetErr"), msg);
     } catch (err) {
       showErr($("resetErr"), err.message || "실패");
+    } finally {
+      if (btn) btn.disabled = false;
     }
   });
   $("formReset")?.addEventListener("submit", async (e) => {
@@ -1048,7 +1171,7 @@
     }
   });
 
-  $("btnLogout").addEventListener("click", () => {
+  function doLogout() {
     api.clearSession();
     feed = "all";
     document.querySelectorAll(".seg-btn").forEach((x) => {
@@ -1058,7 +1181,11 @@
     switchAuthTab("login");
     fillSavedLoginForm();
     syncChrome();
-  });
+  }
+
+  $("btnLogout")?.addEventListener("click", doLogout);
+  $("btnLogoutFromProfile")?.addEventListener("click", doLogout);
+  $("btnFeesFromProfile")?.addEventListener("click", () => loadFees());
 
   $("btnGoLogin").addEventListener("click", () => {
     pendingAfterAuth = "list";
