@@ -17,10 +17,11 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <style>
-    /* Dynamic auction atmosphere */
+    /* Auction pulse field — deep navy + ECG waves (public bid stage) */
     .auction-page {
       position: relative;
       isolation: isolate;
+      background: #03040a;
       transition: background 0.6s ease;
     }
     .auction-ambient {
@@ -29,107 +30,33 @@
       inset: 0;
       z-index: 0;
       overflow: hidden;
-      /* Always on for project pages — not only when bidding is hot */
-      opacity: 0.9;
-      transition: opacity 0.7s ease, filter 0.6s ease;
-    }
-    .auction-page.auction-hot .auction-ambient { opacity: 0.95; }
-    .auction-page.auction-hotter .auction-ambient { opacity: 1; }
-    .auction-page.auction-sold .auction-ambient {
-      opacity: 0.55;
-      filter: saturate(0.75) brightness(0.92);
-    }
-    .auction-ambient .amb-base {
-      position: absolute;
-      inset: -4%;
-      background:
-        radial-gradient(ellipse 90% 55% at 50% -5%, rgba(192, 132, 252, 0.3), transparent 55%),
-        radial-gradient(ellipse 55% 45% at 95% 50%, rgba(244, 114, 182, 0.16), transparent 50%),
-        radial-gradient(ellipse 50% 40% at 5% 75%, rgba(129, 140, 248, 0.15), transparent 50%),
-        radial-gradient(ellipse 40% 30% at 70% 100%, rgba(168, 85, 247, 0.1), transparent 50%);
-      animation: amb-breathe 8s ease-in-out infinite;
-    }
-    .auction-page.auction-hot .auction-ambient .amb-base {
-      animation-duration: 6s;
-    }
-    .auction-page.auction-hotter .auction-ambient .amb-base {
-      animation-duration: 4.5s;
-      filter: brightness(1.06) saturate(1.1);
-    }
-    @keyframes amb-breathe {
-      0%, 100% { filter: brightness(1) saturate(1); transform: scale(1); }
-      50% { filter: brightness(1.12) saturate(1.15); transform: scale(1.03); }
-    }
-    .amb-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(48px);
-      opacity: 0.62;
-      will-change: transform;
-    }
-    .amb-orb-a {
-      width: min(42vw, 320px);
-      height: min(42vw, 320px);
-      left: -8%;
-      top: 15%;
-      background: rgba(168, 85, 247, 0.45);
-      animation: amb-float-a 14s ease-in-out infinite;
-    }
-    .amb-orb-b {
-      width: min(36vw, 280px);
-      height: min(36vw, 280px);
-      right: -6%;
-      top: 35%;
-      background: rgba(236, 72, 153, 0.32);
-      animation: amb-float-b 11s ease-in-out infinite;
-    }
-    .amb-orb-c {
-      width: min(30vw, 220px);
-      height: min(30vw, 220px);
-      left: 40%;
-      bottom: 5%;
-      background: rgba(99, 102, 241, 0.28);
-      animation: amb-float-c 16s ease-in-out infinite;
-    }
-    .auction-page.auction-hotter .amb-orb {
-      opacity: 0.75;
-      filter: blur(40px);
-    }
-    @keyframes amb-float-a {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(12%, 18%) scale(1.12); }
-    }
-    @keyframes amb-float-b {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(-14%, -10%) scale(1.08); }
-    }
-    @keyframes amb-float-c {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(8%, -16%) scale(1.15); }
-    }
-    .amb-scan {
-      position: absolute;
-      inset: -20% 0;
-      background: linear-gradient(
-        105deg,
-        transparent 40%,
-        rgba(255, 255, 255, 0.03) 48%,
-        rgba(192, 132, 252, 0.08) 50%,
-        rgba(255, 255, 255, 0.03) 52%,
-        transparent 60%
-      );
       opacity: 1;
-      animation: amb-scan 10s linear infinite;
+      transition: opacity 0.7s ease, filter 0.6s ease;
+      background:
+        radial-gradient(ellipse 100% 70% at 50% -10%, rgba(67, 56, 202, 0.28), transparent 55%),
+        radial-gradient(ellipse 60% 50% at 100% 40%, rgba(14, 165, 233, 0.1), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 0% 80%, rgba(139, 92, 246, 0.14), transparent 50%),
+        linear-gradient(180deg, #05060f 0%, #03040a 45%, #020308 100%);
     }
-    .auction-page.auction-hot .amb-scan {
-      animation-duration: 7s;
+    .auction-page.auction-hot .auction-ambient { filter: saturate(1.08) brightness(1.03); }
+    .auction-page.auction-hotter .auction-ambient { filter: saturate(1.15) brightness(1.06); }
+    .auction-page.auction-sold .auction-ambient {
+      filter: saturate(1.25) brightness(1.12);
     }
-    .auction-page.auction-hotter .amb-scan {
-      animation-duration: 5s;
+    .auction-ambient .wave-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0.92;
     }
-    @keyframes amb-scan {
-      0% { transform: translateX(-40%); }
-      100% { transform: translateX(40%); }
+    .auction-ambient .amb-vignette {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 55% 50% at 50% 42%, transparent 0%, rgba(3, 4, 10, 0.35) 55%, rgba(3, 4, 10, 0.78) 100%);
+      pointer-events: none;
     }
     .auction-page > header,
     .auction-page > main,
@@ -138,8 +65,185 @@
       z-index: 1;
     }
     @media (prefers-reduced-motion: reduce) {
-      .amb-orb, .amb-base, .amb-scan { animation: none !important; }
-      .auction-ambient { opacity: 0.35 !important; }
+      .auction-ambient .wave-canvas { opacity: 0.35; }
+      .pulse-metric, .price-rise-fill, .spotlight-card { animation: none !important; }
+    }
+
+    /* Central spotlight card (매물 하나 강하게) */
+    .spotlight-stage {
+      position: relative;
+      margin: 0 0 1.35rem;
+      padding: 0.35rem 0 0.15rem;
+    }
+    .spotlight-card {
+      position: relative;
+      border-radius: 22px;
+      padding: 1.15rem 1.2rem 1.25rem;
+      background:
+        linear-gradient(155deg, rgba(24, 20, 48, 0.92) 0%, rgba(8, 10, 22, 0.96) 55%, rgba(6, 12, 24, 0.94) 100%);
+      border: 1px solid rgba(167, 139, 250, 0.42);
+      box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.08),
+        0 24px 64px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(124, 58, 237, 0.22);
+      overflow: hidden;
+      animation: spotlight-breathe 5s ease-in-out infinite;
+    }
+    .spotlight-card::before {
+      content: "";
+      position: absolute;
+      inset: -40% -20%;
+      background: conic-gradient(from 180deg at 50% 50%, transparent, rgba(34, 211, 238, 0.07), transparent 30%, rgba(168, 85, 247, 0.1), transparent 60%);
+      animation: spotlight-spin 18s linear infinite;
+      pointer-events: none;
+    }
+    .spotlight-card > * { position: relative; z-index: 1; }
+    .auction-page.auction-hot .spotlight-card {
+      border-color: rgba(192, 132, 252, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(34, 211, 238, 0.12),
+        0 28px 72px rgba(0, 0, 0, 0.55),
+        0 0 100px rgba(168, 85, 247, 0.28);
+      animation-duration: 3.6s;
+    }
+    .auction-page.auction-hotter .spotlight-card {
+      animation-duration: 2.6s;
+      border-color: rgba(232, 121, 249, 0.55);
+    }
+    .auction-page.auction-sold .spotlight-card {
+      animation: none;
+      border-color: rgba(52, 211, 153, 0.45);
+      box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.2),
+        0 24px 64px rgba(0, 0, 0, 0.45),
+        0 0 90px rgba(52, 211, 153, 0.18);
+    }
+    @keyframes spotlight-breathe {
+      0%, 100% { transform: translateY(0); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.08), 0 24px 64px rgba(0,0,0,0.55), 0 0 70px rgba(124, 58, 237, 0.18); }
+      50% { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.14), 0 28px 72px rgba(0,0,0,0.58), 0 0 100px rgba(168, 85, 247, 0.28); }
+    }
+    @keyframes spotlight-spin {
+      to { transform: rotate(360deg); }
+    }
+    .spotlight-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+    .spotlight-title {
+      margin: 0 0 0.15rem;
+      font-size: clamp(1.15rem, 2.8vw, 1.45rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+    }
+    .spotlight-one {
+      margin: 0 0 0.95rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .price-rise {
+      margin: 0 0 0.85rem;
+    }
+    .price-rise-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .price-rise-labels strong {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .price-rise-labels .is-now strong {
+      color: #e9d5ff;
+      text-shadow: 0 0 18px rgba(192, 132, 252, 0.45);
+    }
+    .price-rise-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      position: relative;
+    }
+    .price-rise-fill {
+      height: 100%;
+      width: 8%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #22d3ee 0%, #a855f7 55%, #e879f9 100%);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.55);
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .price-rise-arrow {
+      margin: 0.35rem 0 0;
+      font-size: 0.8rem;
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+    .pulse-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin: 0 0 0.85rem;
+    }
+    .pulse-metric {
+      border-radius: 14px;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.45);
+      animation: metric-pulse 2.8s ease-in-out infinite;
+    }
+    .pulse-metric:nth-child(2) { animation-delay: 0.35s; }
+    .pulse-metric .pm-lab {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .pulse-metric .pm-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #f5f3ff;
+      letter-spacing: -0.02em;
+    }
+    .auction-page.auction-hotter .pulse-metric { animation-duration: 1.8s; }
+    @keyframes metric-pulse {
+      0%, 100% { box-shadow: inset 0 0 0 0 rgba(34, 211, 238, 0); transform: scale(1); }
+      50% { box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.25), 0 0 18px rgba(34, 211, 238, 0.08); transform: scale(1.015); }
+    }
+    .sold-ribbon {
+      display: none;
+      margin: 0 0 0.75rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 14px;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      background: linear-gradient(120deg, rgba(6, 78, 59, 0.45), rgba(15, 23, 42, 0.7));
+      color: #a7f3d0;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-align: center;
+      font-size: 1.02rem;
+      text-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
+    }
+    .auction-page.auction-sold .sold-ribbon { display: block; }
+    .auction-page.auction-sold .price-rise-fill {
+      background: linear-gradient(90deg, #34d399, #6ee7b7);
+      width: 100% !important;
     }
 
     .auction-hero {
@@ -148,16 +252,16 @@
       margin-bottom: 1.5rem;
     }
     @media (min-width: 800px) {
-      .auction-hero { grid-template-columns: 1.2fr 0.9fr; align-items: start; }
+      .auction-hero { grid-template-columns: 1.05fr 0.95fr; align-items: start; }
     }
     .price-panel {
-      background: linear-gradient(160deg, rgba(192, 132, 252, 0.2), rgba(20, 12, 32, 0.95));
-      border: 1px solid rgba(192, 132, 252, 0.45);
-      border-radius: var(--radius);
+      background: linear-gradient(160deg, rgba(30, 27, 55, 0.88), rgba(8, 10, 22, 0.96));
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      border-radius: 20px;
       padding: 1.25rem 1.2rem 1.35rem;
       box-shadow:
-        0 16px 48px rgba(168, 85, 247, 0.18),
-        0 0 50px rgba(168, 85, 247, 0.1);
+        0 16px 48px rgba(0, 0, 0, 0.4),
+        0 0 50px rgba(168, 85, 247, 0.12);
       transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
       animation: panel-pulse 4s ease-in-out infinite;
     }
@@ -166,41 +270,42 @@
       animation-duration: 3s;
       box-shadow:
         0 16px 52px rgba(168, 85, 247, 0.26),
-        0 0 0 1px rgba(236, 72, 153, 0.12),
+        0 0 0 1px rgba(34, 211, 238, 0.1),
         0 0 70px rgba(168, 85, 247, 0.16);
     }
     .auction-page.auction-hotter .price-panel {
       animation-duration: 2.2s;
       box-shadow:
         0 18px 56px rgba(168, 85, 247, 0.3),
-        0 0 80px rgba(236, 72, 153, 0.14);
+        0 0 80px rgba(34, 211, 238, 0.12);
     }
     .auction-page.auction-sold .price-panel {
       animation: none;
       border-color: rgba(52, 211, 153, 0.35);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25), 0 0 40px rgba(52, 211, 153, 0.12);
     }
     @keyframes panel-pulse {
-      0%, 100% { box-shadow: 0 16px 48px rgba(168, 85, 247, 0.2), 0 0 40px rgba(168, 85, 247, 0.1); }
-      50% { box-shadow: 0 18px 56px rgba(192, 132, 252, 0.32), 0 0 70px rgba(236, 72, 153, 0.14); }
+      0%, 100% { box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 40px rgba(168, 85, 247, 0.1); }
+      50% { box-shadow: 0 18px 56px rgba(0,0,0,0.45), 0 0 70px rgba(34, 211, 238, 0.1); }
     }
     .price-panel .live-row {
       display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
     .price-big {
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-size: clamp(1.9rem, 4.2vw, 2.55rem);
       font-weight: 800;
       letter-spacing: -0.03em;
       margin: 0.15rem 0 0.35rem;
       font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 22px rgba(192, 132, 252, 0.28);
+      color: #f5f3ff;
+      text-shadow: 0 0 22px rgba(192, 132, 252, 0.35);
       transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.35s ease;
     }
     .auction-page.auction-hot .price-big {
-      text-shadow: 0 0 28px rgba(232, 121, 249, 0.4);
+      text-shadow: 0 0 28px rgba(34, 211, 238, 0.35), 0 0 40px rgba(232, 121, 249, 0.35);
     }
-    .price-big.flash { color: var(--pink); transform: scale(1.03); text-shadow: 0 0 24px rgba(232, 121, 249, 0.55); }
+    .price-big.flash { color: #f0abfc; transform: scale(1.04); text-shadow: 0 0 28px rgba(232, 121, 249, 0.7); }
     .price-meta { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0; }
     .bid-form label { display: block; font-weight: 600; font-size: 0.88rem; margin: 0.85rem 0 0.35rem; }
     .bid-form input {
@@ -548,11 +653,8 @@
 </head>
 <body class="form-body auction-page">
   <div class="auction-ambient" aria-hidden="true">
-    <div class="amb-base"></div>
-    <span class="amb-orb amb-orb-a"></span>
-    <span class="amb-orb amb-orb-b"></span>
-    <span class="amb-orb amb-orb-c"></span>
-    <span class="amb-scan"></span>
+    <canvas class="wave-canvas" id="waveCanvas"></canvas>
+    <div class="amb-vignette"></div>
   </div>
   <header class="nav-pill-wrap form-nav">
     <div class="nav-pill">
@@ -587,9 +689,45 @@
       <strong id="publicBannerStrong" data-i18n="proj.banner_live">판매 중</strong>
       <span id="publicBannerText" data-i18n="proj.banner_live_t"> — 누구나 지금 가격을 볼 수 있어요. 가격 쓰기는 쉽고, 낙찰되면 안내에 따라 빠르게 입금해야 해요.</span>
     </p>
-    <p class="eyebrow" id="statusEyebrow">AUCTION</p>
-    <h1 id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
-    <p class="legal-meta" id="pOne"></p>
+
+    <!-- Public heartbeat stage: one listing card over flowing waves -->
+    <section class="spotlight-stage" id="spotlightStage" aria-label="경매 현황">
+      <div class="spotlight-card" id="spotlightCard">
+        <div class="sold-ribbon" id="soldRibbon">다음 주인을 만났습니다</div>
+        <div class="spotlight-kicker">
+          <p class="eyebrow" id="statusEyebrow" style="margin:0">AUCTION</p>
+          <span class="badge live" id="liveBadgeSpot">LIVE</span>
+        </div>
+        <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
+        <p class="spotlight-one" id="pOne"></p>
+        <div class="price-rise" id="priceRise">
+          <div class="price-rise-labels">
+            <div>
+              <span data-i18n="proj.start_price_short">시작가</span>
+              <strong id="riseStart">—</strong>
+            </div>
+            <div class="is-now">
+              <span data-i18n="proj.now_price_short">현재가</span>
+              <strong id="riseNow">—</strong>
+            </div>
+          </div>
+          <div class="price-rise-track" aria-hidden="true">
+            <div class="price-rise-fill" id="riseFill"></div>
+          </div>
+          <p class="price-rise-arrow" id="riseDelta">상승 흐름이 실시간으로 공개됩니다</p>
+        </div>
+        <div class="pulse-metrics">
+          <div class="pulse-metric">
+            <span class="pm-lab" data-i18n="proj.time_left_short">남은 시간</span>
+            <span class="pm-val" id="pulseCountdown">—</span>
+          </div>
+          <div class="pulse-metric">
+            <span class="pm-lab" data-i18n="proj.bid_pulse_short">입찰 맥박</span>
+            <span class="pm-val" id="pulseBids">—</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Mobile-first: seller trust at top for instant confidence -->
     <aside class="seller-trust-bar" id="sellerTrustBar" hidden>
@@ -861,11 +999,13 @@
       var params = new URLSearchParams(location.search);
       var id = params.get("id");
       if (!id) {
-        document.getElementById("pTitle").textContent = t("매물을 찾을 수 없습니다.", "Listing not found.");
+        var miss = document.getElementById("pTitle");
+        if (miss) miss.textContent = "매물을 찾을 수 없습니다.";
         return;
       }
 
       var lastPrice = null;
+      var lastBidEvents = null;
       var pollMs = 4000;
       var mentionState = {
         init: false,
@@ -877,6 +1017,109 @@
         lines: [],
       };
       var MAX_MENTIONS = 8;
+
+      /* —— ECG wave field (public atmosphere) —— */
+      var waveField = (function () {
+        var canvas = document.getElementById("waveCanvas");
+        if (!canvas || !canvas.getContext) return { spike: function () {}, setSold: function () {}, setHot: function () {} };
+        var ctx = canvas.getContext("2d");
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var w = 0, h = 0, raf = 0, t0 = performance.now();
+        var spike = 0; // 0..1 burst energy on new bid
+        var soldBoost = 0;
+        var hot = 0;
+        var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var layers = [
+          { amp: 0.055, speed: 0.00055, freq: 0.012, phase: 0, color: [168, 85, 247], alpha: 0.55, thick: 1.6 },
+          { amp: 0.04, speed: 0.00072, freq: 0.017, phase: 1.7, color: [34, 211, 238], alpha: 0.42, thick: 1.3 },
+          { amp: 0.03, speed: 0.0004, freq: 0.009, phase: 3.1, color: [129, 140, 248], alpha: 0.32, thick: 1.1 },
+          { amp: 0.022, speed: 0.0009, freq: 0.022, phase: 4.2, color: [232, 121, 249], alpha: 0.28, thick: 1.0 },
+        ];
+
+        function resize() {
+          w = window.innerWidth;
+          h = window.innerHeight;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          canvas.style.width = w + "px";
+          canvas.style.height = h + "px";
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function ecgY(x, time, layer, mid, ampPx) {
+          // Periodic ECG-ish pulse + slow drift
+          var beat = (x * layer.freq + time * layer.speed * 60 + layer.phase) % (Math.PI * 2);
+          var base = Math.sin(x * layer.freq * 0.35 + time * layer.speed * 40 + layer.phase) * ampPx * 0.35;
+          var qrs = 0;
+          var cycle = (x * 0.018 + time * (0.85 + hot * 0.35) + layer.phase * 2) % 100;
+          if (cycle > 42 && cycle < 58) {
+            var u = (cycle - 42) / 16;
+            // QRS complex shape
+            if (u < 0.2) qrs = -ampPx * 0.25 * (u / 0.2);
+            else if (u < 0.35) qrs = ampPx * (1.15 + spike * 1.4) * ((u - 0.2) / 0.15);
+            else if (u < 0.5) qrs = -ampPx * 0.55 * ((u - 0.35) / 0.15);
+            else qrs = ampPx * 0.2 * (1 - (u - 0.5) / 0.5);
+          }
+          var noise = Math.sin(x * 0.09 + time * 0.002 + layer.phase) * ampPx * 0.08;
+          return mid + base + qrs + noise;
+        }
+
+        function frame(now) {
+          if (reduced) {
+            ctx.clearRect(0, 0, w, h);
+            return;
+          }
+          var time = now - t0;
+          if (spike > 0) spike = Math.max(0, spike - 0.018);
+          if (soldBoost > 0 && soldBoost < 1) soldBoost = Math.min(1, soldBoost + 0.02);
+
+          ctx.clearRect(0, 0, w, h);
+          // soft trails
+          ctx.globalCompositeOperation = "lighter";
+          for (var i = 0; i < layers.length; i++) {
+            var L = layers[i];
+            var mid = h * (0.28 + i * 0.14);
+            var ampPx = h * L.amp * (1 + spike * 1.8 + soldBoost * 0.35 + hot * 0.2);
+            var a = L.alpha * (0.75 + spike * 0.6 + soldBoost * 0.4 + hot * 0.15);
+            ctx.beginPath();
+            ctx.lineWidth = L.thick + spike * 1.2 + soldBoost * 0.6;
+            ctx.strokeStyle =
+              "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + "," + a + ")";
+            ctx.shadowColor =
+              "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + "," + (0.25 + spike * 0.45) + ")";
+            ctx.shadowBlur = 12 + spike * 24 + soldBoost * 18;
+            var step = Math.max(3, Math.floor(w / 220));
+            for (var x = 0; x <= w; x += step) {
+              var y = ecgY(x, time, L, mid, ampPx);
+              if (x === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          ctx.shadowBlur = 0;
+          ctx.globalCompositeOperation = "source-over";
+          raf = requestAnimationFrame(frame);
+        }
+
+        function start() {
+          resize();
+          window.addEventListener("resize", resize);
+          if (!reduced) raf = requestAnimationFrame(frame);
+        }
+
+        start();
+        return {
+          spike: function () {
+            spike = 1;
+          },
+          setSold: function (on) {
+            soldBoost = on ? 1 : 0;
+          },
+          setHot: function (level) {
+            hot = Math.max(0, Math.min(1, level));
+          },
+        };
+      })();
 
       function pushMention(key, text, force) {
         if (!text) return;
@@ -1044,10 +1287,22 @@
 
       function flashPrice() {
         var el = document.getElementById("priceCurrent");
-        el.classList.remove("flash");
-        void el.offsetWidth;
-        el.classList.add("flash");
-        setTimeout(function () { el.classList.remove("flash"); }, 600);
+        if (el) {
+          el.classList.remove("flash");
+          void el.offsetWidth;
+          el.classList.add("flash");
+          setTimeout(function () { el.classList.remove("flash"); }, 600);
+        }
+        var rise = document.getElementById("riseNow");
+        if (rise) {
+          rise.style.transform = "scale(1.06)";
+          rise.style.color = "#f0abfc";
+          setTimeout(function () {
+            rise.style.transform = "";
+            rise.style.color = "";
+          }, 500);
+        }
+        if (waveField && waveField.spike) waveField.spike();
       }
 
       function fmtRemain(ms) {
@@ -1065,21 +1320,71 @@
 
       function tickCountdown(endsAt) {
         var el = document.getElementById("countdownLine");
-        if (!el || !endsAt) {
+        var pulse = document.getElementById("pulseCountdown");
+        if ((!el && !pulse) || !endsAt) {
           if (el) el.textContent = "";
+          if (pulse) pulse.textContent = "—";
           return;
         }
         function run() {
           var end = Date.parse(endsAt);
+          var text;
           if (isNaN(end)) {
-            el.textContent = t("마감 ", "Ends ") + endsAt;
-            return;
+            text = endsAt;
+          } else {
+            text = fmtRemain(end - Date.now());
           }
-          el.textContent = t("끝나는 때까지 ", "Time left ") + fmtRemain(end - Date.now());
+          if (el) {
+            el.textContent = isNaN(end)
+              ? t("마감 ", "Ends ") + endsAt
+              : t("끝나는 때까지 ", "Time left ") + text;
+          }
+          if (pulse) pulse.textContent = text;
         }
         run();
         if (countdownTimer) clearInterval(countdownTimer);
         countdownTimer = setInterval(run, 1000);
+      }
+
+      function updatePriceRise(p) {
+        var start = Number(p.price_start) || 0;
+        var cur = p.price_current != null ? Number(p.price_current) : start;
+        var buy = p.price_buy_now != null ? Number(p.price_buy_now) : null;
+        var sold = (p.auction_status || "") === "sold";
+        var soldPrice = p.sold_price != null ? Number(p.sold_price) : cur;
+        if (sold && soldPrice) cur = soldPrice;
+
+        var riseStart = document.getElementById("riseStart");
+        var riseNow = document.getElementById("riseNow");
+        var fill = document.getElementById("riseFill");
+        var delta = document.getElementById("riseDelta");
+        if (riseStart) riseStart.textContent = won(start);
+        if (riseNow) riseNow.textContent = won(cur);
+
+        // Progress: start → current relative to start..max(start*2, buy_now, current)
+        var ceiling = Math.max(start * 2, cur, buy || 0, 1);
+        var pct = start <= 0 ? 8 : Math.min(100, Math.max(6, ((cur - start) / (ceiling - start || 1)) * 100 + 8));
+        if (sold) pct = 100;
+        if (fill) fill.style.width = pct + "%";
+
+        if (delta) {
+          if (sold) {
+            delta.textContent = t(
+              "낙찰가까지 올라간 뒤, 다음 주인을 만났습니다",
+              "Climbed to the winning price — found its next owner"
+            );
+          } else if (cur > start) {
+            delta.textContent =
+              t("시작가 대비 ", "Up ") +
+              won(cur - start) +
+              t(" 상승 · 모두가 실시간으로 봅니다", " from start · live & public");
+          } else {
+            delta.textContent = t(
+              "상승 흐름이 실시간으로 공개됩니다",
+              "The rise will be public in real time"
+            );
+          }
+        }
       }
 
       function meIsOwner(p) {
@@ -1256,9 +1561,13 @@
 
         var price = p.price_current != null ? p.price_current : p.price_start;
         var priceEl = document.getElementById("priceCurrent");
+        var bidEvents = Number(p.bid_count) || 0;
         if (lastPrice != null && Number(price) !== Number(lastPrice)) flashPrice();
+        else if (lastBidEvents != null && bidEvents > lastBidEvents) flashPrice();
         lastPrice = price;
-        priceEl.textContent = won(price);
+        lastBidEvents = bidEvents;
+        if (priceEl) priceEl.textContent = won(price);
+        updatePriceRise(p);
 
         document.getElementById("priceStartLine").textContent =
           t("시작 가격 ", "Start ") + won(p.price_start) +
@@ -1270,6 +1579,14 @@
           uniqueBidders +
           t("명 · 한 번에 올릴 최소 금액 ", " · min step ") +
           won(p.min_increment || 10000);
+        var pulseBids = document.getElementById("pulseBids");
+        if (pulseBids) {
+          pulseBids.textContent =
+            uniqueBidders +
+            t("명 · ", " · ") +
+            bidEvents +
+            t("회", " bids");
+        }
         document.getElementById("endsLine").textContent =
           p.auction_ends_at
             ? t("끝나는 시간 ", "Ends ") + String(p.auction_ends_at).replace("T", " ").slice(0, 19)
@@ -1404,11 +1721,19 @@
         document.body.classList.toggle("auction-hot", live && bidsN >= 1);
         document.body.classList.toggle("auction-hotter", live && bidsN >= 3);
         document.body.classList.toggle("auction-sold", sold);
+        if (waveField) {
+          if (waveField.setSold) waveField.setSold(sold);
+          if (waveField.setHot) waveField.setHot(live ? (bidsN >= 3 ? 1 : bidsN >= 1 ? 0.55 : 0.2) : 0);
+        }
+        var soldRibbon = document.getElementById("soldRibbon");
+        if (soldRibbon) {
+          soldRibbon.textContent = t("다음 주인을 만났습니다", "It found its next owner");
+        }
         var banS = document.getElementById("publicBannerStrong");
         var banT = document.getElementById("publicBannerText");
         if (banS && banT) {
           if (sold) {
-            banS.textContent = t("끝났어요 · 팔림", "Sold");
+            banS.textContent = t("다음 주인을 만났습니다", "It found its next owner");
             banT.textContent = t(" — 이 프로젝트는 팔렸습니다. 돈 보내기와 넘기기를 진행하세요.", " — This project sold. Proceed with payment and transfer.");
           } else if (paused) {
             banS.textContent = t("경매 중단", "Auction paused");
@@ -1433,9 +1758,19 @@
           }
         }
         var badge = document.getElementById("liveBadge");
+        var badgeSpot = document.getElementById("liveBadgeSpot");
+        function setBadges(text, cls) {
+          if (badge) {
+            badge.textContent = text;
+            badge.className = "badge " + cls;
+          }
+          if (badgeSpot) {
+            badgeSpot.textContent = text;
+            badgeSpot.className = "badge " + cls;
+          }
+        }
         if (sold) {
-          badge.textContent = "SOLD";
-          badge.className = "badge ending";
+          setBadges(t("NEXT OWNER", "NEXT OWNER"), "ending");
           var deal = document.getElementById("dealLine");
           deal.hidden = false;
           var fee = p.fee || {};
@@ -1444,18 +1779,16 @@
             (fee.fee != null ? t(" · 판매자 수수료 ", " · seller fee ") + won(fee.fee) + t(" · 실수령 예상 ", " · seller net ~ ") + won(fee.seller_net) : "");
         } else if (paused) {
           document.getElementById("dealLine").hidden = true;
-          badge.textContent = t("PAUSED · 신고 중단", "PAUSED · reports");
-          badge.className = "badge ending";
+          setBadges(t("PAUSED · 신고 중단", "PAUSED · reports"), "ending");
         } else {
           document.getElementById("dealLine").hidden = true;
           if (live && bidsN >= 1) {
-            badge.textContent = t("진행 중 · 입찰자 ", "Live · ") + bidsN + t("명", " bidders");
+            setBadges(t("진행 중 · 입찰자 ", "Live · ") + bidsN + t("명", " bidders"), "live");
           } else if (live) {
-            badge.textContent = t("첫 입찰 대기", "Awaiting first bid");
+            setBadges(t("첫 입찰 대기", "Awaiting first bid"), "live");
           } else {
-            badge.textContent = (p.auction_status || "—").toUpperCase();
+            setBadges((p.auction_status || "—").toUpperCase(), "draft");
           }
-          badge.className = "badge " + (live ? "live" : "draft");
         }
 
         var bidInput = document.getElementById("bidAmount");
