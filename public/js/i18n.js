@@ -523,17 +523,41 @@
       var key = el.getAttribute("data-i18n");
       if (!key) return;
       var val = t(key);
+      // Missing key: keep author-provided HTML/text fallback instead of showing raw "proj.foo"
+      if (val === key) {
+        var hasHtml = el.hasAttribute("data-i18n-html");
+        var existing = hasHtml ? (el.innerHTML || "").trim() : (el.textContent || "").trim();
+        if (existing && existing !== key) return;
+      }
       if (el.hasAttribute("data-i18n-html")) el.innerHTML = val;
       else el.textContent = val;
     });
     scope.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
-      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+      var k = el.getAttribute("data-i18n-placeholder");
+      var v = t(k);
+      if (v === k) {
+        var ph = el.getAttribute("placeholder");
+        if (ph && ph !== k) return;
+      }
+      el.setAttribute("placeholder", v);
     });
     scope.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
-      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+      var k = el.getAttribute("data-i18n-aria");
+      var v = t(k);
+      if (v === k) {
+        var a = el.getAttribute("aria-label");
+        if (a && a !== k) return;
+      }
+      el.setAttribute("aria-label", v);
     });
     scope.querySelectorAll("[data-i18n-title]").forEach(function (el) {
-      el.setAttribute("title", t(el.getAttribute("data-i18n-title")));
+      var k = el.getAttribute("data-i18n-title");
+      var v = t(k);
+      if (v === k) {
+        var ti = el.getAttribute("title");
+        if (ti && ti !== k) return;
+      }
+      el.setAttribute("title", v);
     });
     document.documentElement.lang = state.lang === "en" ? "en" : "ko";
     document.documentElement.setAttribute("data-wa-lang", state.lang);

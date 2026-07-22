@@ -695,8 +695,8 @@
       <div class="spotlight-card" id="spotlightCard">
         <div class="sold-ribbon" id="soldRibbon">다음 주인을 만났습니다</div>
         <div class="spotlight-kicker">
-          <p class="eyebrow" id="statusEyebrow" style="margin:0">AUCTION</p>
-          <span class="badge live" id="liveBadgeSpot">LIVE</span>
+          <p class="eyebrow" id="statusEyebrow" style="margin:0" data-i18n="proj.auction_eyebrow">경매</p>
+          <span class="badge live" id="liveBadgeSpot" data-i18n="proj.live_badge">진행 중</span>
         </div>
         <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
         <p class="spotlight-one" id="pOne"></p>
@@ -792,7 +792,7 @@
 
       <aside class="price-panel">
         <div class="live-row">
-          <span class="badge live" id="liveBadge">LIVE</span>
+          <span class="badge live" id="liveBadge" data-i18n="proj.live_badge">진행 중</span>
           <span class="price-meta" id="pollHint" data-i18n="proj.poll">4초마다 새로고침</span>
         </div>
         <p class="price-meta" data-i18n="proj.price_public">지금 가격 (모두가 볼 수 있어요)</p>
@@ -988,8 +988,8 @@
     </p>
   </footer>
   <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260722d"></script>
-  <script src="/js/i18n.js?v=20260722d"></script>
+  <script src="/js/i18n-messages.js?v=20260722e"></script>
+  <script src="/js/i18n.js?v=20260722e"></script>
 
 
   <script src="/js/api.js"></script>
@@ -1770,7 +1770,7 @@
           }
         }
         if (sold) {
-          setBadges(t("NEXT OWNER", "NEXT OWNER"), "ending");
+          setBadges(t("새 주인", "Next owner"), "ending");
           var deal = document.getElementById("dealLine");
           deal.hidden = false;
           var fee = p.fee || {};
@@ -1779,7 +1779,7 @@
             (fee.fee != null ? t(" · 판매자 수수료 ", " · seller fee ") + won(fee.fee) + t(" · 실수령 예상 ", " · seller net ~ ") + won(fee.seller_net) : "");
         } else if (paused) {
           document.getElementById("dealLine").hidden = true;
-          setBadges(t("PAUSED · 신고 중단", "PAUSED · reports"), "ending");
+          setBadges(t("중단 · 신고 검토", "Paused · under review"), "ending");
         } else {
           document.getElementById("dealLine").hidden = true;
           if (live && bidsN >= 1) {
