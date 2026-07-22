@@ -153,6 +153,7 @@ def health_root():
             "APP_SECRET_missing": not flags["app_secret_set"],
             "user_count_collapsed": bool(collapse),
             "users_zero_after_peak": bool(collapse),
+            "offsite_backup_missing": not (bstat.get("offsite") or {}).get("configured"),
         }.items()
         if v
     }
@@ -171,6 +172,12 @@ def health_root():
             "backup_enabled": bstat.get("enabled"),
             "peak_users": (bstat.get("meta") or {}).get("peak_users"),
             "collapse_alert": collapse,
+            "offsite": {
+                "configured": (bstat.get("offsite") or {}).get("configured"),
+                "enabled": (bstat.get("offsite") or {}).get("enabled"),
+                "last_upload_at": (bstat.get("offsite") or {}).get("last_upload_at"),
+                "last_upload_ok": (bstat.get("offsite") or {}).get("last_upload_ok"),
+            },
         },
         "scheduler": {
             "enabled": sched.get("enabled"),

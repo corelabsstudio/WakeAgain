@@ -3085,6 +3085,17 @@ def admin_data_status(_: None = Depends(require_admin)):
     ok_int, int_msg = db_backup.integrity_ok()
     collapse = db_backup.detect_user_collapse()
     backups = db_backup.list_backups(limit=30)
+    offsite_st = st.get("offsite") or {}
+    remote_files: list[dict] = []
+    remote_err = None
+    if offsite_st.get("enabled") or offsite_st.get("configured"):
+        try:
+            from wakeagain import offsite_backup as offsite_mod
+
+            if offsite_mod.is_configured():
+                remote_files = offsite_mod.list_objects(max_keys=40)
+        except Exception as e:
+            remote_err = f"{type(e).__name__}: {e}"
     return {
         "ok": True,
         "critical": bool(collapse),
@@ -3112,18 +3123,26 @@ def admin_data_status(_: None = Depends(require_admin)):
             "files": backups,
             "file_count": len(backups),
         },
+        "offsite": {
+            **offsite_st,
+            "files": remote_files,
+            "file_count": len(remote_files),
+            "list_error": remote_err,
+        },
         "policy": {
             "message": (
                 "회원 데이터 유실 = 서비스 파산급. "
-                "purge/restore는 ALLOW_DESTRUCTIVE_ADMIN=1 + 명시 confirm 필요. "
-                "스냅샷은 DATA_DIR/backups (볼륨) 에 보관."
+                "로컬 볼륨 스냅샷 + 오프사이트(S3/R2) 이중 보관. "
+                "purge/restore는 ALLOW_DESTRUCTIVE_ADMIN=1 + 명시 confirm 필요."
             ),
             "env": [
                 "DATA_DIR=/data",
                 "DB_BACKUP_ENABLED=1",
                 "DB_BACKUP_INTERVAL_SEC=3600",
-                "DB_BACKUP_KEEP_HOURLY=48",
-                "DB_BACKUP_KEEP_DAILY=14",
+                "OFFSITE_S3_ENDPOINT",
+                "OFFSITE_S3_BUCKET",
+                "OFFSITE_S3_ACCESS_KEY",
+                "OFFSITE_S3_SECRET_KEY",
                 "ALLOW_DESTRUCTIVE_ADMIN=0",
             ],
         },
@@ -3132,13 +3151,73 @@ def admin_data_status(_: None = Depends(require_admin)):
 
 @router.post("/admin/data/backup")
 def admin_data_backup_now(_: None = Depends(require_admin)):
-    """Force an immediate SQLite snapshot (admin)."""
+    """Force an immediate SQLite snapshot (admin) + offsite upload when configured."""
     from wakeagain import backup as db_backup
 
     result = db_backup.create_backup(reason="manual")
     if not result.get("ok"):
         raise HTTPException(status_code=500, detail=result.get("error") or "backup failed")
     return {"ok": True, **result}
+
+
+@router.post("/admin/data/offsite-upload")
+def admin_offsite_upload_latest(_: None = Depends(require_admin)):
+    """Force upload the newest local snapshot to offsite storage."""
+    from wakeagain import backup as db_backup
+    from wakeagain import offsite_backup as offsite_mod
+
+    if not offsite_mod.is_configured():
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "offsite_not_configured",
+                "message": (
+                    "오프사이트 스토리지가 설정되지 않았습니다. "
+                    "OFFSITE_S3_ENDPOINT / BUCKET / ACCESS_KEY / SECRET_KEY 를 설정하세요."
+                ),
+            },
+        )
+    files = db_backup.list_backups(limit=1)
+    if not files:
+        # create then upload
+        snap = db_backup.create_backup(reason="manual")
+        if not snap.get("ok"):
+            raise HTTPException(status_code=500, detail=snap.get("error") or "backup failed")
+        return {"ok": True, "created": True, **snap}
+    path = files[0]["path"]
+    result = offsite_mod.upload_backup_file(
+        path, reason="manual", users=db_backup.count_users(), force=True
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=500, detail=result.get("error") or "upload failed")
+    return {"ok": True, "created": False, "local": files[0]["name"], **result}
+
+
+class AdminOffsitePullIn(BaseModel):
+    """원격 백업을 볼륨으로 내려받기 (복구 전 단계)."""
+
+    object_key: str = Field(min_length=8, max_length=400)
+
+
+@router.post("/admin/data/offsite-pull")
+def admin_offsite_pull(body: AdminOffsitePullIn, _: None = Depends(require_admin)):
+    """Download a remote snapshot into DATA_DIR/backups (does not restore yet)."""
+    from wakeagain import backup as db_backup
+    from wakeagain import offsite_backup as offsite_mod
+
+    if not offsite_mod.is_configured():
+        raise HTTPException(status_code=400, detail="offsite not configured")
+    result = offsite_mod.download_to_local(body.object_key.strip(), db_backup.BACKUP_DIR)
+    if not result.get("ok"):
+        raise HTTPException(status_code=500, detail=result.get("error") or "pull failed")
+    return {
+        "ok": True,
+        **result,
+        "message": (
+            f"원격 백업을 로컬로 받았습니다: {result.get('name')}. "
+            "복구하려면 ALLOW_DESTRUCTIVE_ADMIN=1 후 restore API를 사용하세요."
+        ),
+    }
 
 
 class AdminRestoreIn(BaseModel):

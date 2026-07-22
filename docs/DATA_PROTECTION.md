@@ -12,10 +12,12 @@
 |------|------|------|
 | 로컬 | `./data/wakeagain.db` | gitignore |
 | 프로덕션 (Railway) | `/data/wakeagain.db` | **Volume 마운트 필수** · env `DATA_DIR=/data` |
-| 백업 | `{DATA_DIR}/backups/wakeagain-*.db` | 같은 볼륨 안 (재배포에도 남음) |
-| 메타 | `{DATA_DIR}/db_health.json` | peak/last 회원 수 · 마지막 백업 |
+| 백업 (1차) | `{DATA_DIR}/backups/wakeagain-*.db` | 같은 볼륨 안 (재배포에도 남음) |
+| 백업 (2차) | S3 호환 오프사이트 (R2/S3/B2) | **볼륨 장애·프로젝트 삭제 대비** · `docs/OFFSITE_BACKUP_SETUP.md` |
+| 메타 | `{DATA_DIR}/db_health.json` | peak/last 회원 수 · 마지막 백업 · 오프사이트 시각 |
 
-볼륨이 없거나 `DATA_DIR`이 컨테이너 ephemeral 경로면 **배포마다 회원 전원 소멸**한다.
+볼륨이 없거나 `DATA_DIR`이 컨테이너 ephemeral 경로면 **배포마다 회원 전원 소멸**한다.  
+오프사이트까지 켜야 “개망” 시나리오를 한 단계 더 막는다.
 
 ---
 
@@ -25,13 +27,14 @@
 |------|------|
 | 기동 백업 | `init_db` 후 `backup.startup_hooks()` — 스냅샷 + WAL + 급감 경고 |
 | 주기 백업 | 옥션 스케줄러 틱에서 `maybe_periodic_backup()` (기본 1시간) |
-| 로테이션 | 최근 ~48개 + 일별 14일분 유지 |
+| 오프사이트 | 로컬 스냅샷 직후 S3 PUT (R2 등) · 원격 로테이션 `OFFSITE_KEEP_REMOTE` |
+| 로테이션 | 로컬 최근 ~48개 + 일별 14일 · 원격 기본 60개 |
 | integrity | `PRAGMA integrity_check` |
-| health | `GET /health` → `data.users`, `data.collapse_alert`, `prod_warnings.user_count_collapsed` |
+| health | `GET /health` → `data.users`, `data.offsite`, `prod_warnings.offsite_backup_missing` |
 | purge 잠금 | `ALLOW_DESTRUCTIVE_ADMIN` 없으면 전체 삭제 403 · 허용 시에도 **pre-purge 백업 후** 삭제 |
-| 복구 | 관리자 복구도 동일 잠금 · 복구 직전 현재 DB 백업 |
+| 복구 | 원격 pull → 로컬 restore · 동일 잠금 |
 
-구현: `wakeagain/backup.py` · `server.py` · `wakeagain/scheduler.py` · `wakeagain/api.py`
+구현: `wakeagain/backup.py` · `wakeagain/offsite_backup.py` · `server.py` · `scheduler.py` · `api.py`
 
 ---
 
@@ -55,8 +58,9 @@
    - `POST /api/v1/admin/data/restore`  
      body: `{ "backup_name": "wakeagain-....db", "confirm": "RESTORE_FROM_BACKUP" }`
    - 변수 다시 끄기 (`0` 또는 삭제)
-4. 백업이 없고 볼륨만 비어 있으면 Railway 이전 볼륨/스냅샷·지원 티켓  
-5. 원인 기록: 볼륨 미연결, 잘못된 `DATA_DIR`, purge, 시크릿 회전 혼동 등  
+4. 로컬에 없고 **오프사이트**에 있으면: **로컬로 받기** → restore  
+5. 둘 다 없으면 Railway 지원·이전 볼륨 (최후)  
+6. 원인 기록: 볼륨 미연결, 잘못된 `DATA_DIR`, purge, 시크릿 회전 혼동 등 
 
 ---
 
@@ -74,10 +78,10 @@
 
 | 항목 | 이유 |
 |------|------|
-| 오프사이트 백업 (S3/R2/별도 스토리지) | 볼륨 자체 장애·실수 삭제 대비 |
+| ~~오프사이트 백업~~ | **완료** — R2/S3 연동 (`OFFSITE_S3_*`) · 설정 가이드 `OFFSITE_BACKUP_SETUP.md` |
 | 일 1회 운영자 알림 (회원 수 델타) | 조용한 유실 조기 발견 |
 | Postgres 이전 (규모 커지면) | 단일 SQLite 파일 한계·운영 도구 |
 
-오프사이트 백업은 도메인·PG 이후 우선 백로그에 올려도 된다.  
-**지금은 볼륨 + 로컬 스냅샷 + 잠금이 최소 방어선이다.**
+**최소 방어선:** 볼륨 + 로컬 스냅샷 + purge 잠금 + **오프사이트(R2)**.  
+R2 키가 없으면 health에 `offsite_backup_missing` 경고가 뜬다.
 )

@@ -1586,19 +1586,25 @@
             document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
             $("pageTitle").textContent = "데이터 · 백업";
             $("hintBox").innerHTML =
-              "<strong>회원 데이터 = 서비스 생명줄.</strong> 스냅샷은 볼륨 <code>DATA_DIR/backups</code>에 쌓입니다. " +
-              "전체 삭제·복구는 환경변수 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> 이 켜져 있을 때만 가능합니다 (기본 잠금).";
+              "<strong>회원 데이터 = 서비스 생명줄.</strong> ① 볼륨 스냅샷 + ② 오프사이트(S3/R2). " +
+              "전체 삭제·복구는 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> 일 때만 (기본 잠금).";
             $("counts").innerHTML = "";
             var dstat = await api("/api/v1/admin/data/status");
             state.dataStatus = dstat;
             var c = dstat.counts || {};
             var b = dstat.backup || {};
+            var o = dstat.offsite || {};
             var files = b.files || [];
+            var remote = o.files || [];
             var alertHtml = dstat.critical
               ? '<p class="err" style="display:block">⚠ ' +
                 escapeHtml((dstat.collapse_alert && dstat.collapse_alert.message) || "회원 수 급감 감지") +
                 "</p>"
               : "";
+            if (!o.configured) {
+              alertHtml +=
+                '<p class="err" style="display:block">오프사이트 미설정 — Railway에 OFFSITE_S3_* 변수를 넣어야 볼륨 장애에도 살아남습니다.</p>';
+            }
             var fileList = files.length
               ? files
                   .map(function (f) {
@@ -1613,7 +1619,30 @@
                     );
                   })
                   .join("")
-              : "<li class='meta'>아직 백업 파일 없음 (배포 후 자동 생성)</li>";
+              : "<li class='meta'>아직 로컬 백업 없음</li>";
+            var remoteList = remote.length
+              ? remote
+                  .map(function (f) {
+                    return (
+                      "<li><code>" +
+                      escapeHtml(f.key || f.name) +
+                      "</code> · " +
+                      Math.round((f.size_bytes || 0) / 1024) +
+                      " KB · " +
+                      escapeHtml(f.last_modified || "") +
+                      ' <button type="button" class="btn btn-ghost btn-sm btn-pull-remote" data-key="' +
+                      escapeHtml(f.key || "") +
+                      '">로컬로 받기</button></li>'
+                    );
+                  })
+                  .join("")
+              : "<li class='meta'>" +
+                (o.list_error
+                  ? "원격 목록 오류: " + escapeHtml(o.list_error)
+                  : o.configured
+                    ? "원격 백업 아직 없음 (지금 백업/오프사이트 업로드 실행)"
+                    : "스토리지 미연결") +
+                "</li>";
             $("list").innerHTML =
               alertHtml +
               "<div class='panel' style='padding:1rem'>" +
@@ -1630,34 +1659,42 @@
               Math.round(((dstat.db && dstat.db.size_bytes) || 0) / 1024) +
               " KB · integrity " +
               (dstat.integrity_ok ? "OK" : "FAIL") +
-              " (" +
-              escapeHtml(dstat.integrity || "") +
-              ")</p>" +
-              "<p class='meta'><strong>peak 회원</strong> " +
-              escapeHtml(String((b.meta && b.meta.peak_users) != null ? b.meta.peak_users : "—")) +
-              " · <strong>마지막 백업</strong> " +
+              "</p>" +
+              "<p class='meta'><strong>로컬 백업</strong> " +
               escapeHtml(b.last_backup_at || "—") +
-              " · 백업 " +
-              (b.enabled ? "ON" : "OFF") +
+              " · <strong>오프사이트</strong> " +
+              (o.configured ? (o.enabled ? "ON" : "OFF") : "미설정") +
+              (o.endpoint_host ? " · " + escapeHtml(o.endpoint_host) : "") +
+              (o.bucket ? " / " + escapeHtml(o.bucket) : "") +
+              " · 마지막 업로드 " +
+              escapeHtml(o.last_upload_at || (b.meta && b.meta.last_offsite_at) || "—") +
+              (o.last_upload_ok === false ? " · <span style='color:#f66'>업로드 실패</span>" : "") +
               " · 파괴 작업 " +
               (dstat.destructive_admin_enabled ? "UNLOCKED" : "LOCKED") +
               "</p>" +
               "<div class='actions' style='margin:0.75rem 0'>" +
-              '<button type="button" class="btn btn-primary btn-sm" id="btnBackupNow">지금 백업</button>' +
+              '<button type="button" class="btn btn-primary btn-sm" id="btnBackupNow">지금 백업(+오프사이트)</button>' +
+              '<button type="button" class="btn btn-ghost btn-sm" id="btnOffsiteUpload">오프사이트만 업로드</button>' +
               '<button type="button" class="btn btn-ghost btn-sm" id="btnDataRefresh">새로고침</button>' +
               "</div>" +
-              "<h3 style='font-size:0.95rem;margin:1rem 0 0.4rem'>백업 파일 (" +
+              "<h3 style='font-size:0.95rem;margin:1rem 0 0.4rem'>로컬 볼륨 백업 (" +
               files.length +
               ")</h3>" +
               "<ul style='margin:0;padding-left:1.2rem;font-size:0.85rem;line-height:1.55'>" +
               fileList +
               "</ul>" +
+              "<h3 style='font-size:0.95rem;margin:1rem 0 0.4rem'>오프사이트 원격 (" +
+              remote.length +
+              ")</h3>" +
+              "<ul style='margin:0;padding-left:1.2rem;font-size:0.85rem;line-height:1.7'>" +
+              remoteList +
+              "</ul>" +
               "<p class='meta' style='margin-top:1rem'>" +
               escapeHtml((dstat.policy && dstat.policy.message) || "") +
               "</p>" +
               "<details style='margin-top:0.75rem'><summary class='meta'>복구 (위험 · 잠금 해제 시에만)</summary>" +
-              "<p class='meta'>1) Railway에 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> 임시 설정 → 2) 아래 파일명 입력 → 3) confirm 문구 입력</p>" +
-              '<label class="meta">backup 파일명</label><br/>' +
+              "<p class='meta'>원격 → 「로컬로 받기」 후, Railway에 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> · 파일명 + <code>RESTORE_FROM_BACKUP</code></p>" +
+              '<label class="meta">backup 파일명 (로컬)</label><br/>' +
               '<input id="restoreName" type="text" style="width:100%;max-width:28rem;margin:0.25rem 0" placeholder="wakeagain-...-startup.db" />' +
               '<label class="meta">confirm = RESTORE_FROM_BACKUP</label><br/>' +
               '<input id="restoreConfirm" type="text" style="width:100%;max-width:28rem;margin:0.25rem 0" autocomplete="off" />' +
@@ -1678,8 +1715,34 @@
                 }
               });
             }
+            var btnO = document.getElementById("btnOffsiteUpload");
+            if (btnO) {
+              btnO.addEventListener("click", async function () {
+                try {
+                  await api("/api/v1/admin/data/offsite-upload", { method: "POST", body: "{}" });
+                  await load();
+                } catch (e) {
+                  showErr(e.message || "오프사이트 업로드 실패");
+                }
+              });
+            }
             var btnR = document.getElementById("btnDataRefresh");
             if (btnR) btnR.addEventListener("click", function () { load(); });
+            document.querySelectorAll(".btn-pull-remote").forEach(function (btn) {
+              btn.addEventListener("click", async function () {
+                var key = btn.getAttribute("data-key") || "";
+                if (!key) return;
+                try {
+                  await api("/api/v1/admin/data/offsite-pull", {
+                    method: "POST",
+                    body: JSON.stringify({ object_key: key }),
+                  });
+                  await load();
+                } catch (e) {
+                  showErr(e.message || "원격 받기 실패");
+                }
+              });
+            });
             var btnRest = document.getElementById("btnRestore");
             if (btnRest) {
               btnRest.addEventListener("click", async function () {

@@ -221,6 +221,7 @@ npm run build:store:prep
 | `JWT_DAYS` | 토큰 유효일 (기본 30) |
 | `DB_BACKUP_ENABLED` | SQLite 스냅샷 자동 백업 (기본 `1`) |
 | `DB_BACKUP_INTERVAL_SEC` | 백업 주기 초 (기본 `3600`) |
+| `OFFSITE_S3_*` | 오프사이트 백업 (R2/S3) · [`docs/OFFSITE_BACKUP_SETUP.md`](./docs/OFFSITE_BACKUP_SETUP.md) |
 | `ALLOW_DESTRUCTIVE_ADMIN` | 회원 전체 삭제·DB 복구 허용 (기본 **꺼짐** · 사고 방지) |
 
 ### 회원 데이터 보호 (2026-07-22 확정 · 최우선)
@@ -231,12 +232,13 @@ npm run build:store:prep
 |------|------|
 | 영속 볼륨 | Railway Volume → `DATA_DIR=/data` · 컨테이너 재시작해도 DB 유지 |
 | 자동 백업 | `wakeagain/backup.py` · 기동 시 + 주기적 스냅샷 → `/data/backups/` |
+| **오프사이트** | `wakeagain/offsite_backup.py` · S3/R2 업로드 (볼륨 장애 대비) |
 | 급감 감지 | `peak_users` / `last_users` 메타 · 0으로 떨어지면 health·로그 CRITICAL |
 | purge 잠금 | `POST /admin/users/purge-all` 기본 403 · `ALLOW_DESTRUCTIVE_ADMIN=1` + confirm 필요 · 삭제 전 백업 |
-| 복구 | `POST /admin/data/restore` · 동일 잠금 · 복구 직전 현재 DB도 백업 |
+| 복구 | 원격 pull → `POST /admin/data/restore` · 동일 잠금 |
 | 운영 UI | `/admin/` → **데이터·백업** 탭 |
 
-상세: [`docs/DATA_PROTECTION.md`](./docs/DATA_PROTECTION.md)
+상세: [`docs/DATA_PROTECTION.md`](./docs/DATA_PROTECTION.md) · R2 설정: [`docs/OFFSITE_BACKUP_SETUP.md`](./docs/OFFSITE_BACKUP_SETUP.md)
 
 ---
 

@@ -87,6 +87,12 @@ def status() -> dict[str, Any]:
     out["db_size_bytes"] = int(DB_PATH.stat().st_size) if DB_PATH.is_file() else 0
     out["data_dir"] = str(DATA)
     out["meta"] = _load_meta()
+    try:
+        from wakeagain import offsite_backup as offsite_mod
+
+        out["offsite"] = offsite_mod.status()
+    except Exception as e:
+        out["offsite"] = {"enabled": False, "configured": False, "error": str(e)}
     return out
 
 
@@ -241,6 +247,31 @@ def create_backup(reason: str = "manual") -> dict[str, Any]:
             }
         )
         rotated = rotate_backups()
+        # Second parachute: S3/R2/B2 (no-op when not configured)
+        offsite: dict[str, Any] = {"ok": False, "skipped": True, "reason": "not_attempted"}
+        try:
+            from wakeagain import offsite_backup as offsite_mod
+
+            offsite = offsite_mod.upload_backup_file(dest, reason=reason, users=users)
+            if offsite.get("ok"):
+                _save_meta(
+                    {
+                        "last_offsite_at": datetime.now(timezone.utc).isoformat(),
+                        "last_offsite_key": offsite.get("key"),
+                        "last_offsite_ok": True,
+                    }
+                )
+            elif not offsite.get("skipped"):
+                _save_meta(
+                    {
+                        "last_offsite_ok": False,
+                        "last_offsite_error": offsite.get("error"),
+                    }
+                )
+        except Exception as oe:
+            offsite = {"ok": False, "error": f"{type(oe).__name__}: {oe}"}
+            print(f"[WakeAgain][backup] offsite upload error: {oe}", flush=True)
+
         with _lock:
             _state["last_backup_at"] = meta.get("last_backup_at")
             _state["last_backup_path"] = str(dest)
@@ -248,10 +279,12 @@ def create_backup(reason: str = "manual") -> dict[str, Any]:
             _state["last_error"] = None
             _state["last_users"] = users
             _state["runs"] = int(_state.get("runs") or 0) + 1
+            _state["last_offsite"] = offsite
 
         print(
             f"[WakeAgain][backup] ok reason={reason} users={users} file={dest.name} "
-            f"bytes={size} integrity={int_msg}",
+            f"bytes={size} integrity={int_msg} offsite="
+            f"{'ok' if offsite.get('ok') else ('skip' if offsite.get('skipped') else 'fail')}",
             flush=True,
         )
         return {
@@ -265,6 +298,7 @@ def create_backup(reason: str = "manual") -> dict[str, Any]:
             "integrity_ok": ok_int,
             "rotated_removed": rotated,
             "reason": reason,
+            "offsite": offsite,
         }
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
