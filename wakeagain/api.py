@@ -31,15 +31,21 @@ from wakeagain.mailer import (
 
 router = APIRouter(prefix="/api/v1")
 
-# Dev: return email codes in API JSON. Production should use SMTP + EMAIL_DEV_MODE=0.
+# Dev: return email codes in API JSON. Production must use SMTP + EMAIL_DEV_MODE=0.
 EMAIL_DEV_MODE = os.environ.get("EMAIL_DEV_MODE", "1").strip() not in {"0", "false", "False"}
-# If SMTP missing/fails, still return code in API so users are not stuck (ops misconfig).
-EMAIL_CODE_FALLBACK = os.environ.get("EMAIL_CODE_FALLBACK", "1").strip() not in {
+# If SMTP missing/fails, optionally return code in API. Default OFF — production must not expose codes.
+# Local only: EMAIL_CODE_FALLBACK=1 (or EMAIL_DEV_MODE=1).
+EMAIL_CODE_FALLBACK = os.environ.get("EMAIL_CODE_FALLBACK", "0").strip() not in {
     "0",
     "false",
     "False",
 }
 EMAIL_CODE_MINUTES = int(os.environ.get("EMAIL_CODE_MINUTES", "30"))
+
+# 아이디 찾기: IP당 윈도우 내 요청 제한 (열거·브루트 완화)
+FIND_EMAIL_RATE_LIMIT = max(1, int(os.environ.get("FIND_EMAIL_RATE_LIMIT", "5")))
+FIND_EMAIL_RATE_WINDOW_SEC = max(60, int(os.environ.get("FIND_EMAIL_RATE_WINDOW_SEC", "900")))
+_find_email_hits: dict[str, list[float]] = {}
 
 # 개인정보 보호법: 만 14세 미만 아동 개인정보 처리 제한 → WakeAgain은 가입 자체를 거절
 MIN_AGE_YEARS = 14
@@ -109,12 +115,19 @@ def _issue_email_code(conn, user_id: int) -> str:
     return code
 
 
-def _deliver_verify_code(email: str, code: str) -> dict[str, Any]:
+def _deliver_code_mail(
+    email: str,
+    code: str,
+    *,
+    kind: Literal["verify", "reset"] = "verify",
+) -> dict[str, Any]:
     """
     Try SMTP first (when configured and not pure dev mode).
     Always safe-return flags for the client UI.
+    On SMTP missing/fail + EMAIL_CODE_FALLBACK, include dev_email_code so users are not stuck.
     """
     email = (email or "").strip().lower()
+    send_fn = send_verification_code if kind == "verify" else send_password_reset_code
     out: dict[str, Any] = {
         "email_sent": False,
         "email_configured": smtp_configured(),
@@ -125,28 +138,48 @@ def _deliver_verify_code(email: str, code: str) -> dict[str, Any]:
         out["dev_note"] = "EMAIL_DEV_MODE: 화면에 코드 표시 (SMTP 생략 가능)"
         # Still try SMTP if configured so real inboxes work in hybrid ops
         if smtp_configured():
-            out["email_sent"] = send_verification_code(email, code)
+            out["email_sent"] = send_fn(email, code)
         return out
 
     if not smtp_configured():
-        out["warning"] = (
-            "SMTP가 설정되지 않아 메일을 보낼 수 없습니다. "
-            "Railway에 SMTP_HOST/SMTP_FROM/SMTP_USER/SMTP_PASS 를 넣거나, "
-            "일시적으로 EMAIL_DEV_MODE=1 로 화면 코드를 쓰세요."
-        )
         if EMAIL_CODE_FALLBACK:
+            out["warning"] = (
+                "메일 서버(SMTP)가 아직 연결되지 않아 이메일을 보낼 수 없습니다. "
+                "아래에 표시된 코드를 입력해 주세요."
+            )
             out["dev_email_code"] = code
             out["dev_note"] = "SMTP 미설정 · 폴백으로 화면에 코드 표시"
+        else:
+            out["warning"] = (
+                "메일 서버가 아직 연결되지 않아 이메일을 보낼 수 없습니다. "
+                "잠시 후 다시 시도하거나 관리자에게 문의해 주세요."
+            )
         return out
 
-    sent = send_verification_code(email, code)
+    sent = send_fn(email, code)
     out["email_sent"] = sent
     if not sent:
-        out["warning"] = "메일 서버 전송에 실패했습니다. 잠시 후 다시 시도하거나 관리자에게 문의하세요."
         if EMAIL_CODE_FALLBACK:
+            out["warning"] = (
+                "메일 전송에 실패했습니다. 스팸함을 확인하거나, "
+                "아래에 표시된 코드로 진행해 주세요."
+            )
             out["dev_email_code"] = code
             out["dev_note"] = "SMTP 실패 · 폴백으로 화면에 코드 표시"
+        else:
+            out["warning"] = (
+                "메일 전송에 실패했습니다. 스팸함을 확인한 뒤 잠시 후 다시 시도해 주세요. "
+                "(운영 환경에서는 보안상 화면에 코드를 표시하지 않습니다.)"
+            )
     return out
+
+
+def _deliver_verify_code(email: str, code: str) -> dict[str, Any]:
+    return _deliver_code_mail(email, code, kind="verify")
+
+
+def _deliver_reset_code(email: str, code: str) -> dict[str, Any]:
+    return _deliver_code_mail(email, code, kind="reset")
 
 
 def _require_trust(
@@ -296,6 +329,12 @@ class PasswordResetConfirmIn(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class FindEmailIn(BaseModel):
+    """아이디(이메일) 찾기 — 프로필에 등록한 실명 + 휴대폰으로 조회."""
+    real_name: str = Field(min_length=2, max_length=40)
+    phone: str = Field(min_length=10, max_length=20)
+
+
 class CloseDealIn(BaseModel):
     sold_price: int | None = Field(default=None, ge=0)
     buyer_user_id: int | None = None
@@ -434,6 +473,7 @@ def client_config():
         "paths": {
             "register": "/api/v1/auth/register",
             "login": "/api/v1/auth/login",
+            "find_email": "/api/v1/auth/find-email",
             "verify_email": "/api/v1/auth/verify-email",
             "resend_verify": "/api/v1/auth/resend-verify",
             "me": "/api/v1/me",
@@ -935,6 +975,104 @@ def verify_email(body: VerifyEmailIn, user: dict = Depends(get_current_user)):
     return {"ok": True, "user": database.user_to_dict(row)}
 
 
+def _client_ip(request: Request) -> str:
+    """Prefer first X-Forwarded-For hop (Railway proxy), else direct peer."""
+    xff = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    if xff:
+        return xff
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
+def _rate_limit_find_email(request: Request) -> None:
+    """In-process sliding window. Multi-worker deploy may soft-limit per process."""
+    import time
+
+    ip = _client_ip(request)
+    now = time.time()
+    window = float(FIND_EMAIL_RATE_WINDOW_SEC)
+    hits = [t for t in _find_email_hits.get(ip, []) if now - t < window]
+    if len(hits) >= FIND_EMAIL_RATE_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"요청이 너무 많습니다. {FIND_EMAIL_RATE_WINDOW_SEC // 60}분 후 "
+                "다시 시도해 주세요."
+            ),
+        )
+    hits.append(now)
+    _find_email_hits[ip] = hits
+    # Bound map size (simple GC of stale keys)
+    if len(_find_email_hits) > 5000:
+        stale = [k for k, v in _find_email_hits.items() if not v or now - v[-1] >= window]
+        for k in stale[:2000]:
+            _find_email_hits.pop(k, None)
+
+
+@router.post("/auth/find-email")
+def find_email(body: FindEmailIn, request: Request):
+    """실명·휴대폰으로 가입 이메일 힌트(마스킹만)를 반환. 원문 이메일은 노출하지 않음."""
+    _rate_limit_find_email(request)
+    try:
+        phone = database.validate_phone(body.phone)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    real_name = (body.real_name or "").strip()
+    if len(real_name) < 2:
+        raise HTTPException(status_code=400, detail="real_name required")
+
+    with database.db() as conn:
+        # 실명+휴대폰 둘 다 일치해야 함 (열거·피싱 완화)
+        rows = conn.execute(
+            """
+            SELECT email FROM users
+            WHERE phone = ? AND TRIM(real_name) = ?
+            ORDER BY id ASC
+            LIMIT 5
+            """,
+            (phone, real_name),
+        ).fetchall()
+
+    if not rows:
+        return {
+            "ok": True,
+            "found": False,
+            "message": (
+                "일치하는 계정을 찾지 못했습니다. "
+                "프로필에 등록한 실명·휴대폰을 확인하거나, "
+                "아직 실명·휴대폰을 넣지 않았다면 가입 이메일을 직접 입력해 주세요."
+            ),
+        }
+
+    emails = [str(r["email"] or "").strip() for r in rows if r["email"]]
+    emails = [e for e in emails if e]
+    if not emails:
+        return {
+            "ok": True,
+            "found": False,
+            "message": "일치하는 계정을 찾지 못했습니다.",
+        }
+
+    masked = [database.mask_email_public(e) for e in emails]
+    primary_masked = masked[0]
+    return {
+        "ok": True,
+        "found": True,
+        # 원문 이메일 비노출 (구 클라이언트 호환 필드도 마스킹만)
+        "email": primary_masked,
+        "email_masked": primary_masked,
+        "emails": masked if len(masked) > 1 else None,
+        "emails_masked": masked if len(masked) > 1 else None,
+        "full_email_revealed": False,
+        "message": (
+            "가입 이메일 힌트를 찾았습니다. "
+            "개인정보 보호를 위해 일부만 표시합니다. "
+            "기억나는 전체 주소로 로그인해 주세요."
+        ),
+    }
+
+
 @router.post("/auth/password-reset/request")
 def password_reset_request(body: PasswordResetRequestIn):
     email = body.email.strip().lower()
@@ -947,34 +1085,35 @@ def password_reset_request(body: PasswordResetRequestIn):
                 "UPDATE users SET reset_code_hash = ?, reset_code_expires = ? WHERE id = ?",
                 (_hash_code(code), _code_expiry_iso(), row["id"]),
             )
-            # deliver
-            if EMAIL_DEV_MODE:
-                mail_meta = {
-                    "email_sent": smtp_configured() and send_password_reset_code(email, code),
-                    "email_configured": smtp_configured(),
-                    "dev_email_code": code,
-                    "dev_note": "EMAIL_DEV_MODE",
-                }
-            elif smtp_configured():
-                sent = send_password_reset_code(email, code)
-                mail_meta = {"email_sent": sent, "email_configured": True}
-                if not sent and EMAIL_CODE_FALLBACK:
-                    mail_meta["dev_email_code"] = code
-                    mail_meta["dev_note"] = "SMTP 실패 폴백"
-            elif EMAIL_CODE_FALLBACK:
-                mail_meta = {
-                    "email_sent": False,
-                    "email_configured": False,
-                    "dev_email_code": code,
-                    "dev_note": "SMTP 미설정 폴백",
-                }
+            mail_meta = _deliver_reset_code(email, code)
     # Always ok (no email enumeration)
     out: dict[str, Any] = {
         "ok": True,
         "message": "등록된 이메일이면 재설정 코드를 발급했습니다.",
+        # Always surface SMTP status so UI can explain missing mail (no user leak)
+        "email_configured": smtp_configured(),
+        "email_sent": bool(mail_meta and mail_meta.get("email_sent")),
     }
     if mail_meta:
-        out.update({k: v for k, v in mail_meta.items() if v is not None})
+        # Never leak codes unless EMAIL_DEV_MODE or EMAIL_CODE_FALLBACK already set them
+        for k, v in mail_meta.items():
+            if v is None:
+                continue
+            if k == "dev_email_code" and not (EMAIL_DEV_MODE or EMAIL_CODE_FALLBACK):
+                continue
+            out[k] = v
+    elif not smtp_configured():
+        if EMAIL_DEV_MODE or EMAIL_CODE_FALLBACK:
+            out["warning"] = (
+                "메일 서버(SMTP)가 아직 연결되지 않았습니다. "
+                "계정이 있다면 화면에 코드가 표시됩니다. "
+                "코드가 없으면 가입 이메일을 확인하거나 새로 가입해 주세요."
+            )
+        else:
+            out["warning"] = (
+                "메일 서버가 일시적으로 연결되지 않았습니다. "
+                "잠시 후 다시 시도해 주세요."
+            )
     return out
 
 
@@ -2770,6 +2909,414 @@ def admin_resume_auction(project_id: int, _: None = Depends(require_admin)):
     return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
 
 
+def _admin_user_row(conn: Any, row: Any, *, full: bool = False) -> dict[str, Any]:
+    """Admin-facing user summary (full PII — never expose on public APIs)."""
+    u = database.user_to_dict(row)
+    phone_raw = (row["phone"] if "phone" in row.keys() else None) or ""
+    real_name = (row["real_name"] if "real_name" in row.keys() else None) or ""
+    out: dict[str, Any] = {
+        "id": int(row["id"]),
+        "email": (row["email"] or "").strip(),
+        "display_name": (row["display_name"] or "").strip(),
+        "real_name": real_name,
+        "phone": phone_raw,
+        "phone_display": database.format_phone_display(phone_raw) if phone_raw else "",
+        "role": (row["role"] if "role" in row.keys() else None) or "both",
+        "email_verified": bool(int(row["email_verified"] or 0)),
+        "created_at": (row["created_at"] or ""),
+        "trust": u.get("trust") or {},
+        "is_suspended": bool(int(row["is_suspended"] or 0)) if "is_suspended" in row.keys() else False,
+        "suspended_at": (row["suspended_at"] if "suspended_at" in row.keys() else None) or "",
+        "suspend_reason": (row["suspend_reason"] if "suspend_reason" in row.keys() else None) or "",
+        "oauth_provider": (row["oauth_provider"] if "oauth_provider" in row.keys() else None) or "",
+        "auth_method": (
+            (row["oauth_provider"] if "oauth_provider" in row.keys() else None) or ""
+        )
+        or "password",
+        "profile_updated_at": (row["profile_updated_at"] if "profile_updated_at" in row.keys() else None)
+        or "",
+    }
+    if full:
+        uid = int(row["id"])
+        projects_n = conn.execute(
+            "SELECT COUNT(*) AS c FROM projects WHERE owner_id = ?", (uid,)
+        ).fetchone()["c"]
+        live_n = conn.execute(
+            """
+            SELECT COUNT(*) AS c FROM projects
+            WHERE owner_id = ? AND listing_status = 'approved'
+              AND COALESCE(auction_status, 'live') = 'live'
+            """,
+            (uid,),
+        ).fetchone()["c"]
+        bids_n = 0
+        try:
+            bids_n = conn.execute(
+                "SELECT COUNT(*) AS c FROM bids WHERE user_id = ?", (uid,)
+            ).fetchone()["c"]
+        except Exception:
+            bids_n = 0
+        deals_n = 0
+        try:
+            deals_n = conn.execute(
+                """
+                SELECT COUNT(*) AS c FROM projects
+                WHERE owner_id = ? AND COALESCE(auction_status, '') IN ('sold', 'closed')
+                """,
+                (uid,),
+            ).fetchone()["c"]
+        except Exception:
+            deals_n = 0
+        out["stats"] = {
+            "projects": int(projects_n),
+            "live_projects": int(live_n),
+            "bids": int(bids_n),
+            "sold_or_closed": int(deals_n),
+        }
+        out["settlement"] = (u.get("settlement") or {})
+        out["seller_identity"] = (u.get("seller_identity") or {})
+        out["credit"] = (u.get("credit") or {})
+        out["buyer_rank"] = (u.get("buyer_rank") or {})
+        out["birth_date"] = (row["birth_date"] if "birth_date" in row.keys() else None) or ""
+    return out
+
+
+class AdminPurgeUsersIn(BaseModel):
+    """회원 전체 삭제 확인 — confirm 문자열이 정확히 일치해야 함."""
+    confirm: str = Field(min_length=8, max_length=40)
+
+
+def _destructive_admin_allowed() -> bool:
+    """Hard gate: purge/restore only when operator explicitly enables ALLOW_DESTRUCTIVE_ADMIN=1."""
+    return (os.environ.get("ALLOW_DESTRUCTIVE_ADMIN") or "").strip() in {"1", "true", "TRUE", "yes", "on"}
+
+
+@router.post("/admin/users/purge-all")
+def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_admin)):
+    """
+    테스트·초기화용: 모든 회원 및 연관 데이터(매물·입찰·알림 등) 삭제.
+
+    **프로덕션 기본 차단.** 실행 조건:
+      1) env ALLOW_DESTRUCTIVE_ADMIN=1
+      2) confirm == DELETE_ALL_USERS
+    삭제 직전 자동 백업을 남긴다. 회원 데이터 유실은 서비스 파산급 사고다.
+    """
+    if not _destructive_admin_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "destructive_locked",
+                "message": (
+                    "회원 전체 삭제가 잠겨 있습니다. "
+                    "ALLOW_DESTRUCTIVE_ADMIN=1 을 설정한 뒤에만 가능합니다. "
+                    "(실수 방지 — 기본 차단)"
+                ),
+            },
+        )
+    if (body.confirm or "").strip() != "DELETE_ALL_USERS":
+        raise HTTPException(
+            status_code=400,
+            detail="confirm must be exactly DELETE_ALL_USERS",
+        )
+    # Snapshot first — never purge without a recoverable file on volume
+    from wakeagain import backup as db_backup
+
+    pre = db_backup.create_backup(reason="pre-purge")
+    if not pre.get("ok") and not pre.get("skipped"):
+        raise HTTPException(
+            status_code=500,
+            detail=f"pre-purge backup failed; aborting purge: {pre.get('error')}",
+        )
+
+    tables = [
+        "bids",
+        "messages",
+        "notifications",
+        "fee_invoices",
+        "reports",
+        "interests",
+        "reviews",
+        "showcases",
+        "projects",
+        "users",
+    ]
+    deleted: dict[str, int] = {}
+    with database.db() as conn:
+        try:
+            conn.execute("PRAGMA foreign_keys=ON")
+        except Exception:
+            pass
+        before = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+        for t in tables:
+            try:
+                n = int(conn.execute(f"SELECT COUNT(*) AS c FROM {t}").fetchone()["c"])
+                conn.execute(f"DELETE FROM {t}")
+                deleted[t] = n
+            except Exception as e:
+                deleted[t] = -1
+                print(f"[admin purge] skip {t}: {e}", flush=True)
+        after = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+    print(
+        f"[WakeAgain][CRITICAL] admin purge-all users_before={before} after={after} "
+        f"backup={pre.get('name')}",
+        flush=True,
+    )
+    db_backup.record_counts_tick()
+    return {
+        "ok": True,
+        "users_before": before,
+        "users_after": after,
+        "deleted": deleted,
+        "pre_purge_backup": pre.get("name"),
+        "message": f"회원 {before}명 삭제 완료 (남은 회원 {after}명). 백업: {pre.get('name')}",
+    }
+
+
+# --- Data durability (회원/매물 백업 · 복구) ---
+
+
+@router.get("/admin/data/status")
+def admin_data_status(_: None = Depends(require_admin)):
+    """DB path, counts, backup list meta, collapse alert. Ops first-stop when login fails for everyone."""
+    from wakeagain import backup as db_backup
+
+    st = db_backup.status()
+    counts = db_backup.live_counts()
+    ok_int, int_msg = db_backup.integrity_ok()
+    collapse = db_backup.detect_user_collapse()
+    backups = db_backup.list_backups(limit=30)
+    return {
+        "ok": True,
+        "critical": bool(collapse),
+        "collapse_alert": collapse,
+        "destructive_admin_enabled": _destructive_admin_allowed(),
+        "counts": counts,
+        "integrity_ok": ok_int,
+        "integrity": int_msg,
+        "db": {
+            "path": st.get("db_path"),
+            "exists": st.get("db_exists"),
+            "size_bytes": st.get("db_size_bytes"),
+            "data_dir": st.get("data_dir"),
+        },
+        "backup": {
+            "enabled": st.get("enabled"),
+            "interval_sec": st.get("interval_sec"),
+            "dir": st.get("backup_dir"),
+            "last_backup_at": st.get("last_backup_at"),
+            "last_backup_path": st.get("last_backup_path"),
+            "last_ok": st.get("last_backup_ok"),
+            "last_error": st.get("last_error"),
+            "runs": st.get("runs"),
+            "meta": st.get("meta") or {},
+            "files": backups,
+            "file_count": len(backups),
+        },
+        "policy": {
+            "message": (
+                "회원 데이터 유실 = 서비스 파산급. "
+                "purge/restore는 ALLOW_DESTRUCTIVE_ADMIN=1 + 명시 confirm 필요. "
+                "스냅샷은 DATA_DIR/backups (볼륨) 에 보관."
+            ),
+            "env": [
+                "DATA_DIR=/data",
+                "DB_BACKUP_ENABLED=1",
+                "DB_BACKUP_INTERVAL_SEC=3600",
+                "DB_BACKUP_KEEP_HOURLY=48",
+                "DB_BACKUP_KEEP_DAILY=14",
+                "ALLOW_DESTRUCTIVE_ADMIN=0",
+            ],
+        },
+    }
+
+
+@router.post("/admin/data/backup")
+def admin_data_backup_now(_: None = Depends(require_admin)):
+    """Force an immediate SQLite snapshot (admin)."""
+    from wakeagain import backup as db_backup
+
+    result = db_backup.create_backup(reason="manual")
+    if not result.get("ok"):
+        raise HTTPException(status_code=500, detail=result.get("error") or "backup failed")
+    return {"ok": True, **result}
+
+
+class AdminRestoreIn(BaseModel):
+    """복구 확인 — 파일명 + 고정 문구. ALLOW_DESTRUCTIVE_ADMIN=1 필수."""
+
+    backup_name: str = Field(min_length=10, max_length=120)
+    confirm: str = Field(min_length=8, max_length=40)
+
+
+@router.post("/admin/data/restore")
+def admin_data_restore(body: AdminRestoreIn, _: None = Depends(require_admin)):
+    """
+    지정 백업으로 primary DB 교체.
+    ALLOW_DESTRUCTIVE_ADMIN=1 이고 confirm == RESTORE_FROM_BACKUP 일 때만.
+    복구 직전 현재 DB를 pre-restore 로 한 번 더 남김.
+    """
+    if not _destructive_admin_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "destructive_locked",
+                "message": (
+                    "DB 복구가 잠겨 있습니다. ALLOW_DESTRUCTIVE_ADMIN=1 설정 후에만 가능합니다."
+                ),
+            },
+        )
+    if (body.confirm or "").strip() != "RESTORE_FROM_BACKUP":
+        raise HTTPException(
+            status_code=400,
+            detail="confirm must be exactly RESTORE_FROM_BACKUP",
+        )
+    from wakeagain import backup as db_backup
+
+    result = db_backup.restore_from_backup(body.backup_name.strip())
+    if not result.get("ok"):
+        raise HTTPException(status_code=500, detail=result.get("error") or "restore failed")
+    return {"ok": True, **result, "message": f"복구 완료: {body.backup_name} → users={result.get('users')}"}
+
+
+@router.get("/admin/users")
+def admin_list_users(
+    q: str = "",
+    filter: str = "all",
+    limit: int = 50,
+    offset: int = 0,
+    _: None = Depends(require_admin),
+):
+    """회원 목록 · 검색(이메일/실명/표시명/휴대폰) · 필터."""
+    lim = max(1, min(int(limit or 50), 200))
+    off = max(0, int(offset or 0))
+    filt = (filter or "all").strip().lower()
+    raw_q = (q or "").strip()
+    q_like = f"%{raw_q}%" if raw_q else ""
+    phone_digits = database.normalize_phone(raw_q) if raw_q else ""
+
+    where: list[str] = ["1=1"]
+    params: list[Any] = []
+
+    if filt == "verified":
+        where.append("COALESCE(email_verified, 0) = 1")
+    elif filt == "unverified":
+        where.append("COALESCE(email_verified, 0) = 0")
+    elif filt == "suspended":
+        where.append("COALESCE(is_suspended, 0) = 1")
+    elif filt == "oauth":
+        where.append("COALESCE(oauth_provider, '') != ''")
+    elif filt == "password":
+        where.append("COALESCE(oauth_provider, '') = ''")
+    # else all
+
+    if raw_q:
+        if phone_digits and len(phone_digits) >= 4:
+            where.append(
+                "("
+                "email LIKE ? OR IFNULL(display_name,'') LIKE ? OR IFNULL(real_name,'') LIKE ? "
+                "OR IFNULL(phone,'') LIKE ? OR REPLACE(REPLACE(IFNULL(phone,''),'-',''),' ','') LIKE ?"
+                ")"
+            )
+            params.extend([q_like, q_like, q_like, q_like, f"%{phone_digits}%"])
+        else:
+            where.append(
+                "(email LIKE ? OR IFNULL(display_name,'') LIKE ? OR IFNULL(real_name,'') LIKE ?)"
+            )
+            params.extend([q_like, q_like, q_like])
+
+    where_sql = " AND ".join(where)
+    with database.db() as conn:
+        total = conn.execute(
+            f"SELECT COUNT(*) AS c FROM users WHERE {where_sql}", params
+        ).fetchone()["c"]
+        rows = conn.execute(
+            f"""
+            SELECT * FROM users
+            WHERE {where_sql}
+            ORDER BY id DESC
+            LIMIT ? OFFSET ?
+            """,
+            (*params, lim, off),
+        ).fetchall()
+        counts = {
+            "all": int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"]),
+            "verified": int(
+                conn.execute(
+                    "SELECT COUNT(*) AS c FROM users WHERE COALESCE(email_verified,0)=1"
+                ).fetchone()["c"]
+            ),
+            "unverified": int(
+                conn.execute(
+                    "SELECT COUNT(*) AS c FROM users WHERE COALESCE(email_verified,0)=0"
+                ).fetchone()["c"]
+            ),
+            "suspended": int(
+                conn.execute(
+                    "SELECT COUNT(*) AS c FROM users WHERE COALESCE(is_suspended,0)=1"
+                ).fetchone()["c"]
+            ),
+            "oauth": int(
+                conn.execute(
+                    "SELECT COUNT(*) AS c FROM users WHERE COALESCE(oauth_provider,'') != ''"
+                ).fetchone()["c"]
+            ),
+        }
+        users = [_admin_user_row(conn, r, full=False) for r in rows]
+    return {
+        "ok": True,
+        "users": users,
+        "total": int(total),
+        "limit": lim,
+        "offset": off,
+        "filter": filt,
+        "q": raw_q,
+        "counts": counts,
+    }
+
+
+@router.get("/admin/users/{user_id}")
+def admin_get_user(user_id: int, _: None = Depends(require_admin)):
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="user not found")
+        user = _admin_user_row(conn, row, full=True)
+        # recent projects (for ops)
+        prows = conn.execute(
+            """
+            SELECT id, title, listing_status, auction_status, price_start, price_current, created_at
+            FROM projects WHERE owner_id = ?
+            ORDER BY id DESC LIMIT 10
+            """,
+            (user_id,),
+        ).fetchall()
+        user["recent_projects"] = [
+            {
+                "id": int(p["id"]),
+                "title": p["title"] or "",
+                "listing_status": p["listing_status"] or "",
+                "auction_status": p["auction_status"] or "",
+                "price_start": p["price_start"],
+                "price_current": p["price_current"],
+                "created_at": p["created_at"] or "",
+            }
+            for p in prows
+        ]
+    return {"ok": True, "user": user}
+
+
+class AdminSuspendIn(BaseModel):
+    reason: str = Field(default="", max_length=500)
+
+
+class AdminSetPasswordIn(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class AdminNoteIn(BaseModel):
+    note: str = Field(default="", max_length=500)
+
+
 @router.post("/admin/users/{user_id}/unsuspend")
 def admin_unsuspend_user(user_id: int, _: None = Depends(require_admin)):
     with database.db() as conn:
@@ -2792,11 +3339,8 @@ def admin_unsuspend_user(user_id: int, _: None = Depends(require_admin)):
             "/app/",
         )
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    return {"ok": True, "user_id": user_id, "is_suspended": False}
-
-
-class AdminSuspendIn(BaseModel):
-    reason: str = Field(default="", max_length=500)
+        user = _admin_user_row(conn, row, full=True)
+    return {"ok": True, "user_id": user_id, "is_suspended": False, "user": user}
 
 
 @router.post("/admin/users/{user_id}/suspend")
@@ -2830,7 +3374,102 @@ def admin_suspend_user(
             (database._now(), user_id),
         )
         database.notify(conn, int(user_id), "계정 정지", reason, "/app/")
-    return {"ok": True, "user_id": user_id, "is_suspended": True, "reason": reason}
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        user = _admin_user_row(conn, row, full=True)
+    return {"ok": True, "user_id": user_id, "is_suspended": True, "reason": reason, "user": user}
+
+
+@router.post("/admin/users/{user_id}/verify-email")
+def admin_verify_email(user_id: int, _: None = Depends(require_admin)):
+    """운영자 강제 이메일 인증 완료 (메일 미수신 고객 지원)."""
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        conn.execute(
+            """
+            UPDATE users
+            SET email_verified = 1,
+                email_code_hash = NULL,
+                email_code_expires = NULL
+            WHERE id = ?
+            """,
+            (user_id,),
+        )
+        database.recompute_user_credit(conn, int(user_id))
+        database.notify(
+            conn,
+            int(user_id),
+            "이메일 인증 완료",
+            "운영자가 이메일 인증을 확인해 드렸습니다.",
+            "/app/",
+        )
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        user = _admin_user_row(conn, row, full=True)
+    return {"ok": True, "user": user, "message": "이메일 인증 처리됨"}
+
+
+@router.post("/admin/users/{user_id}/set-password")
+def admin_set_password(
+    user_id: int,
+    body: AdminSetPasswordIn,
+    _: None = Depends(require_admin),
+):
+    """운영자 비밀번호 재설정 (메일 없이 고객 지원)."""
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="password min 8 chars")
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        conn.execute(
+            """
+            UPDATE users
+            SET password_hash = ?,
+                reset_code_hash = NULL,
+                reset_code_expires = NULL
+            WHERE id = ?
+            """,
+            (hash_password(body.new_password), user_id),
+        )
+        database.notify(
+            conn,
+            int(user_id),
+            "비밀번호 변경",
+            "운영자가 비밀번호를 재설정했습니다. 새 비밀번호로 로그인해 주세요.",
+            "/app/",
+        )
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        user = _admin_user_row(conn, row, full=True)
+    return {"ok": True, "user": user, "message": "비밀번호가 변경되었습니다."}
+
+
+@router.post("/admin/users/{user_id}/issue-reset-code")
+def admin_issue_reset_code(user_id: int, _: None = Depends(require_admin)):
+    """재설정 코드 발급 — SMTP 있으면 메일, 없으면 응답에 코드(운영 전달용)."""
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        email = (row["email"] or "").strip().lower()
+        code = _new_email_code()
+        conn.execute(
+            "UPDATE users SET reset_code_hash = ?, reset_code_expires = ? WHERE id = ?",
+            (_hash_code(code), _code_expiry_iso(), user_id),
+        )
+        mail_meta = _deliver_reset_code(email, code)
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        user = _admin_user_row(conn, row, full=True)
+    out: dict[str, Any] = {
+        "ok": True,
+        "user": user,
+        "email": email,
+        "message": "재설정 코드를 발급했습니다.",
+    }
+    out.update({k: v for k, v in mail_meta.items() if v is not None})
+    # Always include code for admin ops (admin-only endpoint)
+    out["dev_email_code"] = code
+    return out
 
 
 # --- reviews (simple testimonials — not a full community board) ---

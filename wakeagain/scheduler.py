@@ -49,7 +49,7 @@ def status() -> dict[str, Any]:
 
 
 def run_once() -> int:
-    """Process expired auctions + deal deadlines (pay / auto-settle)."""
+    """Process expired auctions + deal deadlines (pay / auto-settle) + DB backup tick."""
     closed = 0
     deals: dict = {}
     err: str | None = None
@@ -59,6 +59,14 @@ def run_once() -> int:
             deals = database.process_deal_deadlines(conn) or {}
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
+        traceback.print_exc()
+    # Member-data durability (independent of auction success)
+    try:
+        from wakeagain import backup as db_backup
+
+        db_backup.maybe_periodic_backup()
+    except Exception as be:
+        print(f"[WakeAgain] scheduler backup tick: {be}", flush=True)
         traceback.print_exc()
     now = datetime.now(timezone.utc).isoformat()
     with _lock:

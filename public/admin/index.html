@@ -186,6 +186,33 @@
       border-radius: inherit;
       background: linear-gradient(90deg, #7c3aed, #e879f9);
     }
+    .user-search {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .user-search input[type="search"] {
+      flex: 1 1 14rem; min-width: 12rem;
+      border-radius: 10px; border: 1px solid var(--border-strong);
+      background: var(--card); color: var(--text); padding: 0.55rem 0.75rem; font: inherit;
+    }
+    .tag-sus { background: rgba(248,113,113,0.15); color: #fecaca; border: 1px solid rgba(248,113,113,0.4); }
+    .tag-ok { background: rgba(52,211,153,0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.35); }
+    .tag-warn { background: rgba(251,191,36,0.15); color: #fcd34d; border: 1px solid rgba(251,191,36,0.35); }
+    .tag-lv { background: rgba(96,165,250,0.12); color: #93c5fd; border: 1px solid rgba(96,165,250,0.35); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.02em; }
+    .user-actions textarea.note { min-height: 56px; margin-top: 0.35rem; }
+    .user-actions .field { margin: 0.65rem 0 0; }
+    .user-actions .field label { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 600; margin-bottom: 0.3rem; }
+    .user-actions .field input {
+      width: 100%; border-radius: 10px; border: 1px solid var(--border-strong);
+      background: var(--bg-elev); color: var(--text); padding: 0.55rem 0.75rem; font: inherit;
+    }
+    .code-flash {
+      margin: 0.75rem 0; padding: 0.85rem 1rem; border-radius: 12px;
+      background: rgba(168,85,247,0.12); border: 1px dashed rgba(168,85,247,0.45);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 1.35rem; font-weight: 800; letter-spacing: 0.2em; color: #e9d5ff;
+    }
   </style>
 </head>
 <body class="form-body">
@@ -218,6 +245,8 @@
 
     <div class="counts" id="modeTabs" style="margin-bottom:0.75rem">
       <button type="button" data-mode="projects" class="is-on">매물</button>
+      <button type="button" data-mode="users">회원</button>
+      <button type="button" data-mode="data">데이터·백업</button>
       <button type="button" data-mode="reviews">후기</button>
       <button type="button" data-mode="fees">수수료</button>
       <button type="button" data-mode="revenue">매출</button>
@@ -261,6 +290,14 @@
         checklist: [],
         selected: null,
         selectedReview: null,
+        selectedUser: null,
+        users: [],
+        userCounts: {},
+        userQ: "",
+        userFilter: "all",
+        userTotal: 0,
+        revenuePeriod: "all", // all | day | week | month — 기본 전체
+        revenueData: null,
         counts: {},
         reviewCounts: {},
       };
@@ -274,7 +311,10 @@
           });
           state.selected = null;
           state.selectedReview = null;
-          state.status = "pending";
+          state.selectedUser = null;
+          state.status = state.mode === "users" ? "all" : "pending";
+          if (state.mode === "users") state.userFilter = "all";
+          if (state.mode === "revenue") state.revenuePeriod = "all"; // 매출 탭 기본 = 전체
           load();
         });
       });
@@ -730,13 +770,646 @@
         $("btnReject").addEventListener("click", function () { review("reject"); });
       }
 
+      function trustLabel(u) {
+        var t = (u && u.trust) || {};
+        return (t.code || "Lv?") + " · " + (t.label || "");
+      }
+
+      /** trust.missing API keys → 관리자용 한글 라벨 */
+      var TRUST_MISSING_LABELS = {
+        email_verification: "이메일 인증",
+        real_name: "실명",
+        phone: "휴대폰",
+        settlement_holder: "정산 예금주",
+        settlement_bank: "정산 은행",
+        settlement_account: "정산 계좌",
+        seller_identity: "판매자 공개 신원",
+      };
+
+      function formatTrustMissing(missing) {
+        if (!missing || !missing.length) return "없음 (현재 레벨 완료)";
+        return missing
+          .map(function (k) {
+            return TRUST_MISSING_LABELS[k] || k;
+          })
+          .join(" · ");
+      }
+
+      function trustNextHint(t) {
+        t = t || {};
+        var lv = Number(t.level || 0);
+        if (t.is_suspended) return "계정 정지 중";
+        if (lv >= 3 && t.deal_ready) return "Lv3 거래 준비 완료";
+        if (lv >= 2) return "다음: 정산 계좌 등록 → Lv3 (판매 성사·정산)";
+        if (lv >= 1) return "다음: 실명·휴대폰 → Lv2 (매물·낙찰 이행)";
+        return "다음: 이메일 인증 → Lv1 (입찰)";
+      }
+
+      function renderUsersList() {
+        var list = $("list");
+        if (!state.users.length) {
+          list.innerHTML = '<p class="empty">회원이 없거나 검색 결과가 없습니다.</p>';
+          return;
+        }
+        list.innerHTML = state.users
+          .map(function (u) {
+            var on = state.selectedUser && state.selectedUser.id === u.id ? " is-on" : "";
+            var badges = "";
+            if (u.is_suspended) badges += '<span class="tag tag-sus">정지</span>';
+            else if (u.email_verified) badges += '<span class="tag tag-ok">인증</span>';
+            else badges += '<span class="tag tag-warn">미인증</span>';
+            badges +=
+              '<span class="tag tag-lv">' +
+              escapeHtml((u.trust && u.trust.code) || "Lv?") +
+              "</span>";
+            if (u.oauth_provider)
+              badges +=
+                '<span class="tag tag-product">' +
+                escapeHtml(u.oauth_provider) +
+                "</span>";
+            return (
+              '<button type="button" class="pitem' +
+              on +
+              '" data-uid="' +
+              u.id +
+              '"><strong class="mono">' +
+              escapeHtml(u.email) +
+              "</strong><div class=\"row-badges\">" +
+              badges +
+              "</div><span>#" +
+              u.id +
+              " · " +
+              escapeHtml(u.real_name || u.display_name || "이름없음") +
+              (u.phone_display ? " · " + escapeHtml(u.phone_display) : "") +
+              "</span></button>"
+            );
+          })
+          .join("");
+        list.querySelectorAll(".pitem").forEach(function (b) {
+          b.addEventListener("click", async function () {
+            var uid = Number(b.getAttribute("data-uid"));
+            try {
+              showErr("");
+              var data = await api("/api/v1/admin/users/" + uid);
+              state.selectedUser = data.user;
+              renderUsersList();
+              renderUserDetail();
+            } catch (e) {
+              showErr(e.message || "불러오기 실패");
+            }
+          });
+        });
+      }
+
+      function renderUserDetail() {
+        var box = $("detail");
+        var u = state.selectedUser;
+        if (!u) {
+          box.innerHTML = '<p class="empty">왼쪽에서 회원을 선택하세요.</p>';
+          return;
+        }
+        var st = u.stats || {};
+        var t = u.trust || {};
+        var projectsHtml = "";
+        if (u.recent_projects && u.recent_projects.length) {
+          projectsHtml =
+            "<h3 style='margin:1rem 0 0.4rem;font-size:0.95rem'>최근 매물</h3><ul style='margin:0;padding-left:1.1rem;color:var(--muted);font-size:0.9rem;line-height:1.55'>" +
+            u.recent_projects
+              .map(function (p) {
+                return (
+                  "<li><a class=\"text-link\" href=\"/project.html?id=" +
+                  p.id +
+                  "\" target=\"_blank\" rel=\"noopener\">#" +
+                  p.id +
+                  " " +
+                  escapeHtml(p.title) +
+                  "</a> · " +
+                  escapeHtml(p.listing_status) +
+                  " / " +
+                  escapeHtml(p.auction_status || "—") +
+                  "</li>"
+                );
+              })
+              .join("") +
+            "</ul>";
+        }
+
+        box.innerHTML =
+          "<h2 class=\"mono\" style=\"font-size:1.15rem;word-break:break-all\">" +
+          escapeHtml(u.email) +
+          "</h2>" +
+          '<p class="meta">회원 #' +
+          u.id +
+          " · 가입 " +
+          escapeHtml((u.created_at || "").slice(0, 19)) +
+          (u.oauth_provider ? " · SNS " + escapeHtml(u.oauth_provider) : " · 이메일 가입") +
+          "</p>" +
+          '<div class="row-badges" style="margin:0.5rem 0">' +
+          (u.is_suspended
+            ? '<span class="tag tag-sus">정지됨</span>'
+            : '<span class="tag tag-ok">정상</span>') +
+          (u.email_verified
+            ? '<span class="tag tag-ok">이메일 인증</span>'
+            : '<span class="tag tag-warn">이메일 미인증</span>') +
+          '<span class="tag tag-lv">' +
+          escapeHtml(trustLabel(u)) +
+          "</span></div>" +
+          (u.is_suspended
+            ? '<p class="meta" style="color:#fecaca">정지 사유: ' +
+              escapeHtml(u.suspend_reason || "—") +
+              " · " +
+              escapeHtml(u.suspended_at || "") +
+              "</p>"
+            : "") +
+          '<div class="kv">' +
+          "<div><span class=\"k\">실명</span><span class=\"v\">" +
+          escapeHtml(u.real_name || "—") +
+          "</span></div>" +
+          "<div><span class=\"k\">표시 이름</span><span class=\"v\">" +
+          escapeHtml(u.display_name || "—") +
+          "</span></div>" +
+          "<div><span class=\"k\">휴대폰</span><span class=\"v\">" +
+          escapeHtml(u.phone_display || u.phone || "—") +
+          "</span></div>" +
+          "<div><span class=\"k\">역할</span><span class=\"v\">" +
+          escapeHtml(u.role || "—") +
+          "</span></div>" +
+          "<div><span class=\"k\">생년월일</span><span class=\"v\">" +
+          escapeHtml(u.birth_date || "—") +
+          "</span></div>" +
+          "<div><span class=\"k\">활동</span><span class=\"v\">매물 " +
+          (st.projects || 0) +
+          " (라이브 " +
+          (st.live_projects || 0) +
+          ") · 입찰 " +
+          (st.bids || 0) +
+          " · 성사/종료 " +
+          (st.sold_or_closed || 0) +
+          "</span></div>" +
+          "<div><span class=\"k\">신뢰 진행</span><span class=\"v\">" +
+          escapeHtml(trustNextHint(t)) +
+          "</span></div>" +
+          "<div><span class=\"k\">미입력 항목</span><span class=\"v\">" +
+          escapeHtml(formatTrustMissing(t.missing)) +
+          "</span></div>" +
+          "<div><span class=\"k\">권한</span><span class=\"v\">" +
+          escapeHtml(
+            [
+              t.can_bid ? "입찰" : null,
+              t.can_list ? "매물등록" : null,
+              t.can_fulfill_purchase ? "낙찰이행" : null,
+              t.can_close_deal ? "성사·정산" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "열람만"
+          ) +
+          "</span></div>" +
+          "</div>" +
+          projectsHtml +
+          '<div class="user-actions">' +
+          "<h3 style='margin:1.1rem 0 0.35rem;font-size:0.95rem'>회원 관리</h3>" +
+          '<div class="field"><label for="suspendReason">정지 사유</label>' +
+          '<input id="suspendReason" type="text" placeholder="예: 사기 의심 · 약관 위반" maxlength="500" value="' +
+          escapeHtml(u.suspend_reason || "") +
+          '" /></div>' +
+          '<div class="actions">' +
+          (u.is_suspended
+            ? '<button type="button" class="btn btn-primary btn-sm" id="btnUserUnsuspend">정지 해제</button>'
+            : '<button type="button" class="btn btn-ghost btn-sm" id="btnUserSuspend" style="border-color:rgba(248,113,113,0.5);color:#fecaca">계정 정지</button>') +
+          (!u.email_verified
+            ? '<button type="button" class="btn btn-primary btn-sm" id="btnUserVerify">이메일 인증 처리</button>'
+            : "") +
+          '<button type="button" class="btn btn-ghost btn-sm" id="btnUserResetCode">재설정 코드 발급</button>' +
+          "</div>" +
+          '<div class="field"><label for="newPass">새 비밀번호 (운영 직접 설정, 8자+)</label>' +
+          '<input id="newPass" type="text" autocomplete="off" placeholder="고객에게 전달할 임시 비밀번호" minlength="8" /></div>' +
+          '<div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="btnUserSetPass">비밀번호 변경</button></div>' +
+          '<div id="userCodeBox" hidden><p class="meta">발급된 코드 (고객에게 전달 · 메일 미설정 시)</p><div class="code-flash" id="userCodeVal"></div></div>' +
+          "</div>" +
+          '<p class="err" id="detailErr" hidden></p>';
+
+        function detailErr(msg) {
+          var el = $("detailErr");
+          if (!el) return;
+          if (!msg) {
+            el.hidden = true;
+            el.textContent = "";
+            return;
+          }
+          el.hidden = false;
+          el.textContent = msg;
+        }
+
+        async function refreshUser() {
+          var data = await api("/api/v1/admin/users/" + u.id);
+          state.selectedUser = data.user;
+          await loadUsers(true);
+        }
+
+        var bs = $("btnUserSuspend");
+        if (bs) {
+          bs.addEventListener("click", async function () {
+            detailErr("");
+            if (!confirm("이 계정을 정지할까요? 라이브 매물도 일시 중단됩니다.")) return;
+            try {
+              await api("/api/v1/admin/users/" + u.id + "/suspend", {
+                method: "POST",
+                body: JSON.stringify({
+                  reason: ($("suspendReason") && $("suspendReason").value.trim()) || "[운영] 수동 계정 정지",
+                }),
+              });
+              await refreshUser();
+              await loadUsers(true);
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+        var bu = $("btnUserUnsuspend");
+        if (bu) {
+          bu.addEventListener("click", async function () {
+            detailErr("");
+            try {
+              await api("/api/v1/admin/users/" + u.id + "/unsuspend", {
+                method: "POST",
+                body: "{}",
+              });
+              await refreshUser();
+              await loadUsers(true);
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+        var bv = $("btnUserVerify");
+        if (bv) {
+          bv.addEventListener("click", async function () {
+            detailErr("");
+            if (!confirm("이메일 인증을 운영자가 완료 처리할까요?")) return;
+            try {
+              await api("/api/v1/admin/users/" + u.id + "/verify-email", {
+                method: "POST",
+                body: "{}",
+              });
+              await refreshUser();
+              await loadUsers(true);
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+        var br = $("btnUserResetCode");
+        if (br) {
+          br.addEventListener("click", async function () {
+            detailErr("");
+            try {
+              var data = await api("/api/v1/admin/users/" + u.id + "/issue-reset-code", {
+                method: "POST",
+                body: "{}",
+              });
+              var codeBox = $("userCodeBox");
+              var codeVal = $("userCodeVal");
+              if (codeBox && codeVal && data.dev_email_code) {
+                codeBox.hidden = false;
+                codeVal.textContent = data.dev_email_code;
+              }
+              detailErr(
+                (data.email_sent ? "메일 발송 시도 완료. " : "메일 미발송(SMTP 미설정). ") +
+                  "아래 코드를 고객에게 전달하거나, 비밀번호를 직접 설정하세요."
+              );
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+        var bp = $("btnUserSetPass");
+        if (bp) {
+          bp.addEventListener("click", async function () {
+            detailErr("");
+            var pw = ($("newPass") && $("newPass").value) || "";
+            if (pw.length < 8) {
+              detailErr("비밀번호는 8자 이상이어야 합니다.");
+              return;
+            }
+            if (!confirm("이 회원의 비밀번호를 지금 입력한 값으로 바꿀까요?")) return;
+            try {
+              await api("/api/v1/admin/users/" + u.id + "/set-password", {
+                method: "POST",
+                body: JSON.stringify({ new_password: pw }),
+              });
+              if ($("newPass")) $("newPass").value = "";
+              detailErr("비밀번호를 변경했습니다. 고객에게 새 비밀번호를 안전하게 전달하세요.");
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+      }
+
+      async function loadUsers(keepSelected) {
+        var q = state.userQ || "";
+        var filt = state.userFilter || "all";
+        var data = await api(
+          "/api/v1/admin/users?q=" +
+            encodeURIComponent(q) +
+            "&filter=" +
+            encodeURIComponent(filt) +
+            "&limit=100"
+        );
+        state.users = data.users || [];
+        state.userCounts = data.counts || {};
+        state.userTotal = data.total || 0;
+        if (keepSelected && state.selectedUser) {
+          var still = state.users.find(function (x) {
+            return x.id === state.selectedUser.id;
+          });
+          if (!still) {
+            /* keep detail if filtered out — optional refetch */
+          }
+        } else if (!keepSelected) {
+          state.selectedUser = null;
+        }
+        var c = state.userCounts;
+        $("counts").innerHTML =
+          '<button type="button" data-uf="all"' +
+          (filt === "all" ? ' class="is-on"' : "") +
+          ">전체 " +
+          (c.all || 0) +
+          "</button>" +
+          '<button type="button" data-uf="verified"' +
+          (filt === "verified" ? ' class="is-on"' : "") +
+          ">인증 " +
+          (c.verified || 0) +
+          "</button>" +
+          '<button type="button" data-uf="unverified"' +
+          (filt === "unverified" ? ' class="is-on"' : "") +
+          ">미인증 " +
+          (c.unverified || 0) +
+          "</button>" +
+          '<button type="button" data-uf="suspended"' +
+          (filt === "suspended" ? ' class="is-on"' : "") +
+          ">정지 " +
+          (c.suspended || 0) +
+          "</button>" +
+          '<button type="button" data-uf="oauth"' +
+          (filt === "oauth" ? ' class="is-on"' : "") +
+          ">SNS " +
+          (c.oauth || 0) +
+          "</button>";
+        $("counts").querySelectorAll("button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            state.userFilter = b.getAttribute("data-uf");
+            load();
+          });
+        });
+
+        // search bar above list
+        var listHost = $("list");
+        var searchHtml =
+          '<div class="user-search" id="userSearchBar">' +
+          '<input type="search" id="userQ" placeholder="이메일 · 실명 · 표시명 · 휴대폰" value="' +
+          escapeHtml(state.userQ) +
+          '" />' +
+          '<button type="button" class="btn btn-primary btn-sm" id="btnUserSearch">검색</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" id="btnUserClear">초기화</button>' +
+          '<span class="meta" style="margin-left:auto">결과 ' +
+          state.userTotal +
+          "명</span></div>" +
+          '<div id="userListBody"></div>';
+        listHost.innerHTML = searchHtml;
+        var body = document.getElementById("userListBody");
+        // temporary swap list target
+        var realList = $("list");
+        var origId = "list";
+        // render into userListBody by temporarily rebinding
+        var listEl = body;
+        function renderIntoBody() {
+          if (!state.users.length) {
+            listEl.innerHTML = '<p class="empty">회원이 없거나 검색 결과가 없습니다.</p>';
+            return;
+          }
+          listEl.innerHTML = state.users
+            .map(function (u) {
+              var on = state.selectedUser && state.selectedUser.id === u.id ? " is-on" : "";
+              var badges = "";
+              if (u.is_suspended) badges += '<span class="tag tag-sus">정지</span>';
+              else if (u.email_verified) badges += '<span class="tag tag-ok">인증</span>';
+              else badges += '<span class="tag tag-warn">미인증</span>';
+              badges +=
+                '<span class="tag tag-lv">' +
+                escapeHtml((u.trust && u.trust.code) || "Lv?") +
+                "</span>";
+              if (u.oauth_provider)
+                badges +=
+                  '<span class="tag tag-product">' +
+                  escapeHtml(u.oauth_provider) +
+                  "</span>";
+              return (
+                '<button type="button" class="pitem' +
+                on +
+                '" data-uid="' +
+                u.id +
+                '"><strong class="mono">' +
+                escapeHtml(u.email) +
+                '</strong><div class="row-badges">' +
+                badges +
+                "</div><span>#" +
+                u.id +
+                " · " +
+                escapeHtml(u.real_name || u.display_name || "이름없음") +
+                (u.phone_display ? " · " + escapeHtml(u.phone_display) : "") +
+                "</span></button>"
+              );
+            })
+            .join("");
+          listEl.querySelectorAll(".pitem").forEach(function (b) {
+            b.addEventListener("click", async function () {
+              var uid = Number(b.getAttribute("data-uid"));
+              try {
+                showErr("");
+                var d = await api("/api/v1/admin/users/" + uid);
+                state.selectedUser = d.user;
+                renderIntoBody();
+                renderUserDetail();
+              } catch (e) {
+                showErr(e.message || "실패");
+              }
+            });
+          });
+        }
+        renderIntoBody();
+        // override renderUsersList for subsequent updates
+        window.__waRenderUsersBody = renderIntoBody;
+
+        var sq = document.getElementById("userQ");
+        var btnS = document.getElementById("btnUserSearch");
+        var btnC = document.getElementById("btnUserClear");
+        function doSearch() {
+          state.userQ = (sq && sq.value.trim()) || "";
+          load();
+        }
+        if (btnS) btnS.addEventListener("click", doSearch);
+        if (sq) {
+          sq.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter") {
+              ev.preventDefault();
+              doSearch();
+            }
+          });
+        }
+        if (btnC) {
+          btnC.addEventListener("click", function () {
+            state.userQ = "";
+            load();
+          });
+        }
+        if (state.selectedUser) renderUserDetail();
+        else $("detail").innerHTML = '<p class="empty">왼쪽에서 회원을 선택하세요. 검색으로 아이디(이메일)를 찾을 수 있습니다.</p>';
+      }
+
+      function wonRev(n) {
+        return "₩" + Number(n || 0).toLocaleString("ko-KR");
+      }
+
+      function renderRevenue() {
+        var rev = state.revenueData;
+        if (!rev) {
+          $("list").innerHTML = '<p class="empty">매출 데이터 없음</p>';
+          $("detail").innerHTML = "";
+          return;
+        }
+        var periods = rev.periods || {};
+        var note = (rev.assumptions && rev.assumptions.note_ko) || "";
+        var key = state.revenuePeriod || "all";
+        if (!periods[key]) key = "all";
+
+        var tabs = [
+          ["all", "전체"],
+          ["day", "오늘"],
+          ["week", "이번 주"],
+          ["month", "이번 달"],
+        ];
+        $("counts").innerHTML = tabs
+          .map(function (t) {
+            var p = periods[t[0]] || {};
+            var fee = p.fee_paid != null ? wonRev(p.fee_paid) : "—";
+            return (
+              '<button type="button" data-rp="' +
+              t[0] +
+              '" class="' +
+              (key === t[0] ? "is-on" : "") +
+              '" title="입금 수수료 ' +
+              fee +
+              '">' +
+              t[1] +
+              (p.fee_paid != null ? " · " + fee : "") +
+              "</button>"
+            );
+          })
+          .join("");
+        $("counts").querySelectorAll("button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            state.revenuePeriod = b.getAttribute("data-rp") || "all";
+            renderRevenue();
+          });
+        });
+
+        function periodBlock(p, periodKey) {
+          if (!p) return '<p class="empty">이 기간 데이터 없음</p>';
+          var labelMap = {
+            all: "전체 매출",
+            day: "오늘 매출",
+            week: "이번 주 매출",
+            month: "이번 달 매출",
+          };
+          return (
+            '<div class="panel" style="margin:0">' +
+            '<p class="rev-period">' +
+            escapeHtml(labelMap[periodKey] || p.label || periodKey) +
+            (p.label && periodKey !== "all" ? " · " + escapeHtml(p.label) : "") +
+            "</p>" +
+            '<div class="rev-grid">' +
+            '<div class="rev-card"><p class="lab">수수료 입금(매출)</p><p class="num">' +
+            wonRev(p.fee_paid) +
+            '</p><p class="sub">입금 확인 ' +
+            (p.deals_paid || 0) +
+            "건</p></div>" +
+            '<div class="rev-card"><p class="lab">미수 수수료</p><p class="num">' +
+            wonRev(p.fee_pending) +
+            '</p><p class="sub">청구 대기 ' +
+            (p.deals_pending_fee || 0) +
+            "건</p></div>" +
+            '<div class="rev-card is-tax"><p class="lab">부가세 추정(10%)</p><p class="num">' +
+            wonRev(p.vat_on_paid) +
+            '</p><p class="sub">입금분 역산 · 납부 예정 참고</p></div>' +
+            '<div class="rev-card is-net"><p class="lab">순수익 추정</p><p class="num">' +
+            wonRev(p.net_after_vat_paid) +
+            '</p><p class="sub">입금 수수료 − 부가세 (소득세 별도)</p></div>' +
+            '<div class="rev-card"><p class="lab">거래액(성사 GMV)</p><p class="num">' +
+            wonRev(p.gmv_paid) +
+            '</p><p class="sub">수수료 입금 확정 건 기준</p></div>' +
+            '<div class="rev-card"><p class="lab">공급가액 추정</p><p class="num">' +
+            wonRev(p.supply_on_paid) +
+            '</p><p class="sub">부가세 제외 수수료</p></div>' +
+            "</div></div>"
+          );
+        }
+
+        // 차트: 오늘/이번주 선택 시 최근 14일 참고용 (접을 수 있게 짧게)
+        var bars = "";
+        if (key === "day" || key === "week") {
+          var series = rev.series_days || [];
+          var maxFee = 1;
+          series.forEach(function (d) {
+            if ((d.fee_paid || 0) > maxFee) maxFee = d.fee_paid;
+          });
+          bars =
+            '<div class="panel" style="margin-top:0.85rem"><p class="rev-period">최근 14일 · 입금 수수료 (참고)</p><div class="rev-bar-wrap">' +
+            series
+              .map(function (d) {
+                var w = Math.round(((d.fee_paid || 0) / maxFee) * 100);
+                return (
+                  '<div class="rev-bar-row"><span>' +
+                  escapeHtml(d.label) +
+                  '</span><div class="rev-bar"><i style="width:' +
+                  w +
+                  '%"></i></div><span>' +
+                  wonRev(d.fee_paid) +
+                  "</span></div>"
+                );
+              })
+              .join("") +
+            "</div></div>";
+        }
+
+        // 한 화면에 선택 기간만 — 스크롤 최소화
+        document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
+        $("list").innerHTML =
+          periodBlock(periods[key], key) +
+          bars +
+          '<p class="meta" style="margin-top:0.85rem;line-height:1.55">' +
+          escapeHtml(note) +
+          "<br />기준 시각: " +
+          escapeHtml(rev.as_of || "") +
+          "</p>";
+        $("detail").innerHTML = "";
+        $("detail").hidden = true;
+      }
+
       async function load() {
         showErr("");
         try {
+          $("detail").hidden = false;
           if (state.mode !== "revenue") {
             document.querySelector(".admin-grid").style.gridTemplateColumns = "";
           }
-          if (state.mode === "reviews") {
+          if (state.mode === "users") {
+            $("pageTitle").textContent = "회원 관리";
+            $("hintBox").innerHTML =
+              "<strong>가입 회원 목록</strong> 이메일·실명·휴대폰으로 검색하고, 선택 후 정지/해제·이메일 인증·비밀번호 재설정(코드 발급 또는 직접 설정)을 할 수 있습니다. " +
+              "개인정보는 운영 목적에만 사용하세요.";
+            await loadUsers(!!state.selectedUser);
+          } else if (state.mode === "reviews") {
             $("pageTitle").textContent = "후기 검수";
             $("hintBox").innerHTML =
               "<strong>후기 검수</strong> 허위 성사가·비방·스팸만 걸러 게시 허용하세요.";
@@ -909,6 +1582,125 @@
                 });
               });
             }
+          } else if (state.mode === "data") {
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
+            $("pageTitle").textContent = "데이터 · 백업";
+            $("hintBox").innerHTML =
+              "<strong>회원 데이터 = 서비스 생명줄.</strong> 스냅샷은 볼륨 <code>DATA_DIR/backups</code>에 쌓입니다. " +
+              "전체 삭제·복구는 환경변수 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> 이 켜져 있을 때만 가능합니다 (기본 잠금).";
+            $("counts").innerHTML = "";
+            var dstat = await api("/api/v1/admin/data/status");
+            state.dataStatus = dstat;
+            var c = dstat.counts || {};
+            var b = dstat.backup || {};
+            var files = b.files || [];
+            var alertHtml = dstat.critical
+              ? '<p class="err" style="display:block">⚠ ' +
+                escapeHtml((dstat.collapse_alert && dstat.collapse_alert.message) || "회원 수 급감 감지") +
+                "</p>"
+              : "";
+            var fileList = files.length
+              ? files
+                  .map(function (f) {
+                    return (
+                      "<li><code>" +
+                      escapeHtml(f.name) +
+                      "</code> · " +
+                      Math.round((f.size_bytes || 0) / 1024) +
+                      " KB · " +
+                      escapeHtml(f.mtime || "") +
+                      "</li>"
+                    );
+                  })
+                  .join("")
+              : "<li class='meta'>아직 백업 파일 없음 (배포 후 자동 생성)</li>";
+            $("list").innerHTML =
+              alertHtml +
+              "<div class='panel' style='padding:1rem'>" +
+              "<p class='meta'><strong>현재 회원</strong> " +
+              (c.users != null ? c.users : "—") +
+              " · <strong>매물</strong> " +
+              (c.projects != null ? c.projects : "—") +
+              " · <strong>입찰</strong> " +
+              (c.bids != null ? c.bids : "—") +
+              "</p>" +
+              "<p class='meta'><strong>DB</strong> " +
+              escapeHtml((dstat.db && dstat.db.path) || "") +
+              " · " +
+              Math.round(((dstat.db && dstat.db.size_bytes) || 0) / 1024) +
+              " KB · integrity " +
+              (dstat.integrity_ok ? "OK" : "FAIL") +
+              " (" +
+              escapeHtml(dstat.integrity || "") +
+              ")</p>" +
+              "<p class='meta'><strong>peak 회원</strong> " +
+              escapeHtml(String((b.meta && b.meta.peak_users) != null ? b.meta.peak_users : "—")) +
+              " · <strong>마지막 백업</strong> " +
+              escapeHtml(b.last_backup_at || "—") +
+              " · 백업 " +
+              (b.enabled ? "ON" : "OFF") +
+              " · 파괴 작업 " +
+              (dstat.destructive_admin_enabled ? "UNLOCKED" : "LOCKED") +
+              "</p>" +
+              "<div class='actions' style='margin:0.75rem 0'>" +
+              '<button type="button" class="btn btn-primary btn-sm" id="btnBackupNow">지금 백업</button>' +
+              '<button type="button" class="btn btn-ghost btn-sm" id="btnDataRefresh">새로고침</button>' +
+              "</div>" +
+              "<h3 style='font-size:0.95rem;margin:1rem 0 0.4rem'>백업 파일 (" +
+              files.length +
+              ")</h3>" +
+              "<ul style='margin:0;padding-left:1.2rem;font-size:0.85rem;line-height:1.55'>" +
+              fileList +
+              "</ul>" +
+              "<p class='meta' style='margin-top:1rem'>" +
+              escapeHtml((dstat.policy && dstat.policy.message) || "") +
+              "</p>" +
+              "<details style='margin-top:0.75rem'><summary class='meta'>복구 (위험 · 잠금 해제 시에만)</summary>" +
+              "<p class='meta'>1) Railway에 <code>ALLOW_DESTRUCTIVE_ADMIN=1</code> 임시 설정 → 2) 아래 파일명 입력 → 3) confirm 문구 입력</p>" +
+              '<label class="meta">backup 파일명</label><br/>' +
+              '<input id="restoreName" type="text" style="width:100%;max-width:28rem;margin:0.25rem 0" placeholder="wakeagain-...-startup.db" />' +
+              '<label class="meta">confirm = RESTORE_FROM_BACKUP</label><br/>' +
+              '<input id="restoreConfirm" type="text" style="width:100%;max-width:28rem;margin:0.25rem 0" autocomplete="off" />' +
+              '<div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="btnRestore">이 백업으로 복구</button></div>' +
+              '<p class="err" id="dataErr" hidden></p>' +
+              "</details>" +
+              "</div>";
+            $("detail").hidden = true;
+            $("detail").innerHTML = "";
+            var btnB = document.getElementById("btnBackupNow");
+            if (btnB) {
+              btnB.addEventListener("click", async function () {
+                try {
+                  await api("/api/v1/admin/data/backup", { method: "POST", body: "{}" });
+                  await load();
+                } catch (e) {
+                  showErr(e.message || "백업 실패");
+                }
+              });
+            }
+            var btnR = document.getElementById("btnDataRefresh");
+            if (btnR) btnR.addEventListener("click", function () { load(); });
+            var btnRest = document.getElementById("btnRestore");
+            if (btnRest) {
+              btnRest.addEventListener("click", async function () {
+                var name = (document.getElementById("restoreName") || {}).value || "";
+                var conf = (document.getElementById("restoreConfirm") || {}).value || "";
+                if (!confirm("정말로 이 백업으로 DB를 교체할까요? 현재 DB는 pre-restore로 한 번 더 저장됩니다.")) return;
+                try {
+                  await api("/api/v1/admin/data/restore", {
+                    method: "POST",
+                    body: JSON.stringify({ backup_name: name.trim(), confirm: conf.trim() }),
+                  });
+                  await load();
+                } catch (e) {
+                  var de = document.getElementById("dataErr");
+                  if (de) {
+                    de.hidden = false;
+                    de.textContent = e.message || "복구 실패";
+                  } else showErr(e.message || "복구 실패");
+                }
+              });
+            }
           } else if (state.mode === "fees") {
             document.querySelector(".admin-grid").style.gridTemplateColumns = "";
             $("pageTitle").textContent = "수수료 장부";
@@ -989,87 +1781,12 @@
           } else if (state.mode === "revenue") {
             $("pageTitle").textContent = "매출 · 세금 · 순수익";
             $("hintBox").innerHTML =
-              "<strong>한눈에 보기</strong> 판매자 수수료(10%) 장부 기준. 부가세 10%는 입금 확인분을 「부가세 포함」으로 역산. " +
-              "종합소득세 등은 포함하지 않습니다. 세무 신고 전 세무사 확인 필수.";
-            $("counts").innerHTML = "";
+              "<strong>기간 선택</strong> 기본은 <strong>전체</strong>입니다. 오늘·이번 주·이번 달 버튼을 누르면 해당 기간만 표시합니다. " +
+              "판매자 수수료(10%) 장부 기준 · 부가세 10% 역산 · 소득세 미포함.";
+            if (!state.revenuePeriod) state.revenuePeriod = "all";
             var rev = await api("/api/v1/admin/revenue");
-            var periods = rev.periods || {};
-            var note = (rev.assumptions && rev.assumptions.note_ko) || "";
-
-            function won(n) {
-              return "₩" + Number(n || 0).toLocaleString("ko-KR");
-            }
-            function periodBlock(key, p) {
-              if (!p) return "";
-              return (
-                '<div class="panel" style="margin-bottom:0.85rem">' +
-                '<p class="rev-period">' +
-                escapeHtml(p.label || key) +
-                "</p>" +
-                '<div class="rev-grid">' +
-                '<div class="rev-card"><p class="lab">수수료 입금(매출)</p><p class="num">' +
-                won(p.fee_paid) +
-                '</p><p class="sub">입금 확인 ' +
-                (p.deals_paid || 0) +
-                "건</p></div>" +
-                '<div class="rev-card"><p class="lab">미수 수수료</p><p class="num">' +
-                won(p.fee_pending) +
-                '</p><p class="sub">청구 대기 ' +
-                (p.deals_pending_fee || 0) +
-                "건</p></div>" +
-                '<div class="rev-card is-tax"><p class="lab">부가세 추정(10%)</p><p class="num">' +
-                won(p.vat_on_paid) +
-                '</p><p class="sub">입금분 역산 · 납부 예정 참고</p></div>' +
-                '<div class="rev-card is-net"><p class="lab">순수익 추정</p><p class="num">' +
-                won(p.net_after_vat_paid) +
-                '</p><p class="sub">입금 수수료 − 부가세 (소득세 별도)</p></div>' +
-                '<div class="rev-card"><p class="lab">거래액(성사 GMV)</p><p class="num">' +
-                won(p.gmv_paid) +
-                '</p><p class="sub">수수료 입금 확정 건 기준</p></div>' +
-                '<div class="rev-card"><p class="lab">공급가액 추정</p><p class="num">' +
-                won(p.supply_on_paid) +
-                '</p><p class="sub">부가세 제외 수수료</p></div>' +
-                "</div></div>"
-              );
-            }
-
-            var series = rev.series_days || [];
-            var maxFee = 1;
-            series.forEach(function (d) {
-              if ((d.fee_paid || 0) > maxFee) maxFee = d.fee_paid;
-            });
-            var bars =
-              '<div class="panel"><p class="rev-period">최근 14일 · 입금 수수료</p><div class="rev-bar-wrap">' +
-              series
-                .map(function (d) {
-                  var w = Math.round(((d.fee_paid || 0) / maxFee) * 100);
-                  return (
-                    '<div class="rev-bar-row"><span>' +
-                    escapeHtml(d.label) +
-                    '</span><div class="rev-bar"><i style="width:' +
-                    w +
-                    '%"></i></div><span>' +
-                    won(d.fee_paid) +
-                    "</span></div>"
-                  );
-                })
-                .join("") +
-              "</div></div>";
-
-            $("list").innerHTML =
-              periodBlock("day", periods.day) +
-              periodBlock("week", periods.week) +
-              periodBlock("month", periods.month);
-            $("detail").innerHTML =
-              periodBlock("all", periods.all) +
-              bars +
-              '<p class="meta" style="margin-top:1rem;line-height:1.55">' +
-              escapeHtml(note) +
-              "<br />기준 시각: " +
-              escapeHtml(rev.as_of || "") +
-              "</p>";
-            // revenue uses full width — stack panels
-            document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
+            state.revenueData = rev;
+            renderRevenue();
           } else {
             document.querySelector(".admin-grid").style.gridTemplateColumns = "";
             $("pageTitle").textContent = "매물 검수";
