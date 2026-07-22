@@ -129,6 +129,7 @@ def create_and_approve(seller: dict, **kwargs) -> int:
         "auction_days": kwargs.get("auction_days", 3),
         "min_increment": 10_000,
         "license_note": "양도",
+        "keywords": ["테스트", "경매", "SaaS", "웹앱", "양도"],
         "attest_works": True,
         "attest_license": True,
         "attest_rights": True,

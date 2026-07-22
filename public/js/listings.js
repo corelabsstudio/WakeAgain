@@ -20,6 +20,7 @@
       listing_status: "preview",
       auction_status: "live",
       product_type: "webapp",
+      keywords: ["SaaS", "카카오", "주문", "알림", "소상공인"],
       price_start: 890000,
       price_current: 1120000,
       bid_count: 4,
@@ -37,6 +38,7 @@
       listing_status: "preview",
       auction_status: "live",
       product_type: "mobile",
+      keywords: ["가계부", "영수증", "OCR", "모바일앱", "Flutter"],
       price_start: 450000,
       price_current: 450000,
       bid_count: 0,
@@ -54,6 +56,7 @@
       listing_status: "preview",
       auction_status: "live",
       product_type: "webapp",
+      keywords: ["회의", "요약", "AI", "웹앱", "Whisper"],
       price_start: 320000,
       price_current: 380000,
       bid_count: 2,
@@ -71,6 +74,7 @@
       listing_status: "preview",
       auction_status: "live",
       product_type: "desktop",
+      keywords: ["CSV", "데이터", "CLI", "Python", "도구"],
       price_start: 180000,
       price_current: 210000,
       bid_count: 1,
@@ -88,6 +92,7 @@
       listing_status: "preview",
       auction_status: "live",
       product_type: "webapp",
+      keywords: ["AI", "블로그", "콘텐츠", "웹앱", "초안"],
       price_start: 550000,
       price_current: 720000,
       bid_count: 5,
@@ -231,10 +236,16 @@
   }
 
   function detailHref(p) {
+    var path;
     if (p.listing_status === "preview" || String(p.id).indexOf("preview") === 0) {
-      return "/buy.html";
+      path = "/buy.html";
+    } else {
+      path = "/project.html?id=" + encodeURIComponent(p.id);
     }
-    return "/project.html?id=" + encodeURIComponent(p.id);
+    if (window.WakeAgainAPI && window.WakeAgainAPI.pageUrl) {
+      return window.WakeAgainAPI.pageUrl(path);
+    }
+    return path;
   }
 
   function bidNoteText(bidders, top) {
@@ -251,6 +262,28 @@
       return base;
     }
     return tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기");
+  }
+
+  function keywordsOf(p) {
+    const raw = p && p.keywords;
+    if (!raw || !raw.length) return [];
+    return raw.map(function (k) {
+      return String(k).trim();
+    }).filter(Boolean).slice(0, 5);
+  }
+
+  function keywordsHtml(p) {
+    const kws = keywordsOf(p);
+    if (!kws.length) return "";
+    return (
+      '<div class="listing-kw">' +
+      kws
+        .map(function (k) {
+          return '<span class="listing-kw-tag">#' + escapeHtml(k) + "</span>";
+        })
+        .join("") +
+      "</div>"
+    );
   }
 
   function cardHtml(p) {
@@ -273,12 +306,17 @@
       bids > 0
         ? tt("list.cta_bid", isEn() ? "Bid & view" : "가격 쓰고 보기")
         : tt("list.cta_view", isEn() ? "View project" : "프로젝트 자세히 보기");
+    const searchBlob = escapeAttr(
+      [p.title, p.one_liner, p.one_liner_en, (p.keywords || []).join(" "), p.story]
+        .join(" ")
+        .toLowerCase()
+    );
     return (
-      `<article class="listing-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}">` +
+      `<article class="listing-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}" data-search="${searchBlob}">` +
       `<div class="listing-icon ${tone}">${ICONS[tone] || ICONS.violet}</div>` +
       `<div class="listing-body">` +
       `<div class="listing-title-row"><h3>${title}</h3><span class="badge ${b.cls}">${b.text}</span></div>` +
-      `<p>${line}</p>${typeBit}${bidNote}` +
+      `<p>${line}</p>${keywordsHtml(p)}${typeBit}${bidNote}` +
       `<div class="listing-foot"><div><span class="label">${price.label}</span><strong data-price data-money-krw="${escapeAttr(String(p.price_current != null ? p.price_current : p.price_start || 0))}">${price.value}</strong></div>` +
       `<a class="btn btn-primary btn-sm" href="${href}">${cta}</a></div>` +
       `</div></article>`
@@ -299,25 +337,42 @@
   let filter = "all";
   let source = "preview";
   let cache = [];
+  let searchQ = "";
 
   function applyFilter() {
     const cards = Array.prototype.slice.call(grid.querySelectorAll(".listing-card"));
+    const q = (searchQ || "").trim().toLowerCase();
     let shown = 0;
     cards.forEach(function (card) {
       const cats = (card.getAttribute("data-cats") || "").split(/\s+/);
-      const ok = filter === "all" || cats.indexOf(filter) !== -1;
+      const catOk = filter === "all" || cats.indexOf(filter) !== -1;
+      const blob = (card.getAttribute("data-search") || card.textContent || "").toLowerCase();
+      const qOk = !q || blob.indexOf(q) !== -1;
+      const ok = catOk && qOk;
       card.hidden = !ok;
       if (ok) shown++;
     });
     if (empty) {
       empty.hidden = shown > 0;
       if (shown === 0) {
-        empty.textContent =
-          source === "api"
-            ? tt("list.empty_cat", isEn() ? "No listings in this category." : "해당 카테고리 매물이 없습니다.")
-            : tt("list.empty_sample", isEn() ? "No samples in this category." : "해당 카테고리 예시가 없습니다.");
+        if (q) {
+          empty.textContent = tt(
+            "list.empty_search",
+            isEn() ? "No matches. Try another keyword." : "검색 결과가 없습니다. 다른 키워드를 시도해 보세요."
+          );
+        } else {
+          empty.textContent =
+            source === "api"
+              ? tt("list.empty_cat", isEn() ? "No listings in this category." : "해당 카테고리 매물이 없습니다.")
+              : tt("list.empty_sample", isEn() ? "No samples in this category." : "해당 카테고리 예시가 없습니다.");
+        }
       }
     }
+  }
+
+  function syncSearchClear() {
+    const clearBtn = document.getElementById("listingSearchClear");
+    if (clearBtn) clearBtn.hidden = !(searchQ && searchQ.trim());
   }
 
   function sourceNoteText(fromApi) {
@@ -604,18 +659,35 @@
   async function load(reset) {
     if (!api) {
       render(PREVIEW, false);
+      applyFilter();
       return;
     }
     if (reset !== false) {
       pageOffset = 0;
     }
     try {
-      const data = await api.listProjects(false, PAGE, pageOffset);
+      const data = await api.listProjects(false, PAGE, pageOffset, searchQ);
       const projects = (data && data.projects) || [];
       hasMore = !!(data && data.has_more);
       if (pageOffset === 0) {
-        if (projects.length) render(projects, true);
-        else render(PREVIEW, false);
+        if (projects.length) {
+          render(projects, true);
+        } else if (searchQ && searchQ.trim()) {
+          // Active search with zero hits — don't fall back to sample cards
+          source = "api";
+          cache = [];
+          grid.innerHTML = "";
+          if (empty) {
+            empty.hidden = false;
+            empty.textContent = tt(
+              "list.empty_search",
+              isEn() ? "No matches. Try another keyword." : "검색 결과가 없습니다. 다른 키워드를 시도해 보세요."
+            );
+          }
+          updateHeroLive(null, true);
+        } else {
+          render(PREVIEW, false);
+        }
       } else if (projects.length && source === "api") {
         cache = cache.concat(projects);
         grid.innerHTML = cache.map(cardHtml).join("");
@@ -624,6 +696,7 @@
       pageOffset += projects.length;
       var moreBtn = document.getElementById("listingsMore");
       if (moreBtn) moreBtn.hidden = !(source === "api" && hasMore);
+      syncSearchClear();
     } catch (e) {
       console.warn("listings", e);
       if (pageOffset === 0) render(PREVIEW, false);
@@ -645,8 +718,10 @@
             money(t.amount) +
             " · " +
             (t.bidder_label || "") +
-            ' · <a href="/project.html?id=' +
-            encodeURIComponent(t.project_id) +
+            ' · <a href="' +
+            (window.WakeAgainAPI && window.WakeAgainAPI.pageUrl
+              ? window.WakeAgainAPI.pageUrl("/project.html?id=" + encodeURIComponent(t.project_id))
+              : "/project.html?id=" + encodeURIComponent(t.project_id)) +
             '" style="color:inherit;text-decoration:underline">' +
             (isEn() ? "view" : "보기") +
             "</a>";
@@ -671,6 +746,26 @@
   }
   document.addEventListener("wa:langchange", rerenderForLocale);
   document.addEventListener("wa:currencychange", rerenderForLocale);
+
+  var searchForm = document.getElementById("listingSearchForm");
+  var searchInput = document.getElementById("listingSearchQ");
+  var searchClear = document.getElementById("listingSearchClear");
+  if (searchForm && searchInput) {
+    searchForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      searchQ = (searchInput.value || "").trim();
+      syncSearchClear();
+      load(true);
+    });
+  }
+  if (searchClear && searchInput) {
+    searchClear.addEventListener("click", function () {
+      searchQ = "";
+      searchInput.value = "";
+      syncSearchClear();
+      load(true);
+    });
+  }
 
   load(true).then(function () {
     setInterval(pollLive, 4000);

@@ -29,6 +29,7 @@ SAMPLES = [
         "price_buy_now": 2500000,
         "bid_count": 4,
         "license_note": "직접 작성 코드 위주 · 오픈소스 라이브러리 MIT/Apache 명시 예정",
+        "keywords": ["SaaS", "카카오", "주문", "알림", "소상공인"],
         "days_left": 4,
     },
     {
@@ -46,6 +47,7 @@ SAMPLES = [
         "price_buy_now": 980000,
         "bid_count": 0,
         "license_note": "본인 작성 · OCR API 키는 이전 시 구매자 계정으로 교체 필요",
+        "keywords": ["가계부", "영수증", "OCR", "모바일앱", "Flutter"],
         "days_left": 6,
     },
     {
@@ -63,6 +65,7 @@ SAMPLES = [
         "price_buy_now": 700000,
         "bid_count": 2,
         "license_note": "자체 코드 + OpenAI API 사용 (키 별도)",
+        "keywords": ["회의", "요약", "AI", "웹앱", "Whisper"],
         "days_left": 3,
     },
     {
@@ -80,6 +83,7 @@ SAMPLES = [
         "price_buy_now": 400000,
         "bid_count": 1,
         "license_note": "MIT 예정 · 양도 후 패키지명 변경 가능",
+        "keywords": ["CSV", "데이터", "CLI", "Python", "도구"],
         "days_left": 5,
     },
     {
@@ -98,6 +102,7 @@ SAMPLES = [
         "price_buy_now": 1500000,
         "bid_count": 5,
         "license_note": "직접 작성 프론트/백 · LLM API 키는 구매자 부담",
+        "keywords": ["AI", "블로그", "콘텐츠", "웹앱", "초안"],
         "days_left": 2,
     },
 ]
@@ -113,6 +118,11 @@ def main() -> None:
     conn = sqlite3.connect(str(DB))
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # ensure keywords column (additive; matches wakeagain.db migrations)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
+    if "keywords_json" not in cols:
+        conn.execute("ALTER TABLE projects ADD COLUMN keywords_json TEXT DEFAULT '[]'")
+        print("added keywords_json column")
 
     # Wipe listing-related rows (keep users)
     for table in (
@@ -185,13 +195,15 @@ def main() -> None:
             """
             INSERT INTO projects (
               owner_id, title, one_liner, status, product_type, story, demo, assets_json,
-              price_start, price_buy_now, price_current, bid_count, min_increment,
+              keywords_json,
+              price_start, price_buy_now, price_current, bid_count, bidder_count, min_increment,
               auction_ends_at, auction_status, listing_status,
               contact, license_note, seller_attest_json,
               created_at, updated_at, demo_verified
             ) VALUES (
               ?,?,?,?,?,?,?,?,
-              ?,?,?,?,?,
+              ?,
+              ?,?,?,?,?,?,
               ?, 'live', 'approved',
               ?,?,?,
               ?,?, 1
@@ -206,10 +218,12 @@ def main() -> None:
                 s["story"],
                 s["demo"],
                 "[]",
+                json.dumps(s.get("keywords") or [], ensure_ascii=False),
                 s["price_start"],
                 s["price_buy_now"],
                 s["price_current"],
                 s["bid_count"],
+                s["bid_count"],  # demo: treat as unique bidders
                 10000,
                 ends,
                 "corelabs.studio@gmail.com",

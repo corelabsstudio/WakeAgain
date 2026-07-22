@@ -23,12 +23,18 @@
 |------|------|
 | 운영 | **코어랩스(CoreLabs)** |
 | 제품 | **WakeAgain** (사이트·로고 영문) |
-| 로고 마크 | **확정** `WA_unified_purple_white_bigger_A` — 퍼플 그라데이션 배경 + 화이트 WA 모노그램(세리프·리가처) · `public/assets/logo-mark.png` · `favicon.ico` |
-| 로고 락업 | 마크 + 워드마크 **WakeAgain** (`.brand-name` / Again 그라데이션) |
+| 제품 로고 마크 | **확정** `WA_unified_purple_white_bigger_A` — 퍼플 그라데이션 배경 + 화이트 WA 모노그램(세리프·리가처) · `public/assets/logo-mark.png` · `favicon.ico` |
+| 제품 로고 락업 | 마크 + 워드마크 **WakeAgain** (`.brand-name` / Again 그라데이션) |
+| **회사 로고** | **확정 2026-07-21** — 육각 **C** + 내부 네트워크(코어 노드) 마크 + **Core**(네이비)/**Labs**(시안) 워드마크 · 태그라인 없음 · 원자/궤도 시안 폐기 |
+| 회사 로고 파일 | 락업 `public/assets/corelabs-logo-lockup.png` · 마크 `public/assets/corelabs-logo-mark.png` · 다크 UI용 `*-light.png` · 바탕화면 `CoreLabs_logo_final.jpg` |
+| 사이트 반영 | 푸터(메인 락업 + 컴팩트 마크) · 사업계획서 표지 HWP/PDF |
 | 문의 이메일 | **corelabs.studio@gmail.com** |
 | 카피라이트 | **© 2026 CoreLabs. All rights reserved.** |
 | 이용약관 | `/legal/terms.html` · `docs/이용약관.md` |
 | 개인정보처리방침 | `/legal/privacy.html` · `docs/개인정보처리방침.md` |
+
+**브랜드 계층:** CoreLabs(회사·스튜디오) ⊃ WakeAgain · RoadLog(제품). 제품 로고(퍼플 WA)와 회사 로고(네이비 육각 C + 시안 Labs 글자)를 섞지 말 것.  
+회사 로고 사용: 푸터「운영 · 코어랩스」、사업계획서、약관 표지、Powered by CoreLabs、명함. 사이트 헤더·앱 아이콘은 **WakeAgain** 제품 마크.
 
 푸터·가입·문의에 위 표기를 빠뜨리지 말 것. `hello@wakeagain.com` 은 사용하지 않음(미개설).
 

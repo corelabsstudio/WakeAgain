@@ -145,6 +145,7 @@ def create_listing(
         "auction_days": auction_days,
         "min_increment": 10_000,
         "license_note": "양도 테스트",
+        "keywords": ["테스트", "경매", "SaaS", "웹앱", "입찰"],
         "attest_works": True,
         "attest_license": True,
         "attest_rights": True,

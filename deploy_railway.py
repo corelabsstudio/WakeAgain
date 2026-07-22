@@ -35,7 +35,8 @@ SERVICE_NAME = "web"
 def find_token() -> str:
     for p in TOKEN_CANDIDATES:
         if p.is_file():
-            t = p.read_text(encoding="utf-8").strip().splitlines()[0].strip()
+            t = p.read_text(encoding="utf-8-sig").strip().splitlines()[0].strip()
+            t = t.lstrip("\ufeff").strip()
             if t and not t.startswith("#"):
                 return t
     raise SystemExit(
@@ -173,9 +174,14 @@ def main() -> int:
             "JWT_SECRET": existing.get("JWT_SECRET") or app_secret,
             "ADMIN_SECRET": admin_secret,
             "EMAIL_DEV_MODE": "0",
+            "EMAIL_CODE_FALLBACK": "0",
             "AUCTION_SCHEDULER": "1",
             "AUCTION_SCHEDULER_SEC": "60",
-            "ALLOWED_ORIGINS": "*",
+            "ALLOWED_ORIGINS": (
+                "https://wakeagain.com,https://www.wakeagain.com,"
+                "https://web-production-8ee81.up.railway.app,"
+                "capacitor://localhost,http://localhost,ionic://localhost,https://localhost"
+            ),
             "DATA_DIR": "/data",
         }
         secrets_path.parent.mkdir(parents=True, exist_ok=True)

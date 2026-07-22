@@ -700,6 +700,7 @@
         </div>
         <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
         <p class="spotlight-one" id="pOne"></p>
+        <div class="listing-kw" id="pKeywords" hidden></div>
         <div class="price-rise" id="priceRise">
           <div class="price-rise-labels">
             <div>
@@ -1547,6 +1548,21 @@
         document.getElementById("pTitle").textContent = p.title || "";
         document.getElementById("pOne").textContent =
           (isEn() && p.one_liner_en) ? p.one_liner_en : (p.one_liner || "");
+        var kwHost = document.getElementById("pKeywords");
+        if (kwHost) {
+          var kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];
+          if (kws.length) {
+            kwHost.hidden = false;
+            kwHost.innerHTML = kws
+              .map(function (k) {
+                return '<span class="listing-kw-tag">#' + String(k).replace(/</g, "&lt;") + "</span>";
+              })
+              .join("");
+          } else {
+            kwHost.hidden = true;
+            kwHost.innerHTML = "";
+          }
+        }
         document.getElementById("pStory").textContent =
           (isEn() && p.story_en) ? p.story_en : (p.story || "");
         document.getElementById("pDemo").textContent = t("데모: ", "Demo: ") + (p.demo || "—");

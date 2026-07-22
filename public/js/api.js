@@ -10,17 +10,89 @@
   /** Device-local saved email/password for "remember login" (not the session token). */
   const STORAGE_SAVED_LOGIN = "wa_saved_login";
 
+  function isNativeShell() {
+    try {
+      if (global.WAKEAGAIN_CHANNEL === "native") return true;
+      if (
+        location.protocol === "capacitor:" ||
+        location.protocol === "ionic:" ||
+        location.protocol === "file:"
+      ) {
+        return true;
+      }
+      if (
+        global.Capacitor &&
+        global.Capacitor.isNativePlatform &&
+        global.Capacitor.isNativePlatform()
+      ) {
+        return true;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return false;
+  }
+
+  /**
+   * Site path that works on web and Capacitor (app shell lives under /app/).
+   * Pass root-style paths: "/project.html?id=1", "/#listings", "/app/#list"
+   */
+  function pageUrl(path) {
+    var raw = String(path == null ? "/" : path);
+    if (!raw) raw = "/";
+    if (/^(https?:|mailto:|tel:)/i.test(raw)) return raw;
+    if (raw.charAt(0) === "#") {
+      // hash-only: stay on current document when possible
+      return raw;
+    }
+    var hash = "";
+    var query = "";
+    var pathOnly = raw;
+    var hi = pathOnly.indexOf("#");
+    if (hi >= 0) {
+      hash = pathOnly.slice(hi);
+      pathOnly = pathOnly.slice(0, hi);
+    }
+    var qi = pathOnly.indexOf("?");
+    if (qi >= 0) {
+      query = pathOnly.slice(qi);
+      pathOnly = pathOnly.slice(0, qi);
+    }
+    if (!pathOnly || pathOnly === "") pathOnly = "/";
+    if (pathOnly.charAt(0) !== "/") pathOnly = "/" + pathOnly;
+
+    // Normal website or Capacitor https://localhost — root-relative is correct
+    if (location.protocol === "http:" || location.protocol === "https:") {
+      return pathOnly + query + hash;
+    }
+
+    // file:// / capacitor: legacy — resolve relative to current folder depth
+    var parts = (location.pathname || "").split("/").filter(function (x) {
+      return x && x !== "." ;
+    });
+    // drop filename
+    if (parts.length && /\.(html?|htm)$/i.test(parts[parts.length - 1])) {
+      parts.pop();
+    }
+    var inApp = parts.length > 0 && parts[parts.length - 1].toLowerCase() === "app";
+    var target = pathOnly.replace(/^\//, "");
+    if (pathOnly === "/") target = "index.html";
+    if (inApp) {
+      return "../" + target + query + hash;
+    }
+    return target + query + hash;
+  }
+
+  function goPage(path) {
+    location.href = pageUrl(path);
+  }
+
   function apiBase() {
     const saved = localStorage.getItem(STORAGE_API);
     if (saved) return saved.replace(/\/$/, "");
     if (global.WAKEAGAIN_API_BASE) return String(global.WAKEAGAIN_API_BASE).replace(/\/$/, "");
     // Capacitor / file: must not use empty base (relative fetch breaks)
-    if (
-      location.protocol === "capacitor:" ||
-      location.protocol === "ionic:" ||
-      location.protocol === "file:" ||
-      (global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform())
-    ) {
+    if (isNativeShell()) {
       return "http://10.0.2.2:8080";
     }
     return "";
@@ -160,6 +232,9 @@
 
   const api = {
     apiBase,
+    isNativeShell,
+    pageUrl,
+    goPage,
     request,
     setApiBase(url) {
       if (url) localStorage.setItem(STORAGE_API, url.replace(/\/$/, ""));
@@ -230,6 +305,12 @@
       return request("/api/v1/auth/password-reset/confirm", {
         method: "POST",
         body: JSON.stringify({ email, code, new_password }),
+      });
+    },
+    async findEmail(real_name, phone) {
+      return request("/api/v1/auth/find-email", {
+        method: "POST",
+        body: JSON.stringify({ real_name, phone }),
       });
     },
     async placeBid(projectId, amount) {
@@ -318,12 +399,21 @@
       if (data.user) localStorage.setItem(STORAGE_USER, JSON.stringify(data.user));
       return data;
     },
-    async listProjects(mine, limit, offset) {
+    async listProjects(mine, limit, offset, searchQ) {
       var q = [];
       if (mine) q.push("mine=true");
       if (limit != null) q.push("limit=" + encodeURIComponent(limit));
       if (offset != null) q.push("offset=" + encodeURIComponent(offset));
+      if (searchQ != null && String(searchQ).trim()) {
+        q.push("q=" + encodeURIComponent(String(searchQ).trim()));
+      }
       return request("/api/v1/projects" + (q.length ? "?" + q.join("&") : ""));
+    },
+    async suggestKeywords(payload) {
+      return request("/api/v1/projects/suggest-keywords", {
+        method: "POST",
+        body: JSON.stringify(payload || {}),
+      });
     },
     async listMessages(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/messages");

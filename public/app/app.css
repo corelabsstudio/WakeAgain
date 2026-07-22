@@ -983,6 +983,129 @@ body.is-native-app .app-top-hide-native {
 }
 .safety-notice li { margin: 0.2rem 0; }
 
+/* Auth / verify escape routes */
+.auth-browse-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+/* Marketplace search */
+.market-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0.85rem;
+}
+.market-search input[type="search"] {
+  flex: 1 1 10rem;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.92rem;
+}
+.market-search input[type="search"]:focus {
+  outline: none;
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+.p-kw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin: 0.25rem 0 0;
+}
+.p-kw-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* Listing keywords (create form) */
+.kw-block {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  background: rgba(88, 28, 135, 0.12);
+}
+.kw-block > label {
+  margin-top: 0;
+  font-weight: 700;
+}
+.kw-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0.55rem;
+}
+.kw-ai-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.kw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.45rem;
+}
+.kw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  background: rgba(139, 92, 246, 0.18);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem 0.28rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kw-chip:hover {
+  border-color: rgba(196, 181, 253, 0.7);
+  background: rgba(139, 92, 246, 0.28);
+}
+.kw-chip .kw-x {
+  opacity: 0.75;
+  font-size: 1rem;
+  line-height: 1;
+}
+.kw-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.kw-input-row input {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Capacitor / notch safe areas
    상단은 sticky .app-top 에만 inset (body 이중 패딩 금지).
    하단은 body + tabbar.

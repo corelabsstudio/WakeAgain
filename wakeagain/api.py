@@ -13,6 +13,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 
 from wakeagain import __version__, db as database
+from wakeagain import keywords as kw_mod
 from wakeagain import oauth as oauth_mod
 from wakeagain import pricing as price_policy
 from wakeagain.admin_auth import require_admin
@@ -385,6 +386,8 @@ class ProjectIn(BaseModel):
     story: str = Field(min_length=1, max_length=2000)
     demo: str = Field(min_length=1, max_length=1000)
     assets: list[str] = Field(default_factory=list)
+    # Marketplace tags (1–5) — AI suggest or manual; improves buyer search
+    keywords: list[str] = Field(default_factory=list, max_length=10)
     # Optional buy-now; both capped so 999999999999… abuse is rejected
     price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
     price_buy_now: int | None = Field(default=None, ge=50_000, le=100_000_000)
@@ -396,6 +399,14 @@ class ProjectIn(BaseModel):
     attest_works: bool = False
     attest_license: bool = False
     attest_rights: bool = False
+
+
+class KeywordSuggestIn(BaseModel):
+    title: str = Field(default="", max_length=80)
+    one_liner: str = Field(default="", max_length=120)
+    story: str = Field(default="", max_length=2000)
+    product_type: str = Field(default="", max_length=40)
+    lang: str = Field(default="ko", max_length=8)
 
 
 class BidIn(BaseModel):
@@ -1420,25 +1431,44 @@ def list_projects(
     mine: bool = False,
     limit: int = 24,
     offset: int = 0,
+    q: str = "",
     user: dict | None = Depends(get_optional_user),
 ):
     lim = max(1, min(int(limit or 24), 100))
     off = max(0, int(offset or 0))
+    # Buyer/seller search: title · one_liner · story · keywords JSON · product_type
+    q_raw = (q or "").strip()
+    q_term = q_raw[:80] if q_raw else ""
+    like = f"%{q_term}%" if q_term else None
+    search_sql = (
+        "("
+        "title LIKE ? OR one_liner LIKE ? OR IFNULL(story,'') LIKE ? "
+        "OR IFNULL(keywords_json,'') LIKE ? OR IFNULL(product_type,'') LIKE ?"
+        ")"
+        if like
+        else ""
+    )
+
     with database.db() as conn:
         database.process_expired_auctions(conn)
         if mine:
             if not user:
                 raise HTTPException(status_code=401, detail="auth required")
+            where = "owner_id = ?"
+            params: list[Any] = [user["id"]]
+            if like:
+                where += " AND " + search_sql
+                params.extend([like, like, like, like, like])
             total = conn.execute(
-                "SELECT COUNT(*) AS c FROM projects WHERE owner_id = ?",
-                (user["id"],),
+                f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
+                params,
             ).fetchone()["c"]
             rows = conn.execute(
-                """
-                SELECT * FROM projects WHERE owner_id = ?
+                f"""
+                SELECT * FROM projects WHERE {where}
                 ORDER BY id DESC LIMIT ? OFFSET ?
                 """,
-                (user["id"], lim, off),
+                (*params, lim, off),
             ).fetchall()
             projects = [database.project_to_dict(r, include_private=True) for r in rows]
             return {
@@ -1448,16 +1478,23 @@ def list_projects(
                 "limit": lim,
                 "offset": off,
                 "has_more": off + len(projects) < int(total),
+                "q": q_term,
             }
+        where = "listing_status = 'approved'"
+        params = []
+        if like:
+            where += " AND " + search_sql
+            params.extend([like, like, like, like, like])
         total = conn.execute(
-            "SELECT COUNT(*) AS c FROM projects WHERE listing_status = 'approved'"
+            f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
+            params,
         ).fetchone()["c"]
         rows = conn.execute(
-            """
-            SELECT * FROM projects WHERE listing_status = 'approved'
+            f"""
+            SELECT * FROM projects WHERE {where}
             ORDER BY id DESC LIMIT ? OFFSET ?
             """,
-            (lim, off),
+            (*params, lim, off),
         ).fetchall()
         projects = [database.project_to_dict(r, include_private=False) for r in rows]
     return {
@@ -1467,6 +1504,42 @@ def list_projects(
         "limit": lim,
         "offset": off,
         "has_more": off + len(projects) < int(total),
+        "q": q_term,
+    }
+
+
+@router.post("/projects/suggest-keywords")
+def suggest_project_keywords(
+    body: KeywordSuggestIn,
+    user: dict = Depends(get_current_user),
+):
+    """AI (SpaceXAI/xAI if keyed) or heuristic keyword suggestions for listing form."""
+    _ = user  # auth required — avoid anonymous spam of AI calls
+    if not (body.title or "").strip() and not (body.one_liner or "").strip():
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "title_or_oneliner_required",
+                "message": "키워드 추천을 위해 제목 또는 한 줄 소개를 먼저 적어 주세요.",
+            },
+        )
+    kws, source = kw_mod.suggest_keywords_ai(
+        title=body.title or "",
+        one_liner=body.one_liner or "",
+        story=body.story or "",
+        product_type=body.product_type or "",
+        lang=body.lang or "ko",
+    )
+    return {
+        "ok": True,
+        "keywords": kws,
+        "source": source,
+        "max": kw_mod.MAX_KEYWORDS,
+        "note": (
+            "AI 추천입니다. 수정·삭제 후 직접 입력도 가능합니다."
+            if source == "ai"
+            else "자동 추천입니다. 수정·삭제 후 직접 입력도 가능합니다."
+        ),
     }
 
 
@@ -2507,6 +2580,16 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             },
         )
 
+    keywords = kw_mod.normalize_keywords(body.keywords or [])
+    if len(keywords) < kw_mod.MIN_KEYWORDS:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "keywords_required",
+                "message": f"검색 키워드를 {kw_mod.MIN_KEYWORDS}~{kw_mod.MAX_KEYWORDS}개 넣어 주세요. AI 추천 또는 직접 입력 가능합니다.",
+            },
+        )
+
     status = price_policy.normalize_status(body.status.strip())
     product_type = database.normalize_product_type(body.product_type)
     try:
@@ -2564,11 +2647,12 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             """
             INSERT INTO projects (
               owner_id, title, one_liner, status, product_type, story, demo, assets_json,
+              keywords_json,
               price_start, price_buy_now, contact, listing_status,
               price_current, bid_count, min_increment, auction_ends_at, auction_status,
               license_note, seller_attest_json,
               created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?)
             """,
             (
                 user["id"],
@@ -2579,6 +2663,7 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 body.story.strip(),
                 body.demo.strip(),
                 json.dumps(assets, ensure_ascii=False),
+                json.dumps(keywords, ensure_ascii=False),
                 start,
                 buy_now,
                 contact,

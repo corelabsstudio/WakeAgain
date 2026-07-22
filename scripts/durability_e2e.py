@@ -194,6 +194,7 @@ def seed() -> dict:
             "min_increment": 10000,
             "auction_days": 7,
             "license_note": "MIT 양도 테스트",
+            "keywords": ["내구성", "테스트", "SaaS", "웹앱", "영속성"],
             "attest_works": True,
             "attest_license": True,
             "attest_rights": True,

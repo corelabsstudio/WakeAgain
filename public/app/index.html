@@ -52,9 +52,7 @@
       header.app-top #btnProfile,
       header.app-top #btnLogout,
       header.app-top a[href="/get-app.html"],
-      header.app-top a[href="/"],
-      header.app-top a[href="../get-app.html"],
-      header.app-top a[href="../index.html"] {
+      header.app-top a[href="../get-app.html"] {
         display: none !important;
       }
       header.app-top .user-chip-meta { display: none !important; }
@@ -72,7 +70,7 @@
 </head>
 <body class="app-body">
   <header class="app-top">
-    <a class="brand" href="/app/">
+    <a class="brand" href="/app/#list" title="마켓">
       <span class="brand-mark" aria-hidden="true"></span>
       <span class="brand-name">Wake<span class="brand-again">Again</span></span>
     </a>
@@ -95,7 +93,7 @@
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login" data-i18n="app.login_submit">로그인</button>
       <a class="btn btn-ghost btn-sm app-top-hide-sm app-top-hide-native" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
-      <a class="btn btn-ghost btn-sm app-top-hide-sm app-top-hide-native" href="/" data-i18n="nav.site">사이트</a>
+      <a class="btn btn-ghost btn-sm" href="/" data-nav-home data-i18n="nav.home">홈</a>
     </div>
   </header>
 
@@ -237,8 +235,12 @@
         <p class="form-error" id="regErr" hidden></p>
       </form>
 
+      <div class="auth-browse-row form-actions" style="margin:0.75rem 0 0.5rem">
+        <button type="button" class="btn btn-primary" id="btnAuthBrowse" data-i18n="app.browse_market">공개 매물 보기</button>
+        <button type="button" class="btn btn-ghost" id="btnAuthHome" data-i18n="nav.home">홈(메인)</button>
+      </div>
       <p class="auth-foot muted fine">
-        로그인 없이 <a class="text-link" href="#list">공개 매물</a>은 볼 수 있습니다.
+        로그인 없이도 홈·공개 매물을 볼 수 있습니다.
         경량 관심 등록은 <a class="text-link" href="/buy.html">buy 폼</a>.<br />
         운영 <strong>코어랩스(CoreLabs)</strong> ·
         <a class="text-link" href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a> ·
@@ -285,6 +287,11 @@
         <p class="form-error" id="verifyErr" hidden></p>
       </form>
       <p class="muted fine">코드는 30분간 유효합니다.</p>
+      <div class="form-actions" style="margin-top:1rem">
+        <button type="button" class="btn btn-primary" id="btnVerifySkip" data-i18n="app.browse_market">나중에 · 마켓 둘러보기</button>
+        <button type="button" class="btn btn-ghost" id="btnVerifyHome" data-i18n="nav.home">홈(메인)으로</button>
+      </div>
+      <p class="muted fine" data-i18n="app.verify_skip_hint">인증은 입찰·올리기 전에 하면 됩니다. 지금은 매물 구경부터 할 수 있어요.</p>
     </section>
 
     <!-- Seller public identity (required to list) -->
@@ -362,12 +369,6 @@
         <input id="profReal" required minlength="2" maxlength="40" autocomplete="name" placeholder="홍길동" />
         <label for="profPhone">휴대폰 *</label>
         <input id="profPhone" required inputmode="tel" autocomplete="tel" placeholder="01012345678" />
-        <label for="profRole">이용 목적 *</label>
-        <select id="profRole" required>
-          <option value="both">판매 + 구매</option>
-          <option value="seller">주로 판매</option>
-          <option value="buyer">주로 구매</option>
-        </select>
         <label for="profDisplay">표시 이름 (선택)</label>
         <input id="profDisplay" maxlength="80" placeholder="목록에 보일 닉네임" />
         <div class="form-actions">
@@ -430,6 +431,21 @@
         <button type="button" class="seg-btn is-on" data-feed="all">전체</button>
         <button type="button" class="seg-btn" data-feed="mine">내가 올린 것</button>
       </div>
+      <form class="market-search" id="formMarketSearch" role="search">
+        <label class="sr-only" for="marketSearchQ" data-i18n="app.search_label">매물 검색</label>
+        <input
+          type="search"
+          id="marketSearchQ"
+          name="q"
+          maxlength="80"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="제목 · 키워드 · 한 줄 소개 검색"
+          data-i18n-placeholder="app.search_ph"
+        />
+        <button type="submit" class="btn btn-primary btn-sm" data-i18n="app.search_btn">검색</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnMarketSearchClear" hidden data-i18n="app.search_clear">초기화</button>
+      </form>
       <div id="projectList" class="project-list project-list--cards" aria-label="프로젝트 카드 목록"></div>
       <p id="emptyList" class="empty" hidden>아직 올라온 프로젝트가 없어요.</p>
       <div style="text-align:center;margin-top:0.75rem">
@@ -490,6 +506,35 @@
         <input id="pTitle" required maxlength="80" />
         <label for="pOne">한 줄 소개 *</label>
         <input id="pOne" required maxlength="120" />
+
+        <div class="kw-block" id="kwBlock">
+          <label data-i18n="app.kw_label">검색 키워드 * (최대 5개)</label>
+          <p class="price-guide muted fine" data-i18n="app.kw_hint">
+            크몽처럼 구매자가 찾기 쉬운 태그입니다. AI 추천을 받거나 직접 넣을 수 있어요.
+          </p>
+          <div class="kw-mode" role="group" aria-label="키워드 입력 방식">
+            <button type="button" class="seg-btn is-on" id="kwModeAi" data-kw-mode="ai" data-i18n="app.kw_mode_ai">AI 추천</button>
+            <button type="button" class="seg-btn" id="kwModeManual" data-kw-mode="manual" data-i18n="app.kw_mode_manual">직접 입력</button>
+          </div>
+          <div class="kw-ai-row" id="kwAiRow">
+            <button type="button" class="btn btn-ghost btn-sm" id="btnKwSuggest" data-i18n="app.kw_suggest">AI로 5개 추천받기</button>
+            <span class="muted fine" id="kwSourceNote" hidden></span>
+          </div>
+          <div class="kw-chips" id="kwChips" aria-live="polite"></div>
+          <div class="kw-input-row">
+            <input
+              id="pKeywordInput"
+              type="text"
+              maxlength="24"
+              autocomplete="off"
+              placeholder="키워드 입력 후 Enter 또는 추가"
+              data-i18n-placeholder="app.kw_input_ph"
+            />
+            <button type="button" class="btn btn-ghost btn-sm" id="btnKwAdd" data-i18n="app.kw_add">추가</button>
+          </div>
+          <p class="price-guide muted fine" id="kwCount">0 / 5</p>
+        </div>
+
         <label for="pProductType">제품 형태 *</label>
         <select id="pProductType" required>
           <option value="">선택하세요</option>
@@ -577,6 +622,7 @@
   </main>
 
   <nav class="app-tabbar" id="tabbar" hidden>
+    <button type="button" class="tabbar-item" data-go="home" data-i18n="nav.home">홈</button>
     <button type="button" class="tabbar-item is-on" data-go="list" data-i18n="app.tab_projects">프로젝트</button>
     <button type="button" class="tabbar-item" data-go="new" data-i18n="app.tab_new">올리기</button>
     <button type="button" class="tabbar-item" data-go="profile" data-i18n="app.tab_me">내 정보</button>
@@ -604,7 +650,7 @@
   <script src="/js/pwa-install.js?v=20260723-topbar"></script>
   <script src="/js/api.js?v=20260723-topbar"></script>
   <script src="/js/demo-help.js?v=20260723-topbar"></script>
-  <script src="/app/app.js?v=20260723-topbar"></script>
+  <script src="/app/app.js?v=20260723-no-role"></script>
   <script>
     (function () {
       try {

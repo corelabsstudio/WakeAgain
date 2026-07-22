@@ -1,7 +1,8 @@
 /**
  * Copy WakeAgain web client into Capacitor www/ for Play Store & App Store.
- * - Full public/ mirror for shared pages
- * - App shell paths rewritten for Capacitor file loading
+ * - Full public/ mirror (same screens as the website)
+ * - Landing page stays as index.html (homepage)
+ * - App shell at app/index.html
  * - runtime-config.js injects WAKEAGAIN_API_BASE
  */
 const fs = require("fs");
@@ -27,25 +28,43 @@ function copyDir(src, dest) {
   }
 }
 
-function rewriteAppShell(html) {
-  let out = html;
-  // runtime config + native bridge before api.js
-  if (!out.includes("runtime-config.js")) {
-    out = out.replace(
-      /<script src="\/js\/api\.js"><\/script>/,
+function injectRuntime(html) {
+  if (html.includes("runtime-config.js")) return html;
+  // Prefer inject before api.js
+  if (html.includes('src="/js/api.js"') || html.includes("src=\"/js/api.js\"")) {
+    return html.replace(
+      /<script src="\/js\/api\.js[^"]*"><\/script>/,
+      '<script src="/js/runtime-config.js"></script>\n  <script src="/js/api.js"></script>\n  <script src="/js/native-bridge.js"></script>'
+    );
+  }
+  if (html.includes('src="../js/api.js"')) {
+    return html.replace(
+      /<script src="\.\.\/js\/api\.js[^"]*"><\/script>/,
       '<script src="../js/runtime-config.js"></script>\n  <script src="../js/api.js"></script>\n  <script src="../js/native-bridge.js"></script>'
     );
   }
-  // absolute → relative for packaged app
+  // Fallback: inject before </head>
+  if (html.includes("</head>")) {
+    return html.replace(
+      "</head>",
+      '  <script src="/js/runtime-config.js"></script>\n  <script src="/js/native-bridge.js"></script>\n</head>'
+    );
+  }
+  return html;
+}
+
+function rewriteAppShell(html) {
+  let out = injectRuntime(html);
+  // absolute → relative for packaged app under app/
   const pairs = [
-    ['href="/styles.css"', 'href="../styles.css"'],
-    ['href="/ux9.css"', 'href="../ux9.css"'],
-    ['href="/app/app.css"', 'href="app.css"'],
+    ['href="/styles.css', 'href="../styles.css'],
+    ['href="/ux9.css', 'href="../ux9.css'],
+    ['href="/app/app.css', 'href="app.css'],
     ['href="/favicon.ico"', 'href="../favicon.ico"'],
     ['href="/favicon.svg"', 'href="../favicon.svg"'],
     ['href="/manifest.webmanifest"', 'href="../manifest.webmanifest"'],
     ['src="/js/', 'src="../js/'],
-    ['src="/app/app.js"', 'src="app.js"'],
+    ['src="/app/app.js', 'src="app.js'],
     ['href="/app/"', 'href="./index.html"'],
     ['href="/app/#', 'href="./index.html#'],
     ['href="/buy.html"', 'href="../buy.html"'],
@@ -57,48 +76,56 @@ function rewriteAppShell(html) {
     ['href="/diagnose.html"', 'href="../diagnose.html"'],
     ['href="/project.html', 'href="../project.html'],
     ['href="/review.html"', 'href="../review.html"'],
+    ['href="/get-app.html"', 'href="../get-app.html"'],
+    // Homepage (landing) — critical for "홈" from app shell
     ['href="/"', 'href="../index.html"'],
+    ['href="/#"', 'href="../index.html#"'],
   ];
   for (const [a, b] of pairs) {
     out = out.split(a).join(b);
   }
+  // data-nav-home links that were rewritten away: ensure brand/home work
   // viewport safe area for notched phones
   if (!out.includes("viewport-fit=cover")) {
     out = out.replace(
-      'width=device-width, initial-scale=1',
-      'width=device-width, initial-scale=1, viewport-fit=cover'
+      "width=device-width, initial-scale=1",
+      "width=device-width, initial-scale=1, viewport-fit=cover"
     );
   }
   return out;
 }
 
-function rewriteHtmlFile(filePath, isAppShell) {
-  if (!fs.existsSync(filePath)) return;
-  let html = fs.readFileSync(filePath, "utf8");
-  if (isAppShell) {
-    html = rewriteAppShell(html);
-  } else {
-    // secondary pages: inject runtime config if they load api.js
-    if (html.includes('src="/js/api.js"') && !html.includes("runtime-config.js")) {
-      html = html.replace(
-        '<script src="/js/api.js"></script>',
-        '<script src="/js/runtime-config.js"></script>\n  <script src="/js/api.js"></script>'
-      );
-    }
-    // For capacitor, absolute / paths often break — keep as root-relative
-    // when opened via redirect from www/index; secondary pages still use / when
-    // served from same origin. Capacitor WebView loads from capacitor://localhost
-    // so we convert leading / to relative from www root for common assets.
-    html = html
-      .replaceAll('href="/styles.css"', 'href="styles.css"')
-      .replaceAll('href="/favicon', 'href="favicon')
-      .replaceAll('src="/js/', 'src="js/')
-      .replaceAll('href="/legal/', 'href="legal/')
-      .replaceAll('href="/guide/', 'href="guide/')
-      .replaceAll('href="/app/', 'href="app/')
-      .replaceAll('href="/"', 'href="index.html"');
+function rewriteRootHtml(html) {
+  let out = injectRuntime(html);
+  // Capacitor https://localhost serves www as root — keep root-relative / paths.
+  // Only ensure runtime-config + native-bridge are present.
+  if (!out.includes("viewport-fit=cover")) {
+    out = out.replace(
+      "width=device-width, initial-scale=1",
+      "width=device-width, initial-scale=1, viewport-fit=cover"
+    );
   }
-  fs.writeFileSync(filePath, html, "utf8");
+  // PWA auto-redirect to app login is for installed browser PWA, not store app —
+  // skip forcing #login when channel is native (handled in page script if any)
+  out = out.replace(
+    'location.replace("/app/?source=pwa#login");',
+    'if (!(window.WAKEAGAIN_CHANNEL === "native" || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()))) { location.replace("/app/?source=pwa#login"); }'
+  );
+  return out;
+}
+
+function walkHtml(dir, fn) {
+  if (!fs.existsSync(dir)) return;
+  for (const name of fs.readdirSync(dir)) {
+    const p = path.join(dir, name);
+    const st = fs.statSync(p);
+    if (st.isDirectory()) {
+      if (name === "assets" || name === "node_modules") continue;
+      walkHtml(p, fn);
+    } else if (name.endsWith(".html")) {
+      fn(p);
+    }
+  }
 }
 
 // --- run ---
@@ -111,8 +138,6 @@ rimraf(www);
 copyDir(publicDir, www);
 
 // API host for native builds (required for store / device)
-// Dev Android emulator default: 10.0.2.2 → host localhost
-// Production: set WAKEAGAIN_API_BASE=https://api.yourdomain.com
 const apiBase =
   process.env.WAKEAGAIN_API_BASE ||
   process.env.CAPACITOR_API_BASE ||
@@ -130,60 +155,30 @@ window.WAKEAGAIN_APP_VERSION = ${JSON.stringify(
 `;
 fs.writeFileSync(path.join(jsDir, "runtime-config.js"), cfg, "utf8");
 
-// native bridge (StatusBar / Splash) — no bundler
 const bridgeSrc = path.join(__dirname, "native-bridge.js");
 if (fs.existsSync(bridgeSrc)) {
   fs.copyFileSync(bridgeSrc, path.join(jsDir, "native-bridge.js"));
 } else {
-  fs.writeFileSync(
-    path.join(jsDir, "native-bridge.js"),
-    "/* native-bridge missing */\n",
-    "utf8"
-  );
+  fs.writeFileSync(path.join(jsDir, "native-bridge.js"), "/* native-bridge missing */\n", "utf8");
 }
 
-// Capacitor entry → app shell
-const redirect = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#050508" />
-  <title>WakeAgain</title>
-  <script>location.replace('app/index.html' + (location.hash || ''));</script>
-  <meta http-equiv="refresh" content="0;url=app/index.html" />
-</head>
-<body style="background:#050508;color:#fff;font-family:system-ui;padding:2rem;text-align:center">
-  <p>WakeAgain 시작 중…</p>
-  <p><a href="app/index.html" style="color:#c084fc">앱 열기</a></p>
-</body>
-</html>
-`;
-fs.writeFileSync(path.join(www, "index.html"), redirect, "utf8");
+// Rewrite every HTML: root pages keep site structure; app shell gets relative assets
+walkHtml(www, function (filePath) {
+  const rel = path.relative(www, filePath).replace(/\\/g, "/");
+  let html = fs.readFileSync(filePath, "utf8");
+  if (rel === "app/index.html" || rel.startsWith("app/")) {
+    html = rewriteAppShell(html);
+  } else {
+    html = rewriteRootHtml(html);
+  }
+  fs.writeFileSync(filePath, html, "utf8");
+});
 
-// rewrite app shell
-rewriteHtmlFile(path.join(www, "app", "index.html"), true);
-
-// rewrite key secondary pages for relative assets
-for (const rel of [
-  "buy.html",
-  "sell.html",
-  "diagnose.html",
-  "showcase.html",
-  "showcase-new.html",
-  "project.html",
-  "review.html",
-  "guide/index.html",
-  "legal/terms.html",
-  "legal/privacy.html",
-]) {
-  rewriteHtmlFile(path.join(www, rel), false);
-}
-
-console.log("synced public → mobile/www");
+// Entry is the real landing (homepage) — same as website.
+// Users open 홈 = listings / manifesto; 로그인 → /app/#login
+console.log("synced public → mobile/www (full site + app shell)");
+console.log("entry: index.html (landing homepage)");
 console.log("WAKEAGAIN_API_BASE =", apiBase);
 if (!process.env.WAKEAGAIN_API_BASE && !process.env.CAPACITOR_API_BASE) {
-  console.log(
-    "(tip) 스토어 빌드 전: set WAKEAGAIN_API_BASE=https://your-api.example"
-  );
+  console.log("(tip) 스토어 빌드 전: set WAKEAGAIN_API_BASE=https://your-api.example");
 }

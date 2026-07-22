@@ -322,6 +322,8 @@ def init_db() -> None:
                 # Seller listing attestations (required at create)
                 "license_note": "TEXT",
                 "seller_attest_json": "TEXT",
+                # Marketplace discovery tags (JSON array, max 5) — search + listing cards
+                "keywords_json": "TEXT DEFAULT '[]'",
             },
         )
         conn.executescript(
@@ -1056,6 +1058,13 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         assets = json.loads(row["assets_json"] or "[]")
     except json.JSONDecodeError:
         assets = []
+    try:
+        keywords_raw = json.loads(_row_get(row, "keywords_json") or "[]")
+    except (json.JSONDecodeError, TypeError):
+        keywords_raw = []
+    if not isinstance(keywords_raw, list):
+        keywords_raw = []
+    keywords = [str(k).strip() for k in keywords_raw if str(k).strip()][:5]
     price_start = _row_get(row, "price_start")
     price_current = _row_get(row, "price_current")
     if price_current is None:
@@ -1099,6 +1108,7 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "story_en": demo_i18n.get("story_en") or "",
         "demo": row["demo"],
         "assets": assets,
+        "keywords": keywords,
         "price_start": price_start,
         "price_current": price_current,
         "price_buy_now": _row_get(row, "price_buy_now"),
@@ -2146,6 +2156,8 @@ def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
         "id": p["id"],
         "title": p["title"],
         "one_liner": p["one_liner"],
+        "keywords": p.get("keywords") or [],
+        "product_type": p.get("product_type"),
         "price_start": p["price_start"],
         "price_current": p["price_current"],
         "bid_count": p["bid_count"],

@@ -14,6 +14,7 @@ COPY public ./public
 # Optional: bake non-secret defaults only; secrets via Railway Variables
 ENV AUCTION_SCHEDULER=1
 ENV EMAIL_DEV_MODE=0
+ENV EMAIL_CODE_FALLBACK=0
 
 RUN mkdir -p /data
 # Note: Railway rejects Dockerfile VOLUME — use dashboard Volume mount on /data if needed

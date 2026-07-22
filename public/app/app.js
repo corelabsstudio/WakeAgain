@@ -28,6 +28,24 @@
     return "₩" + Number(n).toLocaleString("ko-KR");
   }
 
+  /** Navigate to any site page (landing, project detail, legal…) from app shell. */
+  function goPage(path) {
+    if (api.goPage) api.goPage(path);
+    else location.href = path;
+  }
+  function pageUrl(path) {
+    return api.pageUrl ? api.pageUrl(path) : path;
+  }
+
+  function goHomeSite() {
+    // Full site homepage (landing) — same as website main
+    goPage("/");
+  }
+
+  function goMarketList() {
+    loadProjects(true);
+  }
+
   const views = {
     auth: $("viewAuth"),
     age: $("viewAge"),
@@ -44,6 +62,9 @@
   const PAGE = 24;
   const tabbar = $("tabbar");
   let feed = "all";
+  let marketSearchQ = "";
+  let listingKeywords = [];
+  const KW_MAX = 5;
   let pendingAfterAuth = null;
   let lastView = "list";
 
@@ -62,6 +83,7 @@
     Object.keys(views).forEach((k) => {
       if (views[k]) views[k].hidden = k !== name;
     });
+    // Keep bottom tabs on auth/verify too so user can always open 홈·마켓
     const showTab =
       name === "list" ||
       name === "create" ||
@@ -69,7 +91,10 @@
       name === "sellerId" ||
       name === "settle" ||
       name === "notif" ||
-      name === "fees";
+      name === "fees" ||
+      name === "auth" ||
+      name === "verify" ||
+      name === "age";
     tabbar.hidden = !showTab;
     document.querySelectorAll(".tabbar-item[data-go]").forEach((b) => {
       const go = b.getAttribute("data-go");
@@ -81,7 +106,8 @@
           name === "settle" ||
           name === "verify") &&
           go === "profile");
-      b.classList.toggle("is-on", on);
+      // "home" is a site navigation action — never sticky-selected as SPA view
+      b.classList.toggle("is-on", go === "home" ? false : on);
     });
     const hashMap = {
       auth: "#login",
@@ -277,7 +303,16 @@
         if (n.link) {
           el.style.cursor = "pointer";
           el.addEventListener("click", () => {
-            location.href = n.link;
+            var link = n.link;
+            if (link && link.charAt(0) === "/") goPage(link);
+            else if (link && /^https?:\/\//i.test(link)) {
+              try {
+                var u = new URL(link);
+                goPage(u.pathname + u.search + u.hash);
+              } catch (e) {
+                location.href = link;
+              }
+            } else location.href = link;
           });
         }
         list.appendChild(el);
@@ -311,7 +346,7 @@
     if (!u) return;
     $("profReal").value = u.real_name || "";
     $("profPhone").value = u.phone || "";
-    $("profRole").value = u.role || "both";
+    // role is always "both" (sell+buy) — purpose selector removed
     $("profDisplay").value = u.display_name || "";
     if (u.settlement) {
       $("setHolder").value = u.settlement.holder || u.real_name || "";
@@ -542,36 +577,58 @@
       return;
     }
 
-    if (!trust.email_verified) {
-      showDevCode();
-      setView("verify");
-      return;
-    }
-    if (next === "create" && !trust.profile_complete) {
-      fillProfileForm(u);
-      setView("profile");
-      return;
-    }
-    if (next === "create" && !trust.seller_identity_complete) {
-      fillSellerIdForm(u);
-      setView("sellerId");
-      return;
-    }
-    if (next === "create" && trust.can_list) {
-      setView("create");
-      return;
-    }
+    // Explicit destinations that need a full session path
     if (next === "profile") {
+      if (!trust.email_verified) {
+        showDevCode();
+        setView("verify");
+        return;
+      }
       fillProfileForm(u);
       setView("profile");
       return;
     }
     if (next === "seller") {
+      if (!trust.email_verified) {
+        showDevCode();
+        setView("verify");
+        return;
+      }
       fillSellerIdForm(u);
       setView("sellerId");
       return;
     }
+    if (next === "create") {
+      // Listing still requires verify + profile + seller identity
+      if (!trust.email_verified) {
+        showDevCode();
+        pendingAfterAuth = "create";
+        setView("verify");
+        return;
+      }
+      if (!trust.profile_complete) {
+        fillProfileForm(u);
+        setView("profile");
+        return;
+      }
+      if (!trust.seller_identity_complete) {
+        fillSellerIdForm(u);
+        setView("sellerId");
+        return;
+      }
+      if (trust.can_list) {
+        setView("create");
+        return;
+      }
+    }
+
+    // Default after login: open marketplace like the website (browse freely).
+    // Email verify is a soft gate — banner still prompts, but user is not trapped.
     await loadProjects();
+    if (!trust.email_verified) {
+      updateTrustBanner();
+      showDevCode();
+    }
   }
 
   function appendProjectCards(projects) {
@@ -603,6 +660,18 @@
       const aStatus = p.auction_status || "live";
       el.querySelector("h3").textContent = p.title || "—";
       el.querySelector(".p-one").textContent = oneLine;
+      const kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];
+      if (kws.length) {
+        const kwRow = document.createElement("p");
+        kwRow.className = "p-kw";
+        kws.forEach(function (k) {
+          const tag = document.createElement("span");
+          tag.className = "p-kw-tag";
+          tag.textContent = "#" + k;
+          kwRow.appendChild(tag);
+        });
+        el.querySelector(".p-one").after(kwRow);
+      }
 
       const badge = el.querySelector(".p-card-badge");
       let badgeText = "LIVE";
@@ -664,7 +733,7 @@
       el.querySelector(".p-live").textContent = liveText;
 
       el.addEventListener("click", () => {
-        location.href = "/project.html?id=" + encodeURIComponent(p.id);
+        goPage("/project.html?id=" + encodeURIComponent(p.id));
       });
       list.appendChild(el);
     });
@@ -691,14 +760,18 @@
     }
 
     try {
-      const data = await api.listProjects(feed === "mine", PAGE, listOffset);
+      const data = await api.listProjects(feed === "mine", PAGE, listOffset, marketSearchQ);
       const projects = data.projects || [];
       if (listOffset === 0) {
         empty.hidden = projects.length > 0;
-        empty.textContent =
-          feed === "mine"
-            ? t("app.empty_mine", "아직 올린 프로젝트가 없습니다.")
-            : t("app.empty_all", "아직 공개 매물이 없습니다. 첫 프로젝트를 올려 보세요.");
+        if (marketSearchQ && !projects.length) {
+          empty.textContent = t("app.search_empty", "검색 결과가 없습니다.");
+        } else {
+          empty.textContent =
+            feed === "mine"
+              ? t("app.empty_mine", "아직 올린 프로젝트가 없습니다.")
+              : t("app.empty_all", "아직 공개 매물이 없습니다. 첫 프로젝트를 올려 보세요.");
+        }
       }
       appendProjectCards(projects);
       listOffset += projects.length;
@@ -1090,11 +1163,14 @@
       await api.updateProfile({
         real_name: $("profReal").value.trim(),
         phone: $("profPhone").value.trim(),
-        role: $("profRole").value,
+        // Always both — no purpose picker (was confusing empty UI after "판매+구매")
+        role: "both",
         display_name: $("profDisplay").value.trim(),
       });
       const u = api.getUser();
       const trust = trustOf(u);
+      // Only force seller-identity when user is mid-listing flow.
+      // Do not bounce to seller form just because role is both/seller.
       if (pendingAfterAuth === "create") {
         if (!trust.seller_identity_complete) {
           fillSellerIdForm(u);
@@ -1103,9 +1179,6 @@
           pendingAfterAuth = null;
           setView("create");
         }
-      } else if (!trust.seller_identity_complete && (u.role === "seller" || u.role === "both")) {
-        fillSellerIdForm(u);
-        setView("sellerId");
       } else {
         await loadProjects();
       }
@@ -1200,16 +1273,11 @@
       return;
     }
     const u = api.getUser();
-    const trust = trustOf(u);
-    if (!trust.email_verified) {
-      showDevCode();
-      setView("verify");
-      return;
-    }
+    // Profile is viewable without email verify — same as website soft gates
     fillProfileForm(u);
     setView("profile");
   }
-  $("btnProfile").addEventListener("click", () => openProfile());
+  $("btnProfile")?.addEventListener("click", () => openProfile());
   $("userChip")?.addEventListener("click", () => openProfile());
 
   $("btnBackFromProfile").addEventListener("click", () => loadProjects());
@@ -1228,9 +1296,56 @@
   });
   $("btnBackList").addEventListener("click", () => loadProjects());
 
+  // Brand / 홈 → site landing or marketplace (never dead-end)
+  document.querySelectorAll("[data-nav-home]").forEach(function (el) {
+    el.addEventListener("click", function (e) {
+      e.preventDefault();
+      goHomeSite();
+    });
+  });
+  document.querySelectorAll("[data-nav-market]").forEach(function (el) {
+    el.addEventListener("click", function (e) {
+      e.preventDefault();
+      goMarketList();
+    });
+  });
+  // Logo: stay in app marketplace (list) so login shell always has a home
+  var brand = document.querySelector("header.app-top a.brand");
+  if (brand) {
+    brand.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (api.isLoggedIn && api.isLoggedIn()) {
+        goMarketList();
+      } else {
+        setView("auth");
+        switchAuthTab("login");
+      }
+    });
+  }
+  $("btnVerifySkip")?.addEventListener("click", function () {
+    pendingAfterAuth = null;
+    loadProjects(true);
+  });
+  $("btnVerifyHome")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    goHomeSite();
+  });
+  $("btnAuthBrowse")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    loadProjects(true);
+  });
+  $("btnAuthHome")?.addEventListener("click", function (e) {
+    e.preventDefault();
+    goHomeSite();
+  });
+
   document.querySelectorAll(".seg-btn").forEach((b) => {
     b.addEventListener("click", () => {
-      document.querySelectorAll(".seg-btn").forEach((x) => x.classList.remove("is-on"));
+      // skip keyword mode buttons inside create form
+      if (b.closest && b.closest("#kwBlock")) return;
+      if (b.getAttribute("data-kw-mode")) return;
+      if (!b.getAttribute("data-feed")) return;
+      document.querySelectorAll(".seg-btn[data-feed]").forEach((x) => x.classList.remove("is-on"));
       b.classList.add("is-on");
       feed = b.getAttribute("data-feed") || "all";
       loadProjects(true);
@@ -1240,10 +1355,14 @@
   document.querySelectorAll(".tabbar-item[data-go]").forEach((b) => {
     b.addEventListener("click", async () => {
       const go = b.getAttribute("data-go");
+      if (go === "home") {
+        goHomeSite();
+        return;
+      }
       if (go === "new") {
         if (await requireListReady()) setView("create");
       } else if (go === "profile") {
-        $("btnProfile").click();
+        openProfile();
       } else {
         await loadProjects();
       }
@@ -1370,6 +1489,148 @@
   }
   $("pProductType")?.addEventListener("change", applyDemoHelp);
 
+  function normalizeKeyword(raw) {
+    return String(raw || "")
+      .replace(/[#，,|/]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 24);
+  }
+
+  function renderKeywordChips() {
+    const host = $("kwChips");
+    const countEl = $("kwCount");
+    if (host) {
+      host.innerHTML = "";
+      listingKeywords.forEach(function (k, idx) {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "kw-chip";
+        chip.setAttribute("aria-label", "remove " + k);
+        chip.innerHTML = "<span></span><span class='kw-x' aria-hidden='true'>×</span>";
+        chip.querySelector("span").textContent = k;
+        chip.addEventListener("click", function () {
+          listingKeywords.splice(idx, 1);
+          renderKeywordChips();
+        });
+        host.appendChild(chip);
+      });
+    }
+    if (countEl) countEl.textContent = listingKeywords.length + " / " + KW_MAX;
+  }
+
+  function addKeyword(raw) {
+    const k = normalizeKeyword(raw);
+    if (!k) return false;
+    const key = k.toLowerCase();
+    if (listingKeywords.some(function (x) {
+      return x.toLowerCase() === key;
+    })) {
+      return false;
+    }
+    if (listingKeywords.length >= KW_MAX) {
+      showErr($("projErr"), t("app.kw_full", "키워드는 최대 5개입니다."));
+      return false;
+    }
+    listingKeywords.push(k);
+    renderKeywordChips();
+    showErr($("projErr"));
+    return true;
+  }
+
+  function setKeywords(list) {
+    listingKeywords = [];
+    (list || []).forEach(function (k) {
+      addKeyword(k);
+    });
+    renderKeywordChips();
+  }
+
+  function setKwMode(mode) {
+    const ai = $("kwModeAi");
+    const man = $("kwModeManual");
+    const row = $("kwAiRow");
+    if (ai) ai.classList.toggle("is-on", mode === "ai");
+    if (man) man.classList.toggle("is-on", mode === "manual");
+    if (row) row.hidden = mode !== "ai";
+  }
+
+  $("kwModeAi")?.addEventListener("click", function () {
+    setKwMode("ai");
+  });
+  $("kwModeManual")?.addEventListener("click", function () {
+    setKwMode("manual");
+  });
+  $("btnKwAdd")?.addEventListener("click", function () {
+    const inp = $("pKeywordInput");
+    if (!inp) return;
+    if (addKeyword(inp.value)) inp.value = "";
+    inp.focus();
+  });
+  $("pKeywordInput")?.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const inp = $("pKeywordInput");
+      if (inp && addKeyword(inp.value)) inp.value = "";
+    }
+  });
+  $("btnKwSuggest")?.addEventListener("click", async function () {
+    const title = $("pTitle") ? $("pTitle").value.trim() : "";
+    const one = $("pOne") ? $("pOne").value.trim() : "";
+    if (!title && !one) {
+      showErr($("projErr"), t("app.kw_need_title", "제목 또는 한 줄 소개를 먼저 적어 주세요."));
+      if ($("pTitle")) $("pTitle").focus();
+      return;
+    }
+    const btn = $("btnKwSuggest");
+    if (btn) btn.disabled = true;
+    showErr($("projErr"));
+    try {
+      const lang =
+        window.WakeAgainI18n && window.WakeAgainI18n.getLang
+          ? window.WakeAgainI18n.getLang()
+          : "ko";
+      const data = await api.suggestKeywords({
+        title: title,
+        one_liner: one,
+        story: $("pStory") ? $("pStory").value.trim() : "",
+        product_type: $("pProductType") ? $("pProductType").value : "",
+        lang: lang,
+      });
+      setKeywords(data.keywords || []);
+      const note = $("kwSourceNote");
+      if (note) {
+        note.hidden = false;
+        note.textContent =
+          data.source === "ai"
+            ? t("app.kw_source_ai", "AI 추천 · 수정·삭제 가능")
+            : t("app.kw_source_auto", "자동 추천 · 수정·삭제 가능");
+      }
+    } catch (err) {
+      showErr($("projErr"), err.message || t("app.load_fail", "불러오기에 실패했습니다."));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+  setKwMode("ai");
+  renderKeywordChips();
+
+  $("formMarketSearch")?.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const inp = $("marketSearchQ");
+    marketSearchQ = inp ? (inp.value || "").trim() : "";
+    const clearBtn = $("btnMarketSearchClear");
+    if (clearBtn) clearBtn.hidden = !marketSearchQ;
+    loadProjects(true);
+  });
+  $("btnMarketSearchClear")?.addEventListener("click", function () {
+    marketSearchQ = "";
+    if ($("marketSearchQ")) $("marketSearchQ").value = "";
+    const clearBtn = $("btnMarketSearchClear");
+    if (clearBtn) clearBtn.hidden = true;
+    loadProjects(true);
+  });
+
   $("formProject").addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("projErr"));
@@ -1445,6 +1706,11 @@
         return;
       }
     }
+    if (!listingKeywords.length) {
+      showErr($("projErr"), t("app.kw_need", "검색 키워드를 1~5개 넣어 주세요."));
+      if ($("pKeywordInput")) $("pKeywordInput").focus();
+      return;
+    }
     const payload = {
       title: $("pTitle").value.trim(),
       one_liner: $("pOne").value.trim(),
@@ -1453,6 +1719,7 @@
       story: $("pStory").value.trim(),
       demo: $("pDemo").value.trim(),
       assets: ["code"],
+      keywords: listingKeywords.slice(0, KW_MAX),
       price_start: start,
       min_increment: band ? band.min_increment : 10000,
       contact: (api.getUser() && api.getUser().email) || "",
@@ -1469,6 +1736,14 @@
     try {
       await api.createProject(payload);
       $("formProject").reset();
+      listingKeywords = [];
+      renderKeywordChips();
+      const kwNote = $("kwSourceNote");
+      if (kwNote) {
+        kwNote.hidden = true;
+        kwNote.textContent = "";
+      }
+      setKwMode("ai");
       applyPriceGuide(true);
       applyDemoHelp();
       feed = "mine";
