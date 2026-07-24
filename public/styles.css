@@ -89,9 +89,23 @@ body::before {
   background-size: 28px 28px;
   opacity: 0.45;
 }
-/* app-top is sticky (PWA compact header) — do not force relative on it */
-main, header:not(.app-top), footer, .mobile-cta, .scroll-progress, .nav-pill-wrap { position: relative; z-index: 1; }
-header.app-top { position: sticky; top: 0; z-index: 50; }
+/* Stacking for content layers.
+   - app-top: sticky (PWA shell)
+   - nav-pill-wrap: fixed floating pill (landing) — never force relative here
+     (header:not(.app-top) is (0,1,1) and would beat .nav-pill-wrap fixed) */
+main,
+header:not(.app-top):not(.nav-pill-wrap),
+footer,
+.mobile-cta,
+.scroll-progress {
+  position: relative;
+  z-index: 1;
+}
+header.app-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
@@ -219,11 +233,13 @@ h1, h2, h3, h4 {
 }
 .btn-muted:hover { transform: none; }
 
-/* ——— Nav pill ——— */
+/* ——— Nav pill (landing floating bar — stays fixed while scrolling) ——— */
+header.nav-pill-wrap,
 .nav-pill-wrap {
-  position: fixed;
+  position: fixed !important;
   top: 1.1rem;
-  left: 0; right: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -383,23 +399,29 @@ h1, h2, h3, h4 {
   min-height: var(--hero-min-h);
   display: flex;
   align-items: center;
-  overflow: hidden;
+  /* Clip sides only — allow top glow to bleed under fixed nav (not hard-cut) */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 .hero-glow {
   position: absolute;
-  top: -5%;
+  /* Extend above hero so purple fills under floating nav, not cut at a hard edge */
+  top: -18%;
   left: 50%;
   transform: translateX(-50%);
   width: min(1600px, 100vw);
-  height: min(720px, 85vh);
+  height: min(820px, 95vh);
   background:
     radial-gradient(ellipse 55% 65% at 28% 42%, rgba(124, 58, 237, 0.5), transparent 72%),
     radial-gradient(ellipse 50% 60% at 72% 28%, rgba(232, 121, 249, 0.32), transparent 72%),
     radial-gradient(ellipse 45% 55% at 50% 0%, rgba(59, 7, 100, 0.55), transparent 70%);
   filter: blur(10px);
   pointer-events: none;
+  z-index: 0;
 }
 .hero-grid {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: var(--max);
   margin: 0 auto;
