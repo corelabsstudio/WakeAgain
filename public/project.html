@@ -951,6 +951,14 @@
             <p class="form-error" id="reportErr" hidden></p>
             <p class="price-meta" id="reportOk" hidden style="color:#86efac"></p>
           </form>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnBlockSeller" style="width:100%;margin-top:0.5rem;border-color:rgba(148,163,184,0.45)" data-i18n="proj.block_btn">
+            이 판매자 차단
+          </button>
+          <p class="price-meta" id="blockSellerHint" style="margin:0.4rem 0 0;line-height:1.45" data-i18n="proj.block_help">
+            차단하면 상대 매물이 숨겨지고 입찰·쪽지가 불가합니다. 신고와 별개이며, 앱 내 정보 → 차단 목록에서 해제할 수 있습니다.
+          </p>
+          <p class="form-error" id="blockSellerErr" hidden></p>
+          <p class="price-meta" id="blockSellerOk" hidden style="color:#86efac"></p>
         </div>
 
         <div id="ownerActions" hidden style="margin-top:1rem">
@@ -1823,6 +1831,9 @@
         document.getElementById("bidForm").style.display = isOwner || (p.auction_status || "") === "sold" ? "none" : "";
         var reportBox = document.getElementById("reportBox");
         if (reportBox) reportBox.hidden = !!isOwner;
+        window.__waSellerOwnerId = p.seller && p.seller.owner_id != null
+          ? p.seller.owner_id
+          : (p.owner_id != null ? p.owner_id : null);
         renderDealProtect(p);
       }
 
@@ -2085,6 +2096,50 @@
             err.textContent = ex.message || t("신고 실패", "Report failed");
           } finally {
             if (btn) btn.disabled = false;
+          }
+        });
+      }
+
+      var btnBlockSeller = document.getElementById("btnBlockSeller");
+      if (btnBlockSeller) {
+        btnBlockSeller.addEventListener("click", async function () {
+          var err = document.getElementById("blockSellerErr");
+          var ok = document.getElementById("blockSellerOk");
+          if (err) err.hidden = true;
+          if (ok) ok.hidden = true;
+          if (!api.isLoggedIn()) {
+            location.href = "/app/#login";
+            return;
+          }
+          var ownerId = window.__waSellerOwnerId;
+          if (!ownerId) {
+            if (err) {
+              err.hidden = false;
+              err.textContent = t("판매자 정보를 아직 불러오지 못했습니다.", "Seller info not loaded yet.");
+            }
+            return;
+          }
+          var confirmMsg = t(
+            "이 판매자를 차단할까요? 상대 매물이 숨겨지고 입찰·쪽지가 불가합니다.",
+            "Block this seller? Their listings will be hidden and bids/messages blocked."
+          );
+          if (!window.confirm(confirmMsg)) return;
+          btnBlockSeller.disabled = true;
+          try {
+            var res = await api.blockUser(ownerId);
+            if (ok) {
+              ok.hidden = false;
+              ok.textContent = res.message_ko || t("차단했습니다.", "Blocked.");
+            }
+            setTimeout(function () {
+              location.href = "/app/#list";
+            }, 700);
+          } catch (ex) {
+            if (err) {
+              err.hidden = false;
+              err.textContent = ex.message || t("차단 실패", "Block failed");
+            }
+            btnBlockSeller.disabled = false;
           }
         });
       }

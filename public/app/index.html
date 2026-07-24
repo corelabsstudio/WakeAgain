@@ -380,6 +380,15 @@
         </div>
         <p class="form-error" id="profErr" hidden></p>
       </form>
+      <div class="form-card" id="blockListCard" style="margin-top:1.25rem">
+        <h2 style="font-size:1.05rem;margin:0 0 0.35rem" data-i18n="app.blocks_title">차단 목록</h2>
+        <p class="muted fine" style="margin:0 0 0.75rem" data-i18n="app.blocks_help">
+          차단한 사용자의 매물은 숨겨지고, 입찰·쪽지가 거부됩니다. 신고와 별개입니다.
+        </p>
+        <div id="blockList" class="project-list project-list--stack"></div>
+        <p id="blockListEmpty" class="empty" hidden data-i18n="app.blocks_empty">차단한 사용자가 없습니다.</p>
+        <p class="form-error" id="blockListErr" hidden></p>
+      </div>
     </section>
 
     <!-- Settlement (L3) -->

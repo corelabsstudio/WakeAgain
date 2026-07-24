@@ -495,6 +495,9 @@ def client_config():
             "place_bid": "/api/v1/projects/{id}/bids",
             "interest": "/api/v1/interest",
             "stats": "/api/v1/stats",
+            "block_user": "POST /api/v1/users/{id}/block",
+            "unblock_user": "DELETE /api/v1/users/{id}/block",
+            "my_blocks": "GET /api/v1/me/blocks",
         },
         "auction_policy": {
             "public_live_board": True,
@@ -630,6 +633,24 @@ def client_config():
                     f"판매자 매물 합산 {database.REPORT_ACCOUNT_SUSPEND_THRESHOLD}건이면 계정 자동 정지."
                 ),
                 "path": "POST /api/v1/projects/{id}/report",
+            },
+            "block_policy": {
+                "enabled": True,
+                "requires": "login (정지 아님)",
+                "message_ko": (
+                    "유저 차단 시 상대 매물이 목록·상세에서 숨겨지고, "
+                    "입찰·쪽지 등 상호 액션이 거부됩니다. 신고와 별개입니다."
+                ),
+                "paths": {
+                    "block": "POST /api/v1/users/{id}/block",
+                    "unblock": "DELETE /api/v1/users/{id}/block",
+                    "list": "GET /api/v1/me/blocks",
+                },
+                "effects": [
+                    "hide_blocked_user_listings",
+                    "reject_bid_buy_message",
+                    "bidirectional_interaction_guard",
+                ],
             },
             "listing_guidelines": {
                 "required": True,
@@ -1372,23 +1393,32 @@ def _refresh_auction_ended(conn, row) -> Any:
 
 
 @router.get("/auctions/live")
-def auctions_live():
+def auctions_live(user: dict | None = Depends(get_optional_user)):
     """
     Public live board — anyone on the site can see current prices rising.
-    Designed for short-interval polling (no auth).
+    Designed for short-interval polling (auth optional; logged-in users hide blocked).
     """
     with database.db() as conn:
+        hidden = database.blocked_owner_ids(conn, user["id"] if user else None)
+        hide_sql = ""
+        hide_params: list[Any] = []
+        if hidden:
+            placeholders = ",".join("?" * len(hidden))
+            hide_sql = f" AND owner_id NOT IN ({placeholders})"
+            hide_params = list(sorted(hidden))
         rows = conn.execute(
-            """
+            f"""
             SELECT * FROM projects
             WHERE listing_status = 'approved'
               AND COALESCE(auction_status, 'live') IN ('live', 'ended')
+              {hide_sql}
             ORDER BY
               CASE WHEN COALESCE(auction_status, 'live') = 'live' THEN 0 ELSE 1 END,
               bid_count DESC,
               updated_at DESC
             LIMIT 50
-            """
+            """,
+            hide_params,
         ).fetchall()
         snaps = []
         for r in rows:
@@ -1401,8 +1431,7 @@ def auctions_live():
                 top = None
             snaps.append(database.auction_snapshot(r, top_bid=top))
         # recent public bid ticker (last 20 across board)
-        recent = conn.execute(
-            """
+        recent_sql = """
             SELECT b.*, u.display_name,
                    COALESCE(u.credit_bought, 0) AS credit_bought,
                    COALESCE(u.credit_defaults, 0) AS credit_defaults
@@ -1410,10 +1439,14 @@ def auctions_live():
             JOIN users u ON u.id = b.bidder_id
             JOIN projects p ON p.id = b.project_id
             WHERE p.listing_status = 'approved'
-            ORDER BY b.id DESC
-            LIMIT 20
             """
-        ).fetchall()
+        recent_params: list[Any] = []
+        if hidden:
+            placeholders = ",".join("?" * len(hidden))
+            recent_sql += f" AND p.owner_id NOT IN ({placeholders})"
+            recent_params = list(sorted(hidden))
+        recent_sql += " ORDER BY b.id DESC LIMIT 20"
+        recent = conn.execute(recent_sql, recent_params).fetchall()
         ticker = [database.bid_to_public(b) for b in recent]
     return {
         "ok": True,
@@ -1481,10 +1514,16 @@ def list_projects(
                 "q": q_term,
             }
         where = "listing_status = 'approved'"
-        params = []
+        params: list[Any] = []
         if like:
             where += " AND " + search_sql
             params.extend([like, like, like, like, like])
+        # Hide listings from users in a block relationship with the viewer
+        hidden_owners = database.blocked_owner_ids(conn, user["id"] if user else None)
+        if hidden_owners:
+            placeholders = ",".join("?" * len(hidden_owners))
+            where += f" AND owner_id NOT IN ({placeholders})"
+            params.extend(sorted(hidden_owners))
         total = conn.execute(
             f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
             params,
@@ -1553,6 +1592,16 @@ def get_project(
         if not row:
             raise HTTPException(status_code=404, detail="not found")
         row = _refresh_auction_ended(conn, row)
+        # Block relationship: treat as not found for non-owners
+        if user and int(user["id"]) != int(row["owner_id"]):
+            if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "code": "blocked",
+                        "message": "차단된 사용자의 매물입니다.",
+                    },
+                )
     private = bool(user and user["id"] == row["owner_id"])
     # Non-owners only see approved public listings
     if not private and row["listing_status"] != "approved":
@@ -1669,6 +1718,14 @@ def report_project(
             raise HTTPException(status_code=400, detail="이 매물은 신고할 수 없는 상태입니다.")
         if int(row["owner_id"]) == int(user["id"]):
             raise HTTPException(status_code=400, detail="본인 매물은 신고할 수 없습니다.")
+        if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "blocked",
+                    "message": "차단된 사용자와는 신고할 수 없습니다. (차단을 먼저 해제하세요)",
+                },
+            )
 
         exists = conn.execute(
             "SELECT id FROM reports WHERE project_id = ? AND reporter_id = ?",
@@ -1741,6 +1798,91 @@ def report_project(
     }
 
 
+# --- user ↔ user block (separate from project report) ---
+
+
+@router.get("/me/blocks")
+def list_my_blocks(user: dict = Depends(get_current_user)):
+    """List users I have blocked."""
+    with database.db() as conn:
+        blocks = database.list_user_blocks(conn, user["id"])
+    return {
+        "ok": True,
+        "blocks": blocks,
+        "count": len(blocks),
+        "note_ko": "차단한 사용자의 매물은 목록·상세에서 숨겨지고, 입찰·쪽지가 거부됩니다.",
+    }
+
+
+@router.post("/users/{target_user_id}/block")
+def block_user(target_user_id: int, user: dict = Depends(get_current_user)):
+    """
+    Block another user. Hides their listings from the blocker and rejects
+    bid / buy-now / message between the pair (either direction).
+    """
+    tid = int(target_user_id)
+    if tid == int(user["id"]):
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "cannot_block_self", "message": "자기 자신은 차단할 수 없습니다."},
+        )
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+        fresh = database.user_to_dict(row_u)
+        if not fresh["trust"].get("can_block"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "suspended",
+                    "message": "정지된 계정은 차단을 사용할 수 없습니다.",
+                    "trust": fresh["trust"],
+                },
+            )
+        target = conn.execute("SELECT id, display_name FROM users WHERE id = ?", (tid,)).fetchone()
+        if not target:
+            raise HTTPException(status_code=404, detail="user not found")
+        already = database.is_blocked_by(conn, user["id"], tid)
+        block = database.create_user_block(conn, user["id"], tid)
+        name = (target["display_name"] or "").strip() or "사용자"
+    return {
+        "ok": True,
+        "blocked": True,
+        "already": already,
+        "block": block,
+        "blocked_user": {"id": tid, "display_name": name},
+        "message_ko": (
+            f"「{name}」님을 차단했습니다. 상대 매물이 숨겨지고 입찰·쪽지가 불가합니다."
+            if not already
+            else f"「{name}」님은 이미 차단되어 있습니다."
+        ),
+    }
+
+
+@router.delete("/users/{target_user_id}/block")
+def unblock_user(target_user_id: int, user: dict = Depends(get_current_user)):
+    """Remove a block you placed."""
+    tid = int(target_user_id)
+    with database.db() as conn:
+        removed = database.delete_user_block(conn, user["id"], tid)
+        name = "사용자"
+        trow = conn.execute(
+            "SELECT display_name FROM users WHERE id = ?", (tid,)
+        ).fetchone()
+        if trow:
+            name = (trow["display_name"] or "").strip() or name
+    if not removed:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "not_blocked", "message": "차단 목록에 없는 사용자입니다."},
+        )
+    return {
+        "ok": True,
+        "blocked": False,
+        "blocked_user_id": tid,
+        "message_ko": f"「{name}」님 차단을 해제했습니다.",
+    }
+
+
 @router.post("/projects/{project_id}/bids")
 def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_user)):
     """Place a bid. Requires Lv1 (email). Lv2 is required only after award for pay/accept."""
@@ -1770,6 +1912,14 @@ def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_use
             raise HTTPException(status_code=400, detail="auction ended")
         if int(row["owner_id"]) == int(user["id"]):
             raise HTTPException(status_code=400, detail="cannot bid on own project")
+        if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "blocked",
+                    "message": "차단된 사용자의 매물에는 입찰할 수 없습니다.",
+                },
+            )
 
         p = database.project_to_dict(row, include_private=False)
         next_min = int(p["next_min_bid"] or 0)
@@ -1887,6 +2037,14 @@ def buy_now(project_id: int, user: dict = Depends(get_current_user)):
             raise HTTPException(status_code=400, detail="buy-now not available")
         if int(row["owner_id"]) == int(user["id"]):
             raise HTTPException(status_code=400, detail="cannot buy own project")
+        if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "blocked",
+                    "message": "차단된 사용자의 매물은 구매할 수 없습니다.",
+                },
+            )
         buy = int(buy)
         now = database._now()
         conn.execute(
@@ -2093,6 +2251,12 @@ def list_messages(project_id: int, user: dict = Depends(get_current_user)):
     with database.db() as conn:
         if not _can_message_project(conn, project_id, user["id"]):
             raise HTTPException(status_code=403, detail="owner or bidders only")
+        proj = conn.execute("SELECT owner_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if proj and database.is_blocked_either(conn, user["id"], proj["owner_id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={"code": "blocked", "message": "차단된 사용자와는 쪽지를 볼 수 없습니다."},
+            )
         rows = conn.execute(
             """
             SELECT m.*, u.display_name FROM messages m
@@ -2117,6 +2281,11 @@ def post_message(project_id: int, body: MessageIn, user: dict = Depends(get_curr
         proj = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         if not proj:
             raise HTTPException(status_code=404, detail="not found")
+        if database.is_blocked_either(conn, user["id"], proj["owner_id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={"code": "blocked", "message": "차단된 사용자에게 쪽지를 보낼 수 없습니다."},
+            )
         now = database._now()
         cur = conn.execute(
             """
@@ -3119,6 +3288,7 @@ def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_adm
         "notifications",
         "fee_invoices",
         "reports",
+        "user_blocks",
         "interests",
         "reviews",
         "showcases",

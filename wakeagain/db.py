@@ -343,6 +343,17 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_reports_project ON reports(project_id);
             CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
             CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
+
+            -- User↔user block (Play content rating: block=yes). Separate from project reports.
+            CREATE TABLE IF NOT EXISTS user_blocks (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              blocker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              blocked_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              created_at TEXT NOT NULL,
+              UNIQUE(blocker_id, blocked_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id);
+            CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id);
             """
         )
         # Backfill current price from start for existing rows
@@ -738,8 +749,126 @@ def compute_trust(row: sqlite3.Row | dict) -> dict:
         "can_fulfill_purchase": profile_ok and not suspended,
         "can_close_deal": deal_ready and not suspended,
         "can_report": profile_ok and not suspended,
+        # 유저 차단: 로그인 + 정지 아님 (Lv 무관 — 개인 안전)
+        "can_block": not suspended,
         "missing": missing,
     }
+
+
+# --- user blocks (user ↔ user; not project reports) ---
+
+
+def is_blocked_either(conn: sqlite3.Connection, user_a: int | None, user_b: int | None) -> bool:
+    """True if either user has blocked the other (bidirectional interaction guard)."""
+    if not user_a or not user_b:
+        return False
+    a, b = int(user_a), int(user_b)
+    if a == b:
+        return False
+    row = conn.execute(
+        """
+        SELECT 1 FROM user_blocks
+        WHERE (blocker_id = ? AND blocked_id = ?)
+           OR (blocker_id = ? AND blocked_id = ?)
+        LIMIT 1
+        """,
+        (a, b, b, a),
+    ).fetchone()
+    return bool(row)
+
+
+def is_blocked_by(conn: sqlite3.Connection, blocker_id: int, blocked_id: int) -> bool:
+    """True if blocker_id has blocked blocked_id (one-way)."""
+    row = conn.execute(
+        """
+        SELECT 1 FROM user_blocks
+        WHERE blocker_id = ? AND blocked_id = ?
+        LIMIT 1
+        """,
+        (int(blocker_id), int(blocked_id)),
+    ).fetchone()
+    return bool(row)
+
+
+def blocked_owner_ids(conn: sqlite3.Connection, viewer_id: int | None) -> set[int]:
+    """Owners whose listings should be hidden from viewer (viewer blocked them, or they blocked viewer)."""
+    if not viewer_id:
+        return set()
+    vid = int(viewer_id)
+    rows = conn.execute(
+        """
+        SELECT blocked_id AS uid FROM user_blocks WHERE blocker_id = ?
+        UNION
+        SELECT blocker_id AS uid FROM user_blocks WHERE blocked_id = ?
+        """,
+        (vid, vid),
+    ).fetchall()
+    return {int(r["uid"]) for r in rows if r["uid"] is not None}
+
+
+def list_user_blocks(conn: sqlite3.Connection, blocker_id: int) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT b.id, b.blocked_id, b.created_at,
+               u.display_name, u.email
+        FROM user_blocks b
+        JOIN users u ON u.id = b.blocked_id
+        WHERE b.blocker_id = ?
+        ORDER BY b.id DESC
+        LIMIT 200
+        """,
+        (int(blocker_id),),
+    ).fetchall()
+    out = []
+    for r in rows:
+        email = (r["email"] or "").strip()
+        masked = email
+        if "@" in email:
+            local, _, domain = email.partition("@")
+            masked = (local[:1] + "***@" + domain) if local else ("***@" + domain)
+        out.append(
+            {
+                "id": int(r["id"]),
+                "blocked_user_id": int(r["blocked_id"]),
+                "display_name": (r["display_name"] or "").strip() or "사용자",
+                "email_masked": masked,
+                "created_at": r["created_at"],
+            }
+        )
+    return out
+
+
+def create_user_block(conn: sqlite3.Connection, blocker_id: int, blocked_id: int) -> dict:
+    """Insert block. Caller must validate ids and not self."""
+    now = _now()
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id, created_at)
+        VALUES (?, ?, ?)
+        """,
+        (int(blocker_id), int(blocked_id), now),
+    )
+    row = conn.execute(
+        """
+        SELECT id, blocker_id, blocked_id, created_at FROM user_blocks
+        WHERE blocker_id = ? AND blocked_id = ?
+        """,
+        (int(blocker_id), int(blocked_id)),
+    ).fetchone()
+    return {
+        "id": int(row["id"]),
+        "blocker_id": int(row["blocker_id"]),
+        "blocked_id": int(row["blocked_id"]),
+        "created_at": row["created_at"],
+    }
+
+
+def delete_user_block(conn: sqlite3.Connection, blocker_id: int, blocked_id: int) -> bool:
+    cur = conn.execute(
+        "DELETE FROM user_blocks WHERE blocker_id = ? AND blocked_id = ?",
+        (int(blocker_id), int(blocked_id)),
+    )
+    return cur.rowcount > 0
 
 
 def seller_identity_complete(row: sqlite3.Row | dict | None) -> bool:

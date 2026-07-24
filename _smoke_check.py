@@ -78,6 +78,10 @@ for p in [
             "config.report_policy",
             "report_policy" in (cfg.get("trust_policy") or {}),
         )
+        ok(
+            "config.block_policy",
+            "block_policy" in (cfg.get("trust_policy") or {}),
+        )
         ok("config.oauth", "oauth" in cfg)
         pay = cfg.get("payment_policy") or {}
         ok("config.background_scheduler", pay.get("background_scheduler") is True)

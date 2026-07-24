@@ -436,6 +436,20 @@
         body: JSON.stringify({ reason: reason, detail: detail || "" }),
       });
     },
+    async blockUser(userId) {
+      return request("/api/v1/users/" + encodeURIComponent(userId) + "/block", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+    },
+    async unblockUser(userId) {
+      return request("/api/v1/users/" + encodeURIComponent(userId) + "/block", {
+        method: "DELETE",
+      });
+    },
+    async listBlocks() {
+      return request("/api/v1/me/blocks");
+    },
     async liveAuctions() {
       return request("/api/v1/auctions/live");
     },

@@ -155,6 +155,7 @@ def live_counts() -> dict[str, int]:
         "messages",
         "fee_invoices",
         "reports",
+        "user_blocks",
         "reviews",
         "showcases",
     )

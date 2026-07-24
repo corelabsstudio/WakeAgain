@@ -176,3 +176,19 @@
 ## 이어하기 한 줄
 
 > 「PROGRESS.md 기준으로 이어서」 / 「배포 준비」 / 「승인 플로우」 라고 말하면 됩니다.
+
+---
+
+## 유저↔유저 차단 (2026-07-24 구현 완료)
+
+Play 콘텐츠 등급 차단=예 선언에 맞춰 구현. 신고(`POST .../report`)와 **분리**.
+
+| 레이어 | 상태 |
+|--------|------|
+| DB | `user_blocks (blocker_id, blocked_id, created_at)` UNIQUE |
+| API | `POST/DELETE /api/v1/users/{id}/block` · `GET /api/v1/me/blocks` |
+| 효과 | 양방향 관계 시 목록·상세 숨김 · 입찰·즉시구매·쪽지 거부 |
+| UI | `project.html` 판매자 차단 버튼 · 앱 프로필 차단 목록·해제 |
+| 검증 | `_block_user_test.py` · smoke `config.block_policy` |
+
+트리거 재확인: 「유저 차단」「차단 기능」.

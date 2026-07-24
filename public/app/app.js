@@ -1267,6 +1267,71 @@
     fillSavedLoginForm();
   });
 
+  async function loadBlockList() {
+    const list = $("blockList");
+    const empty = $("blockListEmpty");
+    const errEl = $("blockListErr");
+    if (!list) return;
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = "";
+    }
+    list.innerHTML = "";
+    if (empty) empty.hidden = true;
+    try {
+      const data = await api.listBlocks();
+      const blocks = data.blocks || [];
+      if (!blocks.length) {
+        if (empty) empty.hidden = false;
+        return;
+      }
+      blocks.forEach((b) => {
+        const row = document.createElement("div");
+        row.className = "project-card";
+        row.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem 0.9rem";
+        const name = (b.display_name || "사용자").replace(/</g, "&lt;");
+        const meta = (b.email_masked || "").replace(/</g, "&lt;");
+        row.innerHTML =
+          "<div><strong>" +
+          name +
+          "</strong>" +
+          (meta ? '<p class="muted fine" style="margin:0.15rem 0 0">' + meta + "</p>" : "") +
+          "</div>" +
+          '<button type="button" class="btn btn-ghost btn-sm" data-unblock="' +
+          String(b.blocked_user_id) +
+          '">' +
+          (window.WakeAgainI18n && window.WakeAgainI18n.t
+            ? window.WakeAgainI18n.t("app.blocks_unblock")
+            : "해제") +
+          "</button>";
+        list.appendChild(row);
+      });
+      list.querySelectorAll("[data-unblock]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const uid = btn.getAttribute("data-unblock");
+          if (!uid) return;
+          btn.disabled = true;
+          try {
+            await api.unblockUser(uid);
+            await loadBlockList();
+          } catch (ex) {
+            if (errEl) {
+              errEl.hidden = false;
+              errEl.textContent = ex.message || "해제 실패";
+            }
+            btn.disabled = false;
+          }
+        });
+      });
+    } catch (ex) {
+      if (errEl) {
+        errEl.hidden = false;
+        errEl.textContent = ex.message || "차단 목록을 불러오지 못했습니다.";
+      }
+      if (empty) empty.hidden = false;
+    }
+  }
+
   async function openProfile() {
     if (!(await ensureSession())) {
       setView("auth");
@@ -1276,6 +1341,7 @@
     // Profile is viewable without email verify — same as website soft gates
     fillProfileForm(u);
     setView("profile");
+    loadBlockList();
   }
   $("btnProfile")?.addEventListener("click", () => openProfile());
   $("userChip")?.addEventListener("click", () => openProfile());
