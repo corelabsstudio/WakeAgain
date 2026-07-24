@@ -57,8 +57,8 @@
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Aim for ~1.5–2.2 spikes visible across the hero
-    beatW = Math.round(Math.max(520, Math.min(1400, w * 0.55)));
+    // ~2–3 spikes across; enough land in the open mid band left of the card
+    beatW = Math.round(Math.max(480, Math.min(1100, w * 0.42)));
   }
 
   function beatY(localX) {
@@ -77,11 +77,19 @@
     return 0;
   }
 
-  /** Left = almost pure flatline; right = full QRS. */
+  /**
+   * Life envelope — peak in the OPEN mid zone (left of auction card).
+   * Far left: quiet flatline. ~25–65%: full QRS visible. Under card: softer.
+   */
   function lifeAt(x) {
     var u = w > 0 ? Math.max(0, Math.min(1, x / w)) : 0;
     var floor = 0.05;
-    return floor + (1 - floor) * Math.pow(u, 2.1);
+    // Rise early: full by ~42% width (clear of copy, before card)
+    var rise = Math.max(0, Math.min(1, (u - 0.1) / 0.32));
+    rise = rise * rise * (3 - 2 * rise);
+    // Soften under the right-side auction card so spikes aren't wasted there
+    var underCard = u < 0.68 ? 1 : Math.max(0.28, 1 - (u - 0.68) / 0.32);
+    return floor + (1 - floor) * rise * underCard;
   }
 
   function sampleY(x, scrollPx, baseAmp) {
@@ -99,8 +107,8 @@
     clearFull();
     var mid = h * 0.52;
     // Sized for R-peak only — baseline stays a thin straight line
-    var baseAmp = h * (0.085 + hot * 0.03);
-    var thick = 1.7 + hot * 0.4;
+    var baseAmp = h * (0.095 + hot * 0.03);
+    var thick = 1.75 + hot * 0.4;
 
     ctx.beginPath();
     ctx.lineJoin = "round";
@@ -111,22 +119,25 @@
       else ctx.lineTo(x, y);
     }
 
-    var a0 = 0.28 + hot * 0.1;
-    var a1 = 0.82 + hot * 0.15;
+    // Brightest in mid open zone (not under the card)
+    var a0 = 0.22 + hot * 0.08;
+    var aMid = 0.85 + hot * 0.12;
+    var a1 = 0.4 + hot * 0.1;
     var grad = ctx.createLinearGradient(0, 0, w, 0);
     grad.addColorStop(0, "rgba(52, 211, 153, " + a0 + ")");
-    grad.addColorStop(0.5, "rgba(52, 211, 153, " + (a0 * 0.5 + a1 * 0.5) + ")");
-    grad.addColorStop(1, "rgba(167, 243, 208, " + a1 + ")");
+    grad.addColorStop(0.35, "rgba(74, 222, 128, " + aMid + ")");
+    grad.addColorStop(0.62, "rgba(167, 243, 208, " + aMid + ")");
+    grad.addColorStop(1, "rgba(52, 211, 153, " + a1 + ")");
     ctx.lineWidth = thick;
     ctx.strokeStyle = grad;
     ctx.shadowBlur = 0;
     ctx.stroke();
 
-    // Monitor sweep tip
-    var tipX = w - 2;
+    // Sweep tip in the open mid-right band (left of auction card)
+    var tipX = w * 0.58;
     var tipY = mid + sampleY(tipX, scrollPx, baseAmp);
     ctx.beginPath();
-    ctx.fillStyle = "rgba(190, 255, 220, " + (0.65 + hot * 0.25) + ")";
+    ctx.fillStyle = "rgba(190, 255, 220, " + (0.55 + hot * 0.25) + ")";
     ctx.arc(tipX, tipY, 2 + hot, 0, Math.PI * 2);
     ctx.fill();
   }
