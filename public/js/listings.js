@@ -539,6 +539,10 @@
         setTimeout(function () {
           bid.classList.remove("price-flash");
         }, 500);
+        // Green ECG spike — bid = heartbeat of a living project
+        if (window.WakeAgainHeroEcg && window.WakeAgainHeroEcg.spike) {
+          window.WakeAgainHeroEcg.spike(1);
+        }
       }
     }
     const badgeEl = card.querySelector(".live-badge");

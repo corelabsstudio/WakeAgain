@@ -813,6 +813,104 @@ header.nav-pill-wrap,
   background: linear-gradient(90deg, #7c3aed, #e879f9);
 }
 .live-progress p { margin: 0; font-size: var(--text-xs); color: var(--muted-2); }
+
+/* Hero live card — green ECG (alive vital sign) */
+.live-ecg {
+  margin: 0 0 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  background:
+    linear-gradient(180deg, rgba(6, 24, 16, 0.92), rgba(4, 12, 10, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(52, 211, 153, 0.06),
+    0 0 24px rgba(16, 185, 129, 0.12);
+  overflow: hidden;
+}
+.live-ecg-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6ee7b7;
+}
+.live-ecg-heart {
+  color: #34d399;
+  font-size: 0.75rem;
+  line-height: 1;
+  animation: live-ecg-heart 1.05s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.85);
+}
+.live-ecg-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  opacity: 0.92;
+}
+.live-ecg-bpm {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: #a7f3d0;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 12px rgba(52, 211, 153, 0.45);
+}
+.live-ecg-screen {
+  position: relative;
+  height: 64px;
+  margin: 0 0.35rem 0.4rem;
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(16, 185, 129, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
+    radial-gradient(ellipse 80% 120% at 50% 50%, rgba(6, 40, 28, 0.5), rgba(2, 8, 6, 0.95));
+  background-size: 12px 12px, 12px 12px, auto;
+  overflow: hidden;
+}
+.live-ecg-screen::after {
+  /* CRT-ish scan glow on the right edge of the beam */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 72%,
+    rgba(52, 211, 153, 0.04) 88%,
+    transparent 100%
+  );
+  animation: live-ecg-scan 2.4s linear infinite;
+}
+.live-ecg-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@keyframes live-ecg-heart {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  12% { transform: scale(1.22); opacity: 1; }
+  24% { transform: scale(1); opacity: 0.95; }
+  36% { transform: scale(1.12); opacity: 1; }
+  50% { transform: scale(1); opacity: 0.9; }
+}
+@keyframes live-ecg-scan {
+  0% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+  100% { opacity: 0.35; }
+}
+.live-card.is-ecg-hot .live-ecg {
+  border-color: rgba(74, 222, 128, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(74, 222, 128, 0.12),
+    0 0 32px rgba(34, 197, 94, 0.28);
+}
+.live-card.is-ecg-hot .live-ecg-heart {
+  animation-duration: 0.55s;
+  color: #4ade80;
+}
+
 .live-toast {
   display: flex;
   align-items: center;
@@ -2496,4 +2594,6 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .pulse-dot { animation: none; }
   .live-dot { animation: none; }
   .live-card { animation: none; }
+  .live-ecg-heart { animation: none; }
+  .live-ecg-screen::after { animation: none; }
 }
