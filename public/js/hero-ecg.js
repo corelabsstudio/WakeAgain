@@ -1,10 +1,11 @@
 /**
- * Hero live-card green ECG — “project is alive” vital sign.
- * Exposes window.WakeAgainHeroEcg.spike() for bid pulse.
+ * Hero background green ECG — full-section ambient “alive” pulse.
+ * Not on the live card. window.WakeAgainHeroEcg.spike() for bid energy.
  */
 (function (global) {
   var canvas = document.getElementById("heroEcgCanvas");
-  if (!canvas || !canvas.getContext) return;
+  var hero = document.querySelector(".hero");
+  if (!canvas || !canvas.getContext || !hero) return;
 
   var ctx = canvas.getContext("2d");
   var dpr = Math.min(global.devicePixelRatio || 1, 2);
@@ -12,24 +13,22 @@
   var h = 0;
   var raf = 0;
   var t0 = performance.now();
-  var phase = 0;
-  var spike = 0; // 0..1
-  var bpmEl = document.getElementById("heroEcgBpm");
-  var card = canvas.closest(".live-card");
+  var spike = 0;
   var reduced =
     global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Classic green monitor palette
-  var GREEN = [52, 211, 153];
-  var GREEN_BRIGHT = [74, 222, 128];
-  var GREEN_DIM = [16, 185, 129];
+  // Green vital layers (monitor green, not purple)
+  var layers = [
+    { amp: 0.07, speed: 0.00052, freq: 0.011, phase: 0.0, color: [52, 211, 153], alpha: 0.5, thick: 1.8, mid: 0.32 },
+    { amp: 0.05, speed: 0.00068, freq: 0.015, phase: 1.9, color: [74, 222, 128], alpha: 0.38, thick: 1.4, mid: 0.48 },
+    { amp: 0.038, speed: 0.0004, freq: 0.009, phase: 3.4, color: [16, 185, 129], alpha: 0.3, thick: 1.15, mid: 0.62 },
+    { amp: 0.028, speed: 0.00085, freq: 0.02, phase: 4.6, color: [110, 231, 183], alpha: 0.22, thick: 1.0, mid: 0.78 },
+  ];
 
   function resize() {
-    var rect = canvas.parentElement
-      ? canvas.parentElement.getBoundingClientRect()
-      : canvas.getBoundingClientRect();
-    w = Math.max(120, Math.floor(rect.width || 320));
-    h = Math.max(48, Math.floor(rect.height || 64));
+    var rect = hero.getBoundingClientRect();
+    w = Math.max(320, Math.floor(rect.width));
+    h = Math.max(280, Math.floor(rect.height));
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.width = w + "px";
@@ -37,168 +36,125 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  /**
-   * ECG-ish y for one sample along scrolling strip.
-   * xNorm 0..1 across visible width; t advances so waveform scrolls left→right feel.
-   */
-  function ecgAt(xPx, t, amp) {
-    var mid = h * 0.55;
-    // Scroll so the QRS complex marches across
-    var scroll = t * 0.095 + phase;
-    var u = ((xPx * 0.42 + scroll) % 110 + 110) % 110;
-    var y = mid;
-    // baseline wobble (alive, not flatline)
-    y += Math.sin(xPx * 0.04 + t * 0.002) * amp * 0.06;
-    y += Math.sin(xPx * 0.11 + t * 0.0035) * amp * 0.03;
-
-    // P wave
-    if (u > 18 && u < 30) {
-      var p = (u - 18) / 12;
-      y -= Math.sin(p * Math.PI) * amp * 0.18;
+  function ecgY(x, time, layer, mid, ampPx) {
+    var base =
+      Math.sin(x * layer.freq * 0.32 + time * layer.speed * 38 + layer.phase) * ampPx * 0.32;
+    var qrs = 0;
+    // Heart-rate cycle: ~1 beat per ~90–110 px scroll units
+    var cycle =
+      (x * 0.016 + time * (0.78 + spike * 0.35) + layer.phase * 2.2) % 100;
+    if (cycle > 40 && cycle < 58) {
+      var u = (cycle - 40) / 18;
+      if (u < 0.18) qrs = ampPx * 0.2 * (u / 0.18);
+      else if (u < 0.34) qrs = -ampPx * (1.2 + spike * 1.1) * ((u - 0.18) / 0.16);
+      else if (u < 0.5) qrs = ampPx * 0.9 * ((u - 0.34) / 0.16);
+      else qrs = -ampPx * 0.28 * (1 - (u - 0.5) / 0.5);
     }
-    // QRS complex
-    if (u > 38 && u < 56) {
-      var q = (u - 38) / 18;
-      if (q < 0.18) y += amp * 0.22 * (q / 0.18);
-      else if (q < 0.38) y -= amp * (1.15 + spike * 0.85) * ((q - 0.18) / 0.2);
-      else if (q < 0.55) y += amp * 0.95 * (1 + spike * 0.5) * ((q - 0.38) / 0.17);
-      else y -= amp * 0.35 * (1 - (q - 0.55) / 0.45);
+    // Soft P / T
+    var pwave = 0;
+    if (cycle > 22 && cycle < 34) {
+      pwave = -Math.sin(((cycle - 22) / 12) * Math.PI) * ampPx * 0.16;
     }
-    // T wave
-    if (u > 62 && u < 82) {
-      var tw = (u - 62) / 20;
-      y -= Math.sin(tw * Math.PI) * amp * 0.28;
+    if (cycle > 62 && cycle < 80) {
+      pwave += -Math.sin(((cycle - 62) / 18) * Math.PI) * ampPx * 0.22;
     }
-    return y;
+    var noise = Math.sin(x * 0.085 + time * 0.0018 + layer.phase) * ampPx * 0.07;
+    return mid + base + qrs + pwave + noise;
   }
 
   function drawStatic() {
     resize();
     ctx.clearRect(0, 0, w, h);
-    ctx.lineWidth = 1.6;
-    ctx.strokeStyle = "rgba(52, 211, 153, 0.75)";
-    ctx.shadowColor = "rgba(52, 211, 153, 0.45)";
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    var amp = h * 0.32;
-    for (var x = 0; x <= w; x += 2) {
-      var y = ecgAt(x, 0, amp);
-      if (x === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    ctx.globalCompositeOperation = "lighter";
+    for (var i = 0; i < layers.length; i++) {
+      var L = layers[i];
+      var mid = h * L.mid;
+      var ampPx = h * L.amp;
+      ctx.beginPath();
+      ctx.lineWidth = L.thick;
+      ctx.strokeStyle =
+        "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + "," + L.alpha * 0.7 + ")";
+      ctx.shadowColor =
+        "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + ",0.25)";
+      ctx.shadowBlur = 10;
+      var step = Math.max(3, Math.floor(w / 200));
+      for (var x = 0; x <= w; x += step) {
+        var y = ecgY(x, 0, L, mid, ampPx);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
     ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = "source-over";
   }
 
   function frame(now) {
-    var t = now - t0;
-    if (spike > 0) spike = Math.max(0, spike - 0.022);
-    if (card) card.classList.toggle("is-ecg-hot", spike > 0.15);
-
-    // ~70 BPM baseline, spikes feel like a jump
-    var bpm = Math.round(68 + Math.sin(t * 0.0011) * 4 + spike * 28);
-    if (bpmEl) bpmEl.textContent = bpm + " BPM";
+    var time = now - t0;
+    if (spike > 0) spike = Math.max(0, spike - 0.014);
+    hero.classList.toggle("is-ecg-hot", spike > 0.12);
 
     ctx.clearRect(0, 0, w, h);
-
-    // soft fill under the line
-    var amp = h * (0.34 + spike * 0.12);
-    ctx.beginPath();
-    for (var x = 0; x <= w; x += 2) {
-      var y = ecgAt(x, t, amp);
-      if (x === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.closePath();
-    var fill = ctx.createLinearGradient(0, 0, 0, h);
-    fill.addColorStop(0, "rgba(52, 211, 153, " + (0.12 + spike * 0.12) + ")");
-    fill.addColorStop(1, "rgba(52, 211, 153, 0)");
-    ctx.fillStyle = fill;
-    ctx.fill();
-
-    // main glowing trace
     ctx.globalCompositeOperation = "lighter";
-    ctx.beginPath();
-    ctx.lineWidth = 1.7 + spike * 1.1;
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    var a = 0.82 + spike * 0.18;
-    ctx.strokeStyle =
-      "rgba(" + GREEN_BRIGHT[0] + "," + GREEN_BRIGHT[1] + "," + GREEN_BRIGHT[2] + "," + a + ")";
-    ctx.shadowColor =
-      "rgba(" + GREEN[0] + "," + GREEN[1] + "," + GREEN[2] + "," + (0.45 + spike * 0.4) + ")";
-    ctx.shadowBlur = 10 + spike * 18;
-    for (var x2 = 0; x2 <= w; x2 += 2) {
-      var y2 = ecgAt(x2, t, amp);
-      if (x2 === 0) ctx.moveTo(x2, y2);
-      else ctx.lineTo(x2, y2);
-    }
-    ctx.stroke();
 
-    // secondary dim echo (depth)
-    ctx.beginPath();
-    ctx.lineWidth = 1;
-    ctx.shadowBlur = 4;
-    ctx.strokeStyle =
-      "rgba(" + GREEN_DIM[0] + "," + GREEN_DIM[1] + "," + GREEN_DIM[2] + ",0.28)";
-    for (var x3 = 0; x3 <= w; x3 += 3) {
-      var y3 = ecgAt(x3, t * 0.97 + 40, amp * 0.7);
-      if (x3 === 0) ctx.moveTo(x3, y3);
-      else ctx.lineTo(x3, y3);
+    for (var i = 0; i < layers.length; i++) {
+      var L = layers[i];
+      var mid = h * L.mid;
+      var ampPx = h * L.amp * (1 + spike * 1.5);
+      var a = L.alpha * (0.72 + spike * 0.55);
+      ctx.beginPath();
+      ctx.lineWidth = L.thick + spike * 1.1;
+      ctx.lineJoin = "round";
+      ctx.strokeStyle =
+        "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + "," + a + ")";
+      ctx.shadowColor =
+        "rgba(" + L.color[0] + "," + L.color[1] + "," + L.color[2] + "," + (0.22 + spike * 0.4) + ")";
+      ctx.shadowBlur = 14 + spike * 22;
+      var step = Math.max(3, Math.floor(w / 240));
+      for (var x = 0; x <= w; x += step) {
+        var y = ecgY(x, time, L, mid, ampPx);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
+
     ctx.shadowBlur = 0;
     ctx.globalCompositeOperation = "source-over";
-
-    // bright leading “beam” tip
-    var tipX = ((t * 0.095 + phase) % 110) / 110;
-    // tip is where the latest QRS is drawn — approximate right-side energy
-    var beamX = w * (0.78 + Math.sin(t * 0.003) * 0.04);
-    var beamY = ecgAt(beamX, t, amp);
-    ctx.beginPath();
-    ctx.fillStyle = "rgba(167, 243, 208, " + (0.55 + spike * 0.4) + ")";
-    ctx.shadowColor = "rgba(52, 211, 153, 0.9)";
-    ctx.shadowBlur = 14 + spike * 10;
-    ctx.arc(beamX, beamY, 2.2 + spike * 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
     raf = requestAnimationFrame(frame);
   }
 
-  function spikePulse(level) {
-    spike = Math.max(spike, level == null ? 1 : Math.min(1, level));
-    if (card) card.classList.add("is-ecg-hot");
+  function onResize() {
+    resize();
   }
 
   function start() {
     resize();
-    global.addEventListener("resize", function () {
-      resize();
-    });
+    global.addEventListener("resize", onResize);
+    if (typeof ResizeObserver !== "undefined") {
+      try {
+        new ResizeObserver(onResize).observe(hero);
+      } catch (e) {}
+    }
     if (reduced) {
       drawStatic();
-      if (bpmEl) bpmEl.textContent = "72 BPM";
       return;
     }
     raf = requestAnimationFrame(frame);
   }
 
-  // Start after layout
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start);
+    document.addEventListener("DOMContentLoaded", function () {
+      requestAnimationFrame(start);
+    });
   } else {
-    // next frame so parent has size
     requestAnimationFrame(start);
   }
 
   global.WakeAgainHeroEcg = {
-    spike: spikePulse,
-    setAlive: function (on) {
-      if (!card) return;
-      card.classList.toggle("is-ecg-flat", !on);
+    spike: function (level) {
+      spike = Math.max(spike, level == null ? 1 : Math.min(1, level));
+      hero.classList.add("is-ecg-hot");
     },
   };
 })(typeof window !== "undefined" ? window : globalThis);
