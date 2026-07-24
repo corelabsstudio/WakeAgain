@@ -41,8 +41,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20260724-vital" />
-  <link rel="stylesheet" href="/ux9.css?v=20260724-vital" />
+  <link rel="stylesheet" href="/styles.css?v=20260724-ecgline" />
+  <link rel="stylesheet" href="/ux9.css?v=20260724-ecgline" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -104,6 +104,10 @@
     <!-- 1. HERO -->
     <section class="hero" id="top">
       <div class="hero-glow" aria-hidden="true"></div>
+      <!-- Background only: the moving green ECG line (not the card monitor chrome) -->
+      <div class="hero-ecg-bg" aria-hidden="true">
+        <canvas id="heroEcgCanvas" class="hero-ecg-bg-canvas"></canvas>
+      </div>
       <div class="hero-grid">
         <div class="hero-copy">
           <p class="hero-badge">
@@ -175,44 +179,6 @@
             <div class="live-progress">
               <div class="live-progress-bar"><span style="--w:68%"></span></div>
               <p data-i18n="live.progress">시작가 대비 · 입찰자 5명</p>
-            </div>
-            <!-- Vital monitor (card style) — alive status, not free-floating background waves -->
-            <div class="live-ecg" aria-hidden="true">
-              <div class="live-ecg-meta">
-                <span class="live-ecg-heart" aria-hidden="true">♥</span>
-                <span class="live-ecg-label" data-i18n="live.ecg">VITAL · 살아 있음</span>
-                <span class="live-ecg-bpm" id="heroEcgBpm">72 BPM</span>
-              </div>
-              <div class="live-ecg-screen">
-                <svg class="live-ecg-svg" viewBox="0 0 360 56" preserveAspectRatio="none" aria-hidden="true">
-                  <defs>
-                    <linearGradient id="ecgGlow" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stop-color="#34d399" stop-opacity="0.15"/>
-                      <stop offset="50%" stop-color="#4ade80" stop-opacity="0.95"/>
-                      <stop offset="100%" stop-color="#34d399" stop-opacity="0.2"/>
-                    </linearGradient>
-                    <filter id="ecgBlur" x="-10%" y="-50%" width="120%" height="200%">
-                      <feGaussianBlur stdDeviation="1.2" result="b"/>
-                      <feMerge>
-                        <feMergeNode in="b"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <!-- Classic single-beat ECG silhouette (monitor, not ambient multi-wave) -->
-                  <path
-                    class="live-ecg-path"
-                    fill="none"
-                    stroke="url(#ecgGlow)"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    filter="url(#ecgBlur)"
-                    d="M0 32 H42 L48 32 L54 26 L62 38 L70 8 L78 48 L86 28 L94 32 H140 L146 32 L152 26 L160 38 L168 8 L176 48 L184 28 L192 32 H240 L246 32 L252 26 L260 38 L268 8 L276 48 L284 28 L292 32 H360"
-                  />
-                </svg>
-                <span class="live-ecg-beam" aria-hidden="true"></span>
-              </div>
             </div>
             <div class="live-toast">
               <span class="pulse-dot"></span>
@@ -704,7 +670,7 @@
   <script src="/js/pwa-install.js?v=20260720q"></script>
   <script src="/js/api.js"></script>
   <script src="/js/listings.js?v=20260724-ecg"></script>
-  <script src="/js/hero-ecg.js?v=20260724-vital"></script>
+  <script src="/js/hero-ecg.js?v=20260724-ecgline"></script>
   <script src="/js/hero-stats.js?v=20260720d"></script>
   <script src="/js/reviews.js?v=20260722e"></script>
   <script src="/js/showcase-home.js?v=20260720d"></script>

@@ -815,111 +815,24 @@ header.nav-pill-wrap,
 }
 .live-progress p { margin: 0; font-size: var(--text-xs); color: var(--muted-2); }
 
-/* Live card — vital monitor (♥ / VITAL / BPM + classic ECG silhouette) */
-.live-ecg {
-  margin: 0 0 0.85rem;
-  border-radius: 14px;
-  border: 1px solid rgba(52, 211, 153, 0.3);
-  background: linear-gradient(180deg, rgba(6, 24, 16, 0.94), rgba(4, 12, 10, 0.98));
-  box-shadow:
-    inset 0 0 0 1px rgba(52, 211, 153, 0.06),
-    0 0 22px rgba(16, 185, 129, 0.12);
+/* Hero background — single moving green ECG line only (no card chrome) */
+.hero-ecg-bg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   overflow: hidden;
 }
-.live-ecg-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.42rem 0.7rem 0.12rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #6ee7b7;
-}
-.live-ecg-heart {
-  color: #34d399;
-  font-size: 0.78rem;
-  line-height: 1;
-  animation: live-ecg-heart 1.05s ease-in-out infinite;
-  text-shadow: 0 0 10px rgba(52, 211, 153, 0.85);
-}
-.live-ecg-label {
-  flex: 1 1 auto;
-  min-width: 0;
-  opacity: 0.95;
-}
-.live-ecg-bpm {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  color: #a7f3d0;
-  letter-spacing: 0.02em;
-  text-shadow: 0 0 12px rgba(52, 211, 153, 0.45);
-}
-.live-ecg-screen {
-  position: relative;
-  height: 56px;
-  margin: 0 0.4rem 0.45rem;
-  border-radius: 10px;
-  background:
-    linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
-    radial-gradient(ellipse 80% 120% at 50% 50%, rgba(6, 40, 28, 0.55), rgba(2, 8, 6, 0.96));
-  background-size: 12px 12px, 12px 12px, auto;
-  overflow: hidden;
-}
-.live-ecg-svg {
-  display: block;
+.hero-ecg-bg-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  display: block;
+  opacity: 0.72;
 }
-.live-ecg-path {
-  stroke-dasharray: 420;
-  stroke-dashoffset: 420;
-  animation: live-ecg-draw 2.4s linear infinite;
-}
-.live-ecg-beam {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 28%;
-  right: -5%;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(52, 211, 153, 0.06) 40%,
-    rgba(167, 243, 208, 0.12) 70%,
-    transparent
-  );
-  animation: live-ecg-beam 2.4s linear infinite;
-}
-@keyframes live-ecg-heart {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  12% { transform: scale(1.22); opacity: 1; }
-  24% { transform: scale(1); opacity: 0.95; }
-  36% { transform: scale(1.12); opacity: 1; }
-  50% { transform: scale(1); opacity: 0.9; }
-}
-@keyframes live-ecg-draw {
-  0% { stroke-dashoffset: 420; }
-  45% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 0; opacity: 0.85; }
-}
-@keyframes live-ecg-beam {
-  0% { transform: translateX(-280%); opacity: 0.3; }
-  50% { opacity: 1; }
-  100% { transform: translateX(120%); opacity: 0.35; }
-}
-.live-card.is-ecg-hot .live-ecg {
-  border-color: rgba(74, 222, 128, 0.55);
-  box-shadow:
-    inset 0 0 0 1px rgba(74, 222, 128, 0.12),
-    0 0 32px rgba(34, 197, 94, 0.28);
-}
-.live-card.is-ecg-hot .live-ecg-heart {
-  animation-duration: 0.55s;
-  color: #4ade80;
+.hero.is-ecg-hot .hero-ecg-bg-canvas {
+  opacity: 0.95;
 }
 
 .live-toast {
@@ -2605,7 +2518,5 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .pulse-dot { animation: none; }
   .live-dot { animation: none; }
   .live-card { animation: none; }
-  .live-ecg-heart { animation: none; }
-  .live-ecg-path { animation: none; stroke-dashoffset: 0; }
-  .live-ecg-beam { animation: none; opacity: 0.4; }
+  .hero-ecg-bg-canvas { opacity: 0.35; }
 }
