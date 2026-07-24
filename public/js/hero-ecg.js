@@ -1,7 +1,7 @@
 /**
- * Hero BACKGROUND only — one green ECG line that scrolls (same shape as the
- * old card monitor path). No VITAL/BPM chrome, no multi-layer ambient waves.
- * window.WakeAgainHeroEcg.spike() brightens briefly on new bids.
+ * Hero BACKGROUND — single green ECG line scrolling L→R.
+ * Amplitude grows left→right (small flatline → strong QRS) = “coming alive”.
+ * window.WakeAgainHeroEcg.spike() brightens on new bids.
  */
 (function (global) {
   var canvas = document.getElementById("heroEcgCanvas");
@@ -18,8 +18,7 @@
   var reduced =
     global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // One beat unit in local coords (mirrors the card SVG silhouette)
-  // Baseline y=0; QRS peaks go negative/positive; repeated across width.
+  // Classic QRS beat unit (local y scale)
   var BEAT = [
     [0, 0],
     [42, 0],
@@ -45,59 +44,92 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function yAt(localX, amp) {
-    // localX within one beat [0, BEAT_W)
+  function beatY(localX) {
     var x = ((localX % BEAT_W) + BEAT_W) % BEAT_W;
     for (var i = 0; i < BEAT.length - 1; i++) {
       var a = BEAT[i];
       var b = BEAT[i + 1];
       if (x >= a[0] && x <= b[0]) {
         var t = b[0] === a[0] ? 0 : (x - a[0]) / (b[0] - a[0]);
-        return (a[1] + (b[1] - a[1]) * t) * amp;
+        return a[1] + (b[1] - a[1]) * t;
       }
     }
     return 0;
   }
 
-  function drawLine(scrollPx, midY, amp, alpha, thick, blur) {
+  /**
+   * Life envelope: left ≈ flat / tiny, right = full QRS.
+   * ease-in so most of the “waking” happens toward the right.
+   */
+  function lifeAt(x) {
+    var u = w > 0 ? Math.max(0, Math.min(1, x / w)) : 0;
+    // slight floor so left isn’t dead zero (still faintly alive)
+    var floor = 0.06;
+    // power curve: small for longer, then grows strongly
+    var grow = Math.pow(u, 1.65);
+    return floor + (1 - floor) * grow;
+  }
+
+  function sampleY(x, scrollPx, baseAmp) {
+    var life = lifeAt(x);
+    // early left: almost flatline with tiny murmur; right: full ECG shape
+    var shape = beatY(x + scrollPx);
+    // when life is low, damp shape more; also shrink baseline wobble
+    return shape * baseAmp * life;
+  }
+
+  function drawLine(scrollPx, midY, baseAmp, alphaScale, thick, blur, hot) {
     ctx.beginPath();
-    ctx.lineWidth = thick;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.strokeStyle = "rgba(74, 222, 128, " + alpha + ")";
-    ctx.shadowColor = "rgba(52, 211, 153, " + Math.min(0.85, alpha + 0.15) + ")";
-    ctx.shadowBlur = blur;
-    var step = Math.max(2, Math.floor(w / 280));
+
+    var step = Math.max(2, Math.floor(w / 300));
+    // Build path first
     for (var x = 0; x <= w; x += step) {
-      var y = midY + yAt(x + scrollPx, amp);
+      var y = midY + sampleY(x, scrollPx, baseAmp);
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
+
+    // Stroke with gradient alpha left→right (waking glow)
+    var grad = ctx.createLinearGradient(0, 0, w, 0);
+    var a0 = (0.18 + hot * 0.08) * alphaScale;
+    var a1 = (0.72 + hot * 0.25) * alphaScale;
+    grad.addColorStop(0, "rgba(52, 211, 153, " + a0 + ")");
+    grad.addColorStop(0.35, "rgba(52, 211, 153, " + (a0 * 0.9 + a1 * 0.25) + ")");
+    grad.addColorStop(0.7, "rgba(74, 222, 128, " + (a0 * 0.35 + a1 * 0.7) + ")");
+    grad.addColorStop(1, "rgba(167, 243, 208, " + a1 + ")");
+
+    ctx.lineWidth = thick;
+    ctx.strokeStyle = grad;
+    ctx.shadowColor = "rgba(52, 211, 153, " + (0.25 + hot * 0.35) + ")";
+    ctx.shadowBlur = blur;
     ctx.stroke();
     ctx.shadowBlur = 0;
   }
 
   function paint(scrollPx, hot) {
     ctx.clearRect(0, 0, w, h);
-    // Single classic ECG line through mid-hero (alive, green)
     var mid = h * 0.52;
-    var amp = h * (0.085 + hot * 0.035);
-    var alpha = 0.55 + hot * 0.3;
-    var thick = 1.85 + hot * 0.7;
-    var blur = 12 + hot * 14;
+    // base amp at full life (right edge)
+    var baseAmp = h * (0.1 + hot * 0.04);
+    var thick = 1.9 + hot * 0.75;
+    var blur = 11 + hot * 16;
 
-    // Soft trailing echo (same line, slightly behind — still one ECG, not multi-layer noise)
-    drawLine(scrollPx + 10, mid, amp * 0.92, alpha * 0.28, thick * 0.85, blur * 0.5);
-    drawLine(scrollPx, mid, amp, alpha, thick, blur);
+    // Soft echo
+    drawLine(scrollPx + 12, mid, baseAmp * 0.9, 0.32, thick * 0.8, blur * 0.45, hot);
+    // Main line
+    drawLine(scrollPx, mid, baseAmp, 1, thick, blur, hot);
 
-    // Bright tip (scan head)
-    var tipX = w * 0.78;
-    var tipY = mid + yAt(tipX + scrollPx, amp);
+    // Bright tip on the right — where the heart is “most alive”
+    var tipX = w * 0.86;
+    var tipY = mid + sampleY(tipX, scrollPx, baseAmp);
+    var tipR = 2.2 + hot * 1.6 + lifeAt(tipX) * 1.2;
     ctx.beginPath();
-    ctx.fillStyle = "rgba(167, 243, 208, " + (0.55 + hot * 0.35) + ")";
+    ctx.fillStyle = "rgba(167, 243, 208, " + (0.45 + lifeAt(tipX) * 0.4 + hot * 0.25) + ")";
     ctx.shadowColor = "rgba(52, 211, 153, 0.95)";
-    ctx.shadowBlur = 16 + hot * 12;
-    ctx.arc(tipX, tipY, 2.4 + hot * 1.4, 0, Math.PI * 2);
+    ctx.shadowBlur = 14 + hot * 14 + lifeAt(tipX) * 8;
+    ctx.arc(tipX, tipY, tipR, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
@@ -107,12 +139,8 @@
     if (spike > 0) spike = Math.max(0, spike - 0.016);
     hero.classList.toggle("is-ecg-hot", spike > 0.12);
 
-    // Scroll speed: one beat ~ every ~1s look
-    var scroll = (t * 0.085) % BEAT_W;
-    // extend scroll so many beats fill the screen smoothly
-    scroll = (t * 0.12) % (BEAT_W * 2);
+    var scroll = (t * 0.12) % (BEAT_W * 2);
     paint(scroll, spike);
-
     raf = requestAnimationFrame(frame);
   }
 
