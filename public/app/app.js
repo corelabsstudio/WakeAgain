@@ -2325,11 +2325,6 @@
       return;
     }
     const demo = $("pDemo") ? $("pDemo").value.trim() : "";
-    const demoLow = demo.toLowerCase();
-    const hollowDemoText =
-      demo.length < 12 ||
-      ["없음", "없어요", "나중에", "none", "n/a", "no", "x", "-"].includes(demoLow) ||
-      demoLow.startsWith("나중에");
     if (demoImageUrls.length < DEMO_MIN) {
       showErr(
         $("projErr"),
