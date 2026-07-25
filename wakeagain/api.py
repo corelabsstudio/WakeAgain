@@ -8,7 +8,7 @@ import secrets
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 
@@ -384,7 +384,10 @@ class ProjectIn(BaseModel):
     status: str = Field(min_length=1, max_length=40)
     product_type: str = Field(default="other", max_length=40)
     story: str = Field(min_length=1, max_length=2000)
-    demo: str = Field(min_length=1, max_length=1000)
+    # Optional free-text demo; screenshots can replace it
+    demo: str = Field(default="", max_length=1000)
+    # Public /media/demos/{user_id}/… URLs from upload endpoint (max 5)
+    demo_images: list[str] = Field(default_factory=list, max_length=5)
     assets: list[str] = Field(default_factory=list)
     # Plain-language product clarity (required for new listings)
     features: list[str] = Field(default_factory=list, max_length=12)
@@ -3383,6 +3386,43 @@ def pricing_guide():
     return {"ok": True, **price_policy.public_policy()}
 
 
+@router.post("/uploads/demo")
+async def upload_demo_image(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+):
+    """
+    Upload one demo screenshot (JPEG/PNG/WebP, max ~1.5MB).
+    Client should resize first. Auth required. Returns /media/… URL.
+    """
+    from wakeagain import media as media_mod
+
+    raw = await file.read()
+    try:
+        saved = media_mod.save_demo_image(
+            user_id=int(user["id"]),
+            raw=raw,
+            filename_hint=file.filename or "",
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "upload_rejected", "message": str(e)},
+        ) from e
+    return {
+        "ok": True,
+        "url": saved["url"],
+        "bytes": saved["bytes"],
+        "ext": saved["ext"],
+        "limits": {
+            "max_bytes": media_mod.MAX_IMAGE_BYTES,
+            "max_per_listing": media_mod.MAX_IMAGES_PER_LISTING,
+            "formats": ["jpg", "png", "webp"],
+            "hint_ko": "장당 최대 약 1.5MB · 매물당 최대 5장 · 클라이언트에서 가로 1280px 권장",
+        },
+    }
+
+
 @router.post("/projects")
 def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
     # refresh trust
@@ -3516,24 +3556,38 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             },
         )
 
-    demo = body.demo.strip()
+    from wakeagain import media as media_mod
+
+    demo = (body.demo or "").strip()
     demo_low = demo.lower()
-    hollow_demo = (
+    try:
+        demo_images = media_mod.normalize_demo_images(
+            list(body.demo_images or []), user_id=int(user["id"])
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "demo_images_invalid", "message": str(e)},
+        ) from e
+
+    hollow_text = (
         len(demo) < 12
         or demo_low in ("없음", "없어요", "나중에", "none", "n/a", "no", "x", "-")
         or demo_low.startswith("나중에")
     )
-    if hollow_demo:
+    if hollow_text and not demo_images:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "demo_required",
                 "message": (
-                    "구매자가 알아볼 설명을 12자 이상 적어 주세요. "
-                    "URL·영상 링크는 필수가 아닙니다. 화면 순서를 글로 적어도 됩니다."
+                    "스크린샷을 1장 이상 올리거나, 화면 설명을 12자 이상 적어 주세요. "
+                    "URL은 필수가 아닙니다."
                 ),
             },
         )
+    if not demo and demo_images:
+        demo = f"스크린샷 {len(demo_images)}장 (실행 화면)"
 
     keywords = kw_mod.normalize_keywords(body.keywords or [])
     if len(keywords) < kw_mod.MIN_KEYWORDS:
@@ -3615,7 +3669,7 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         cur = conn.execute(
             """
             INSERT INTO projects (
-              owner_id, title, one_liner, status, product_type, story, demo, assets_json,
+              owner_id, title, one_liner, status, product_type, story, demo, demo_images_json, assets_json,
               keywords_json, features_json, audience, works_now, limits_note,
               acquisition, acquisition_note,
               price_start, price_buy_now, contact, listing_status,
@@ -3623,7 +3677,7 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
               license_note, seller_attest_json,
               created_at, updated_at
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
               ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?
             )
             """,
@@ -3635,6 +3689,7 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 product_type,
                 story,
                 demo,
+                json.dumps(demo_images, ensure_ascii=False),
                 json.dumps(assets, ensure_ascii=False),
                 json.dumps(keywords, ensure_ascii=False),
                 json.dumps(features, ensure_ascii=False),

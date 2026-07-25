@@ -813,10 +813,33 @@
         </div>
         <div class="story-box" style="margin-top:1rem">
           <h2 data-i18n="proj.demo_status">데모 · 상태 · 자산</h2>
+          <div id="pDemoGallery" class="demo-gallery" hidden></div>
           <p id="pDemo" class="price-meta"></p>
           <p id="pStatus" class="price-meta"></p>
           <p id="pAssets" class="price-meta"></p>
         </div>
+        <style>
+          .demo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.55rem;
+            margin: 0.5rem 0 0.75rem;
+          }
+          .demo-gallery a {
+            display: block;
+            aspect-ratio: 4/3;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: #0a0a10;
+          }
+          .demo-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+          }
+        </style>
         <div class="story-box chat-box" id="msgBox" style="margin-top:1rem" hidden>
           <h2 data-i18n="proj.messages">쪽지 (판매자 · 입찰자)</h2>
           <div class="chat-offplatform-warn" role="alert" aria-live="polite">
@@ -1834,7 +1857,36 @@
           }
           fillMeta("pAcqBlock", "pAcquisition", acqLabel);
         }
-        document.getElementById("pDemo").textContent = t("데모: ", "Demo: ") + (p.demo || "—");
+        var gal = document.getElementById("pDemoGallery");
+        var imgs = Array.isArray(p.demo_images) ? p.demo_images.filter(Boolean) : [];
+        if (gal) {
+          if (imgs.length) {
+            gal.hidden = false;
+            gal.innerHTML = imgs
+              .map(function (u) {
+                var src = String(u);
+                return (
+                  '<a href="' +
+                  src.replace(/"/g, "") +
+                  '" target="_blank" rel="noopener"><img src="' +
+                  src.replace(/"/g, "") +
+                  '" alt="demo" loading="lazy" /></a>'
+                );
+              })
+              .join("");
+          } else {
+            gal.hidden = true;
+            gal.innerHTML = "";
+          }
+        }
+        var demoText = p.demo || "";
+        if (imgs.length && (!demoText || /^스크린샷\s+\d+장/.test(demoText))) {
+          document.getElementById("pDemo").textContent =
+            t("스크린샷 ", "Screenshots ") + imgs.length + t("장", "");
+        } else {
+          document.getElementById("pDemo").textContent =
+            t("데모: ", "Demo: ") + (demoText || (imgs.length ? t("스크린샷", "Screenshots") : "—"));
+        }
         var typeL = (isEn() && p.product_type_label_en) ? p.product_type_label_en : (p.product_type_label || p.product_type || "—");
         var stL = (isEn() && p.status_label_en) ? p.status_label_en : (p.status_label || p.status || "—");
         document.getElementById("pStatus").textContent =

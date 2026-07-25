@@ -86,6 +86,19 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+# Demo screenshots & other uploads (persisted on Railway volume via DATA_DIR)
+try:
+    from wakeagain import media as _media_mod
+
+    _media_mod.ensure_dirs()
+    app.mount(
+        "/media",
+        StaticFiles(directory=str(_media_mod.UPLOAD_ROOT)),
+        name="media",
+    )
+except Exception as _media_err:
+    print(f"[WakeAgain] media mount skipped: {_media_err}", flush=True)
+
 
 def _security_startup_warnings() -> None:
     """Remind operators not to ship with dev defaults."""

@@ -534,6 +534,36 @@
     async createProject(payload) {
       return request("/api/v1/projects", { method: "POST", body: JSON.stringify(payload) });
     },
+    /**
+     * Upload one demo screenshot. Pass a Blob/File (client-resized preferred).
+     * Returns { ok, url, bytes, ext, limits }.
+     */
+    async uploadDemoImage(file) {
+      const fd = new FormData();
+      fd.append("file", file, file.name || "demo.jpg");
+      const headers = { Accept: "application/json" };
+      const t = token();
+      if (t) headers.Authorization = "Bearer " + t;
+      const url = apiBase() + "/api/v1/uploads/demo";
+      const res = await fetch(url, { method: "POST", headers: headers, body: fd });
+      let data = null;
+      const text = await res.text();
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        data = { detail: text };
+      }
+      if (!res.ok) {
+        const msg = parseErrorDetail(data, res.statusText || "upload failed");
+        const err = new Error(msg);
+        err.status = res.status;
+        err.data = data;
+        err.code =
+          data && data.detail && typeof data.detail === "object" ? data.detail.code : null;
+        throw err;
+      }
+      return data;
+    },
     async createInterest(payload) {
       return request("/api/v1/interest", { method: "POST", body: JSON.stringify(payload) });
     },

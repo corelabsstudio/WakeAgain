@@ -366,6 +366,8 @@ def init_db() -> None:
                 # Premium listing boost (scaffold — payment/UI later; sort already respects active boost)
                 # boost_until: ISO end time; null/empty = not boosted
                 "boost_until": "TEXT",
+                # JSON array of public screenshot URLs: ["/media/demos/{uid}/….jpg", …] max 5
+                "demo_images_json": "TEXT DEFAULT '[]'",
                 # boost_tier: 0=none, higher = stronger pin among boosted (future products)
                 "boost_tier": "INTEGER NOT NULL DEFAULT 0",
                 # optional product code e.g. boost_7d (filled when paid product ships)
@@ -1265,6 +1267,24 @@ def product_type_public(key: str | None) -> dict:
     }
 
 
+def _parse_demo_images(row: sqlite3.Row | dict) -> list[str]:
+    raw = _row_get(row, "demo_images_json") if not isinstance(row, dict) else row.get("demo_images_json")
+    try:
+        data = json.loads(raw or "[]")
+    except (json.JSONDecodeError, TypeError):
+        data = []
+    if not isinstance(data, list):
+        return []
+    out: list[str] = []
+    for u in data:
+        s = str(u or "").strip()
+        if s.startswith("/media/demos/") and s not in out:
+            out.append(s)
+        if len(out) >= 5:
+            break
+    return out
+
+
 def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     try:
         assets = json.loads(row["assets_json"] or "[]")
@@ -1329,6 +1349,7 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "story": row["story"],
         "story_en": demo_i18n.get("story_en") or "",
         "demo": row["demo"],
+        "demo_images": _parse_demo_images(row),
         "assets": assets,
         "keywords": keywords,
         "features": features,

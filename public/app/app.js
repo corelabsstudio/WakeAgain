@@ -1905,7 +1905,7 @@
   $("pProductType")?.addEventListener("change", applyDemoHelp);
   wireChoiceChips("pProductType", applyDemoHelp);
 
-  // Demo: one-tap fill (no URL required)
+  // Demo: one-tap fill (optional text; screenshots preferred)
   document.getElementById("demoFillRow")?.addEventListener("click", function (e) {
     const btn = e.target.closest("[data-demo-fill]");
     if (!btn) return;
@@ -1932,6 +1932,160 @@
       ta.setSelectionRange(ta.value.length, ta.value.length);
     } catch (_) {}
   });
+
+  /** Uploaded demo screenshot public URLs (max 5). */
+  let demoImageUrls = [];
+  const DEMO_MAX = 5;
+  const DEMO_MAX_EDGE = 1280;
+  const DEMO_JPEG_Q = 0.82;
+
+  function setDemoShotErr(msg) {
+    const el = $("demoShotErr");
+    if (!el) return;
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent = msg;
+  }
+
+  function renderDemoShots() {
+    const grid = $("demoShotGrid");
+    const hint = $("demoShotHint");
+    if (hint) hint.textContent = demoImageUrls.length + " / " + DEMO_MAX + "장";
+    if (!grid) return;
+    if (!demoImageUrls.length) {
+      grid.innerHTML = "";
+      return;
+    }
+    const base = (api.apiBase && api.apiBase()) || "";
+    grid.innerHTML = demoImageUrls
+      .map(function (url, i) {
+        const src = url.indexOf("http") === 0 ? url : base + url;
+        return (
+          '<div class="demo-shot-item" data-i="' +
+          i +
+          '"><img src="' +
+          src.replace(/"/g, "") +
+          '" alt="스크린샷 ' +
+          (i + 1) +
+          '" loading="lazy" /><button type="button" class="rm" data-rm="' +
+          i +
+          '" aria-label="삭제">×</button></div>'
+        );
+      })
+      .join("");
+    grid.querySelectorAll("[data-rm]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const idx = Number(btn.getAttribute("data-rm"));
+        demoImageUrls = demoImageUrls.filter(function (_, j) {
+          return j !== idx;
+        });
+        renderDemoShots();
+      });
+    });
+  }
+
+  /** Resize image in browser → JPEG blob under ~1.2MB typical. */
+  function resizeImageFile(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file || !file.type || file.type.indexOf("image/") !== 0) {
+        reject(new Error("이미지 파일만 올릴 수 있습니다."));
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = function () {
+        try {
+          let w = img.naturalWidth || img.width;
+          let h = img.naturalHeight || img.height;
+          if (!w || !h) {
+            URL.revokeObjectURL(url);
+            reject(new Error("이미지를 읽을 수 없습니다."));
+            return;
+          }
+          const scale = Math.min(1, DEMO_MAX_EDGE / Math.max(w, h));
+          w = Math.max(1, Math.round(w * scale));
+          h = Math.max(1, Math.round(h * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(
+            function (blob) {
+              if (!blob) {
+                reject(new Error("이미지 변환 실패"));
+                return;
+              }
+              resolve(blob);
+            },
+            "image/jpeg",
+            DEMO_JPEG_Q
+          );
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          reject(e);
+        }
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error("이미지를 열 수 없습니다."));
+      };
+      img.src = url;
+    });
+  }
+
+  async function addDemoFiles(fileList) {
+    setDemoShotErr("");
+    const files = Array.from(fileList || []).filter(Boolean);
+    if (!files.length) return;
+    const room = DEMO_MAX - demoImageUrls.length;
+    if (room <= 0) {
+      setDemoShotErr("스크린샷은 최대 " + DEMO_MAX + "장까지입니다.");
+      return;
+    }
+    const slice = files.slice(0, room);
+    for (let i = 0; i < slice.length; i++) {
+      try {
+        const blob = await resizeImageFile(slice[i]);
+        const named = new File(
+          [blob],
+          "demo-" + Date.now() + "-" + i + ".jpg",
+          { type: "image/jpeg" }
+        );
+        const res = await api.uploadDemoImage(named);
+        if (res && res.url) {
+          demoImageUrls.push(res.url);
+          renderDemoShots();
+        }
+      } catch (err) {
+        setDemoShotErr(err.message || "업로드 실패");
+      }
+    }
+    if (files.length > room) {
+      setDemoShotErr("최대 " + DEMO_MAX + "장까지 · 앞 " + room + "장만 올렸습니다.");
+    }
+  }
+
+  $("btnDemoPick")?.addEventListener("click", function () {
+    if (!api.getUser()) {
+      setDemoShotErr("로그인 후 스크린샷을 올릴 수 있습니다.");
+      setView("login");
+      return;
+    }
+    $("pDemoImages")?.click();
+  });
+  $("pDemoImages")?.addEventListener("change", function (e) {
+    const input = e.target;
+    addDemoFiles(input.files).finally(function () {
+      input.value = "";
+    });
+  });
+  renderDemoShots();
 
   function normalizeKeyword(raw) {
     return String(raw || "")
@@ -2163,16 +2317,17 @@
     }
     const demo = $("pDemo") ? $("pDemo").value.trim() : "";
     const demoLow = demo.toLowerCase();
-    if (
+    const hollowDemoText =
       demo.length < 12 ||
       ["없음", "없어요", "나중에", "none", "n/a", "no", "x", "-"].includes(demoLow) ||
-      demoLow.startsWith("나중에")
-    ) {
+      demoLow.startsWith("나중에");
+    if (hollowDemoText && !demoImageUrls.length) {
       showErr(
         $("projErr"),
-        "구매자가 알아볼 설명을 12자 이상 적어 주세요. 주소 없어도 됩니다. 「화면 글로 쓰기」버튼으로 예시부터 채워 보세요."
+        "실행 화면 스크린샷을 1장 이상 올리거나, 추가 설명을 12자 이상 적어 주세요. URL은 필요 없습니다."
       );
-      if ($("pDemo")) $("pDemo").focus();
+      const box = document.querySelector(".demo-shot-box");
+      if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const acquisition = selectedAcquisition();
@@ -2292,7 +2447,8 @@
       acquisition,
       acquisition_note: acqNote,
       story,
-      demo,
+      demo: demo || (demoImageUrls.length ? "스크린샷 " + demoImageUrls.length + "장" : ""),
+      demo_images: demoImageUrls.slice(0, DEMO_MAX),
       assets,
       keywords: listingKeywords.slice(0, KW_MAX),
       price_start: start,
@@ -2313,6 +2469,9 @@
     try {
       await api.createProject(payload);
       $("formProject").reset();
+      demoImageUrls = [];
+      renderDemoShots();
+      setDemoShotErr("");
       listingKeywords = [];
       renderKeywordChips();
       syncAcqNote();
