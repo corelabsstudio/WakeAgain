@@ -4056,6 +4056,12 @@ class AdminPurgeExceptIn(BaseModel):
     keep_emails: list[str] = Field(default_factory=list, max_length=20)
 
 
+class AdminDeleteUsersIn(BaseModel):
+    """선택 회원 삭제 — 관리자 UI 체크박스용."""
+    confirm: str = Field(min_length=8, max_length=40)
+    user_ids: list[int] = Field(default_factory=list, max_length=50)
+
+
 def _destructive_admin_allowed() -> bool:
     """Hard gate: purge/restore only when operator explicitly enables ALLOW_DESTRUCTIVE_ADMIN=1."""
     return (os.environ.get("ALLOW_DESTRUCTIVE_ADMIN") or "").strip() in {"1", "true", "TRUE", "yes", "on"}
@@ -4074,6 +4080,122 @@ def _require_destructive_admin() -> None:
                 ),
             },
         )
+
+
+def _table_has(conn: Any, name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name = ?",
+        (name,),
+    ).fetchone()
+    return bool(row)
+
+
+def _delete_users_by_ids(conn: Any, drop_ids: list[int]) -> dict[str, Any]:
+    """Cascade-delete the given user ids and related rows. Returns stats."""
+    drop_ids = sorted({int(i) for i in drop_ids if int(i) > 0})
+    deleted: dict[str, int] = {}
+    if not drop_ids:
+        return {"deleted": deleted, "dropped_emails": [], "dropped_ids": []}
+
+    rows = conn.execute(
+        f"SELECT id, email FROM users WHERE id IN ({','.join('?' for _ in drop_ids)})",
+        drop_ids,
+    ).fetchall()
+    # Only ids that actually exist
+    drop_ids = [int(r["id"]) for r in rows]
+    dropped_emails = [str(r["email"]) for r in rows]
+    if not drop_ids:
+        return {"deleted": deleted, "dropped_emails": [], "dropped_ids": []}
+
+    placeholders = ",".join("?" for _ in drop_ids)
+
+    def _del(sql: str, params: tuple | list = ()) -> int:
+        cur = conn.execute(sql, params)
+        return int(cur.rowcount or 0)
+
+    try:
+        deleted["bids_as_bidder"] = _del(
+            f"DELETE FROM bids WHERE bidder_id IN ({placeholders})", drop_ids
+        )
+    except Exception as e:
+        deleted["bids_as_bidder"] = -1
+        print(f"[admin delete-users] bids: {e}", flush=True)
+
+    try:
+        proj_ids = [
+            int(r["id"])
+            for r in conn.execute(
+                f"SELECT id FROM projects WHERE owner_id IN ({placeholders})", drop_ids
+            ).fetchall()
+        ]
+        if proj_ids:
+            pp = ",".join("?" for _ in proj_ids)
+            deleted["bids_on_dropped_projects"] = _del(
+                f"DELETE FROM bids WHERE project_id IN ({pp})", proj_ids
+            )
+            if _table_has(conn, "reports"):
+                deleted["reports_on_dropped_projects"] = _del(
+                    f"DELETE FROM reports WHERE project_id IN ({pp})", proj_ids
+                )
+            deleted["projects"] = _del(
+                f"DELETE FROM projects WHERE id IN ({pp})", proj_ids
+            )
+        else:
+            deleted["projects"] = 0
+    except Exception as e:
+        deleted["projects"] = -1
+        print(f"[admin delete-users] projects: {e}", flush=True)
+
+    for table, col in (
+        ("messages", "sender_id"),
+        ("messages", "recipient_id"),
+        ("notifications", "user_id"),
+        ("fee_invoices", "user_id"),
+        ("reports", "reporter_id"),
+        ("user_blocks", "blocker_id"),
+        ("user_blocks", "blocked_id"),
+        ("interests", "user_id"),
+        ("reviews", "user_id"),
+        ("showcases", "user_id"),
+        ("user_coupons", "user_id"),
+        ("promo_submissions", "user_id"),
+        ("leads", "user_id"),
+    ):
+        key = f"{table}_{col}"
+        try:
+            if not _table_has(conn, table):
+                deleted[key] = 0
+                continue
+            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            if col not in cols:
+                deleted[key] = 0
+                continue
+            deleted[key] = _del(
+                f"DELETE FROM {table} WHERE {col} IN ({placeholders})", drop_ids
+            )
+        except Exception as e:
+            deleted[key] = -1
+            print(f"[admin delete-users] {key}: {e}", flush=True)
+
+    try:
+        if _table_has(conn, "projects"):
+            pcols = {r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
+            if "buyer_id" in pcols:
+                deleted["projects_clear_buyer"] = _del(
+                    f"UPDATE projects SET buyer_id = NULL WHERE buyer_id IN ({placeholders})",
+                    drop_ids,
+                )
+    except Exception as e:
+        deleted["projects_clear_buyer"] = -1
+        print(f"[admin delete-users] clear buyer: {e}", flush=True)
+
+    deleted["users"] = _del(f"DELETE FROM users WHERE id IN ({placeholders})", drop_ids)
+
+    return {
+        "deleted": deleted,
+        "dropped_emails": dropped_emails,
+        "dropped_ids": drop_ids,
+    }
 
 
 def _purge_users_except_emails(conn: Any, keep_emails: list[str]) -> dict[str, Any]:
@@ -4100,118 +4222,21 @@ def _purge_users_except_emails(conn: Any, keep_emails: list[str]) -> dict[str, A
         keep_norm,
     ).fetchall()
     drop_ids = [int(r["id"]) for r in drop_rows]
-    dropped_emails = [str(r["email"]) for r in drop_rows]
-    deleted: dict[str, int] = {}
-
     if not drop_ids:
         return {
-            "deleted": deleted,
+            "deleted": {},
             "dropped_emails": [],
             "kept_ids": keep_ids,
             "kept_emails": [str(r["email"]) for r in keep_rows],
         }
 
-    placeholders = ",".join("?" for _ in drop_ids)
-
-    def _del(sql: str, params: tuple | list = ()) -> int:
-        cur = conn.execute(sql, params)
-        return int(cur.rowcount or 0)
-
-    # Related to drop users
-    try:
-        deleted["bids_as_bidder"] = _del(
-            f"DELETE FROM bids WHERE bidder_id IN ({placeholders})", drop_ids
-        )
-    except Exception as e:
-        deleted["bids_as_bidder"] = -1
-        print(f"[admin purge-except] bids: {e}", flush=True)
-
-    # Projects owned by drop users (and their bids)
-    try:
-        proj_ids = [
-            int(r["id"])
-            for r in conn.execute(
-                f"SELECT id FROM projects WHERE owner_id IN ({placeholders})", drop_ids
-            ).fetchall()
-        ]
-        if proj_ids:
-            pp = ",".join("?" for _ in proj_ids)
-            deleted["bids_on_dropped_projects"] = _del(
-                f"DELETE FROM bids WHERE project_id IN ({pp})", proj_ids
-            )
-            deleted["reports_on_dropped_projects"] = _del(
-                f"DELETE FROM reports WHERE project_id IN ({pp})", proj_ids
-            ) if _table_has(conn, "reports") else 0
-            deleted["projects"] = _del(
-                f"DELETE FROM projects WHERE id IN ({pp})", proj_ids
-            )
-        else:
-            deleted["projects"] = 0
-    except Exception as e:
-        deleted["projects"] = -1
-        print(f"[admin purge-except] projects: {e}", flush=True)
-
-    for table, col in (
-        ("messages", "sender_id"),
-        ("messages", "recipient_id"),
-        ("notifications", "user_id"),
-        ("fee_invoices", "user_id"),
-        ("reports", "reporter_id"),
-        ("user_blocks", "blocker_id"),
-        ("user_blocks", "blocked_id"),
-        ("interests", "user_id"),
-        ("reviews", "user_id"),
-        ("showcases", "user_id"),
-        ("user_coupons", "user_id"),
-        ("promo_submissions", "user_id"),
-        ("leads", "user_id"),
-    ):
-        key = f"{table}_{col}"
-        try:
-            if not _table_has(conn, table):
-                deleted[key] = 0
-                continue
-            # column may not exist on older schemas
-            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
-            if col not in cols:
-                deleted[key] = 0
-                continue
-            deleted[key] = _del(
-                f"DELETE FROM {table} WHERE {col} IN ({placeholders})", drop_ids
-            )
-        except Exception as e:
-            deleted[key] = -1
-            print(f"[admin purge-except] {key}: {e}", flush=True)
-
-    # Buyer fields on kept projects pointing at dropped users
-    try:
-        if _table_has(conn, "projects"):
-            pcols = {r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
-            if "buyer_id" in pcols:
-                deleted["projects_clear_buyer"] = _del(
-                    f"UPDATE projects SET buyer_id = NULL WHERE buyer_id IN ({placeholders})",
-                    drop_ids,
-                )
-    except Exception as e:
-        deleted["projects_clear_buyer"] = -1
-        print(f"[admin purge-except] clear buyer: {e}", flush=True)
-
-    deleted["users"] = _del(f"DELETE FROM users WHERE id IN ({placeholders})", drop_ids)
-
+    result = _delete_users_by_ids(conn, drop_ids)
     return {
-        "deleted": deleted,
-        "dropped_emails": dropped_emails,
+        "deleted": result.get("deleted") or {},
+        "dropped_emails": result.get("dropped_emails") or [],
         "kept_ids": keep_ids,
         "kept_emails": [str(r["email"]) for r in keep_rows],
     }
-
-
-def _table_has(conn: Any, name: str) -> bool:
-    row = conn.execute(
-        "SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name = ?",
-        (name,),
-    ).fetchone()
-    return bool(row)
 
 
 @router.post("/admin/users/purge-all")
@@ -4351,6 +4376,95 @@ def admin_purge_users_except(body: AdminPurgeExceptIn, _: None = Depends(require
             f"남김 {len(result.get('kept_emails') or [])}명 · "
             f"삭제 {len(result.get('dropped_emails') or [])}명 · "
             f"백업 {pre.get('name')}"
+        ),
+    }
+
+
+@router.post("/admin/users/delete")
+def admin_delete_selected_users(body: AdminDeleteUsersIn, _: None = Depends(require_admin)):
+    """
+    관리자 UI: 체크한 회원 id 목록 삭제 + 연관 데이터.
+
+    조건:
+      1) X-Admin-Key
+      2) confirm == DELETE_SELECTED_USERS
+      3) 1~50명, 삭제 후 최소 1명 잔존 (전체 삭제는 purge-all)
+    삭제 직전 자동 백업. ALLOW_DESTRUCTIVE_ADMIN 불필요(선택 삭제 한정).
+    """
+    if (body.confirm or "").strip() != "DELETE_SELECTED_USERS":
+        raise HTTPException(
+            status_code=400,
+            detail="confirm must be exactly DELETE_SELECTED_USERS",
+        )
+    raw_ids = body.user_ids or []
+    try:
+        ids = sorted({int(x) for x in raw_ids if int(x) > 0})
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail="user_ids must be integers") from e
+    if not ids:
+        raise HTTPException(status_code=400, detail="user_ids required (1~50)")
+    if len(ids) > 50:
+        raise HTTPException(status_code=400, detail="user_ids max 50 per request")
+
+    from wakeagain import backup as db_backup
+
+    pre = db_backup.create_backup(reason="pre-purge")
+    if not pre.get("ok") and not pre.get("skipped"):
+        raise HTTPException(
+            status_code=500,
+            detail=f"pre-purge backup failed; aborting delete: {pre.get('error')}",
+        )
+
+    with database.db() as conn:
+        try:
+            conn.execute("PRAGMA foreign_keys=ON")
+        except Exception:
+            pass
+        before = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+        existing = conn.execute(
+            f"SELECT id, email FROM users WHERE id IN ({','.join('?' for _ in ids)})",
+            ids,
+        ).fetchall()
+        if not existing:
+            raise HTTPException(status_code=404, detail="no matching users")
+        drop_ids = [int(r["id"]) for r in existing]
+        remaining_after = before - len(drop_ids)
+        if remaining_after < 1:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "cannot_delete_last_users",
+                    "message": (
+                        "모든 회원을 지우면 안 됩니다. 최소 1명은 남겨 주세요. "
+                        "전체 초기화가 필요하면 purge-all + ALLOW_DESTRUCTIVE_ADMIN=1 을 사용하세요."
+                    ),
+                },
+            )
+        result = _delete_users_by_ids(conn, drop_ids)
+        after = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+        remaining = [
+            {"id": int(r["id"]), "email": r["email"]}
+            for r in conn.execute("SELECT id, email FROM users ORDER BY id").fetchall()
+        ]
+
+    print(
+        f"[WakeAgain][CRITICAL] admin delete-selected users_before={before} after={after} "
+        f"dropped={result.get('dropped_emails')} backup={pre.get('name')}",
+        flush=True,
+    )
+    db_backup.record_counts_tick()
+    return {
+        "ok": True,
+        "users_before": before,
+        "users_after": after,
+        "dropped_ids": result.get("dropped_ids"),
+        "dropped_emails": result.get("dropped_emails"),
+        "deleted": result.get("deleted"),
+        "remaining_users": remaining,
+        "pre_purge_backup": pre.get("name"),
+        "message": (
+            f"삭제 {len(result.get('dropped_emails') or [])}명 · "
+            f"남은 회원 {after}명 · 백업 {pre.get('name')}"
         ),
     }
 
