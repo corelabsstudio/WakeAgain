@@ -639,6 +639,32 @@
       backdrop-filter: blur(8px);
     }
     .story-box h2 { color: var(--text); margin: 0 0 0.75rem; font-size: 1.05rem; }
+    .listing-feature-list {
+      margin: 0; padding-left: 1.15rem; line-height: 1.55; color: var(--text); white-space: normal;
+    }
+    .listing-feature-list li { margin: 0.28rem 0; }
+    .listing-meta-block {
+      margin: 0.75rem 0 0; font-size: 0.92rem; line-height: 1.5; color: var(--muted); white-space: normal;
+    }
+    .listing-meta-block strong {
+      display: block; color: var(--text); margin-bottom: 0.2rem; font-size: 0.88rem;
+    }
+    .handover-box {
+      margin: 0.85rem 0 0.35rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(52, 211, 153, 0.28);
+      background: rgba(52, 211, 153, 0.07);
+    }
+    .handover-title { display: block; font-size: 0.95rem; color: #a7f3d0; margin-bottom: 0.35rem; }
+    .handover-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+    .handover-list li {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      margin: 0.4rem 0; font-size: 0.9rem; line-height: 1.4; color: var(--text);
+    }
+    .handover-list input { margin-top: 0.2rem; flex-shrink: 0; }
+    .handover-list label { cursor: pointer; flex: 1; }
+    .handover-list li.is-done label { color: var(--muted); }
     .public-banner {
       background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.35);
       border-radius: var(--radius-sm); padding: 0.7rem 0.95rem; margin-bottom: 1rem;
@@ -664,6 +690,7 @@
       </a>
       <nav class="nav-links" aria-label="Menu">
         <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
         <a href="/app/" data-i18n="nav.app">앱</a>
       </nav>
       <div class="nav-actions">
@@ -760,14 +787,35 @@
 
     <div class="auction-hero">
       <div>
-        <div class="story-box" id="storyBox">
-          <h2 data-i18n="proj.story">스토리</h2>
+        <div class="story-box" id="featuresBox" hidden>
+          <h2 data-i18n="proj.features">이 제품이 하는 일</h2>
+          <ul class="listing-feature-list" id="pFeatures"></ul>
+          <div class="listing-meta-block" id="pAudienceBlock" hidden>
+            <strong data-i18n="proj.audience">누구를 위한 제품</strong>
+            <span id="pAudience"></span>
+          </div>
+          <div class="listing-meta-block" id="pWorksBlock" hidden>
+            <strong data-i18n="proj.works_now">지금 되는 것</strong>
+            <span id="pWorksNow"></span>
+          </div>
+          <div class="listing-meta-block" id="pLimitsBlock" hidden>
+            <strong data-i18n="proj.limits">지금 안 되는 것 · 한계</strong>
+            <span id="pLimits"></span>
+          </div>
+          <div class="listing-meta-block" id="pAcqBlock" hidden>
+            <strong data-i18n="proj.acquisition">판매자 유형</strong>
+            <span id="pAcquisition"></span>
+          </div>
+        </div>
+        <div class="story-box" id="storyBox" style="margin-top:1rem">
+          <h2 data-i18n="proj.story">왜 팔나요? (스토리)</h2>
           <div id="pStory"></div>
         </div>
         <div class="story-box" style="margin-top:1rem">
-          <h2 data-i18n="proj.demo_status">데모 · 상태</h2>
+          <h2 data-i18n="proj.demo_status">데모 · 상태 · 자산</h2>
           <p id="pDemo" class="price-meta"></p>
           <p id="pStatus" class="price-meta"></p>
+          <p id="pAssets" class="price-meta"></p>
         </div>
         <div class="story-box chat-box" id="msgBox" style="margin-top:1rem" hidden>
           <h2 data-i18n="proj.messages">쪽지 (판매자 · 입찰자)</h2>
@@ -842,6 +890,13 @@
           </ol>
           <p class="price-meta" id="dealStatusLine"></p>
           <p class="price-meta deal-policy-text" id="dealPolicyLine"></p>
+          <div class="handover-box" id="handoverBox" hidden>
+            <strong class="handover-title" id="handoverTitle">인수 확인 목록</strong>
+            <p class="price-meta fine" id="handoverLead"></p>
+            <ul class="handover-list" id="handoverList"></ul>
+            <p class="price-meta fine" id="handoverProgress"></p>
+            <p class="price-meta fine muted" id="handoverDisc"></p>
+          </div>
           <div class="form-actions" id="dealActions" style="margin-top:0.65rem;flex-wrap:wrap;gap:0.45rem"></div>
           <p class="form-error" id="dealErr" hidden></p>
           <p class="price-meta" id="dealOk" hidden style="color:#86efac"></p>
@@ -871,6 +926,7 @@
             <p style="margin:0 0 0.55rem"><strong>낙찰 후 1시간 이내</strong> 입금해야 합니다. 미입금 시 낙찰 무효·신용 점수 반영.</p>
             <p style="margin:0 0 0.55rem">입금 확인 → 판매자 이전 → 구매자 검수 후 <strong>인수하기</strong>. 이전 후 <strong>48시간</strong> 내 이의가 없으면 <strong>자동 구매 확정·정산</strong>.</p>
             <p style="margin:0 0 0.55rem"><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 대금은 인수(또는 자동 확정) 후 판매자에게 정산됩니다.</p>
+            <p style="margin:0 0 0.55rem">매물 페이지는 <strong>기능·데모</strong> 중심입니다. 소스·키·DB는 입금 확인 후 이전 단계에서 받습니다.</p>
             <p style="margin:0">결제는 PG(결제) 연동 후 링크·웹훅으로 확인합니다.<br />
               <a class="text-link" href="/guide/credit.html">점수 설명</a>
               ·
@@ -884,7 +940,7 @@
 
           <div class="safety-pair">
             <div class="safety-manage" aria-label="4단계 안전 절차">
-              <p class="safety-manage-kicker" data-i18n="safe4.kicker">보증은 안 하지만, 관리는 합니다</p>
+              <p class="safety-manage-kicker" data-i18n="safe4.kicker">거래는 단계로 진행합니다</p>
               <p class="safety-manage-title" data-i18n="safe4.title">WakeAgain이 거래를 확인하는 4단계</p>
               <ol class="safety-manage-steps">
                 <li>
@@ -900,7 +956,7 @@
                 <li>
                   <span class="sm-n" aria-hidden="true">3</span>
                   <strong data-i18n="safe4.s3_t">검수 · 인수</strong>
-                  <span class="sm-desc" data-i18n="safe4.s3_d">인수하기 또는 48시간 무이의 시 자동 확정</span>
+                  <span class="sm-desc" data-i18n="safe4.s3_d">인수하기, 또는 48시간 동안 이의가 없으면 자동 확정</span>
                 </li>
                 <li>
                   <span class="sm-n" aria-hidden="true">4</span>
@@ -908,15 +964,15 @@
                   <span class="sm-desc" data-i18n="safe4.s4_d">확정 후 판매자 정산 · 판매자 수수료 10%</span>
                 </li>
               </ol>
-              <p class="safety-manage-foot" data-i18n="safe4.foot">중개자가 보험을 드는 것이 아니라, 단계마다 확인·잠금·신고로 관리합니다.</p>
+              <p class="safety-manage-foot" data-i18n="safe4.foot">단계마다 확인·잠금·신고로 거래를 관리합니다.</p>
             </div>
             <div class="safety-notice" role="note">
               <span class="safety-notice-title" data-i18n="proj.safety_title">안전 · 책임 고지</span>
               <ul data-i18n-html data-i18n="proj.safety_list">
                 <li>WakeAgain은 <strong>통신판매중개자</strong>이며 거래 당사자가 아닙니다.</li>
                 <li>매물 품질·내용·사기 피해의 1차 책임은 <strong>당사자(판매자·가해자)</strong>에게 있습니다.</li>
-                <li>운영 형식 검수·게시 허용·사이트 내 신용 점수는 <strong>보증이 아닙니다.</strong> 직접 확인하세요.</li>
-                <li>사는 쪽: 검토 없이 보내지 마세요. 파는 쪽: <strong>결제 확인 전</strong> 코드·계정 이전 금지.</li>
+                <li>운영 형식 검수·게시 허용·사이트 내 신용 점수는 참고용입니다. 직접 확인하세요. 상세는 <a class="text-link" href="/legal/terms.html">이용약관</a>.</li>
+                <li>구매자: 검토 없이 결제하지 마세요. 판매자: <strong>결제 확인 전</strong> 코드·계정 이전 금지.</li>
                 <li>대금은 <strong>PG 결제</strong>로 확인하며, 인수(또는 자동 확정) 후 판매자에게 정산됩니다.</li>
                 <li>분쟁 시 — ① 당사자 연락 · ② 이의 제기/신고 · ③ 합의 안 되면 수사·소송·공정위 조정 (<a class="text-link" href="/guide/dispute.html">분쟁 해결 안내</a>)</li>
                 <li>사기 의심 메일: <a class="text-link" href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a></li>
@@ -931,7 +987,7 @@
           </button>
           <form id="reportForm" class="bid-form" hidden style="margin-top:0.65rem">
             <p class="price-meta" style="margin:0 0 0.5rem;line-height:1.5" data-i18n-html data-i18n="proj.report_help">
-              <strong>사는 쪽(Lv2)</strong>만 신고할 수 있어요. 매물당 1회.
+              <strong>구매자(Lv2)</strong>만 신고할 수 있어요. 매물당 1회.
               서로 다른 사람 신고가 <strong>3건</strong>이면 경매 자동 중단,
               판매자 합산 <strong>5건</strong>이면 계정 자동 정지.
             </p>
@@ -999,9 +1055,8 @@
   <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260722e"></script>
   <script src="/js/i18n.js?v=20260722e"></script>
-
-
   <script src="/js/api.js"></script>
+  <script src="/js/deal-certificate.js?v=20260725a"></script>
   <script>
     (function () {
       var api = window.WakeAgainAPI;
@@ -1418,6 +1473,112 @@
         return map[st] || st || "—";
       }
 
+      function renderHandoverChecklist(p) {
+        var hbox = document.getElementById("handoverBox");
+        if (!hbox) return;
+        var ho = p.handover_checklist;
+        var isOwner = meIsOwner(p);
+        var isBuyer = meIsBuyer(p);
+        var st = p.deal_status || "";
+        var sold = (p.auction_status || "") === "sold" || !!st;
+        if (!sold || !ho || !ho.items || !ho.items.length || !(isOwner || isBuyer)) {
+          hbox.hidden = true;
+          return;
+        }
+        hbox.hidden = false;
+        var canEdit =
+          isBuyer &&
+          (st === "paid" || st === "inspection" || st === "awaiting_payment");
+        document.getElementById("handoverTitle").textContent = t(
+          "인수 확인 목록",
+          "Handover checklist"
+        );
+        document.getElementById("handoverLead").textContent = canEdit
+          ? t(
+              "판매자와 쪽지 등으로 직접 이전한 뒤, 받은 항목을 체크하세요. 필수 항목을 모두 체크한 뒤 「인수하기」를 눌러 주세요.",
+              "After handoff via messages etc., check what you received. Check all required items, then press Accept."
+            )
+          : isOwner
+            ? t(
+                "구매자가 받은 항목을 체크하는 목록입니다. (판매자는 읽기 전용 · 진행률만 확인)",
+                "Buyer receipt list (read-only for seller · progress only)."
+              )
+            : t("인수 확인 목록", "Handover checklist");
+        var disc = document.getElementById("handoverDisc");
+        if (disc) {
+          disc.textContent = isEn()
+            ? ho.disclaimer_en || ""
+            : ho.disclaimer_ko || "";
+        }
+        var prog = document.getElementById("handoverProgress");
+        if (prog) {
+          prog.textContent =
+            t("확인 ", "Checked ") +
+            (ho.required_checked || 0) +
+            " / " +
+            (ho.required_count || 0) +
+            t(" (필수)", " required") +
+            (ho.all_required_checked
+              ? t(" · 필수 완료 — 「인수하기」를 눌러 주세요", " · all required — press Accept")
+              : "");
+        }
+        var ul = document.getElementById("handoverList");
+        ul.innerHTML = "";
+        (ho.items || []).forEach(function (it) {
+          var li = document.createElement("li");
+          if (it.checked) li.classList.add("is-done");
+          var id = "ho_" + String(it.id || "").replace(/\W/g, "_");
+          var lab = isEn() ? it.label_en || it.label_ko : it.label_ko || it.label_en;
+          if (it.required) lab += t(" *", " *");
+          if (canEdit) {
+            li.innerHTML =
+              '<input type="checkbox" id="' +
+              id +
+              '" data-ho-id="' +
+              String(it.id).replace(/"/g, "") +
+              '"' +
+              (it.checked ? " checked" : "") +
+              " />" +
+              '<label for="' +
+              id +
+              '">' +
+              lab.replace(/</g, "&lt;") +
+              "</label>";
+            var inp = li.querySelector("input");
+            inp.addEventListener("change", async function () {
+              var checks = {};
+              checks[it.id] = !!inp.checked;
+              try {
+                document.getElementById("dealErr").hidden = true;
+                var res = await api.updateHandoverChecklist(p.id, checks);
+                if (res.project) {
+                  projectCache = Object.assign({}, projectCache || {}, res.project);
+                  if (res.handover_checklist) {
+                    projectCache.handover_checklist = res.handover_checklist;
+                  }
+                  renderDealProtect(projectCache);
+                } else {
+                  await refresh();
+                }
+              } catch (ex) {
+                inp.checked = !inp.checked;
+                document.getElementById("dealErr").hidden = false;
+                document.getElementById("dealErr").textContent =
+                  ex.message || t("저장 실패", "Save failed");
+              }
+            });
+          } else {
+            li.innerHTML =
+              "<span aria-hidden=\"true\">" +
+              (it.checked ? "☑" : "☐") +
+              "</span><span>" +
+              lab.replace(/</g, "&lt;") +
+              "</span>";
+          }
+          ul.appendChild(li);
+        });
+      }
+
       function renderDealProtect(p) {
         var box = document.getElementById("dealProtectBox");
         if (!box) return;
@@ -1428,6 +1589,7 @@
           return;
         }
         box.hidden = false;
+        renderHandoverChecklist(p);
         var pol = p.deal_policy || {};
         var payH = pol.payment_hours != null ? pol.payment_hours : 1;
         var inspH = pol.inspection_hours != null ? pol.inspection_hours : 48;
@@ -1491,22 +1653,44 @@
           });
         }
         if (st === "inspection" && isBuyer) {
-          addBtn(t("인수하기", "Accept takeover"), "btn-primary", async function () {
-            if (!confirm(t(
-              "검수를 마치고 인수할까요? 확정되면 판매자에게 정산이 진행됩니다.",
-              "Confirm takeover? Seller settlement will proceed."
-            ))) return;
-            try {
-              var res = await api.dealAccept(p.id);
-              document.getElementById("dealOk").hidden = false;
-              document.getElementById("dealOk").textContent =
-                res.message_ko || t("인수 확정되었습니다.", "Accepted.");
-              await refresh();
-            } catch (ex) {
-              document.getElementById("dealErr").hidden = false;
-              document.getElementById("dealErr").textContent = ex.message || t("실패", "Failed");
+          var hoReady = p.handover_checklist && p.handover_checklist.all_required_checked;
+          addBtn(
+            hoReady
+              ? t("인수하기", "Accept takeover")
+              : t("인수하기 (목록 체크 필요)", "Accept (checklist required)"),
+            "btn-primary",
+            async function () {
+              if (!hoReady) {
+                document.getElementById("dealErr").hidden = false;
+                document.getElementById("dealErr").textContent = t(
+                  "인수 확인 목록의 필수 항목(*)을 모두 체크한 뒤 「인수하기」를 눌러 주세요.",
+                  "Check all required handover items (*) first, then press Accept."
+                );
+                var hb = document.getElementById("handoverBox");
+                if (hb) hb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                return;
+              }
+              if (!confirm(t(
+                "검수를 마치고 인수할까요? 확정되면 판매자에게 정산이 진행됩니다. 플랫폼이 파일 이전을 검증하지는 않습니다.",
+                "Accept takeover? Seller settlement will proceed. The platform does not verify file transfer."
+              ))) return;
+              try {
+                var res = await api.dealAccept(p.id);
+                document.getElementById("dealOk").hidden = false;
+                document.getElementById("dealOk").textContent =
+                  res.message_ko || t("인수 확정되었습니다.", "Accepted.");
+                await refresh();
+                if (window.WakeAgainDealCertificate) {
+                  window.WakeAgainDealCertificate.openFromApi(p.id, "complete", {
+                    autoOpenKey: "wa-cert-complete-" + p.id,
+                  });
+                }
+              } catch (ex) {
+                document.getElementById("dealErr").hidden = false;
+                document.getElementById("dealErr").textContent = ex.message || t("실패", "Failed");
+              }
             }
-          });
+          );
         }
         if ((st === "inspection" || st === "paid" || st === "awaiting_payment") && (isBuyer || isOwner)) {
           addBtn(t("이의 제기", "Raise dispute"), "btn-ghost", async function () {
@@ -1523,6 +1707,38 @@
               document.getElementById("dealErr").textContent = ex.message || t("실패", "Failed");
             }
           });
+        }
+        // 연락: 확인서가 아니라 쪽지·성사 후 판매자 정보
+        if ((isOwner || isBuyer) && sold) {
+          addBtn(t("쪽지로 연락", "Message counterparty"), "btn-primary", function () {
+            var box = document.getElementById("msgBox");
+            if (box) {
+              box.hidden = false;
+              box.scrollIntoView({ behavior: "smooth", block: "start" });
+              var ta = document.getElementById("msgBody");
+              if (ta) ta.focus();
+            }
+          });
+          var certKind = st === "completed" ? "complete" : "award";
+          addBtn(
+            st === "completed"
+              ? t("거래 기록 확인서", "Transaction confirmation")
+              : t("낙찰 기록 확인서", "Award confirmation"),
+            "btn-ghost",
+            function () {
+              if (window.WakeAgainDealCertificate) {
+                window.WakeAgainDealCertificate.openFromApi(p.id, certKind);
+              }
+            }
+          );
+          var contactTip = document.createElement("p");
+          contactTip.className = "price-meta";
+          contactTip.style.margin = "0.4rem 0 0";
+          contactTip.innerHTML = t(
+            "상대 실명·연락처는 <strong>확인서에 넣지 않습니다</strong>. 이전·문의는 <strong>쪽지</strong> 또는 아래 <strong>판매자 정보</strong>(성사 당사자 공개)를 이용하세요.",
+            "Name/phone are <strong>not</strong> on the confirmation image. Use <strong>messages</strong> or <strong>seller info</strong> (shown to deal parties) for contact."
+          );
+          actions.appendChild(contactTip);
         }
         if (st === "awaiting_payment" && isBuyer) {
           var tip = document.createElement("p");
@@ -1573,6 +1789,51 @@
         }
         document.getElementById("pStory").textContent =
           (isEn() && p.story_en) ? p.story_en : (p.story || "");
+        var featBox = document.getElementById("featuresBox");
+        var featList = document.getElementById("pFeatures");
+        var feats = Array.isArray(p.features) ? p.features.filter(Boolean) : [];
+        var hasClarity =
+          feats.length ||
+          p.audience ||
+          p.works_now ||
+          p.limits ||
+          p.acquisition;
+        if (featBox) {
+          featBox.hidden = !hasClarity;
+          if (featList) {
+            featList.innerHTML = feats
+              .map(function (f) {
+                return "<li>" + String(f).replace(/</g, "&lt;") + "</li>";
+              })
+              .join("");
+            featList.hidden = !feats.length;
+          }
+          function fillMeta(blockId, spanId, val) {
+            var block = document.getElementById(blockId);
+            var span = document.getElementById(spanId);
+            if (!block || !span) return;
+            if (val) {
+              block.hidden = false;
+              span.textContent = val;
+            } else {
+              block.hidden = true;
+              span.textContent = "";
+            }
+          }
+          fillMeta("pAudienceBlock", "pAudience", p.audience || "");
+          fillMeta("pWorksBlock", "pWorksNow", p.works_now || "");
+          fillMeta("pLimitsBlock", "pLimits", p.limits || "");
+          var acqMap = {
+            made: t("직접 제작", "Original maker"),
+            resale: t("재판매 (양수 후 판매)", "Resale (acquired then selling)"),
+            other: t("기타", "Other"),
+          };
+          var acqLabel = acqMap[p.acquisition] || "";
+          if (acqLabel && p.acquisition_note) {
+            acqLabel += " · " + p.acquisition_note;
+          }
+          fillMeta("pAcqBlock", "pAcquisition", acqLabel);
+        }
         document.getElementById("pDemo").textContent = t("데모: ", "Demo: ") + (p.demo || "—");
         var typeL = (isEn() && p.product_type_label_en) ? p.product_type_label_en : (p.product_type_label || p.product_type || "—");
         var stL = (isEn() && p.status_label_en) ? p.status_label_en : (p.status_label || p.status || "—");
@@ -1582,6 +1843,27 @@
           (p.demo_verified ? t(" · 데모 확인됨", " · demo verified") : "") +
           t(" · 리스팅 ", " · listing ") + (p.listing_status || "—") +
           (p.license_note ? t(" · 라이선스/조건 ", " · license/terms ") + p.license_note : "");
+        var assetEl = document.getElementById("pAssets");
+        if (assetEl) {
+          var assetMap = {
+            code: t("코드", "Code"),
+            design: t("디자인", "Design"),
+            domain: t("도메인", "Domain"),
+            docs: t("기획/문서", "Docs"),
+            accounts: t("계정/스토어", "Accounts/store"),
+            other: t("기타", "Other"),
+            readme: "README",
+          };
+          var assetList = Array.isArray(p.assets) ? p.assets.filter(Boolean) : [];
+          assetEl.textContent = assetList.length
+            ? t("포함 자산: ", "Includes: ") +
+              assetList
+                .map(function (a) {
+                  return assetMap[a] || a;
+                })
+                .join(" · ")
+            : "";
+        }
 
         var price = p.price_current != null ? p.price_current : p.price_start;
         var priceEl = document.getElementById("priceCurrent");
@@ -1621,7 +1903,7 @@
             ? t("다음에 쓸 수 있는 최소 가격 ", "Next min bid ") + won(p.next_min_bid)
             : "";
         document.getElementById("feeLine").textContent =
-          t("팔리면 판매자 수수료 10% · 사는 사람은 합의 가격만", "10% seller fee when sold · buyers pay agreed price only");
+          t("팔리면 판매자 수수료 10% · 구매자는 합의 가격만", "10% seller fee when sold · buyers pay agreed price only");
         if (p.seller) {
           var cr = p.seller.credit;
           var soldN = Number(p.seller.sold_count) || 0;
@@ -1970,6 +2252,11 @@
         try {
           await api.buyNow(id);
           await refresh();
+          if (window.WakeAgainDealCertificate) {
+            window.WakeAgainDealCertificate.openFromApi(id, "award", {
+              autoOpenKey: "wa-cert-award-" + id,
+            });
+          }
         } catch (ex) {
           if (ex.code === "email_unverified") {
             location.href = "/app/#verify";
@@ -1996,6 +2283,11 @@
             tl.innerHTML = res.transfer_checklist.map(function (t) { return "<li>" + t + "</li>"; }).join("");
           }
           await refresh();
+          if (window.WakeAgainDealCertificate) {
+            window.WakeAgainDealCertificate.openFromApi(id, "award", {
+              autoOpenKey: "wa-cert-award-" + id,
+            });
+          }
         } catch (ex) {
           if (ex.code === "deal_not_ready") {
             err.hidden = false;

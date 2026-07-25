@@ -401,6 +401,15 @@ def scenario_H_full_happy() -> None:
         json={"note": "xfer"},
     )
     log("H transferred", r_tr.status_code == 200 and (j(r_tr).get("project") or {}).get("deal_status") == "inspection", str((j(r_tr).get("project") or {}).get("deal_status")))
+    r_p = cl.get(f"/api/v1/projects/{pid}", headers=b1["headers"])
+    ho = (j(r_p).get("project") or {}).get("handover_checklist") or {}
+    checks = {it["id"]: True for it in (ho.get("items") or []) if it.get("id")}
+    if checks:
+        cl.put(
+            f"/api/v1/projects/{pid}/deal/handover-checklist",
+            headers=b1["headers"],
+            json={"checks": checks},
+        )
     r_acc = cl.post(
         f"/api/v1/projects/{pid}/deal/accept",
         headers=b1["headers"],

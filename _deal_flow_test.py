@@ -355,6 +355,17 @@ def main() -> int:
 
     # --- 10) Buyer accept ---
     print("\n10) Buyer accept / settle")
+    # Handover checklist required for manual accept
+    r_proj = cl.get(f"/api/v1/projects/{pid}", headers=buyer_a["headers"])
+    ho = (j(r_proj).get("project") or {}).get("handover_checklist") or {}
+    checks = {it["id"]: True for it in (ho.get("items") or []) if it.get("id")}
+    if checks:
+        r_ho = cl.put(
+            f"/api/v1/projects/{pid}/deal/handover-checklist",
+            headers=buyer_a["headers"],
+            json={"checks": checks},
+        )
+        log("handover checklist saved", r_ho.status_code == 200, r_ho.text[:100])
     r_acc = cl.post(
         f"/api/v1/projects/{pid}/deal/accept",
         headers=buyer_a["headers"],
@@ -447,7 +458,15 @@ def main() -> int:
             row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid2,)).fetchone()
             row = database.mark_deal_paid(conn, row, note="pg2")
             database.mark_deal_transferred(conn, row, note="xfer2")
-        # re-fetch project for accept
+        r_p2 = cl.get(f"/api/v1/projects/{pid2}", headers=buyer_a["headers"])
+        ho2 = (j(r_p2).get("project") or {}).get("handover_checklist") or {}
+        checks2 = {it["id"]: True for it in (ho2.get("items") or []) if it.get("id")}
+        if checks2:
+            cl.put(
+                f"/api/v1/projects/{pid2}/deal/handover-checklist",
+                headers=buyer_a["headers"],
+                json={"checks": checks2},
+            )
         cl.post(
             f"/api/v1/projects/{pid2}/deal/accept",
             headers=buyer_a["headers"],

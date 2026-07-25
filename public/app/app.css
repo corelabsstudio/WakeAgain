@@ -897,6 +897,60 @@ body.is-native-app .app-top-hide-native {
 }
 .fee-notice-banner li { margin: 0.28rem 0; }
 .fee-notice-banner .text-link { color: var(--purple); }
+.fee-notice-banner .fee-purpose,
+.fee-purpose {
+  margin: 0.65rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.fee-notice-banner .fee-purpose {
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.18);
+}
+.acq-fieldset {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-sm, 12px);
+  padding: 0.75rem 1rem 0.9rem;
+  margin: 0 0 1rem;
+}
+.acq-fieldset legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.asset-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin: 0 0 0.85rem;
+}
+.asset-checks label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.listing-feature-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.15rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+.listing-feature-list li { margin: 0.28rem 0; }
+.listing-meta-block {
+  margin: 0.65rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.listing-meta-block strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+  font-size: 0.88rem;
+}
 .review-sla-banner p { margin: 0; color: var(--muted); }
 .price-guide {
   margin: 0.35rem 0 0.75rem;

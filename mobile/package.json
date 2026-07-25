@@ -13,6 +13,7 @@
     "add:ios": "npx cap add ios",
     "build:www": "npm run sync:www",
     "build:store:prep": "node scripts/require-prod-api.js && npm run cap:sync && node scripts/patch-android.js",
+    "build:aab": "node scripts/build-aab.js",
     "doctor": "npx cap doctor"
   },
   "dependencies": {

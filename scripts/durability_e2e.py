@@ -186,6 +186,15 @@ def seed() -> dict:
             "one_liner": "재시작·재배포 후에도 남아야 하는 테스트 매물",
             "status": "prototype",
             "product_type": "webapp",
+            "features": [
+                "로그인 후 테스트 데이터를 저장하고 다시 불러올 수 있어요",
+                "입찰과 알림이 서버 재시작 뒤에도 그대로 남아 있어요",
+                "운영자가 게시 허용하면 공개 목록에서 다시 찾을 수 있어요",
+            ],
+            "audience": "플랫폼 내구성·영속성을 검증하는 운영 테스트",
+            "works_now": "등록·입찰·알림 조회까지 가능. 결제 PG는 연동 전 테스트 모드.",
+            "limits": "실제 카드 결제 없음 · 데모 전용 매물이라 실사용 기능 제한",
+            "acquisition": "made",
             "story": "회원 데이터 영속성 검증용으로 등록한 매물입니다. 재배포 후에도 입찰·알림과 함께 유지되어야 합니다.",
             "demo": "https://example.com/demo-durability",
             "assets": ["readme"],
@@ -196,8 +205,10 @@ def seed() -> dict:
             "license_note": "MIT 양도 테스트",
             "keywords": ["내구성", "테스트", "SaaS", "웹앱", "영속성"],
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
         },
     )
     project = proj["project"]
@@ -208,9 +219,12 @@ def seed() -> dict:
     checklist = {
         "demo_ok": True,
         "not_idea_only": True,
+        "features_ok": True,
+        "works_limits_ok": True,
         "status_ok": True,
         "price_ok": True,
         "story_ok": True,
+        "rights_ok": True,
         "no_scam": True,
     }
     _, rev = req(

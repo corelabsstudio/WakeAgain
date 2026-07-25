@@ -57,6 +57,7 @@
     create: $("viewCreate"),
     notif: $("viewNotif"),
     fees: $("viewFees"),
+    coupons: $("viewCoupons"),
   };
   let listOffset = 0;
   const PAGE = 24;
@@ -92,6 +93,7 @@
       name === "settle" ||
       name === "notif" ||
       name === "fees" ||
+      name === "coupons" ||
       name === "auth" ||
       name === "verify" ||
       name === "age";
@@ -117,6 +119,8 @@
       settle: "#settlement",
       list: "#list",
       create: "#new",
+      fees: "#fees",
+      coupons: "#coupons",
     };
     if (hashMap[name]) history.replaceState(null, "", hashMap[name]);
     lastView = name === "auth" || name === "verify" ? lastView : name;
@@ -214,6 +218,7 @@
     const badge = $("trustBadge");
     const notif = $("btnNotif");
     const fees = $("btnFees");
+    const coupons = $("btnCoupons");
     if (loggedIn && u) {
       const name = u.display_name || u.real_name || (u.email && u.email.split("@")[0]) || "회원";
       if (label) label.textContent = name;
@@ -229,6 +234,7 @@
       if (prof) prof.hidden = false;
       if (notif) notif.hidden = false;
       if (fees) fees.hidden = false;
+      if (coupons) coupons.hidden = false;
       const trust = trustOf(u);
       const c = u.credit || {};
       const level = trust.level != null ? Number(trust.level) : 0;
@@ -260,6 +266,7 @@
       if (prof) prof.hidden = true;
       if (notif) notif.hidden = true;
       if (fees) fees.hidden = true;
+      if (coupons) coupons.hidden = true;
       if (badge) {
         badge.hidden = true;
         badge.className = "trust-badge";
@@ -805,15 +812,22 @@
         const el = document.createElement("article");
         el.className = "p-card";
         el.style.minHeight = "auto";
+        const pct =
+          f.fee_rate_pct != null
+            ? Number(f.fee_rate_pct)
+            : f.fee_rate != null
+              ? Math.round(Number(f.fee_rate) * 100)
+              : 10;
         el.innerHTML =
           "<div class='p-card-top'><h3></h3><span class='p-card-badge'></span></div>" +
-          "<div class='p-card-foot'><p class='p-card-price'><span>수수료 10%</span><strong></strong></p>" +
+          "<div class='p-card-foot'><p class='p-card-price'><span></span><strong></strong></p>" +
           "<p class='p-meta'></p><p class='p-live'></p></div>";
         el.querySelector("h3").textContent = f.project_title || "매물 #" + f.project_id;
         el.querySelector(".p-card-badge").textContent =
           f.status === "paid" ? t("app.fee_paid", "확인됨") : t("app.fee_wait", "대기");
         if (f.status === "paid") el.querySelector(".p-card-badge").classList.add("is-sold");
         else el.querySelector(".p-card-badge").classList.add("is-wait");
+        el.querySelector(".p-card-price span").textContent = "수수료 " + pct + "%";
         el.querySelector(".p-card-price strong").textContent =
           "₩" + Number(f.fee_amount).toLocaleString("ko-KR");
         el.querySelector(".p-meta").textContent =
@@ -827,6 +841,143 @@
     } catch (e) {
       empty.hidden = false;
       empty.textContent = e.message || "불러오기 실패";
+    }
+  }
+
+  async function loadCoupons() {
+    if (!(await ensureSession())) {
+      setView("auth");
+      return;
+    }
+    setView("coupons");
+    location.hash = "coupons";
+    const list = $("couponList");
+    const empty = $("couponEmpty");
+    if (list) list.innerHTML = "";
+    // Viral event claims (approved channel post → claim button)
+    try {
+      const promo = api.myPromoEvent
+        ? await api.myPromoEvent()
+        : await api.myPromoInstagram();
+      const subs = promo.submissions || [];
+      const claimable = subs.filter((s) => s.status === "approved");
+      const host = list;
+      claimable.forEach((s) => {
+        const el = document.createElement("article");
+        el.className = "p-card";
+        el.style.minHeight = "auto";
+        el.style.borderColor = "rgba(52,211,153,0.4)";
+        const ch = s.channel_label_ko || s.channel || "이벤트";
+        el.innerHTML =
+          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-live'>받기 가능</span></div>" +
+          "<div class='p-card-foot'><p class='p-meta'></p>" +
+          "<div class='form-actions' style='margin-top:0.5rem'>" +
+          "<button type='button' class='btn btn-primary btn-sm btn-claim'>쿠폰 받기</button></div></div>";
+        el.querySelector("h3").textContent = "이벤트 승인 · " + ch;
+        el.querySelector(".p-meta").textContent =
+          "승인됨 · 버튼을 눌러 성사 수수료 8% 쿠폰을 등록하세요 (계정당 1회)";
+        el.querySelector(".btn-claim").addEventListener("click", async () => {
+          try {
+            if (api.claimPromoEvent) await api.claimPromoEvent(s.id);
+            else await api.claimPromoInstagram(s.id);
+            alert("쿠폰이 등록되었습니다. 성사 시 수수료 8%가 적용됩니다.");
+            loadCoupons();
+          } catch (ex) {
+            alert(ex.message || "받기 실패");
+          }
+        });
+        if (host) host.appendChild(el);
+      });
+      const pending = subs.filter((s) => s.status === "pending");
+      pending.forEach((s) => {
+        const el = document.createElement("article");
+        el.className = "p-card";
+        el.style.minHeight = "auto";
+        const ch = s.channel_label_ko || s.channel || "이벤트";
+        el.innerHTML =
+          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-wait'>검토 중</span></div>" +
+          "<div class='p-card-foot'><p class='p-meta'></p></div>";
+        el.querySelector("h3").textContent = "이벤트 제출 대기 · " + ch;
+        el.querySelector(".p-meta").textContent = s.post_url || "";
+        if (host) host.appendChild(el);
+      });
+      // Soft CTA when event open and no submission yet
+      if (promo.event_open && !subs.some((s) => ["pending", "approved", "claimed"].includes(s.status))) {
+        const el = document.createElement("article");
+        el.className = "p-card";
+        el.style.minHeight = "auto";
+        el.style.borderColor = "rgba(168,85,247,0.35)";
+        el.innerHTML =
+          "<div class='p-card-top'><h3>소문내고 8% 쿠폰</h3><span class='p-card-badge is-live'>이벤트</span></div>" +
+          "<div class='p-card-foot'><p class='p-meta'></p>" +
+          "<div class='form-actions' style='margin-top:0.5rem'>" +
+          "<a class='btn btn-ghost btn-sm' href='/promo/event.html'>이벤트 참여</a></div></div>";
+        el.querySelector(".p-meta").textContent =
+          "X·인스타·블로그·커뮤니티 중 하나 · 계정당 1회 · 보상 동일";
+        if (host) host.appendChild(el);
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const data = await api.myCoupons();
+      const items = data.coupons || [];
+      if (empty) {
+        const hasCards = list && list.children.length > 0;
+        empty.hidden = items.length > 0 || hasCards;
+      }
+      items.forEach((c) => {
+        const el = document.createElement("article");
+        el.className = "p-card";
+        el.style.minHeight = "auto";
+        const st = c.status === "available" ? "사용 가능" : "사용됨";
+        const origin =
+          c.origin === "gift" ? "선물 받음" : c.origin === "redeem" ? "코드 등록" : c.origin || "";
+        el.innerHTML =
+          "<div class='p-card-top'><h3></h3><span class='p-card-badge'></span></div>" +
+          "<div class='p-card-foot'><p class='p-meta'></p>" +
+          (c.status === "available"
+            ? "<div class='form-actions' style='margin-top:0.5rem'><button type='button' class='btn btn-ghost btn-sm btn-gift'>선물하기</button></div>"
+            : "") +
+          "</div>";
+        el.querySelector("h3").textContent = c.label_ko || "수수료 쿠폰";
+        const badge = el.querySelector(".p-card-badge");
+        badge.textContent = st;
+        if (c.status === "available") badge.classList.add("is-live");
+        else badge.classList.add("is-sold");
+        el.querySelector(".p-meta").textContent =
+          origin +
+          (c.used_project_id ? " · 매물 #" + c.used_project_id : "") +
+          " · 유효기간 없음";
+        const giftBtn = el.querySelector(".btn-gift");
+        if (giftBtn) {
+          giftBtn.addEventListener("click", async () => {
+            const to = prompt(
+              "받는 사람 계정 아이디 또는 가입 이메일을 입력하세요.\n(예: 12 또는 friend@email.com)"
+            );
+            if (!to || !to.trim()) return;
+            if (
+              !confirm(
+                "이 쿠폰을 선물할까요? 받는 사람 계정에 바로 등록되며 되돌릴 수 없습니다. (사이트는 쿠폰 매매를 중개하지 않습니다.)"
+              )
+            )
+              return;
+            try {
+              await api.giftCoupon(c.id, to.trim());
+              alert("선물했습니다. 받는 사람 계정에 자동 등록되었습니다.");
+              loadCoupons();
+            } catch (ex) {
+              alert(ex.message || "선물 실패");
+            }
+          });
+        }
+        if (list) list.appendChild(el);
+      });
+    } catch (e) {
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = e.message || "불러오기 실패";
+      }
     }
   }
 
@@ -1038,6 +1189,39 @@
   $("btnNotif")?.addEventListener("click", () => loadNotifications());
   $("btnBackNotif")?.addEventListener("click", () => loadProjects(true));
   $("btnFees")?.addEventListener("click", () => loadFees());
+  $("btnCoupons")?.addEventListener("click", () => loadCoupons());
+  $("btnCouponsFromFees")?.addEventListener("click", () => loadCoupons());
+  $("btnBackCoupons")?.addEventListener("click", () => {
+    location.hash = "list";
+    setView("list");
+  });
+  $("formCouponRedeem")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("couponRedeemErr");
+    const ok = $("couponRedeemOk");
+    showErr(err);
+    if (ok) {
+      ok.hidden = true;
+      ok.textContent = "";
+    }
+    const code = $("couponCode") ? $("couponCode").value.trim() : "";
+    if (!code) {
+      showErr(err, "코드를 입력해 주세요.");
+      return;
+    }
+    try {
+      const res = await api.redeemCoupon(code);
+      if (ok) {
+        ok.hidden = false;
+        ok.textContent =
+          "등록 완료: " + ((res.coupon && res.coupon.label_ko) || "쿠폰");
+      }
+      if ($("couponCode")) $("couponCode").value = "";
+      loadCoupons();
+    } catch (ex) {
+      showErr(err, ex.message || "등록 실패");
+    }
+  });
   $("btnBackFees")?.addEventListener("click", () => loadProjects(true));
   $("btnLoadMore")?.addEventListener("click", () => loadProjects(false));
   $("btnMarkRead")?.addEventListener("click", async () => {
@@ -1332,6 +1516,50 @@
     }
   }
 
+  async function loadGiftCouponSelect() {
+    const sel = $("giftCouponSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    const emptyOpt = document.createElement("option");
+    emptyOpt.value = "";
+    emptyOpt.textContent = "사용 가능한 쿠폰 불러오는 중…";
+    sel.appendChild(emptyOpt);
+    try {
+      const data = await api.myCoupons();
+      const items = (data.coupons || []).filter((c) => c.status === "available");
+      sel.innerHTML = "";
+      if (!items.length) {
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = "선물할 수 있는 쿠폰이 없습니다";
+        sel.appendChild(o);
+        sel.disabled = true;
+        return;
+      }
+      sel.disabled = false;
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.textContent = "쿠폰 선택…";
+      sel.appendChild(ph);
+      items.forEach((c) => {
+        const o = document.createElement("option");
+        o.value = String(c.id);
+        const origin =
+          c.origin === "gift" ? "선물 받음" : c.origin === "redeem" ? "코드 등록" : c.origin || "";
+        o.textContent =
+          (c.label_ko || "수수료 쿠폰") + (origin ? " · " + origin : "") + " (#" + c.id + ")";
+        sel.appendChild(o);
+      });
+    } catch (e) {
+      sel.innerHTML = "";
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = e.message || "쿠폰 목록 실패";
+      sel.appendChild(o);
+      sel.disabled = true;
+    }
+  }
+
   async function openProfile() {
     if (!(await ensureSession())) {
       setView("auth");
@@ -1340,11 +1568,79 @@
     const u = api.getUser();
     // Profile is viewable without email verify — same as website soft gates
     fillProfileForm(u);
+    const idLine = $("myAccountIdLine");
+    const idEl = $("myAccountId");
+    if (u && u.id != null && idEl) {
+      idEl.textContent = String(u.id);
+      if (idLine) idLine.hidden = false;
+    }
     setView("profile");
     loadBlockList();
+    loadGiftCouponSelect();
   }
   $("btnProfile")?.addEventListener("click", () => openProfile());
   $("userChip")?.addEventListener("click", () => openProfile());
+
+  $("formCouponGift")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("giftCouponErr");
+    const ok = $("giftCouponOk");
+    if (err) {
+      err.hidden = true;
+      err.textContent = "";
+    }
+    if (ok) {
+      ok.hidden = true;
+      ok.textContent = "";
+    }
+    const couponId = ($("giftCouponSelect") && $("giftCouponSelect").value) || "";
+    const to = ($("giftToRecipient") && $("giftToRecipient").value.trim()) || "";
+    if (!couponId) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = "보낼 쿠폰을 선택해 주세요.";
+      }
+      return;
+    }
+    if (!to) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = "받는 사람 계정 아이디 또는 이메일을 입력해 주세요.";
+      }
+      return;
+    }
+    if (
+      !confirm(
+        "이 쿠폰을 선물할까요? 받는 사람 계정에 바로 등록되며 되돌릴 수 없습니다. (사이트는 쿠폰 매매를 중개하지 않습니다.)"
+      )
+    ) {
+      return;
+    }
+    const btn = $("btnGiftCoupon");
+    if (btn) btn.disabled = true;
+    try {
+      const res = await api.giftCoupon(couponId, to);
+      if (ok) {
+        ok.hidden = false;
+        ok.textContent =
+          (res && res.message_ko) ||
+          "선물 완료. 받는 사람 계정에 자동 등록되었습니다.";
+      }
+      if ($("giftToRecipient")) $("giftToRecipient").value = "";
+      await loadGiftCouponSelect();
+    } catch (ex) {
+      if (err) {
+        err.hidden = false;
+        err.textContent = ex.message || "선물 실패";
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  $("btnGoCouponsFromProfile")?.addEventListener("click", () => {
+    loadCoupons();
+  });
 
   $("btnBackFromProfile").addEventListener("click", () => loadProjects());
   $("btnGoSettle")?.addEventListener("click", () => {
@@ -1697,17 +1993,127 @@
     loadProjects(true);
   });
 
+  function parseFeatureLines(raw) {
+    return String(raw || "")
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^[\s·•\-\*]+/, "").trim())
+      .filter((line) => line.length >= 12)
+      .slice(0, 12);
+  }
+
+  function selectedAssets() {
+    return Array.from(document.querySelectorAll('input[name="pAsset"]:checked')).map(
+      (el) => el.value
+    );
+  }
+
+  function selectedAcquisition() {
+    const el = document.querySelector('input[name="pAcquisition"]:checked');
+    return el ? el.value : "";
+  }
+
+  function syncAcqNote() {
+    const wrap = $("pAcqNoteWrap");
+    const note = $("pAcqNote");
+    const acq = selectedAcquisition();
+    if (!wrap) return;
+    const need = acq === "resale" || acq === "other";
+    wrap.hidden = !need;
+    if (note) {
+      note.required = need;
+      if (!need) note.value = "";
+    }
+  }
+
+  document.querySelectorAll('input[name="pAcquisition"]').forEach((r) => {
+    r.addEventListener("change", syncAcqNote);
+  });
+  syncAcqNote();
+
   $("formProject").addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("projErr"));
     if (!(await requireListReady())) return;
     const works = $("pAttestWorks");
+    const featAck = $("pAttestFeatures");
     const licAck = $("pAttestLicense");
     const rights = $("pAttestRights");
+    const transfer = $("pAttestTransfer");
     const licenseNote = $("pLicense") ? $("pLicense").value.trim() : "";
+    const one = $("pOne") ? $("pOne").value.trim() : "";
+    if (one.length < 15) {
+      showErr($("projErr"), "한 줄 소개를 15자 이상 적어 주세요. 제품이 뭐 하는지 한 문장으로.");
+      if ($("pOne")) $("pOne").focus();
+      return;
+    }
+    const features = parseFeatureLines($("pFeatures") ? $("pFeatures").value : "");
+    if (features.length < 3) {
+      showErr(
+        $("projErr"),
+        "「이 제품이 하는 일」을 최소 3줄, 각 12자 이상 적어 주세요. 구매자가 화면에서 뭘 할 수 있는지로."
+      );
+      if ($("pFeatures")) $("pFeatures").focus();
+      return;
+    }
+    const audience = $("pAudience") ? $("pAudience").value.trim() : "";
+    if (audience.length < 8) {
+      showErr($("projErr"), "「누구를 위한 제품인가요?」를 8자 이상 적어 주세요.");
+      if ($("pAudience")) $("pAudience").focus();
+      return;
+    }
+    const worksNow = $("pWorksNow") ? $("pWorksNow").value.trim() : "";
+    if (worksNow.length < 20) {
+      showErr($("projErr"), "「지금 되는 것」을 데모 기준으로 20자 이상 적어 주세요.");
+      if ($("pWorksNow")) $("pWorksNow").focus();
+      return;
+    }
+    const limits = $("pLimits") ? $("pLimits").value.trim() : "";
+    if (limits.length < 10) {
+      showErr($("projErr"), "「지금 안 되는 것 · 한계」를 10자 이상 적어 주세요.");
+      if ($("pLimits")) $("pLimits").focus();
+      return;
+    }
+    const story = $("pStory") ? $("pStory").value.trim() : "";
+    if (story.length < 20) {
+      showErr($("projErr"), "「왜 팔나요?」를 20자 이상 적어 주세요. 기능은 위 칸에, 여기엔 배경만.");
+      if ($("pStory")) $("pStory").focus();
+      return;
+    }
+    const demo = $("pDemo") ? $("pDemo").value.trim() : "";
+    const demoLow = demo.toLowerCase();
+    if (
+      demo.length < 12 ||
+      ["없음", "없어요", "나중에", "none", "n/a", "no", "x", "-"].includes(demoLow) ||
+      demoLow.startsWith("나중에")
+    ) {
+      showErr($("projErr"), "데모 URL·영상 링크 또는 화면 설명을 구체적으로 적어 주세요.");
+      if ($("pDemo")) $("pDemo").focus();
+      return;
+    }
+    const acquisition = selectedAcquisition();
+    if (!acquisition) {
+      showErr($("projErr"), "매물 취득 경로(직접 제작 / 재판매 / 기타)를 선택해 주세요.");
+      return;
+    }
+    const acqNote = $("pAcqNote") ? $("pAcqNote").value.trim() : "";
+    if ((acquisition === "resale" || acquisition === "other") && acqNote.length < 10) {
+      showErr($("projErr"), "재판매·기타인 경우 어떻게 취득했는지 10자 이상 적어 주세요.");
+      if ($("pAcqNote")) $("pAcqNote").focus();
+      return;
+    }
+    const assets = selectedAssets();
+    if (!assets.length) {
+      showErr($("projErr"), "포함 자산(코드·디자인·도메인 등)을 하나 이상 선택해 주세요.");
+      return;
+    }
     if (works && !works.checked) {
-      showErr($("projErr"), "「최소한 돌아가는지 직접 확인」에 체크해 주세요.");
+      showErr($("projErr"), "「지금 되는 것을 직접 확인」에 체크해 주세요.");
       works.focus();
+      return;
+    }
+    if (featAck && !featAck.checked) {
+      showErr($("projErr"), "「하는 일·되는 것·안 되는 것이 사실」에 체크해 주세요.");
+      featAck.focus();
       return;
     }
     if (!licenseNote || licenseNote.length < 2) {
@@ -1723,6 +2129,11 @@
     if (rights && !rights.checked) {
       showErr($("projErr"), "「팔 권한이 있는 자산」에 체크해 주세요.");
       rights.focus();
+      return;
+    }
+    if (transfer && !transfer.checked) {
+      showErr($("projErr"), "「이전 절차를 끝까지 진행할 수 있다」에 체크해 주세요.");
+      transfer.focus();
       return;
     }
     const feeAck = $("pFeeAck");
@@ -1779,20 +2190,28 @@
     }
     const payload = {
       title: $("pTitle").value.trim(),
-      one_liner: $("pOne").value.trim(),
+      one_liner: one,
       status: st,
       product_type: ptype,
-      story: $("pStory").value.trim(),
-      demo: $("pDemo").value.trim(),
-      assets: ["code"],
+      features,
+      audience,
+      works_now: worksNow,
+      limits,
+      acquisition,
+      acquisition_note: acqNote,
+      story,
+      demo,
+      assets,
       keywords: listingKeywords.slice(0, KW_MAX),
       price_start: start,
       min_increment: band ? band.min_increment : 10000,
       contact: (api.getUser() && api.getUser().email) || "",
       license_note: licenseNote,
       attest_works: true,
+      attest_features: true,
       attest_license: true,
       attest_rights: true,
+      attest_transfer: true,
     };
     if (buyNowRaw != null && buyNowRaw > 0) {
       payload.price_buy_now = buyNowRaw;
@@ -1804,6 +2223,7 @@
       $("formProject").reset();
       listingKeywords = [];
       renderKeywordChips();
+      syncAcqNote();
       const kwNote = $("kwSourceNote");
       if (kwNote) {
         kwNote.hidden = true;
@@ -1877,11 +2297,21 @@
     if (h === "settlement" || h === "settle") return "settle";
     if (h === "new" || h === "create") return "create";
     if (h === "mine") return "mine";
+    if (h === "fees") return "fees";
+    if (h === "coupons" || h === "coupon") return "coupons";
     return "list";
   }
 
   async function applyRoute() {
     const route = routeFromHash();
+    if (route === "fees") {
+      await loadFees();
+      return;
+    }
+    if (route === "coupons") {
+      await loadCoupons();
+      return;
+    }
     if (route === "login") {
       setView("auth");
       switchAuthTab("login");

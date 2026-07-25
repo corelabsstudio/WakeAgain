@@ -386,6 +386,14 @@ class ProjectIn(BaseModel):
     story: str = Field(min_length=1, max_length=2000)
     demo: str = Field(min_length=1, max_length=1000)
     assets: list[str] = Field(default_factory=list)
+    # Plain-language product clarity (required for new listings)
+    features: list[str] = Field(default_factory=list, max_length=12)
+    audience: str = Field(default="", max_length=120)
+    works_now: str = Field(default="", max_length=500)
+    limits: str = Field(default="", max_length=500)
+    # made | resale | other
+    acquisition: str = Field(default="", max_length=20)
+    acquisition_note: str = Field(default="", max_length=200)
     # Marketplace tags (1–5) — AI suggest or manual; improves buyer search
     keywords: list[str] = Field(default_factory=list, max_length=10)
     # Optional buy-now; both capped so 999999999999… abuse is rejected
@@ -399,6 +407,8 @@ class ProjectIn(BaseModel):
     attest_works: bool = False
     attest_license: bool = False
     attest_rights: bool = False
+    attest_features: bool = False
+    attest_transfer: bool = False
 
 
 class KeywordSuggestIn(BaseModel):
@@ -543,9 +553,23 @@ def client_config():
         ],
         "metrics_policy": {
             "mode": "live_counts",
-            "display": ["projects", "interests", "listing_fee"],
+            "display": ["projects", "interests", "went_live"],
             "listing_fee_krw": 0,
-            "note": "사전 등록 단계: 실제 DB 건수만 표시",
+            "went_live_reveal_at": int(
+                os.environ.get("WENT_LIVE_REVEAL_AT", "5") or "5"
+            ),
+            "note": "실제 DB 건수만. 성사(세상으로 나간) 수는 임계값 이전 「추후 공개」.",
+        },
+        # Premium listing boost — scaffold only (docs/PREMIUM_BOOST.md). No purchase UI until enabled.
+        "premium_boost": {
+            "purchase_enabled": database.premium_boost_feature_enabled(),
+            "env": "PREMIUM_BOOST_ENABLED",
+            "doc": "docs/PREMIUM_BOOST.md",
+            "fields": ["boost_until", "boost_tier", "boost_product"],
+            "note_ko": (
+                "상위 노출 상품 미판매. 목록 정렬은 boost_until 활성 시 우선. "
+                "결제·구매 UI는 PREMIUM_BOOST_ENABLED=1 및 구현 후."
+            ),
         },
         "oauth": {
             "enabled": bool(oauth_mod.enabled_providers()),
@@ -656,8 +680,32 @@ def client_config():
                 "required": True,
                 "items": [
                     {
+                        "key": "features",
+                        "label_ko": "이 제품이 하는 일 (기능 3가지 이상, 쉬운 말)",
+                    },
+                    {
+                        "key": "audience",
+                        "label_ko": "누구를 위한 제품인지",
+                    },
+                    {
+                        "key": "works_now",
+                        "label_ko": "지금 되는 것",
+                    },
+                    {
+                        "key": "limits",
+                        "label_ko": "지금 안 되는 것 · 한계",
+                    },
+                    {
+                        "key": "acquisition",
+                        "label_ko": "제작 / 재판매 등 취득 경로",
+                    },
+                    {
                         "key": "attest_works",
-                        "label_ko": "최소한 돌아가는 코드·데모인지 직접 확인했습니다.",
+                        "label_ko": "데모(또는 설명 범위)에서 지금 되는 것을 직접 확인했습니다.",
+                    },
+                    {
+                        "key": "attest_features",
+                        "label_ko": "하는 일·되는 것·안 되는 것이 과장 없이 사실입니다.",
                     },
                     {
                         "key": "attest_license",
@@ -668,11 +716,15 @@ def client_config():
                         "label_ko": "제가 팔 권한이 있는 자산입니다. (남의 코드·계정 도용 아님)",
                     },
                     {
+                        "key": "attest_transfer",
+                        "label_ko": "성사·입금 확인 후 이전 절차를 끝까지 진행할 수 있습니다.",
+                    },
+                    {
                         "key": "license_note",
                         "label_ko": "라이선스 / 양도 조건 (텍스트 필수)",
                     },
                 ],
-                "message_ko": "체크·기재 없이는 매물을 올릴 수 없습니다. 허위 체크는 제재 대상입니다.",
+                "message_ko": "체크·기재 없이는 매물을 올릴 수 없습니다. 허위 체크는 제재 대상입니다. 코딩 지식은 필요 없고, 기능·데모·권리는 분명해야 합니다.",
             },
         },
         "credit_policy": {
@@ -695,9 +747,37 @@ def client_config():
     }
 
 
+def _went_live_reveal_at() -> int:
+    """Min completed deals before public hero shows the real count (else「추후 공개」)."""
+    try:
+        n = int(os.environ.get("WENT_LIVE_REVEAL_AT", "5") or "5")
+    except ValueError:
+        n = 5
+    return max(1, min(n, 1000))
+
+
+def _count_went_live(conn) -> int:
+    """Deals that finished: sold/closed auction or buyer-accepted deal. Not bids alone."""
+    row = conn.execute(
+        """
+        SELECT COUNT(*) AS c FROM projects
+        WHERE COALESCE(auction_status, '') IN ('sold', 'closed')
+           OR COALESCE(deal_status, '') = 'completed'
+           OR (sold_at IS NOT NULL AND TRIM(sold_at) != '')
+        """
+    ).fetchone()
+    return int(row["c"] or 0)
+
+
 @router.get("/stats")
 def public_stats():
-    """Honest public counters for landing hero — no fabricated GMV/match rates."""
+    """Honest public counters for landing hero — no fabricated GMV/match rates.
+
+    「다시 세상으로 나간」count is always tallied server-side; public JSON only
+    exposes the number after WENT_LIVE_REVEAL_AT (default 5). Before that the
+    hero shows「추후 공개」and count is omitted from the public payload.
+    """
+    reveal_at = _went_live_reveal_at()
     with database.db() as conn:
         projects_total = conn.execute(
             "SELECT COUNT(*) AS c FROM projects WHERE listing_status IN ('approved', 'pending')"
@@ -714,6 +794,21 @@ def public_stats():
         verified = conn.execute(
             "SELECT COUNT(*) AS c FROM users WHERE email_verified = 1"
         ).fetchone()["c"]
+        went_live_raw = _count_went_live(conn)
+
+    revealed = went_live_raw >= reveal_at
+    went_live: dict[str, Any] = {
+        "revealed": revealed,
+        "reveal_at": reveal_at,
+        "label_ko": "다시 세상으로 나간 프로젝트",
+        "label_en": "Projects back in the world",
+        "placeholder_ko": "추후 공개",
+        "placeholder_en": "Coming later",
+    }
+    if revealed:
+        went_live["count"] = went_live_raw
+    # Before reveal: do not leak the real count in public stats
+
     return {
         "ok": True,
         "mode": "live_counts",
@@ -725,9 +820,11 @@ def public_stats():
         "users": int(users),
         "users_email_verified": int(verified),
         "listing_fee_krw": 0,
+        "went_live": went_live,
         "labels": {
             "projects": "등록 매물",
             "interests": "관심 등록",
+            "went_live": "다시 세상으로 나간 프로젝트",
             "listing_fee": "등록 비용",
         },
     }
@@ -1469,18 +1566,21 @@ def list_projects(
 ):
     lim = max(1, min(int(limit or 24), 100))
     off = max(0, int(offset or 0))
-    # Buyer/seller search: title · one_liner · story · keywords JSON · product_type
+    # Buyer/seller search: title · one_liner · story · features · audience · keywords · product_type
     q_raw = (q or "").strip()
     q_term = q_raw[:80] if q_raw else ""
     like = f"%{q_term}%" if q_term else None
     search_sql = (
         "("
         "title LIKE ? OR one_liner LIKE ? OR IFNULL(story,'') LIKE ? "
+        "OR IFNULL(features_json,'') LIKE ? OR IFNULL(audience,'') LIKE ? "
+        "OR IFNULL(works_now,'') LIKE ? "
         "OR IFNULL(keywords_json,'') LIKE ? OR IFNULL(product_type,'') LIKE ?"
         ")"
         if like
         else ""
     )
+    search_like_params = 8  # keep in sync with search_sql placeholders
 
     with database.db() as conn:
         database.process_expired_auctions(conn)
@@ -1491,7 +1591,7 @@ def list_projects(
             params: list[Any] = [user["id"]]
             if like:
                 where += " AND " + search_sql
-                params.extend([like, like, like, like, like])
+                params.extend([like] * search_like_params)
             total = conn.execute(
                 f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
                 params,
@@ -1517,7 +1617,7 @@ def list_projects(
         params: list[Any] = []
         if like:
             where += " AND " + search_sql
-            params.extend([like, like, like, like, like])
+            params.extend([like] * search_like_params)
         # Hide listings from users in a block relationship with the viewer
         hidden_owners = database.blocked_owner_ids(conn, user["id"] if user else None)
         if hidden_owners:
@@ -1528,12 +1628,15 @@ def list_projects(
             f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
             params,
         ).fetchone()["c"]
+        # Active premium boost first (scaffold); no boosts ⇒ same as id DESC
+        now = database._now()
         rows = conn.execute(
             f"""
             SELECT * FROM projects WHERE {where}
-            ORDER BY id DESC LIMIT ? OFFSET ?
+            {database.listing_sort_sql()}
+            LIMIT ? OFFSET ?
             """,
-            (*params, lim, off),
+            (*params, now, lim, off),
         ).fetchall()
         projects = [database.project_to_dict(r, include_private=False) for r in rows]
     return {
@@ -1645,7 +1748,100 @@ def get_project(
         "identity_disclosed": bool(identity),
         "contact_revealed": bool(reveal_contact and identity),
     }
+    # Handover checklist: seller + buyer only, after sale
+    astatus = (row["auction_status"] if "auction_status" in row.keys() else None) or ""
+    buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+    is_party = bool(
+        user
+        and (
+            int(user["id"]) == int(row["owner_id"])
+            or (buyer_id is not None and int(user["id"]) == int(buyer_id))
+        )
+    )
+    if is_party and (astatus == "sold" or (row["sold_at"] if "sold_at" in row.keys() else None)):
+        with database.db() as conn2:
+            row2 = conn2.execute(
+                "SELECT * FROM projects WHERE id = ?", (project_id,)
+            ).fetchone()
+            if row2:
+                _, ho = database.ensure_handover_checklist(conn2, row2)
+                project["handover_checklist"] = ho
+    else:
+        project["handover_checklist"] = None
     return {"ok": True, "project": project}
+
+
+@router.get("/projects/{project_id}/certificate")
+def get_deal_certificate(
+    project_id: int,
+    kind: str = "auto",
+    user: dict = Depends(get_current_user),
+):
+    """
+    Transaction / award record confirmation for seller and buyer (same document).
+    kind=award | complete | auto (complete if done else award).
+    """
+    with database.db() as conn:
+        row = conn.execute(
+            "SELECT * FROM projects WHERE id = ?", (project_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+
+        owner_id = int(row["owner_id"])
+        buyer_raw = row["buyer_id"] if "buyer_id" in row.keys() else None
+        buyer_id = int(buyer_raw) if buyer_raw is not None else None
+        uid = int(user["id"])
+        if uid != owner_id and (buyer_id is None or uid != buyer_id):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "certificate_parties_only",
+                    "message": "거래 기록 확인서는 해당 매물의 판매자·구매자만 볼 수 있습니다.",
+                },
+            )
+
+        astatus = (row["auction_status"] or "") or ""
+        if astatus != "sold" and not (row["sold_at"] if "sold_at" in row.keys() else None):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "not_sold",
+                    "message": "아직 낙찰·성사 기록이 없습니다.",
+                },
+            )
+
+        k = (kind or "auto").strip().lower()
+        if k == "auto":
+            k = "complete" if database.deal_is_complete_row(row) else "award"
+        if k not in ("award", "complete"):
+            raise HTTPException(status_code=400, detail="kind must be award, complete, or auto")
+
+        try:
+            cert = database.build_deal_certificate(
+                conn, row, kind=k, viewer_id=uid
+            )
+        except ValueError as e:
+            code = str(e)
+            if code == "not_complete":
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": "not_complete",
+                        "message": "거래 절차 완료 전이므로 「거래 기록 확인서」는 아직 발급할 수 없습니다. 낙찰 기록 확인서를 이용해 주세요.",
+                    },
+                ) from e
+            if code == "not_sold":
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": "not_sold",
+                        "message": "아직 낙찰·성사 기록이 없습니다.",
+                    },
+                ) from e
+            raise HTTPException(status_code=400, detail=code) from e
+
+    return cert
 
 
 @router.get("/projects/{project_id}/bids")
@@ -2132,6 +2328,431 @@ class DealNoteIn(BaseModel):
     note: str = Field(default="", max_length=800)
 
 
+class CouponCampaignCreateIn(BaseModel):
+    code: str = Field(default="", max_length=40)
+    name: str = Field(default="", max_length=80)
+    max_redemptions: int = Field(default=100, ge=1, le=100)
+    fee_rate: float = Field(default=0.08, gt=0, lt=0.1)
+    note: str = Field(default="", max_length=200)
+    auto_code: bool = False  # True → server generates secure code
+    allow_url_claim: bool = False  # Viral URL verify → claim button
+    starts_at: str = Field(default="", max_length=40)  # ISO, optional
+    ends_at: str = Field(default="", max_length=40)  # ISO, optional
+
+
+class CouponRedeemIn(BaseModel):
+    code: str = Field(min_length=4, max_length=40)
+
+
+class CouponGiftIn(BaseModel):
+    """Recipient: account user id and/or email. Prefer `to` (id or email string)."""
+
+    to: str | None = Field(default=None, min_length=1, max_length=120)
+    to_email: EmailStr | None = None
+    to_user_id: int | None = Field(default=None, ge=1)
+
+
+@router.get("/me/coupons")
+def my_coupons(user: dict = Depends(get_current_user)):
+    with database.db() as conn:
+        items = database.list_user_coupons(conn, int(user["id"]))
+    return {
+        "ok": True,
+        "coupons": items,
+        "policy": {
+            "default_fee_pct": 10,
+            "coupon_fee_pct": 8,
+            "label_ko": "성사 수수료 8% 쿠폰",
+            "no_expiry": True,
+            "redeem_once_per_account": True,
+            "gift_does_not_block_redeem": True,
+            "gift_by": "user_id_or_email",
+            "gift_auto_registers": True,
+            "note_ko": (
+                "쿠폰은 판매 성사 수수료에만 적용됩니다. 유효기간 없음. "
+                "코드 등록은 계정당 1회. 선물 수령은 등록 한도와 별개이며 "
+                "선물하면 받는 사람 계정에 바로 등록됩니다. "
+                "현금화·양도 중개는 하지 않으며 선물하기만 제공합니다."
+            ),
+        },
+    }
+
+
+@router.post("/me/coupons/redeem")
+def redeem_coupon(body: CouponRedeemIn, user: dict = Depends(get_current_user)):
+    try:
+        with database.db() as conn:
+            uc = database.redeem_coupon_code(conn, int(user["id"]), body.code)
+            database.notify(
+                conn,
+                int(user["id"]),
+                "쿠폰 등록 완료",
+                uc.get("label_ko") or "수수료 쿠폰이 계정에 등록되었습니다.",
+                "/app/#coupons",
+            )
+    except ValueError as e:
+        msg = str(e)
+        code_map = {
+            "invalid or inactive code": "invalid_code",
+            "campaign sold out": "sold_out",
+            "already redeemed on this account": "already_redeemed",
+            "code required": "code_required",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": code_map.get(msg, "redeem_failed"),
+                "message": {
+                    "invalid or inactive code": "유효하지 않거나 종료된 코드입니다.",
+                    "campaign sold out": "쿠폰이 모두 소진되었습니다.",
+                    "already redeemed on this account": "이 계정은 이미 이 코드를 등록했습니다. (1계정당 1회)",
+                    "code required": "코드를 입력해 주세요.",
+                }.get(msg, msg),
+            },
+        ) from e
+    return {"ok": True, "coupon": uc}
+
+
+@router.post("/me/coupons/{coupon_id}/gift")
+def gift_coupon(
+    coupon_id: int,
+    body: CouponGiftIn,
+    user: dict = Depends(get_current_user),
+):
+    if not body.to and not body.to_email and body.to_user_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "recipient_required",
+                "message": "받는 사람 계정 아이디 또는 이메일을 입력해 주세요.",
+            },
+        )
+    try:
+        with database.db() as conn:
+            uc = database.gift_user_coupon(
+                conn,
+                coupon_id=int(coupon_id),
+                from_user_id=int(user["id"]),
+                to=(str(body.to).strip() if body.to else None),
+                to_email=str(body.to_email) if body.to_email else None,
+                to_user_id=int(body.to_user_id) if body.to_user_id is not None else None,
+            )
+    except ValueError as e:
+        msg = str(e)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "gift_failed",
+                "message": {
+                    "recipient not found": "받는 사람 계정을 찾을 수 없습니다. (계정 아이디 또는 가입 이메일)",
+                    "cannot gift to yourself": "본인에게는 선물할 수 없습니다.",
+                    "coupon not found": "쿠폰을 찾을 수 없습니다.",
+                    "coupon not available": "이미 사용했거나 선물할 수 없는 쿠폰입니다.",
+                    "invalid email": "이메일 형식이 올바르지 않습니다.",
+                    "invalid recipient": "계정 아이디(숫자) 또는 가입 이메일을 입력해 주세요.",
+                    "recipient required": "받는 사람 계정 아이디 또는 이메일을 입력해 주세요.",
+                }.get(msg, msg),
+            },
+        ) from e
+    return {
+        "ok": True,
+        "coupon": uc,
+        "message_ko": "쿠폰을 선물했습니다. 받는 사람 계정에 자동 등록되었습니다.",
+    }
+
+
+@router.get("/admin/coupons")
+def admin_list_coupons(_: None = Depends(require_admin)):
+    with database.db() as conn:
+        camps = database.list_coupon_campaigns(conn)
+    return {"ok": True, "campaigns": camps}
+
+
+@router.get("/admin/coupons/generate-code")
+def admin_generate_coupon_code(_: None = Depends(require_admin)):
+    """Suggest a secure redeem code (does not create campaign)."""
+    return {
+        "ok": True,
+        "code": database.generate_coupon_code(),
+        "hint_ko": "보안용 랜덤 코드입니다. 발급 시 이 코드를 쓰거나 다시 뽑을 수 있습니다.",
+    }
+
+
+@router.post("/admin/coupons")
+def admin_create_coupon(body: CouponCampaignCreateIn, _: None = Depends(require_admin)):
+    try:
+        with database.db() as conn:
+            code = (body.code or "").strip()
+            if body.auto_code or not code:
+                code = database.generate_coupon_code(conn)
+            camp = database.create_coupon_campaign(
+                conn,
+                code=code,
+                name=body.name or "",
+                fee_rate=float(body.fee_rate),
+                max_redemptions=min(100, int(body.max_redemptions or 100)),
+                note=body.note or "",
+                allow_url_claim=bool(body.allow_url_claim),
+                starts_at=(body.starts_at or "").strip(),
+                ends_at=(body.ends_at or "").strip(),
+            )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"ok": True, "campaign": camp}
+
+
+class PromoSubmitIn(BaseModel):
+    post_url: str = Field(min_length=8, max_length=500)
+    channel: str = Field(default="instagram", min_length=1, max_length=40)
+
+
+class PromoReviewIn(BaseModel):
+    action: Literal["approve", "reject"]
+    admin_note: str = Field(default="", max_length=300)
+
+
+def _promo_public_payload() -> dict:
+    """Shared bootstrap for homepage banner + event page (no redeem code)."""
+    with database.db() as conn:
+        open_camp = database.get_active_url_claim_campaign(conn)
+        if open_camp:
+            c = database.campaign_to_dict(open_camp, include_code=False)
+            return {
+                "ok": True,
+                "active": True,
+                "event_open": True,
+                "title_ko": "소문내고 수수료 8% 쿠폰 받기",
+                "banner_ko": "이벤트 진행 중 · 소문 내고 성사 수수료 8% 쿠폰 받기 (계정당 1회)",
+                "cta_ko": "이벤트 참여",
+                "cta_href": "/promo/event.html",
+                "campaign": {
+                    "id": c["id"],
+                    "name": c["name"],
+                    "label_ko": c["label_ko"],
+                    "fee_rate_pct": c["fee_rate_pct"],
+                    "remaining": c["remaining"],
+                    "max_redemptions": c["max_redemptions"],
+                    "no_expiry": True,
+                    "starts_at": c.get("starts_at") or "",
+                    "ends_at": c.get("ends_at") or "",
+                },
+                "channels": database.promo_channel_list(),
+                "steps_ko": [
+                    "아래 채널 중 하나만 골라 WakeAgain 소개글·후기를 올립니다.",
+                    "게시물·글 URL을 복사해 제출합니다. (채널마다 보상은 같습니다)",
+                    "운영 확인 후 승인되면, 앱 → 쿠폰에서 「쿠폰 받기」가 나타납니다.",
+                    "받기 버튼을 누르면 계정에 성사 수수료 8% 쿠폰이 등록됩니다.",
+                ],
+                "rules_ko": [
+                    "보상: 성사 수수료 8% 쿠폰 1장 (기본 10% → 8%, 판매 성사 시에만)",
+                    "계정당 이벤트 전체 1회 · 채널을 여러 개 올려도 보상은 1장",
+                    "인스타·X·블로그·커뮤니티 보상 동일 (할인율 차이 없음)",
+                    "URL 제출만으로 즉시 발급되지 않음 · 승인 후 앱에서 수령",
+                    "이벤트 종료·수량 소진 시 홈 배너·제출 버튼이 사라집니다",
+                    "쿠폰 코드는 공개하지 않습니다 · 유효기간 없음 · 매매 중개 없음",
+                ],
+                "message_ko": "",
+            }
+        closed = database.get_url_claim_campaign_for_display(conn)
+        msg = "진행 중인 소문내기 이벤트가 없습니다."
+        if closed:
+            c = database.campaign_to_dict(closed, include_code=False)
+            if c.get("remaining", 1) <= 0:
+                msg = "이번 이벤트 수량이 모두 소진되었습니다."
+            elif c.get("ends_at"):
+                msg = "이 이벤트는 종료되었습니다."
+            elif not c.get("active"):
+                msg = "이 이벤트는 종료되었습니다."
+        return {
+            "ok": True,
+            "active": False,
+            "event_open": False,
+            "title_ko": "소문내고 수수료 8% 쿠폰 받기",
+            "banner_ko": "",
+            "cta_ko": "",
+            "cta_href": "/promo/event.html",
+            "campaign": None,
+            "channels": database.promo_channel_list(),
+            "steps_ko": [],
+            "rules_ko": [],
+            "message_ko": msg,
+        }
+
+
+_PROMO_SUBMIT_ERRORS = {
+    "no active promo campaign": "진행 중인 이벤트가 없습니다.",
+    "campaign sold out": "이벤트가 마감되었습니다.",
+    "invalid channel": "채널을 선택해 주세요.",
+    "instagram url required": "인스타그램 게시물 URL을 입력해 주세요.",
+    "x url required": "X(트위터) 게시물 URL을 입력해 주세요.",
+    "blog url required": "링크드인 또는 블로그 글 URL을 입력해 주세요.",
+    "community url required": "커뮤니티 글·초대 링크 URL을 입력해 주세요.",
+    "use correct channel": "선택한 채널에 맞는 URL을 입력해 주세요.",
+    "invalid url": "올바른 URL을 입력해 주세요.",
+    "url required": "URL을 입력해 주세요.",
+    "url too long": "URL이 너무 깁니다.",
+    "already pending": "이미 검토 대기 중인 제출이 있습니다. (계정당 1회)",
+    "already approved": "이미 승인되었습니다. 앱 → 쿠폰에서 받아 주세요.",
+    "already claimed": "이미 이벤트 쿠폰을 받으셨습니다. (계정당 1회)",
+}
+
+
+@router.get("/promo/event")
+def promo_event_public():
+    """Unified viral event bootstrap for homepage + /promo/event.html."""
+    return _promo_public_payload()
+
+
+@router.get("/promo/instagram")
+def promo_instagram_public():
+    """Legacy path — same payload as unified event (Instagram is one channel)."""
+    return _promo_public_payload()
+
+
+@router.post("/me/promo/event/submit")
+def promo_event_submit(body: PromoSubmitIn, user: dict = Depends(get_current_user)):
+    try:
+        with database.db() as conn:
+            sub = database.submit_promo_event(
+                conn,
+                int(user["id"]),
+                channel=(body.channel or "instagram").strip().lower(),
+                post_url=body.post_url,
+            )
+    except ValueError as e:
+        msg = str(e)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "submit_failed",
+                "message": _PROMO_SUBMIT_ERRORS.get(msg, msg),
+            },
+        ) from e
+    return {
+        "ok": True,
+        "submission": sub,
+        "message_ko": "제출되었습니다. 운영 확인 후 알림으로 안내합니다. (계정당 1회)",
+    }
+
+
+@router.post("/me/promo/instagram/submit")
+def promo_instagram_submit(body: PromoSubmitIn, user: dict = Depends(get_current_user)):
+    """Legacy: defaults channel to instagram if omitted."""
+    ch = (body.channel or "instagram").strip().lower() or "instagram"
+    body = PromoSubmitIn(post_url=body.post_url, channel=ch)
+    return promo_event_submit(body, user)
+
+
+@router.get("/me/promo/event")
+def promo_event_mine(user: dict = Depends(get_current_user)):
+    with database.db() as conn:
+        items = database.list_user_promo_submissions(conn, int(user["id"]))
+        camp = database.get_active_url_claim_campaign(conn)
+        campaign = (
+            database.campaign_to_dict(camp, include_code=False) if camp else None
+        )
+        open_flag = bool(camp)
+    return {
+        "ok": True,
+        "submissions": items,
+        "campaign": campaign,
+        "event_open": open_flag,
+        "once_per_account": True,
+    }
+
+
+@router.get("/me/promo/instagram")
+def promo_instagram_mine(user: dict = Depends(get_current_user)):
+    return promo_event_mine(user)
+
+
+@router.post("/me/promo/event/{submission_id}/claim")
+def promo_event_claim(
+    submission_id: int, user: dict = Depends(get_current_user)
+):
+    try:
+        with database.db() as conn:
+            uc = database.claim_promo_coupon(
+                conn, int(user["id"]), int(submission_id)
+            )
+    except ValueError as e:
+        msg = str(e)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "claim_failed",
+                "message": {
+                    "not found": "제출을 찾을 수 없습니다.",
+                    "not approved": "아직 승인되지 않았습니다.",
+                    "campaign inactive": "이벤트가 종료되었습니다.",
+                    "campaign sold out": "쿠폰이 모두 소진되었습니다.",
+                }.get(msg, msg),
+            },
+        ) from e
+    return {
+        "ok": True,
+        "coupon": uc,
+        "message_ko": "쿠폰이 계정에 등록되었습니다. 성사 시 수수료 8%가 적용됩니다.",
+    }
+
+
+@router.post("/me/promo/instagram/{submission_id}/claim")
+def promo_instagram_claim(
+    submission_id: int, user: dict = Depends(get_current_user)
+):
+    return promo_event_claim(submission_id, user)
+
+
+@router.get("/admin/promo/event")
+def admin_promo_event(
+    status: str = "pending", _: None = Depends(require_admin)
+):
+    with database.db() as conn:
+        items = database.list_promo_submissions_admin(conn, status=status)
+        open_c = database.get_active_url_claim_campaign(conn)
+    return {
+        "ok": True,
+        "submissions": items,
+        "event_open": bool(open_c),
+        "event_url": "/promo/event.html",
+    }
+
+
+@router.get("/admin/promo/instagram")
+def admin_promo_instagram(
+    status: str = "pending", _: None = Depends(require_admin)
+):
+    return admin_promo_event(status=status)
+
+
+@router.post("/admin/promo/event/{submission_id}/review")
+def admin_promo_event_review(
+    submission_id: int,
+    body: PromoReviewIn,
+    _: None = Depends(require_admin),
+):
+    try:
+        with database.db() as conn:
+            sub = database.review_promo_submission(
+                conn,
+                int(submission_id),
+                action=body.action,
+                admin_note=body.admin_note or "",
+            )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"ok": True, "submission": sub}
+
+
+@router.post("/admin/promo/instagram/{submission_id}/review")
+def admin_promo_review(
+    submission_id: int,
+    body: PromoReviewIn,
+    _: None = Depends(require_admin),
+):
+    return admin_promo_event_review(submission_id, body)
+
+
 @router.post("/projects/{project_id}/deal/mark-transferred")
 def deal_mark_transferred(
     project_id: int,
@@ -2154,6 +2775,53 @@ def deal_mark_transferred(
         "ok": True,
         "project": database.project_to_dict(row, include_private=False),
         "deal_policy": database.deal_policy_public(),
+    }
+
+
+class HandoverCheckIn(BaseModel):
+    """Buyer marks receipt items. checks: { item_id: true/false }"""
+    checks: dict[str, bool] = Field(default_factory=dict)
+
+
+@router.put("/projects/{project_id}/deal/handover-checklist")
+def deal_handover_checklist(
+    project_id: int,
+    body: HandoverCheckIn,
+    user: dict = Depends(get_current_user),
+):
+    """Buyer updates handover receipt checklist (self-transfer; site only records checks)."""
+    if not body.checks:
+        raise HTTPException(status_code=400, detail="checks required")
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+        if not buyer_id or int(buyer_id) != int(user["id"]):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "buyer_only",
+                    "message": "인수 확인 목록은 낙찰 구매자만 체크할 수 있습니다.",
+                },
+            )
+        astatus = (row["auction_status"] or "") or ""
+        if astatus != "sold":
+            raise HTTPException(status_code=400, detail="성사된 매물에서만 사용할 수 있습니다.")
+        st = (row["deal_status"] if "deal_status" in row.keys() else None) or ""
+        if st not in ("paid", "inspection", "awaiting_payment"):
+            raise HTTPException(
+                status_code=400,
+                detail="입금·이전·검수 단계에서만 체크할 수 있습니다.",
+            )
+        row, checklist = database.apply_handover_checks(
+            conn, row, checks=body.checks
+        )
+    return {
+        "ok": True,
+        "handover_checklist": checklist,
+        "project": database.project_to_dict(row, include_private=False),
+        "message_ko": "인수 확인 목록을 저장했습니다.",
     }
 
 
@@ -2182,6 +2850,15 @@ def deal_buyer_accept(
             raise HTTPException(
                 status_code=400,
                 detail="이전·검수 단계에서만 인수할 수 있습니다. 판매자 「이전 완료」 후 이용해 주세요.",
+            )
+        row, _ho = database.ensure_handover_checklist(conn, row)
+        if not database.handover_all_required_checked(row):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "handover_checklist_incomplete",
+                    "message": "인수 확인 목록의 필수 항목을 모두 체크한 뒤 「인수하기」를 눌러 주세요. (직접 이전 후 본인 확인)",
+                },
             )
         try:
             row = database.settle_complete(
@@ -2720,7 +3397,15 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             status_code=400,
             detail={
                 "code": "attest_works_required",
-                "message": "등록 전 「최소한 돌아가는지 직접 확인」에 체크해 주세요.",
+                "message": "등록 전 「지금 되는 것을 직접 확인」에 체크해 주세요.",
+            },
+        )
+    if not body.attest_features:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "attest_features_required",
+                "message": "등록 전 「하는 일·되는 것·안 되는 것이 사실」에 체크해 주세요.",
             },
         )
     if not body.attest_license:
@@ -2739,6 +3424,14 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 "message": "등록 전 「팔 권한이 있는 자산」에 체크해 주세요.",
             },
         )
+    if not body.attest_transfer:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "attest_transfer_required",
+                "message": "등록 전 「이전 절차를 끝까지 진행할 수 있다」에 체크해 주세요.",
+            },
+        )
     license_note = (body.license_note or "").strip()
     if len(license_note) < 2:
         raise HTTPException(
@@ -2746,6 +3439,96 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             detail={
                 "code": "license_note_required",
                 "message": "라이선스 또는 양도 조건을 적어 주세요. (예: MIT, 사유 비공개 양도 등)",
+            },
+        )
+
+    features = [
+        str(f).strip()
+        for f in (body.features or [])
+        if isinstance(f, str) and str(f).strip()
+    ][:12]
+    features = [f[:120] for f in features if len(f) >= 12]
+    if len(features) < 3:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "features_required",
+                "message": "「이 제품이 하는 일」을 최소 3가지, 각 12자 이상 쉬운 말로 적어 주세요. (코딩 용어 불필요)",
+            },
+        )
+
+    audience = (body.audience or "").strip()
+    if len(audience) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "audience_required",
+                "message": "「누구를 위한 제품인가요?」를 8자 이상 적어 주세요.",
+            },
+        )
+
+    works_now = (body.works_now or "").strip()
+    if len(works_now) < 20:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "works_now_required",
+                "message": "「지금 되는 것」을 데모 기준으로 20자 이상 적어 주세요.",
+            },
+        )
+
+    limits_note = (body.limits or "").strip()
+    if len(limits_note) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "limits_required",
+                "message": "「지금 안 되는 것 · 한계」를 10자 이상 적어 주세요. 솔직할수록 분쟁이 줄어듭니다.",
+            },
+        )
+
+    acquisition = (body.acquisition or "").strip().lower()
+    if acquisition not in ("made", "resale", "other"):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "acquisition_required",
+                "message": "매물 취득 경로(직접 제작 / 사서·양도받아 재판매 / 기타)를 선택해 주세요.",
+            },
+        )
+    acquisition_note = (body.acquisition_note or "").strip()
+    if acquisition in ("resale", "other") and len(acquisition_note) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "acquisition_note_required",
+                "message": "재판매·기타인 경우 어떻게 취득했는지 10자 이상 적어 주세요.",
+            },
+        )
+
+    story = body.story.strip()
+    if len(story) < 20:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "story_too_short",
+                "message": "「왜 팔나요?」를 20자 이상 적어 주세요. 기능 설명은 위 칸에, 여기엔 배경만.",
+            },
+        )
+
+    demo = body.demo.strip()
+    demo_low = demo.lower()
+    hollow_demo = (
+        len(demo) < 12
+        or demo_low in ("없음", "없어요", "나중에", "none", "n/a", "no", "x", "-")
+        or demo_low.startswith("나중에")
+    )
+    if hollow_demo:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "demo_required",
+                "message": "데모 URL·영상 링크 또는 화면 설명을 구체적으로 적어 주세요. (배포 없어도 녹화 링크 OK)",
             },
         )
 
@@ -2780,7 +3563,19 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         min_inc = band_inc
 
     now = database._now()
-    assets = [a for a in body.assets if isinstance(a, str)][:20]
+    assets = [
+        a.strip()
+        for a in body.assets
+        if isinstance(a, str) and a.strip()
+    ][:20]
+    if not assets:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "assets_required",
+                "message": "포함 자산(코드·디자인·도메인 등)을 하나 이상 선택해 주세요. 실제로 넘길 수 있는 것만.",
+            },
+        )
     contact = (body.contact or user["email"]).strip()
     ends = _auction_end_iso(int(body.auction_days or 7))
 
@@ -2807,8 +3602,10 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
 
     attest = {
         "works": True,
+        "features": True,
         "license": True,
         "rights": True,
+        "transfer": True,
         "at": now,
     }
     with database.db() as conn:
@@ -2816,12 +3613,16 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             """
             INSERT INTO projects (
               owner_id, title, one_liner, status, product_type, story, demo, assets_json,
-              keywords_json,
+              keywords_json, features_json, audience, works_now, limits_note,
+              acquisition, acquisition_note,
               price_start, price_buy_now, contact, listing_status,
               price_current, bid_count, min_increment, auction_ends_at, auction_status,
               license_note, seller_attest_json,
               created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?)
+            ) VALUES (
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?
+            )
             """,
             (
                 user["id"],
@@ -2829,10 +3630,16 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 body.one_liner.strip(),
                 status,
                 product_type,
-                body.story.strip(),
-                body.demo.strip(),
+                story,
+                demo,
                 json.dumps(assets, ensure_ascii=False),
                 json.dumps(keywords, ensure_ascii=False),
+                json.dumps(features, ensure_ascii=False),
+                audience[:120],
+                works_now[:500],
+                limits_note[:500],
+                acquisition,
+                acquisition_note[:200] if acquisition_note else "",
                 start,
                 buy_now,
                 contact,
@@ -2873,9 +3680,12 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
 REVIEW_CHECKLIST = [
     {"id": "demo_ok", "label": "데모 URL/영상/스크린이 실제로 열리는가"},
     {"id": "not_idea_only", "label": "아이디어·문서만이 아닌가 (실행 흔적 있음)"},
+    {"id": "features_ok", "label": "「하는 일」이 구체적인가 (이름·한 줄만으로 끝내지 않음)"},
+    {"id": "works_limits_ok", "label": "되는 것 / 안 되는 것이 과장 없이 읽히는가"},
     {"id": "status_ok", "label": "제품 상태(프로토/베타/출시/기타)가 과하지 않은가"},
     {"id": "price_ok", "label": "시작가가 상태·근거에 비해 터무니없지 않은가"},
-    {"id": "story_ok", "label": "스토리(왜 만들었고 왜 멈췄는지)가 읽히는가"},
+    {"id": "story_ok", "label": "왜 파는지(스토리)가 읽히는가"},
+    {"id": "rights_ok", "label": "권리·양도·취득 경로가 납득 가능한가"},
     {"id": "no_scam", "label": "보장 수익·명백한 사기·권리 침해 티가 없는가"},
 ]
 

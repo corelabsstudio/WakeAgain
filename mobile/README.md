@@ -82,10 +82,24 @@ npm run build:store:prep
 
 ### Google Play
 
-1. Android Studio에서 `android/` 열기  
-2. **Build → Generate Signed Bundle / APK → Android App Bundle (.aab)**  
-3. Play Console → 앱 만들기 → AAB 업로드  
-4. 스토어 등록정보: 스크린샷, 개인정보처리방침 URL (`/legal/privacy.html`), 콘텐츠 등급  
+**원클릭 (권장 · 웹 동기화 + 서명 AAB)**
+
+```powershell
+cd C:\Users\hysoo\projects\WakeAgain\mobile
+$env:WAKEAGAIN_API_BASE = "https://wakeagain.com"
+npm run build:aab
+```
+
+산출물 (항상 여기):
+
+| 파일 | 용도 |
+|------|------|
+| `mobile/dist/wakeagain-release.aab` | Play 업로드용 **고정 경로** |
+| `mobile/dist/wakeagain-release-YYYYMMDD.aab` | 날짜 백업 |
+
+키스토어: `android/keystore/` (gitignore · 비밀번호 `READ_ME_PASSWORDS.txt`)
+
+수동: Android Studio → Generate Signed Bundle · Play Console 내부 테스트 업로드 · 스토어 등록정보·개인정보처리방침 URL 등.
 
 ### Apple App Store (Mac)
 

@@ -343,6 +343,15 @@
         { method: "POST", body: JSON.stringify({ note: note || "" }) }
       );
     },
+    /** Buyer: { itemId: true/false } receipt checklist */
+    async updateHandoverChecklist(projectId, checks) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/deal/handover-checklist",
+        { method: "PUT", body: JSON.stringify({ checks: checks || {} }) }
+      );
+    },
     async dealDispute(projectId, note) {
       return request(
         "/api/v1/projects/" + encodeURIComponent(projectId) + "/deal/dispute",
@@ -427,8 +436,74 @@
     async myFees() {
       return request("/api/v1/me/fees");
     },
+    async myCoupons() {
+      return request("/api/v1/me/coupons");
+    },
+    async redeemCoupon(code) {
+      return request("/api/v1/me/coupons/redeem", {
+        method: "POST",
+        body: JSON.stringify({ code: String(code || "").trim() }),
+      });
+    },
+    async giftCoupon(couponId, toRecipient) {
+      const to = String(toRecipient || "").trim();
+      const body = { to: to };
+      // Also send typed fields when obvious (backend accepts either)
+      if (/^\d+$/.test(to)) {
+        body.to_user_id = parseInt(to, 10);
+      } else if (to.indexOf("@") >= 0) {
+        body.to_email = to;
+      }
+      return request(
+        "/api/v1/me/coupons/" + encodeURIComponent(couponId) + "/gift",
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        }
+      );
+    },
+    async promoEventPublic() {
+      return request("/api/v1/promo/event");
+    },
+    async myPromoEvent() {
+      return request("/api/v1/me/promo/event");
+    },
+    async submitPromoEvent(channel, postUrl) {
+      return request("/api/v1/me/promo/event/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          channel: String(channel || "instagram").trim(),
+          post_url: String(postUrl || "").trim(),
+        }),
+      });
+    },
+    async claimPromoEvent(submissionId) {
+      return request(
+        "/api/v1/me/promo/event/" +
+          encodeURIComponent(submissionId) +
+          "/claim",
+        { method: "POST", body: "{}" }
+      );
+    },
+    /** @deprecated use myPromoEvent — kept for older pages */
+    async myPromoInstagram() {
+      return this.myPromoEvent();
+    },
+    async submitPromoInstagram(postUrl) {
+      return this.submitPromoEvent("instagram", postUrl);
+    },
+    async claimPromoInstagram(submissionId) {
+      return this.claimPromoEvent(submissionId);
+    },
     async getProject(id) {
       return request("/api/v1/projects/" + encodeURIComponent(id));
+    },
+    /** kind: award | complete | auto — same doc for seller and buyer */
+    async getDealCertificate(projectId, kind) {
+      var q = kind ? "?kind=" + encodeURIComponent(kind) : "?kind=auto";
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/certificate" + q
+      );
     },
     async reportProject(projectId, reason, detail) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/report", {

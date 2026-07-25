@@ -25,6 +25,7 @@
       </a>
       <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="메뉴">
         <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
         <a href="/app/#list" data-i18n="nav.app_open">앱</a>
       </nav>
       <div class="nav-actions">
@@ -39,13 +40,17 @@
   </header>
 
   <main class="form-page">
-    <p class="eyebrow" data-i18n="sell.eyebrow">판매자 · 사전 등록</p>
-    <h1 data-i18n="sell.title">내 프로젝트 올리기</h1>
-    <p class="lede" data-i18n="sell.lede_html" data-i18n-html>방치·미출시 프로젝트를 카드로 등록합니다. 큰돈이 오갈 수 있는 장이라 <strong>공개 매물 등록은 이메일 인증 + 실명·휴대폰</strong>이 필요합니다.</p>
+    <p class="eyebrow" data-i18n="sell.eyebrow">판매 · 올리기</p>
+    <h1 data-i18n="sell.title">프로젝트 올리기</h1>
+    <p class="lede" data-i18n="sell.lede_html" data-i18n-html>멈춘·미출시 프로젝트를 올려 팔 수 있어요. 공개 등록은 <strong>이메일 인증 + 실명·휴대폰</strong>이 필요합니다.</p>
+    <p class="muted fine" style="margin:-0.5rem 0 1.1rem;line-height:1.5">
+      처음이라면 <a class="text-link" href="/guide/how-to-sell.html"><strong>판매 가이드</strong></a>를 먼저 확인해 주세요.
+      (등록 → 검수 → 성사 → 이전 → 정산)
+    </p>
 
     <div class="review-sla-banner" role="note">
       <strong data-i18n="sell.sla_title">검수 안내</strong>
-      <p data-i18n="sell.sla_body_html" data-i18n-html>계정으로 올린 매물은 <strong>바로 공개되지 않습니다.</strong> 운영 <strong>형식 검수</strong> 후 공개되며, 보통 <strong>1~2영업일</strong> 안에 게시 허용·보류·반려가 반영됩니다. (품질·가치 보증 아님)</p>
+      <p data-i18n="sell.sla_body_html" data-i18n-html>계정으로 올린 매물은 <strong>바로 공개되지 않습니다.</strong> 운영 <strong>형식 검수</strong> 후 공개되며, 보통 <strong>1~2영업일</strong> 안에 게시 허용·보류·반려가 반영됩니다.</p>
     </div>
 
     <div class="form-path-cards">
@@ -60,7 +65,7 @@
     </div>
     <p class="trust-inline-note muted fine" data-i18n="sell.trust_html" data-i18n-html>
       올리기 전 궁금하면
-      <a class="text-link" href="/diagnose.html">내 프로젝트는 얼마일까? (30초 무료 진단)</a>
+      <a class="text-link" href="/diagnose.html">내 프로젝트는 얼마일까? (무료 진단)</a>
       · 성사 전 정산 계좌(Lv3) 확인
     </p>
 
@@ -73,6 +78,7 @@
           <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">이용약관 제13조</a>
         </li>
       </ul>
+      <p class="fee-purpose" data-i18n="sell.fee_purpose">거래 수수료는 모든 유저분들의 공정하고 투명한 거래를 위하여, 사이트 발전에 사용하겠습니다.</p>
     </div>
 
     <div class="safety-notice" role="note" style="margin-bottom:1.25rem">
@@ -81,6 +87,7 @@
         <li data-i18n="sell.safety_1">허위·남의 자산·기망 매물은 즉시 차단·신고 대상입니다.</li>
         <li data-i18n="sell.safety_2_html" data-i18n-html>매물 품질·내용의 1차 책임은 <strong>판매자</strong>에게 있습니다. 플랫폼은 거래 당사자가 아닙니다.</li>
         <li data-i18n="sell.safety_3_html" data-i18n-html><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 어긴 손해는 본인 책임입니다.</li>
+        <li>공개 매물에는 <strong>데모·기능 설명</strong>만. 소스·API 키·DB 접속 정보는 올리지 마세요. (입금 확인 후 쪽지로 전달)</li>
       </ul>
     </div>
 
@@ -122,8 +129,21 @@
       <div class="status-criteria" id="sellStatusCriteria" hidden></div>
       <p class="price-guide" id="sellPriceGuide" data-i18n="sell.price_guide_default">상태에 따라 희망 시작가 권장 구간이 달라집니다.</p>
 
-      <label for="story"><span data-i18n="sell.story">스토리 (왜 만들었고 왜 멈췄는지)</span> <span class="req">*</span></label>
-      <textarea id="story" name="story" required maxlength="2000" placeholder="200자 이상 권장. 솔직하게 적어 주세요." data-i18n-placeholder="sell.story_ph"></textarea>
+      <label for="features"><span data-i18n="sell.features">이 제품이 하는 일 (최소 3줄)</span> <span class="req">*</span></label>
+      <p class="price-guide muted fine" data-i18n="sell.features_guide">코딩 몰라도 됩니다. 화면·버튼 기준으로 한 줄에 하나씩.</p>
+      <textarea id="features" name="features" required maxlength="900" rows="4" placeholder="· 예약을 받으면 알림이 가요&#10;· 손님 목록을 볼 수 있어요&#10;· 간단한 통계 화면이 있어요" data-i18n-placeholder="sell.features_ph"></textarea>
+
+      <label for="audience"><span data-i18n="sell.audience">누구를 위한 제품인가요?</span> <span class="req">*</span></label>
+      <input id="audience" name="audience" required maxlength="120" minlength="8" placeholder="예: 1인 카페 사장님" data-i18n-placeholder="sell.audience_ph" />
+
+      <label for="works_now"><span data-i18n="sell.works_now">지금 되는 것</span> <span class="req">*</span></label>
+      <textarea id="works_now" name="works_now" required maxlength="500" rows="2" placeholder="데모에서 실제로 눌러볼 수 있는 것" data-i18n-placeholder="sell.works_ph"></textarea>
+
+      <label for="limits"><span data-i18n="sell.limits">지금 안 되는 것 · 한계</span> <span class="req">*</span></label>
+      <textarea id="limits" name="limits" required maxlength="500" rows="2" placeholder="예: 결제 미연동 · iOS 없음" data-i18n-placeholder="sell.limits_ph"></textarea>
+
+      <label for="story"><span data-i18n="sell.story">왜 팔나요? (스토리)</span> <span class="req">*</span></label>
+      <textarea id="story" name="story" required maxlength="2000" minlength="20" placeholder="만든 이유·멈춘 이유, 또는 재판매 이유. 기능은 위에." data-i18n-placeholder="sell.story_ph"></textarea>
 
       <label for="demo"><span data-i18n="sell.demo">데모 (URL · 영상 링크 · 설명)</span> <span class="req">*</span></label>
       <p class="price-guide muted fine" data-i18n="sell.demo_guide_html" data-i18n-html>
@@ -179,7 +199,7 @@
         <button class="btn btn-primary btn-lg" type="submit" data-i18n="sell.submit">등록 요청하기</button>
         <a class="btn btn-ghost" href="/" data-i18n="common.cancel">취소</a>
       </div>
-      <p class="note" data-i18n="sell.form_note">계정 등록 건은 형식 검수 후 공개(보통 1~2영업일 · 품질 보증 아님). 성사 시 판매자 수수료 10%(약관 제13조) · 구매자는 합의가만. 등록 비용 무료.</p>
+      <p class="note" data-i18n="sell.form_note">계정 등록 건은 형식 검수 후 공개(보통 1~2영업일). 성사 시 판매자 수수료 10%(약관 제13조) · 구매자는 합의가만. 등록 비용 무료.</p>
       <p class="form-error" id="formError" hidden></p>
     </form>
 

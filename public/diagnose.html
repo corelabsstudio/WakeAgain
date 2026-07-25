@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title data-i18n="diag.doc_title">내 프로젝트는 얼마일까? (30초 무료 진단) — WakeAgain</title>
-  <meta name="description" content="내 프로젝트는 얼마일까? 30초 무료 진단. 시작가 힌트와 올리기 전 체크리스트. 가입 없이 바로." />
+  <title data-i18n="diag.doc_title">내 프로젝트는 얼마일까? (무료 진단) — WakeAgain</title>
+  <meta name="description" content="내 프로젝트는 얼마일까? 무료 진단. 설문 + 선택 제품 설명 반영. 시작가 힌트와 올리기 전 체크리스트. 가입 없이 바로." />
   <meta name="theme-color" content="#050508" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -115,6 +115,68 @@
     .diag-list li.ok { color: #86efac; }
     .diag-list li.bad { color: #fca5a5; }
     .diag-cta { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1.25rem; }
+    .diag-field { margin: 0 0 1rem; }
+    .diag-field label {
+      display: block; font-size: 0.88rem; font-weight: 600;
+      margin: 0 0 0.4rem; color: var(--text);
+    }
+    .diag-field .diag-hint {
+      display: block; font-size: 0.8rem; font-weight: 500;
+      color: var(--muted); margin: 0.15rem 0 0.45rem; line-height: 1.4;
+    }
+    .diag-field textarea {
+      width: 100%; box-sizing: border-box; min-height: 96px;
+      resize: vertical; font: inherit; color: var(--text);
+      padding: 0.75rem 0.9rem; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--card);
+      line-height: 1.45;
+    }
+    .diag-field textarea:focus {
+      outline: none;
+      border-color: rgba(168, 85, 247, 0.55);
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+    }
+    .diag-field textarea::placeholder { color: var(--muted); opacity: 0.85; }
+    .diag-opt-note {
+      margin: 0 0 1rem; padding: 0.75rem 0.9rem; border-radius: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      background: rgba(168, 85, 247, 0.08);
+      font-size: 0.88rem; line-height: 1.5; color: var(--muted);
+    }
+    .diag-opt-note strong { color: var(--text); font-weight: 700; }
+    .diag-step-actions {
+      display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.25rem;
+    }
+    .diag-reflect-box {
+      margin: 0 0 1rem; padding: 0.9rem 1rem; border-radius: 14px;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.07);
+    }
+    .diag-reflect-box h3 {
+      margin: 0 0 0.45rem; font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 0.02em; color: var(--muted);
+    }
+    .diag-reflect-box p {
+      margin: 0 0 0.55rem; font-size: 0.92rem; line-height: 1.5;
+      color: var(--text); white-space: pre-wrap; word-break: keep-all;
+    }
+    .diag-reflect-box p:last-child { margin-bottom: 0; }
+    .diag-reflect-box .diag-reflect-label {
+      display: block; font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); margin-bottom: 0.2rem; letter-spacing: 0.04em;
+    }
+    .diag-error-warn {
+      margin: 0 0 1rem; padding: 0.9rem 1rem; border-radius: 14px;
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      background: linear-gradient(145deg, rgba(127, 29, 29, 0.35), rgba(15, 15, 22, 0.9));
+    }
+    .diag-error-warn .diag-error-title {
+      margin: 0 0 0.35rem; font-size: 0.95rem; font-weight: 800;
+      color: #fecdd3; line-height: 1.35;
+    }
+    .diag-error-warn .diag-error-body {
+      margin: 0; font-size: 0.88rem; line-height: 1.5; color: #f5f5f4;
+    }
   </style>
 </head>
 <body class="form-body">
@@ -126,6 +188,7 @@
       </a>
       <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="메뉴">
         <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
+        <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
         <a href="/sell.html" data-i18n="nav.list">내 프로젝트 올리기</a>
       </nav>
       <div class="nav-actions">
@@ -139,10 +202,12 @@
   </header>
 
   <main class="legal-page diag-wrap">
-    <p class="eyebrow" data-i18n="diag.eyebrow">30초 무료 진단 · 가입 불필요</p>
+    <p class="eyebrow" data-i18n="diag.eyebrow">무료 진단 · 가입 불필요</p>
     <h1 data-i18n="diag.title">내 프로젝트는 얼마일까?</h1>
     <p class="lede" style="line-height:1.55" data-i18n="diag.lede" data-i18n-html>
-      30초면 끝 — <strong>시작가 힌트</strong>로 가격 감을 잡고, <strong>올리기 준비도</strong>로 지금 올릴지·손볼지 바로 판단하세요. 과장 없는 가이드일 뿐, 판매 보증이 아닙니다.
+      짧은 설문 후, <strong>어떤 제품인지·주요 기능</strong>을 적으면 진단에 반영됩니다 (선택).
+      안 적어도 결과는 나오지만 <strong>시작가 오차가 커질 수 있습니다</strong>.
+      참고용 가이드입니다.
     </p>
 
     <div class="diag-progress" aria-hidden="true"><i id="diagBar"></i></div>
@@ -205,8 +270,31 @@
       </div>
     </section>
 
-    <!-- Result -->
+    <!-- Q6 optional product description -->
     <section class="diag-step form-card" data-step="5" id="step5">
+      <p class="diag-q" data-i18n="diag.q6">6. 어떤 제품인가요? (선택)</p>
+      <p class="diag-opt-note" data-i18n="diag.q6_note" data-i18n-html>
+        <strong>선택</strong>입니다. 적으면 진단·시작가 힌트에 반영해 신빙성을 높입니다.
+        건너뛰어도 결과는 나오지만, <strong>오차가 크게 날 수 있습니다</strong>.
+      </p>
+      <div class="diag-field">
+        <label for="diagDesc" data-i18n="diag.q6_desc_label">이 제품이 무엇인지</label>
+        <span class="diag-hint" data-i18n="diag.q6_desc_hint">한 줄~몇 줄: 누구를 위한 무엇인지</span>
+        <textarea id="diagDesc" maxlength="800" rows="3" data-i18n-placeholder="diag.q6_desc_ph" placeholder="예: 프리랜서 견적·계약서를 한곳에서 관리하는 웹 앱"></textarea>
+      </div>
+      <div class="diag-field">
+        <label for="diagFeatures" data-i18n="diag.q6_feat_label">주요 기능</label>
+        <span class="diag-hint" data-i18n="diag.q6_feat_hint">있는 것만 짧게 · 줄바꿈 OK</span>
+        <textarea id="diagFeatures" maxlength="800" rows="4" data-i18n-placeholder="diag.q6_feat_ph" placeholder="예:&#10;· 견적서 PDF 생성&#10;· 계약 상태 추적&#10;· 카카오 알림"></textarea>
+      </div>
+      <div class="diag-step-actions">
+        <button type="button" class="btn btn-primary" id="diagApplyProduct" data-i18n="diag.q6_apply">반영하고 결과 보기</button>
+        <button type="button" class="btn btn-ghost" id="diagSkipProduct" data-i18n="diag.q6_skip">건너뛰고 결과 보기</button>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section class="diag-step form-card" data-step="6" id="step6">
       <p class="eyebrow" data-i18n="diag.result">결과</p>
 
       <div class="diag-disclaimer" role="note" aria-label="진단 면책">
@@ -215,15 +303,35 @@
           이 진단은 통계에 기반한 힌트이며, 실제 거래 가격과 무관합니다.
         </p>
         <p class="diag-disclaimer-body" data-i18n="diag.disclaimer_body" data-i18n-html>
-          공식 감정·시세·판매 보장이 <strong>아닙니다</strong>.
+          공식 감정·시세가 <strong>아닙니다</strong>.
           시작가·준비도는 입력 답변과 내부 가이드 구간으로 만든 <strong>참고용 힌트</strong>일 뿐입니다.
           실제 낙찰·합의 가격은 시장·데모·경쟁 입찰에 따라 달라집니다.
+        </p>
+      </div>
+
+      <div id="diagProductReflect" class="diag-reflect-box" hidden>
+        <h3 data-i18n="diag.reflect_title">진단에 반영된 제품 설명</h3>
+        <div id="diagReflectDescWrap" hidden>
+          <span class="diag-reflect-label" data-i18n="diag.reflect_desc">제품</span>
+          <p id="diagReflectDesc"></p>
+        </div>
+        <div id="diagReflectFeatWrap" hidden>
+          <span class="diag-reflect-label" data-i18n="diag.reflect_feat">주요 기능</span>
+          <p id="diagReflectFeat"></p>
+        </div>
+      </div>
+
+      <div id="diagSparseWarn" class="diag-error-warn" hidden role="status">
+        <p class="diag-error-title" data-i18n="diag.sparse_title">제품 설명을 건너뛰었습니다</p>
+        <p class="diag-error-body" data-i18n="diag.sparse_body">
+          설문만으로 추정한 결과라 시작가 힌트 오차가 크게 날 수 있습니다. 더 맞추려면 다시 진단에서 제품·기능을 적어 주세요.
         </p>
       </div>
 
       <p class="muted fine" id="diagLabel" data-i18n="diag.label_ready">올리기 준비도</p>
       <p class="diag-result-score" id="diagScore">—</p>
       <p class="muted" id="diagVerdict" style="line-height:1.5"></p>
+      <p class="muted fine" id="diagConfidence" style="margin:0.35rem 0 0;line-height:1.45"></p>
 
       <div class="diag-price-box">
         <p class="muted fine" style="margin:0 0 0.35rem"><span data-i18n="diag.price_hint_approx">시작가 힌트 (대략)</span> <span id="diagStatusLabel"></span></p>
@@ -246,7 +354,7 @@
           이 진단은 통계에 기반한 힌트이며, 실제 거래 가격과 무관합니다.
         </p>
         <p class="diag-disclaimer-body" data-i18n="diag.disclaimer_body" data-i18n-html>
-          공식 감정·시세·판매 보장이 <strong>아닙니다</strong>.
+          공식 감정·시세가 <strong>아닙니다</strong>.
           시작가·준비도는 입력 답변과 내부 가이드 구간으로 만든 <strong>참고용 힌트</strong>일 뿐입니다.
           실제 낙찰·합의 가격은 시장·데모·경쟁 입찰에 따라 달라집니다.
         </p>
@@ -276,8 +384,8 @@
   </footer>
 
   <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260721h"></script>
-  <script src="/js/i18n.js?v=20260721h"></script>
+  <script src="/js/i18n-messages.js?v=20260724e"></script>
+  <script src="/js/i18n.js?v=20260724e"></script>
   <script>
     (function () {
       function tt(key, vars) {
@@ -288,8 +396,12 @@
 
       var answers = {};
       var step = 0;
-      var TOTAL = 5;
+      var SURVEY_LAST = 4; /* steps 0–4 objective questions */
+      var PRODUCT_STEP = 5;
+      var RESULT_STEP = 6;
+      var TOTAL = 6; /* progress denominator through product step */
       var lastResult = null;
+      var productSkipped = false;
 
       function statusBands() {
         return {
@@ -390,7 +502,16 @@
         var s = Number(score) || 50;
         m *= 0.7 + (s / 100) * 0.55;
 
-        var center = Math.round((base * m) / 10000) * 10000;
+        /* Free-text analysis drives center & uniqueness (not survey-only buckets) */
+        var richness = productRichness();
+        m *= richness.priceMult;
+
+        /* Filled text → 5천 원 단위 + fingerprint (같은 설문·다른 문구 = 다른 금액) */
+        var stepWon = richness.filled ? 5000 : 10000;
+        var center = Math.round((base * m) / stepWon) * stepWon;
+        if (richness.filled) {
+          center = Math.round((center + richness.priceOffset) / stepWon) * stepWon;
+        }
         center = Math.max(floor, Math.min(cap, center));
 
         var spread;
@@ -399,24 +520,274 @@
         else if (s >= 45) spread = 0.22;
         else spread = 0.28;
 
+        spread += richness.spreadAdj;
+        if (richness.level === 0) {
+          spread = Math.min(0.45, Math.max(spread, 0.28) + 0.1);
+        } else {
+          spread = Math.max(0.08, Math.min(0.32, spread));
+        }
+
         var lo = center * (1 - spread);
         var hi = center * (1 + spread * 0.85);
         if (demo === "none" || demo === "screen") hi = Math.min(hi, center * 1.08);
         if (lic !== "clear") hi = Math.min(hi, center * 1.1);
+        if (richness.level === 0) {
+          lo = center * (1 - spread);
+          hi = center * (1 + Math.min(0.48, spread * 1.2));
+        } else if (richness.signalBoost >= 0.12) {
+          /* Strong text signals → allow slightly higher ceiling in band */
+          hi = Math.max(hi, center * (1 + spread * 0.95));
+        }
 
-        lo = Math.max(floor, Math.round(lo / 10000) * 10000);
-        hi = Math.max(lo + 50000, Math.round(hi / 10000) * 10000);
+        lo = Math.max(floor, Math.round(lo / stepWon) * stepWon);
+        hi = Math.max(lo + 50000, Math.round(hi / stepWon) * stepWon);
         hi = Math.min(cap, hi);
 
-        if (hi - lo > 200000) {
-          lo = Math.max(floor, center - 100000);
-          hi = Math.min(cap, center + 100000);
-          lo = Math.round(lo / 10000) * 10000;
-          hi = Math.round(hi / 10000) * 10000;
+        var maxBand = richness.level === 0 ? 380000 : richness.level >= 2 ? 220000 : 260000;
+        var half = richness.level === 0 ? 160000 : richness.level >= 2 ? 90000 : 120000;
+        if (hi - lo > maxBand) {
+          lo = Math.max(floor, center - half);
+          hi = Math.min(cap, center + half);
+          lo = Math.round(lo / stepWon) * stepWon;
+          hi = Math.round(hi / stepWon) * stepWon;
           if (hi <= lo) hi = lo + 50000;
         }
 
-        return { lo: lo, hi: hi, center: center, band: band };
+        return { lo: lo, hi: hi, center: center, band: band, richness: richness };
+      }
+
+      function textHash(str) {
+        var h = 2166136261;
+        var s = String(str || "");
+        for (var i = 0; i < s.length; i++) {
+          h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+
+      function countHits(blob, words) {
+        var n = 0;
+        var hits = [];
+        for (var i = 0; i < words.length; i++) {
+          var w = words[i];
+          if (!w) continue;
+          if (blob.indexOf(w) !== -1) {
+            n += 1;
+            hits.push(w);
+          }
+        }
+        return { n: n, hits: hits };
+      }
+
+      function extractFeatureItems(feat) {
+        var raw = String(feat || "").trim();
+        if (!raw) return [];
+        return raw
+          .split(/\n|[·•\u2022\u3001;|]/)
+          .map(function (x) {
+            return x.replace(/^[\s\-\*0-9.)]+/, "").trim();
+          })
+          .filter(function (x) {
+            return x.length >= 2;
+          });
+      }
+
+      /**
+       * Analyze free-text so price is not survey-combinatorics only.
+       * Heuristic (no LLM): keywords, feature count, length, text fingerprint.
+       */
+      function productRichness() {
+        var desc = String(answers.desc || "").trim();
+        var feat = String(answers.features || "").trim();
+        var blob = (desc + "\n" + feat).toLowerCase();
+        var dLen = desc.length;
+        var fLen = feat.length;
+        var featItems = extractFeatureItems(feat);
+        var featLines = featItems.length;
+        var totalLen = dLen + fLen;
+        var filled = totalLen > 0;
+
+        var level = 0;
+        if (dLen >= 12 || fLen >= 12) level = 1;
+        if (dLen >= 40 && (fLen >= 20 || featLines >= 2)) level = 2;
+        if (dLen >= 80 && fLen >= 40) level = 3;
+
+        var priceMult = 1;
+        var scoreAdj = 0;
+        var spreadAdj = 0;
+        var signalBoost = 0;
+        var signalKeys = [];
+        var priceOffset = 0;
+
+        if (!filled) {
+          priceMult = 0.92;
+          scoreAdj = -2;
+          spreadAdj = 0.12;
+          return {
+            level: 0,
+            desc: desc,
+            features: feat,
+            filled: false,
+            dLen: dLen,
+            fLen: fLen,
+            featLines: featLines,
+            priceMult: priceMult,
+            scoreAdj: scoreAdj,
+            spreadAdj: spreadAdj,
+            signalBoost: 0,
+            signalKeys: [],
+            priceOffset: 0,
+            analysisNote: "none",
+          };
+        }
+
+        /* Length / substance curve → continuous mult (many outcomes) */
+        var lenFactor = 0.94 + Math.min(0.16, totalLen / 900);
+        /* Unique-ish token mass (hangul syllables + latin words) */
+        var tokens = blob.match(/[a-z]{3,}|[가-힣]{2,}/g) || [];
+        var uniq = {};
+        var uniqN = 0;
+        for (var t = 0; t < tokens.length; t++) {
+          if (!uniq[tokens[t]]) {
+            uniq[tokens[t]] = 1;
+            uniqN += 1;
+          }
+        }
+        var vocabFactor = 0.97 + Math.min(0.12, uniqN / 80);
+
+        /* Feature list density */
+        var featFactor = 1 + Math.min(0.18, featLines * 0.028);
+        if (featLines >= 5) featFactor += 0.04;
+        if (featLines >= 8) featFactor += 0.03;
+
+        /* Domain signal lexicons (KO + EN) */
+        var mon = countHits(blob, [
+          "구독", "subscription", "mrr", "arr", "결제", "payment", "stripe",
+          "토스", "toss", "유료", "revenue", "매출", "과금", "billing", "paywall",
+          "인앱", "iap", "광고수익", "adsense", "수익화", "monetiz",
+        ]);
+        var scale = countHits(blob, [
+          "사용자", "users", "user", "dau", "mau", "회원", "customer", "고객",
+          "트래픽", "traffic", "다운로드", "download", "설치", "가입자", "활성",
+          "mau", "wau", "리텐션", "retention",
+        ]);
+        var ai = countHits(blob, [
+          "ai", "llm", "gpt", "인공지능", "머신러닝", "machine learning",
+          "openai", "claude", "생성형", "embedding", "rag", "챗봇", "chatbot",
+        ]);
+        var integ = countHits(blob, [
+          "api", "oauth", "연동", "integration", "slack", "카카오", "kakao",
+          "webhook", "sso", "실시간", "realtime", "websocket", "graphql",
+          "rest", "sdk", "webhooks",
+        ]);
+        var depth = countHits(blob, [
+          "관리자", "admin", "dashboard", "대시보드", "알림", "notification",
+          "push", "푸시", "권한", "role", "멀티테넌트", "multi-tenant",
+          "권한관리", "감사", "audit", "워크플로", "workflow", "자동화", "autom",
+        ]);
+        var weak = countHits(blob, [
+          "미완성", "초안", "todo", "wip", "테스트만", "임시", "dummy",
+          "placeholder", "거의 없음", "아직 없음", "만들어가는", "예정",
+          "미구현", "stub", "hack",
+        ]);
+
+        var sigM = 1;
+        if (mon.n) {
+          sigM *= 1 + Math.min(0.2, 0.07 + mon.n * 0.035);
+          signalBoost += 0.08 + mon.n * 0.02;
+          signalKeys.push("monetize");
+        }
+        if (scale.n) {
+          sigM *= 1 + Math.min(0.16, 0.05 + scale.n * 0.03);
+          signalBoost += 0.05 + scale.n * 0.015;
+          signalKeys.push("scale");
+        }
+        if (ai.n) {
+          sigM *= 1 + Math.min(0.12, 0.04 + ai.n * 0.025);
+          signalBoost += 0.04;
+          signalKeys.push("ai");
+        }
+        if (integ.n) {
+          sigM *= 1 + Math.min(0.12, 0.035 + integ.n * 0.02);
+          signalBoost += 0.035;
+          signalKeys.push("integ");
+        }
+        if (depth.n) {
+          sigM *= 1 + Math.min(0.14, 0.04 + depth.n * 0.022);
+          signalBoost += 0.04;
+          signalKeys.push("depth");
+        }
+        if (weak.n) {
+          sigM *= Math.max(0.72, 1 - 0.06 * weak.n);
+          signalBoost = Math.max(0, signalBoost - 0.06);
+          signalKeys.push("weak");
+        }
+
+        /* Numbers in text (users, price, %) — slight lift if present */
+        var nums = blob.match(/\d{2,}/g);
+        if (nums && nums.length) {
+          sigM *= 1 + Math.min(0.08, nums.length * 0.015);
+          signalKeys.push("numbers");
+        }
+
+        priceMult = lenFactor * vocabFactor * featFactor * sigM;
+        priceMult = Math.max(0.7, Math.min(1.55, priceMult));
+
+        /* Fingerprint: different sentences → different center (wide continuous range) */
+        var h = textHash(blob.replace(/\s+/g, " "));
+        var unit = ((h % 41) - 20) * 10000; /* -20만 ~ +20만 */
+        var fine = ((Math.floor(h / 41) % 19) - 9) * 5000; /* ±4.5만, 5천 단위 */
+        var micro = ((Math.floor(h / 779) % 7) - 3) * 5000;
+        priceOffset = unit + fine + micro;
+
+        /* Score / spread from text quality */
+        scoreAdj = Math.round((priceMult - 1) * 28) + Math.min(6, featLines);
+        if (level >= 2) scoreAdj += 2;
+        if (weak.n) scoreAdj -= 4 * Math.min(3, weak.n);
+        scoreAdj = Math.max(-10, Math.min(14, scoreAdj));
+
+        spreadAdj = -0.02 - Math.min(0.08, signalBoost * 0.35) - Math.min(0.04, totalLen / 2000);
+        if (weak.n) spreadAdj += 0.04;
+        if (level === 1) spreadAdj += 0.02;
+
+        return {
+          level: level,
+          desc: desc,
+          features: feat,
+          filled: true,
+          dLen: dLen,
+          fLen: fLen,
+          featLines: featLines,
+          priceMult: priceMult,
+          scoreAdj: scoreAdj,
+          spreadAdj: spreadAdj,
+          signalBoost: signalBoost,
+          signalKeys: signalKeys,
+          priceOffset: priceOffset,
+          analysisNote: signalKeys.length ? "signals" : "text",
+          uniqN: uniqN,
+          monN: mon.n,
+          scaleN: scale.n,
+          aiN: ai.n,
+          integN: integ.n,
+          depthN: depth.n,
+          weakN: weak.n,
+        };
+      }
+
+      function readProductFields() {
+        var descEl = document.getElementById("diagDesc");
+        var featEl = document.getElementById("diagFeatures");
+        answers.desc = descEl ? String(descEl.value || "").trim() : "";
+        answers.features = featEl ? String(featEl.value || "").trim() : "";
+      }
+
+      function buildStoryFromProduct() {
+        var parts = [];
+        if (answers.desc) parts.push(answers.desc);
+        if (answers.features) parts.push(answers.features);
+        return parts.join("\n\n").slice(0, 500);
       }
 
       function setStep(n) {
@@ -436,8 +807,8 @@
         var key = wrap.getAttribute("data-key");
         answers[key] = btn.getAttribute("data-v");
         setTimeout(function () {
-          if (step < TOTAL - 1) setStep(step + 1);
-          else showResult();
+          if (step < SURVEY_LAST) setStep(step + 1);
+          else setStep(PRODUCT_STEP);
         }, 180);
       }
 
@@ -459,6 +830,7 @@
         var st = answers.status || "prototype";
         var demo = answers.demo || "none";
         var lic = answers.license || "unknown";
+        var rich = productRichness();
 
         if (st === "launched") score += 18;
         else if (st === "beta") score += 12;
@@ -501,12 +873,35 @@
           checks.push({ ok: false, key: "diag.ck_ptype" });
         }
 
+        /* Free-text analysis → score & check list (content, not only length) */
+        if (rich.filled) {
+          score += typeof rich.scoreAdj === "number" ? rich.scoreAdj : 4;
+          if (rich.level >= 2) {
+            checks.push({ ok: true, key: "diag.ck_product_rich" });
+          } else {
+            checks.push({ ok: true, key: "diag.ck_product_some" });
+          }
+          checks.push({ ok: true, key: "diag.ck_text_priced" });
+          var sk = rich.signalKeys || [];
+          if (sk.indexOf("monetize") !== -1) checks.push({ ok: true, key: "diag.ck_sig_monetize" });
+          if (sk.indexOf("scale") !== -1) checks.push({ ok: true, key: "diag.ck_sig_scale" });
+          if (sk.indexOf("ai") !== -1) checks.push({ ok: true, key: "diag.ck_sig_ai" });
+          if (sk.indexOf("integ") !== -1) checks.push({ ok: true, key: "diag.ck_sig_integ" });
+          if (sk.indexOf("depth") !== -1) checks.push({ ok: true, key: "diag.ck_sig_depth" });
+          if (sk.indexOf("weak") !== -1) checks.push({ ok: false, key: "diag.ck_sig_weak" });
+          if (rich.featLines >= 3) checks.push({ ok: true, key: "diag.ck_feat_count" });
+        } else if (productSkipped || !rich.filled) {
+          score -= 2;
+          checks.push({ ok: false, key: "diag.ck_product_none" });
+        }
+
         score = Math.max(8, Math.min(96, score));
-        return { score: score, checks: checks };
+        return { score: score, checks: checks, richness: rich };
       }
 
       function paintResult(r, price) {
         var band = price.band;
+        var rich = (r && r.richness) || productRichness();
         var verdict = "";
         if (r.score >= 72) verdict = tt("diag.v_ready");
         else if (r.score >= 50) verdict = tt("diag.v_ok");
@@ -515,14 +910,69 @@
 
         document.getElementById("diagScore").textContent = tt("diag.score_pts", { n: r.score });
         document.getElementById("diagVerdict").textContent = verdict;
+
+        var confEl = document.getElementById("diagConfidence");
+        if (confEl) {
+          if (!rich.filled) {
+            confEl.textContent = tt("diag.conf_low");
+          } else if ((rich.signalKeys && rich.signalKeys.length) || rich.level >= 2) {
+            confEl.textContent = tt("diag.conf_high_text");
+          } else if (rich.level === 1) {
+            confEl.textContent = tt("diag.conf_mid");
+          } else {
+            confEl.textContent = tt("diag.conf_high");
+          }
+        }
+
+        var reflect = document.getElementById("diagProductReflect");
+        var sparse = document.getElementById("diagSparseWarn");
+        var dWrap = document.getElementById("diagReflectDescWrap");
+        var fWrap = document.getElementById("diagReflectFeatWrap");
+        var dEl = document.getElementById("diagReflectDesc");
+        var fEl = document.getElementById("diagReflectFeat");
+        if (rich.filled) {
+          if (reflect) reflect.hidden = false;
+          if (sparse) sparse.hidden = true;
+          if (dWrap && dEl) {
+            if (rich.desc) {
+              dWrap.hidden = false;
+              dEl.textContent = rich.desc;
+            } else {
+              dWrap.hidden = true;
+              dEl.textContent = "";
+            }
+          }
+          if (fWrap && fEl) {
+            if (rich.features) {
+              fWrap.hidden = false;
+              fEl.textContent = rich.features;
+            } else {
+              fWrap.hidden = true;
+              fEl.textContent = "";
+            }
+          }
+        } else {
+          if (reflect) reflect.hidden = true;
+          if (sparse) sparse.hidden = false;
+        }
+
         document.getElementById("diagStatusLabel").textContent =
           "· " + tt(band.labelKey || "diag.st_proto");
         document.getElementById("diagPrice").textContent = tt("diag.price_line", {
           range: softBand(price.lo, price.hi),
         });
-        document.getElementById("diagPriceRange").textContent = tt("diag.price_range_note");
+        document.getElementById("diagPriceRange").textContent = rich.filled
+          ? tt("diag.price_range_note_text")
+          : tt("diag.price_range_sparse");
+        var noteExtra = "";
+        if (rich.filled && typeof rich.priceMult === "number") {
+          var pct = Math.round((rich.priceMult - 1) * 100);
+          if (pct > 2) noteExtra = " " + tt("diag.text_price_up", { n: pct });
+          else if (pct < -2) noteExtra = " " + tt("diag.text_price_down", { n: Math.abs(pct) });
+          else noteExtra = " " + tt("diag.text_price_neutral");
+        }
         document.getElementById("diagPriceNote").textContent =
-          tt(band.blurbKey || "diag.blurb_proto") + tt("diag.price_note_tail");
+          tt(band.blurbKey || "diag.blurb_proto") + noteExtra + tt("diag.price_note_tail");
 
         var ul = document.getElementById("diagChecks");
         ul.innerHTML = r.checks
@@ -539,13 +989,27 @@
           "</li>";
       }
 
-      function showResult() {
+      function showResult(opts) {
+        opts = opts || {};
+        if (opts.skip) {
+          productSkipped = true;
+          answers.desc = "";
+          answers.features = "";
+          var descEl0 = document.getElementById("diagDesc");
+          var featEl0 = document.getElementById("diagFeatures");
+          if (descEl0) descEl0.value = "";
+          if (featEl0) featEl0.value = "";
+        } else {
+          productSkipped = false;
+          readProductFields();
+        }
+
         var st = answers.status || "prototype";
         var r = computeScore();
         var price = computePriceHint(r.score);
         lastResult = { r: r, price: price, st: st };
         paintResult(r, price);
-        setStep(5);
+        setStep(RESULT_STEP);
         try {
           sessionStorage.setItem(
             "wa_diag",
@@ -555,6 +1019,8 @@
               lo: price.lo,
               hi: price.hi,
               status: st,
+              product_filled: !!(r.richness && r.richness.filled),
+              product_level: r.richness ? r.richness.level : 0,
             })
           );
           var ptypeMap = {
@@ -576,15 +1042,31 @@
               price_hint: price.lo || null,
               price_hi: price.hi || null,
               diag_score: r.score,
-              story: "",
+              story: buildStoryFromProduct(),
+              product_desc: answers.desc || "",
+              product_features: answers.features || "",
             })
           );
         } catch (e) {}
       }
 
+      var applyBtn = document.getElementById("diagApplyProduct");
+      var skipBtn = document.getElementById("diagSkipProduct");
+      if (applyBtn) {
+        applyBtn.addEventListener("click", function () {
+          showResult({ skip: false });
+        });
+      }
+      if (skipBtn) {
+        skipBtn.addEventListener("click", function () {
+          showResult({ skip: true });
+        });
+      }
+
       document.getElementById("diagRetry").addEventListener("click", function () {
         answers = {};
         lastResult = null;
+        productSkipped = false;
         try {
           sessionStorage.removeItem("wa_diag_showcase");
           sessionStorage.removeItem("wa_diag");
@@ -592,11 +1074,15 @@
         document.querySelectorAll(".diag-opts button").forEach(function (b) {
           b.classList.remove("is-pick");
         });
+        var descEl = document.getElementById("diagDesc");
+        var featEl = document.getElementById("diagFeatures");
+        if (descEl) descEl.value = "";
+        if (featEl) featEl.value = "";
         setStep(0);
       });
 
       document.addEventListener("wa:langchange", function () {
-        if (lastResult && step === 5) {
+        if (lastResult && step === RESULT_STEP) {
           paintResult(lastResult.r, lastResult.price);
         }
       });

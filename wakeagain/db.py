@@ -5,10 +5,12 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 from wakeagain import pricing as price_policy
 
@@ -208,10 +210,37 @@ def init_db() -> None:
               paid_at TEXT
             );
 
+            CREATE TABLE IF NOT EXISTS coupon_campaigns (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              code TEXT NOT NULL UNIQUE COLLATE NOCASE,
+              name TEXT NOT NULL,
+              fee_rate REAL NOT NULL DEFAULT 0.08,
+              max_redemptions INTEGER NOT NULL,
+              redeem_count INTEGER NOT NULL DEFAULT 0,
+              active INTEGER NOT NULL DEFAULT 1,
+              note TEXT,
+              created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS user_coupons (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              campaign_id INTEGER NOT NULL REFERENCES coupon_campaigns(id) ON DELETE CASCADE,
+              origin TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'available',
+              used_project_id INTEGER,
+              used_at TEXT,
+              gifted_from_id INTEGER,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_reviews_status ON reviews(listing_status);
             CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
             CREATE INDEX IF NOT EXISTS idx_messages_project ON messages(project_id);
             CREATE INDEX IF NOT EXISTS idx_fee_seller ON fee_invoices(seller_id);
+            CREATE INDEX IF NOT EXISTS idx_user_coupons_user ON user_coupons(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_coupons_status ON user_coupons(status);
 
             CREATE TABLE IF NOT EXISTS showcases (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -324,7 +353,61 @@ def init_db() -> None:
                 "seller_attest_json": "TEXT",
                 # Marketplace discovery tags (JSON array, max 5) — search + listing cards
                 "keywords_json": "TEXT DEFAULT '[]'",
+                # Buyer-facing product clarity (plain language; no coding required)
+                "features_json": "TEXT DEFAULT '[]'",  # JSON array of feature bullets
+                "audience": "TEXT",  # who it's for
+                "works_now": "TEXT",  # what works today
+                "limits_note": "TEXT",  # what doesn't / limits
+                # made | resale | other
+                "acquisition": "TEXT",
+                "acquisition_note": "TEXT",
+                # Buyer handover receipt checklist (JSON) — parties self-transfer; site records checks
+                "handover_checklist_json": "TEXT",
+                # Premium listing boost (scaffold — payment/UI later; sort already respects active boost)
+                # boost_until: ISO end time; null/empty = not boosted
+                "boost_until": "TEXT",
+                # boost_tier: 0=none, higher = stronger pin among boosted (future products)
+                "boost_tier": "INTEGER NOT NULL DEFAULT 0",
+                # optional product code e.g. boost_7d (filled when paid product ships)
+                "boost_product": "TEXT",
             },
+        )
+        _ensure_columns(
+            conn,
+            "fee_invoices",
+            {
+                "fee_rate": "REAL",
+                "user_coupon_id": "INTEGER",
+            },
+        )
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS coupon_campaigns (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              code TEXT NOT NULL UNIQUE COLLATE NOCASE,
+              name TEXT NOT NULL,
+              fee_rate REAL NOT NULL DEFAULT 0.08,
+              max_redemptions INTEGER NOT NULL,
+              redeem_count INTEGER NOT NULL DEFAULT 0,
+              active INTEGER NOT NULL DEFAULT 1,
+              note TEXT,
+              created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS user_coupons (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              campaign_id INTEGER NOT NULL REFERENCES coupon_campaigns(id) ON DELETE CASCADE,
+              origin TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'available',
+              used_project_id INTEGER,
+              used_at TEXT,
+              gifted_from_id INTEGER,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_coupons_user ON user_coupons(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_coupons_status ON user_coupons(status);
+            """
         )
         conn.executescript(
             """
@@ -1194,6 +1277,16 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     if not isinstance(keywords_raw, list):
         keywords_raw = []
     keywords = [str(k).strip() for k in keywords_raw if str(k).strip()][:5]
+    try:
+        features_raw = json.loads(_row_get(row, "features_json") or "[]")
+    except (json.JSONDecodeError, TypeError):
+        features_raw = []
+    if not isinstance(features_raw, list):
+        features_raw = []
+    features = [str(f).strip() for f in features_raw if str(f).strip()][:12]
+    acquisition = (_row_get(row, "acquisition") or "") or ""
+    if acquisition not in ("made", "resale", "other"):
+        acquisition = ""
     price_start = _row_get(row, "price_start")
     price_current = _row_get(row, "price_current")
     if price_current is None:
@@ -1238,6 +1331,12 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "demo": row["demo"],
         "assets": assets,
         "keywords": keywords,
+        "features": features,
+        "audience": (_row_get(row, "audience") or "") or "",
+        "works_now": (_row_get(row, "works_now") or "") or "",
+        "limits": (_row_get(row, "limits_note") or "") or "",
+        "acquisition": acquisition,
+        "acquisition_note": (_row_get(row, "acquisition_note") or "") or "",
         "price_start": price_start,
         "price_current": price_current,
         "price_buy_now": _row_get(row, "price_buy_now"),
@@ -1254,6 +1353,8 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "paused_reason": _row_get(row, "paused_reason") or "",
         "license_note": (_row_get(row, "license_note") or "") or "",
         "demo_verified": bool(int(_row_get(row, "demo_verified", 0) or 0)),
+        # Premium boost scaffold (no purchase UI yet)
+        "boost": project_boost_public(row),
         "sold_price": sold_price,
         "sold_at": _row_get(row, "sold_at") or "",
         "buyer_id": _row_get(row, "buyer_id"),
@@ -1291,30 +1392,1288 @@ FEE_RATE = 0.10
 FEE_PAYER = "seller"
 
 
-def fee_breakdown(amount: int | None) -> dict:
+def premium_boost_feature_enabled() -> bool:
+    """Master switch for selling/showing boost products. Sort still works if rows have boost_until."""
+    return os.environ.get("PREMIUM_BOOST_ENABLED", "0").strip() not in {
+        "0",
+        "false",
+        "False",
+        "",
+    }
+
+
+def project_boost_active(row: sqlite3.Row | dict, *, now: str | None = None) -> bool:
+    until = (_row_get(row, "boost_until") or "") if not isinstance(row, dict) else (row.get("boost_until") or "")
+    until = (until or "").strip()
+    if not until:
+        return False
+    now = now or _now()
+    # ISO strings with offset compare correctly if same format; string compare works for zero-padded ISO
+    return until > now
+
+
+def project_boost_public(row: sqlite3.Row | dict) -> dict:
+    """Public boost fields for API cards. purchase UI gated by PREMIUM_BOOST_ENABLED."""
+    until = (_row_get(row, "boost_until") or "") or ""
+    if isinstance(row, dict):
+        until = (row.get("boost_until") or "") or ""
+        tier = int(row.get("boost_tier") or 0)
+        product = (row.get("boost_product") or "") or ""
+    else:
+        tier = int(_row_get(row, "boost_tier", 0) or 0)
+        product = (_row_get(row, "boost_product") or "") or ""
+    until = until.strip()
+    active = bool(until and project_boost_active(row))
+    return {
+        "active": active,
+        "until": until if until else "",
+        "tier": tier if active or tier else 0,
+        "product": product,
+        # clients: hide "Buy boost" until true
+        "purchase_enabled": premium_boost_feature_enabled(),
+    }
+
+
+def listing_sort_sql() -> str:
+    """
+    Marketplace ORDER BY: active boost first (by tier), then newest id.
+    When no rows are boosted, equivalent to ORDER BY id DESC.
+    Placeholder `?` must be bound to "now" ISO string (same as _now()).
+    """
+    return (
+        "ORDER BY "
+        "CASE WHEN IFNULL(boost_until, '') != '' AND boost_until > ? "
+        "THEN COALESCE(boost_tier, 0) ELSE 0 END DESC, "
+        "id DESC"
+    )
+
+
+def set_project_boost(
+    conn: sqlite3.Connection,
+    project_id: int,
+    *,
+    until_iso: str,
+    tier: int = 1,
+    product: str = "",
+) -> sqlite3.Row:
+    """
+    Activate/update boost on a listing (admin or future payment webhook).
+    Does not charge money — call after payment confirmed.
+    """
+    until = (until_iso or "").strip()
+    if not until:
+        raise ValueError("boost_until required")
+    tier = max(0, min(int(tier), 100))
+    product = (product or "").strip()[:40]
+    now = _now()
+    conn.execute(
+        """
+        UPDATE projects SET
+          boost_until = ?,
+          boost_tier = ?,
+          boost_product = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (until, tier, product, now, int(project_id)),
+    )
+    row = conn.execute(
+        "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    if not row:
+        raise ValueError("project not found")
+    return row
+
+
+def clear_project_boost(conn: sqlite3.Connection, project_id: int) -> sqlite3.Row:
+    """Remove boost (expiry job or admin)."""
+    now = _now()
+    conn.execute(
+        """
+        UPDATE projects SET
+          boost_until = NULL,
+          boost_tier = 0,
+          boost_product = NULL,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (now, int(project_id)),
+    )
+    row = conn.execute(
+        "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    if not row:
+        raise ValueError("project not found")
+    return row
+
+
+# Listing asset keys → buyer receipt checklist labels
+HANDOVER_ASSET_LABELS: dict[str, tuple[str, str]] = {
+    "code": (
+        "소스·코드 (GitHub 이전 또는 ZIP 등 합의 방식)",
+        "Source/code (GitHub transfer or agreed ZIP/link)",
+    ),
+    "design": ("디자인 파일 (피그마 등)", "Design files (Figma, etc.)"),
+    "domain": (
+        "도메인 소유권 이전 (등록업체 Push/Transfer)",
+        "Domain ownership transfer (registrar push/transfer)",
+    ),
+    "docs": (
+        "기획·문서·README/실행 매뉴얼",
+        "Docs / README / runbook",
+    ),
+    "accounts": (
+        "계정·스토어·호스팅 권한 또는 재배포 안내",
+        "Accounts / store / hosting access or redeploy guide",
+    ),
+    "other": ("기타 포함 자산 이전", "Other included assets handed over"),
+    "readme": ("README·운영 매뉴얼", "README / ops manual"),
+}
+
+# Always appended (not from assets)
+HANDOVER_FIXED_ITEMS: list[dict[str, Any]] = [
+    {
+        "id": "access_guide",
+        "label_ko": "실행·배포·DB/API 연결 방법 안내를 받았다",
+        "label_en": "Received run / deploy / DB-API connection instructions",
+        "required": True,
+    },
+    {
+        "id": "secrets_ok",
+        "label_ko": "키·시크릿은 재발급 또는 안전한 이전 절차를 안내받았다",
+        "label_en": "Keys/secrets reissued or transferred via a safe procedure",
+        "required": True,
+    },
+    {
+        "id": "license_ok",
+        "label_ko": "라이선스·양도 조건을 이해했다",
+        "label_en": "Understood license / transfer terms",
+        "required": True,
+    },
+]
+
+
+def _parse_assets_list(row: sqlite3.Row | dict) -> list[str]:
+    raw = _row_get(row, "assets_json") if not isinstance(row, dict) else row.get("assets_json")
+    if isinstance(row, dict) and "assets" in row and isinstance(row["assets"], list):
+        return [str(a).strip() for a in row["assets"] if str(a).strip()]
+    try:
+        data = json.loads(raw or "[]")
+    except (json.JSONDecodeError, TypeError):
+        data = []
+    if not isinstance(data, list):
+        return []
+    return [str(a).strip() for a in data if str(a).strip()][:20]
+
+
+def seed_handover_checklist(row: sqlite3.Row | dict) -> dict:
+    """Build checklist from listing assets + fixed receipt items."""
+    assets = _parse_assets_list(row)
+    items: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for key in assets:
+        k = key.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        labels = HANDOVER_ASSET_LABELS.get(k)
+        if labels:
+            ko, en = labels
+        else:
+            ko, en = f"포함 자산: {key}", f"Asset: {key}"
+        items.append(
+            {
+                "id": f"asset_{k}"[:40],
+                "label_ko": ko,
+                "label_en": en,
+                "required": True,
+                "checked": False,
+                "checked_at": None,
+            }
+        )
+    if not items:
+        items.append(
+            {
+                "id": "asset_bundle",
+                "label_ko": "매물에 포함된 핵심 자산 이전",
+                "label_en": "Core listed assets handed over",
+                "required": True,
+                "checked": False,
+                "checked_at": None,
+            }
+        )
+    for fix in HANDOVER_FIXED_ITEMS:
+        if fix["id"] in seen:
+            continue
+        items.append(
+            {
+                "id": fix["id"],
+                "label_ko": fix["label_ko"],
+                "label_en": fix["label_en"],
+                "required": bool(fix.get("required", True)),
+                "checked": False,
+                "checked_at": None,
+            }
+        )
+    now = _now()
+    return {
+        "items": items,
+        "seeded_at": now,
+        "updated_at": now,
+        "disclaimer_ko": (
+            "체크는 구매자 확인이며, WakeAgain이 파일·계정 이전을 검증하거나 보증하지 않습니다. "
+            "이전은 판매자·구매자가 쪽지 등으로 직접 진행합니다."
+        ),
+        "disclaimer_en": (
+            "Checks are the buyer's confirmation; WakeAgain does not verify or guarantee "
+            "file/account transfer. Parties hand off via messages etc."
+        ),
+    }
+
+
+def load_handover_checklist(row: sqlite3.Row | dict) -> dict | None:
+    raw = _row_get(row, "handover_checklist_json")
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+        return None
+    return data
+
+
+def handover_checklist_public(data: dict | None) -> dict | None:
+    if not data:
+        return None
+    items = data.get("items") or []
+    total = len(items)
+    checked_n = sum(1 for it in items if it.get("checked"))
+    required = [it for it in items if it.get("required", True)]
+    req_n = len(required)
+    req_ok = sum(1 for it in required if it.get("checked"))
+    return {
+        "items": items,
+        "total": total,
+        "checked_count": checked_n,
+        "required_count": req_n,
+        "required_checked": req_ok,
+        "all_required_checked": req_n > 0 and req_ok >= req_n,
+        "seeded_at": data.get("seeded_at") or "",
+        "updated_at": data.get("updated_at") or "",
+        "disclaimer_ko": data.get("disclaimer_ko") or "",
+        "disclaimer_en": data.get("disclaimer_en") or "",
+    }
+
+
+def ensure_handover_checklist(
+    conn: sqlite3.Connection, row: sqlite3.Row
+) -> tuple[sqlite3.Row, dict]:
+    """Seed checklist once after sale; return (row, public checklist)."""
+    existing = load_handover_checklist(row)
+    if existing and existing.get("items"):
+        return row, handover_checklist_public(existing)  # type: ignore[return-value]
+    seeded = seed_handover_checklist(row)
+    pid = int(row["id"])
+    now = _now()
+    conn.execute(
+        "UPDATE projects SET handover_checklist_json = ?, updated_at = ? WHERE id = ?",
+        (json.dumps(seeded, ensure_ascii=False), now, pid),
+    )
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    return row, handover_checklist_public(seeded)  # type: ignore[return-value]
+
+
+def apply_handover_checks(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    checks: dict[str, bool],
+) -> tuple[sqlite3.Row, dict]:
+    """Buyer updates checked flags. checks: { item_id: true/false }."""
+    row, pub = ensure_handover_checklist(conn, row)
+    data = load_handover_checklist(row) or seed_handover_checklist(row)
+    now = _now()
+    items = data.get("items") or []
+    for it in items:
+        iid = str(it.get("id") or "")
+        if iid not in checks:
+            continue
+        want = bool(checks[iid])
+        it["checked"] = want
+        it["checked_at"] = now if want else None
+    data["items"] = items
+    data["updated_at"] = now
+    pid = int(row["id"])
+    conn.execute(
+        "UPDATE projects SET handover_checklist_json = ?, updated_at = ? WHERE id = ?",
+        (json.dumps(data, ensure_ascii=False), now, pid),
+    )
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    return row, handover_checklist_public(data)  # type: ignore[return-value]
+
+
+def handover_all_required_checked(row: sqlite3.Row | dict) -> bool:
+    data = load_handover_checklist(row)
+    if not data:
+        return False
+    pub = handover_checklist_public(data)
+    return bool(pub and pub.get("all_required_checked"))
+
+
+def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
+    """Seller success fee. Default 10%. Coupon may pass rate=0.08 (「수수료 8% 쿠폰」)."""
+    r = FEE_RATE if rate is None else float(rate)
+    if r <= 0 or r > 0.5:
+        r = FEE_RATE
+    rate_pct = int(round(r * 100))
     if amount is None:
         return {
-            "rate": FEE_RATE,
-            "rate_pct": 10,
+            "rate": r,
+            "rate_pct": rate_pct,
             "payer": FEE_PAYER,
             "payer_ko": "판매자",
             "amount": None,
             "fee": None,
             "seller_net": None,
-            "note": "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의가만 부담.",
+            "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
+            "note": (
+                f"성사 시 판매자 수수료 {rate_pct}%. 구매자는 합의가만 부담."
+                if rate is not None
+                else "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의가만 부담."
+            ),
         }
     amt = int(amount)
-    fee = int(round(amt * FEE_RATE))
+    fee = int(round(amt * r))
     return {
-        "rate": FEE_RATE,
-        "rate_pct": 10,
+        "rate": r,
+        "rate_pct": rate_pct,
         "payer": FEE_PAYER,
         "payer_ko": "판매자",
         "amount": amt,
         "fee": fee,
         "seller_net": amt - fee,
-        "note": "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의가만 부담.",
+        "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
+        "note": (
+            f"판매자 수수료 {rate_pct}% 적용"
+            + (" (쿠폰)" if rate is not None and abs(r - FEE_RATE) > 1e-9 else "")
+            + ". 구매자는 합의가만 부담."
+        ),
     }
+
+
+# --- Marketing coupons (seller success fee 8% etc.) ---
+
+DEFAULT_COUPON_FEE_RATE = 0.08
+
+
+def ensure_coupon_tables(conn: sqlite3.Connection) -> None:
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS coupon_campaigns (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT NOT NULL UNIQUE COLLATE NOCASE,
+          name TEXT NOT NULL,
+          fee_rate REAL NOT NULL DEFAULT 0.08,
+          max_redemptions INTEGER NOT NULL,
+          redeem_count INTEGER NOT NULL DEFAULT 0,
+          active INTEGER NOT NULL DEFAULT 1,
+          note TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS user_coupons (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          campaign_id INTEGER NOT NULL REFERENCES coupon_campaigns(id) ON DELETE CASCADE,
+          origin TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'available',
+          used_project_id INTEGER,
+          used_at TEXT,
+          gifted_from_id INTEGER,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS promo_submissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          campaign_id INTEGER NOT NULL REFERENCES coupon_campaigns(id) ON DELETE CASCADE,
+          post_url TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending',
+          admin_note TEXT,
+          reviewed_at TEXT,
+          claimed_at TEXT,
+          user_coupon_id INTEGER,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_coupons_user ON user_coupons(user_id);
+        CREATE INDEX IF NOT EXISTS idx_promo_sub_user ON promo_submissions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_promo_sub_status ON promo_submissions(status);
+        """
+    )
+    _ensure_columns(
+        conn,
+        "coupon_campaigns",
+        {
+            # Viral URL verify flow (no public code on event page)
+            "allow_url_claim": "INTEGER NOT NULL DEFAULT 0",
+            # Optional event window (ISO). Empty = no bound on that side.
+            "starts_at": "TEXT",
+            "ends_at": "TEXT",
+        },
+    )
+    _ensure_columns(
+        conn,
+        "promo_submissions",
+        {
+            # x | linkedin_blog | community | instagram
+            "channel": "TEXT NOT NULL DEFAULT 'instagram'",
+        },
+    )
+
+
+# Unified viral event: all channels → same 8% fee coupon; 1 claim / account / campaign
+PROMO_CHANNELS: dict[str, dict[str, str]] = {
+    "x": {
+        "id": "x",
+        "label_ko": "X (트위터)",
+        "short_ko": "X",
+        "hint_ko": "WakeAgain 소개글 URL (게시물에 사이트 링크 포함)",
+        "placeholder": "https://x.com/…/status/…",
+    },
+    "linkedin_blog": {
+        "id": "linkedin_blog",
+        "label_ko": "링크드인 / 블로그",
+        "short_ko": "링크드인·블로그",
+        "hint_ko": "링크드인 게시물 또는 블로그 후기·소개글 URL",
+        "placeholder": "https://www.linkedin.com/… 또는 블로그 글 주소",
+    },
+    "community": {
+        "id": "community",
+        "label_ko": "디스코드 / 개발 커뮤니티",
+        "short_ko": "커뮤니티",
+        "hint_ko": "디스코드·오픈카톡·개발 커뮤니티 등 공개 가능한 추천글 링크",
+        "placeholder": "https://discord.com/… 또는 커뮤니티 글 URL",
+    },
+    "instagram": {
+        "id": "instagram",
+        "label_ko": "인스타그램",
+        "short_ko": "인스타",
+        "hint_ko": "인스타 게시물·릴스 URL",
+        "placeholder": "https://www.instagram.com/p/… 또는 /reel/…",
+    },
+}
+
+
+def promo_channel_list() -> list[dict]:
+    return [
+        {
+            **ch,
+            "reward_ko": "성사 수수료 8% 쿠폰 1장",
+        }
+        for ch in PROMO_CHANNELS.values()
+    ]
+
+
+def _parse_iso_dt(value: str | None) -> datetime | None:
+    s = (value or "").strip()
+    if not s:
+        return None
+    try:
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def campaign_is_event_open(row: sqlite3.Row) -> bool:
+    """True when viral URL-claim campaign is active, in window, and not sold out."""
+    if not row:
+        return False
+    if not int(row["active"] or 0):
+        return False
+    if not int(_row_get(row, "allow_url_claim", 0) or 0):
+        return False
+    max_r = int(row["max_redemptions"] or 0)
+    used = int(row["redeem_count"] or 0)
+    if max_r > 0 and used >= max_r:
+        return False
+    now = datetime.now(timezone.utc)
+    starts = _parse_iso_dt(_row_get(row, "starts_at", "") or "")
+    ends = _parse_iso_dt(_row_get(row, "ends_at", "") or "")
+    if starts and now < starts:
+        return False
+    if ends and now >= ends:
+        return False
+    return True
+
+
+def campaign_to_dict(row: sqlite3.Row, *, include_code: bool = True) -> dict:
+    fee_rate = float(row["fee_rate"] if "fee_rate" in row.keys() else DEFAULT_COUPON_FEE_RATE)
+    max_r = int(row["max_redemptions"] or 0)
+    used = int(row["redeem_count"] or 0)
+    allow_url = bool(int(_row_get(row, "allow_url_claim", 0) or 0))
+    starts_at = (_row_get(row, "starts_at", None) or "") or ""
+    ends_at = (_row_get(row, "ends_at", None) or "") or ""
+    event_open = campaign_is_event_open(row) if allow_url else False
+    d = {
+        "id": int(row["id"]),
+        "name": row["name"] or "",
+        "fee_rate": fee_rate,
+        "fee_rate_pct": int(round(fee_rate * 100)),
+        "label_ko": f"성사 수수료 {int(round(fee_rate * 100))}% 쿠폰",
+        "max_redemptions": max_r,
+        "redeem_count": used,
+        "remaining": max(0, max_r - used),
+        "active": bool(int(row["active"] or 0)),
+        "note": (row["note"] if "note" in row.keys() else None) or "",
+        "created_at": row["created_at"] or "",
+        "no_expiry": True,
+        "allow_url_claim": allow_url,
+        "starts_at": starts_at,
+        "ends_at": ends_at,
+        "event_open": event_open,
+    }
+    if include_code:
+        d["code"] = row["code"] or ""
+    return d
+
+
+def user_coupon_to_dict(row: sqlite3.Row, campaign: dict | None = None) -> dict:
+    st = (row["status"] or "available") or "available"
+    origin = (row["origin"] or "") or ""
+    fee_pct = (campaign or {}).get("fee_rate_pct") or 8
+    return {
+        "id": int(row["id"]),
+        "user_id": int(row["user_id"]),
+        "campaign_id": int(row["campaign_id"]),
+        "origin": origin,
+        "status": st,
+        "used_project_id": row["used_project_id"],
+        "used_at": (row["used_at"] if "used_at" in row.keys() else None) or "",
+        "gifted_from_id": row["gifted_from_id"] if "gifted_from_id" in row.keys() else None,
+        "created_at": row["created_at"] or "",
+        "campaign": campaign,
+        "label_ko": (campaign or {}).get("label_ko")
+        or f"성사 수수료 {fee_pct}% 쿠폰",
+        "available": st == "available",
+    }
+
+
+def generate_coupon_code(conn: sqlite3.Connection | None = None) -> str:
+    """
+    Secure-looking redeem code: WA-XXXXXXXXXXXX (A–Z, 2–9, no ambiguous 0/O/1/I).
+    Retries if collision when conn is provided.
+    """
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    for _ in range(12):
+        raw = "".join(secrets.choice(alphabet) for _ in range(12))
+        code = f"WA-{raw[:4]}-{raw[4:8]}-{raw[8:12]}"
+        if conn is None:
+            return code
+        hit = conn.execute(
+            "SELECT id FROM coupon_campaigns WHERE code = ? COLLATE NOCASE",
+            (code,),
+        ).fetchone()
+        if not hit:
+            return code
+    # extremely unlikely
+    return f"WA-{secrets.token_hex(8).upper()}"
+
+
+def create_coupon_campaign(
+    conn: sqlite3.Connection,
+    *,
+    code: str = "",
+    name: str = "",
+    fee_rate: float = DEFAULT_COUPON_FEE_RATE,
+    max_redemptions: int = 100,
+    note: str = "",
+    allow_url_claim: bool = False,
+    starts_at: str = "",
+    ends_at: str = "",
+) -> dict:
+    ensure_coupon_tables(conn)
+    code_n = re.sub(r"\s+", "", (code or "").strip().upper())
+    if not code_n:
+        code_n = generate_coupon_code(conn)
+    if len(code_n) < 4:
+        raise ValueError("code too short")
+    # Marketing coupons: hard cap 100 redemptions per code
+    if max_redemptions < 1 or max_redemptions > 100:
+        raise ValueError("max_redemptions must be 1–100")
+    fee_rate = float(fee_rate)
+    if fee_rate <= 0 or fee_rate >= FEE_RATE:
+        # must be better than default 10% for seller
+        fee_rate = DEFAULT_COUPON_FEE_RATE
+    name = (name or "").strip() or f"성사 수수료 {int(round(fee_rate * 100))}% 쿠폰"
+    now = _now()
+    url_flag = 1 if allow_url_claim else 0
+    starts = (starts_at or "").strip()
+    ends = (ends_at or "").strip()
+    if starts and _parse_iso_dt(starts) is None:
+        raise ValueError("invalid starts_at")
+    if ends and _parse_iso_dt(ends) is None:
+        raise ValueError("invalid ends_at")
+    if starts and ends:
+        st = _parse_iso_dt(starts)
+        en = _parse_iso_dt(ends)
+        if st and en and en <= st:
+            raise ValueError("ends_at must be after starts_at")
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO coupon_campaigns (
+              code, name, fee_rate, max_redemptions, redeem_count, active, note, created_at,
+              allow_url_claim, starts_at, ends_at
+            ) VALUES (?, ?, ?, ?, 0, 1, ?, ?, ?, ?, ?)
+            """,
+            (
+                code_n,
+                name[:80],
+                fee_rate,
+                int(max_redemptions),
+                (note or "")[:200],
+                now,
+                url_flag,
+                starts or None,
+                ends or None,
+            ),
+        )
+    except sqlite3.OperationalError:
+        cur = conn.execute(
+            """
+            INSERT INTO coupon_campaigns (
+              code, name, fee_rate, max_redemptions, redeem_count, active, note, created_at
+            ) VALUES (?, ?, ?, ?, 0, 1, ?, ?)
+            """,
+            (code_n, name[:80], fee_rate, int(max_redemptions), (note or "")[:200], now),
+        )
+    except sqlite3.IntegrityError as e:
+        raise ValueError("code already exists") from e
+    cid = int(cur.lastrowid)
+    # backfill flags/dates if older schema path was used
+    cols = _column_names(conn, "coupon_campaigns")
+    if "allow_url_claim" in cols:
+        conn.execute(
+            "UPDATE coupon_campaigns SET allow_url_claim = ? WHERE id = ?",
+            (url_flag, cid),
+        )
+    if "starts_at" in cols:
+        conn.execute(
+            "UPDATE coupon_campaigns SET starts_at = ?, ends_at = ? WHERE id = ?",
+            (starts or None, ends or None, cid),
+        )
+    row = conn.execute(
+        "SELECT * FROM coupon_campaigns WHERE id = ?", (cid,)
+    ).fetchone()
+    return campaign_to_dict(row)
+
+
+def list_coupon_campaigns(conn: sqlite3.Connection) -> list[dict]:
+    ensure_coupon_tables(conn)
+    rows = conn.execute(
+        "SELECT * FROM coupon_campaigns ORDER BY id DESC LIMIT 100"
+    ).fetchall()
+    return [campaign_to_dict(r) for r in rows]
+
+
+def redeem_coupon_code(conn: sqlite3.Connection, user_id: int, code: str) -> dict:
+    """
+    User registers a campaign code once per account per campaign.
+    Gift-received coupons do not block redeem.
+    """
+    ensure_coupon_tables(conn)
+    code_n = re.sub(r"\s+", "", (code or "").strip().upper())
+    if not code_n:
+        raise ValueError("code required")
+    camp = conn.execute(
+        "SELECT * FROM coupon_campaigns WHERE code = ? COLLATE NOCASE",
+        (code_n,),
+    ).fetchone()
+    if not camp or not int(camp["active"] or 0):
+        raise ValueError("invalid or inactive code")
+    cid = int(camp["id"])
+    max_r = int(camp["max_redemptions"] or 0)
+    used = int(camp["redeem_count"] or 0)
+    if used >= max_r:
+        raise ValueError("campaign sold out")
+    # 1 redeem per account per campaign (origin=redeem only)
+    already = conn.execute(
+        """
+        SELECT id FROM user_coupons
+        WHERE user_id = ? AND campaign_id = ? AND origin = 'redeem'
+        LIMIT 1
+        """,
+        (int(user_id), cid),
+    ).fetchone()
+    if already:
+        raise ValueError("already redeemed on this account")
+    now = _now()
+    conn.execute(
+        "UPDATE coupon_campaigns SET redeem_count = redeem_count + 1 WHERE id = ?",
+        (cid,),
+    )
+    cur = conn.execute(
+        """
+        INSERT INTO user_coupons (
+          user_id, campaign_id, origin, status, created_at, updated_at
+        ) VALUES (?, ?, 'redeem', 'available', ?, ?)
+        """,
+        (int(user_id), cid, now, now),
+    )
+    row = conn.execute(
+        "SELECT * FROM user_coupons WHERE id = ?", (int(cur.lastrowid),)
+    ).fetchone()
+    return user_coupon_to_dict(row, campaign_to_dict(camp))
+
+
+def list_user_coupons(conn: sqlite3.Connection, user_id: int) -> list[dict]:
+    ensure_coupon_tables(conn)
+    rows = conn.execute(
+        """
+        SELECT uc.*, c.code AS c_code, c.name AS c_name, c.fee_rate AS c_fee_rate
+        FROM user_coupons uc
+        JOIN coupon_campaigns c ON c.id = uc.campaign_id
+        WHERE uc.user_id = ?
+        ORDER BY uc.id DESC
+        LIMIT 50
+        """,
+        (int(user_id),),
+    ).fetchall()
+    out = []
+    for r in rows:
+        camp = {
+            "id": int(r["campaign_id"]),
+            "code": r["c_code"] or "",
+            "name": r["c_name"] or "",
+            "fee_rate": float(r["c_fee_rate"] or DEFAULT_COUPON_FEE_RATE),
+            "fee_rate_pct": int(round(float(r["c_fee_rate"] or DEFAULT_COUPON_FEE_RATE) * 100)),
+            "label_ko": f"성사 수수료 {int(round(float(r['c_fee_rate'] or DEFAULT_COUPON_FEE_RATE) * 100))}% 쿠폰",
+            "no_expiry": True,
+        }
+        out.append(user_coupon_to_dict(r, camp))
+    return out
+
+
+def resolve_gift_recipient(
+    conn: sqlite3.Connection,
+    *,
+    to_email: str | None = None,
+    to_user_id: int | None = None,
+    to: str | None = None,
+) -> int:
+    """Resolve gift recipient by numeric account id or email. Returns users.id."""
+    # Prefer explicit user id
+    if to_user_id is not None:
+        try:
+            uid = int(to_user_id)
+        except (TypeError, ValueError) as e:
+            raise ValueError("invalid recipient") from e
+        if uid <= 0:
+            raise ValueError("invalid recipient")
+        row = conn.execute(
+            "SELECT id FROM users WHERE id = ?", (uid,)
+        ).fetchone()
+        if not row:
+            raise ValueError("recipient not found")
+        return int(row["id"])
+
+    # Unified field: digits → user id, otherwise email
+    raw = (to if to is not None else to_email) or ""
+    s = str(raw).strip()
+    if not s:
+        raise ValueError("recipient required")
+
+    if s.isdigit():
+        uid = int(s)
+        if uid <= 0:
+            raise ValueError("invalid recipient")
+        row = conn.execute(
+            "SELECT id FROM users WHERE id = ?", (uid,)
+        ).fetchone()
+        if not row:
+            raise ValueError("recipient not found")
+        return int(row["id"])
+
+    email = s.lower()
+    if "@" not in email or len(email) > 200:
+        raise ValueError("invalid recipient")
+    row = conn.execute(
+        "SELECT id FROM users WHERE email = ? COLLATE NOCASE",
+        (email,),
+    ).fetchone()
+    if not row:
+        raise ValueError("recipient not found")
+    return int(row["id"])
+
+
+def gift_user_coupon(
+    conn: sqlite3.Connection,
+    *,
+    coupon_id: int,
+    from_user_id: int,
+    to_email: str | None = None,
+    to_user_id: int | None = None,
+    to: str | None = None,
+) -> dict:
+    """Transfer available coupon ownership to another user. Auto-registers on their account."""
+    ensure_coupon_tables(conn)
+    to_id = resolve_gift_recipient(
+        conn, to_email=to_email, to_user_id=to_user_id, to=to
+    )
+    if to_id == int(from_user_id):
+        raise ValueError("cannot gift to yourself")
+    row = conn.execute(
+        "SELECT * FROM user_coupons WHERE id = ?", (int(coupon_id),)
+    ).fetchone()
+    if not row or int(row["user_id"]) != int(from_user_id):
+        raise ValueError("coupon not found")
+    if (row["status"] or "") != "available":
+        raise ValueError("coupon not available")
+    now = _now()
+    conn.execute(
+        """
+        UPDATE user_coupons SET
+          user_id = ?,
+          origin = 'gift',
+          gifted_from_id = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (to_id, int(from_user_id), now, int(coupon_id)),
+    )
+    camp = conn.execute(
+        "SELECT * FROM coupon_campaigns WHERE id = ?",
+        (int(row["campaign_id"]),),
+    ).fetchone()
+    fresh = conn.execute(
+        "SELECT * FROM user_coupons WHERE id = ?", (int(coupon_id),)
+    ).fetchone()
+    notify(
+        conn,
+        to_id,
+        "쿠폰 선물 받음",
+        f"성사 수수료 {int(round(float(camp['fee_rate'] or 0.08) * 100))}% 쿠폰이 계정에 등록되었습니다.",
+        "/app/#coupons",
+    )
+    return user_coupon_to_dict(fresh, campaign_to_dict(camp) if camp else None)
+
+
+_IG_URL_RE = re.compile(
+    r"^https?://(www\.)?(instagram\.com|instagr\.am)/",
+    re.I,
+)
+_X_URL_RE = re.compile(
+    r"^https?://(www\.)?(twitter\.com|x\.com)/",
+    re.I,
+)
+_LINKEDIN_URL_RE = re.compile(
+    r"^https?://([a-z0-9-]+\.)?linkedin\.com/",
+    re.I,
+)
+_HTTP_URL_RE = re.compile(r"^https?://", re.I)
+
+
+def normalize_instagram_url(url: str) -> str:
+    u = (url or "").strip()
+    if not u:
+        raise ValueError("url required")
+    if not u.startswith("http"):
+        u = "https://" + u
+    if not _IG_URL_RE.match(u):
+        raise ValueError("instagram url required")
+    if len(u) > 500:
+        raise ValueError("url too long")
+    return u
+
+
+def normalize_promo_url(channel: str, url: str) -> str:
+    """Validate post URL for the selected viral channel."""
+    ch = (channel or "").strip().lower()
+    if ch not in PROMO_CHANNELS:
+        raise ValueError("invalid channel")
+    u = (url or "").strip()
+    if not u:
+        raise ValueError("url required")
+    if not u.startswith("http"):
+        u = "https://" + u
+    if len(u) > 500:
+        raise ValueError("url too long")
+    if not _HTTP_URL_RE.match(u):
+        raise ValueError("invalid url")
+    if ch == "instagram":
+        if not _IG_URL_RE.match(u):
+            raise ValueError("instagram url required")
+    elif ch == "x":
+        if not _X_URL_RE.match(u):
+            raise ValueError("x url required")
+    elif ch == "linkedin_blog":
+        # LinkedIn or any public blog/article URL
+        if not (_LINKEDIN_URL_RE.match(u) or _HTTP_URL_RE.match(u)):
+            raise ValueError("blog url required")
+        # reject obvious non-content platforms for this option
+        if _IG_URL_RE.match(u) or _X_URL_RE.match(u):
+            raise ValueError("use correct channel")
+    elif ch == "community":
+        if _IG_URL_RE.match(u) or _X_URL_RE.match(u):
+            raise ValueError("use correct channel")
+        if not _HTTP_URL_RE.match(u):
+            raise ValueError("community url required")
+    return u
+
+
+def get_active_url_claim_campaign(conn: sqlite3.Connection) -> sqlite3.Row | None:
+    """Latest viral event campaign that is open (active + window + remaining)."""
+    ensure_coupon_tables(conn)
+    rows = conn.execute(
+        """
+        SELECT * FROM coupon_campaigns
+        WHERE active = 1 AND IFNULL(allow_url_claim, 0) = 1
+        ORDER BY id DESC
+        LIMIT 10
+        """
+    ).fetchall()
+    for row in rows:
+        if campaign_is_event_open(row):
+            return row
+    return None
+
+
+def get_url_claim_campaign_for_display(conn: sqlite3.Connection) -> sqlite3.Row | None:
+    """Open campaign, or latest closed viral campaign (for 'ended' message)."""
+    open_c = get_active_url_claim_campaign(conn)
+    if open_c:
+        return open_c
+    ensure_coupon_tables(conn)
+    return conn.execute(
+        """
+        SELECT * FROM coupon_campaigns
+        WHERE IFNULL(allow_url_claim, 0) = 1
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+
+
+def promo_submission_to_dict(row: sqlite3.Row) -> dict:
+    ch = (_row_get(row, "channel", "instagram") or "instagram") or "instagram"
+    meta = PROMO_CHANNELS.get(ch) or PROMO_CHANNELS["instagram"]
+    return {
+        "id": int(row["id"]),
+        "user_id": int(row["user_id"]),
+        "campaign_id": int(row["campaign_id"]),
+        "channel": ch,
+        "channel_label_ko": meta.get("label_ko") or ch,
+        "post_url": row["post_url"] or "",
+        "status": row["status"] or "pending",
+        "admin_note": (row["admin_note"] if "admin_note" in row.keys() else None) or "",
+        "reviewed_at": (row["reviewed_at"] if "reviewed_at" in row.keys() else None) or "",
+        "claimed_at": (row["claimed_at"] if "claimed_at" in row.keys() else None) or "",
+        "user_coupon_id": row["user_coupon_id"] if "user_coupon_id" in row.keys() else None,
+        "created_at": row["created_at"] or "",
+        "can_claim": (row["status"] or "") == "approved",
+    }
+
+
+def submit_promo_event(
+    conn: sqlite3.Connection,
+    user_id: int,
+    *,
+    channel: str,
+    post_url: str,
+) -> dict:
+    """
+    Submit one viral post for review.
+    One pending/approved/claimed submission per account per event campaign (all channels share the limit).
+    """
+    ensure_coupon_tables(conn)
+    camp = get_active_url_claim_campaign(conn)
+    if not camp:
+        raise ValueError("no active promo campaign")
+    if not campaign_is_event_open(camp):
+        raise ValueError("no active promo campaign")
+    cid = int(camp["id"])
+    ch = (channel or "").strip().lower()
+    if ch not in PROMO_CHANNELS:
+        raise ValueError("invalid channel")
+    url = normalize_promo_url(ch, post_url)
+    # 계정당 이벤트 전체 1회 (채널 무관)
+    existing = conn.execute(
+        """
+        SELECT * FROM promo_submissions
+        WHERE user_id = ? AND campaign_id = ?
+          AND status IN ('pending', 'approved', 'claimed')
+        ORDER BY id DESC LIMIT 1
+        """,
+        (int(user_id), cid),
+    ).fetchone()
+    if existing:
+        st = existing["status"] or ""
+        if st == "pending":
+            raise ValueError("already pending")
+        if st == "approved":
+            raise ValueError("already approved")
+        if st == "claimed":
+            raise ValueError("already claimed")
+    now = _now()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO promo_submissions (
+              user_id, campaign_id, channel, post_url, status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, 'pending', ?, ?)
+            """,
+            (int(user_id), cid, ch, url, now, now),
+        )
+    except sqlite3.OperationalError:
+        cur = conn.execute(
+            """
+            INSERT INTO promo_submissions (
+              user_id, campaign_id, post_url, status, created_at, updated_at
+            ) VALUES (?, ?, ?, 'pending', ?, ?)
+            """,
+            (int(user_id), cid, url, now, now),
+        )
+        if "channel" in _column_names(conn, "promo_submissions"):
+            conn.execute(
+                "UPDATE promo_submissions SET channel = ? WHERE id = ?",
+                (ch, int(cur.lastrowid)),
+            )
+    row = conn.execute(
+        "SELECT * FROM promo_submissions WHERE id = ?", (int(cur.lastrowid),)
+    ).fetchone()
+    return promo_submission_to_dict(row)
+
+
+def submit_promo_instagram(
+    conn: sqlite3.Connection, user_id: int, post_url: str
+) -> dict:
+    """Backward-compatible: Instagram channel on unified event."""
+    return submit_promo_event(
+        conn, user_id, channel="instagram", post_url=post_url
+    )
+
+
+def list_user_promo_submissions(conn: sqlite3.Connection, user_id: int) -> list[dict]:
+    ensure_coupon_tables(conn)
+    rows = conn.execute(
+        """
+        SELECT * FROM promo_submissions
+        WHERE user_id = ?
+        ORDER BY id DESC LIMIT 20
+        """,
+        (int(user_id),),
+    ).fetchall()
+    return [promo_submission_to_dict(r) for r in rows]
+
+
+def list_promo_submissions_admin(
+    conn: sqlite3.Connection, status: str = "pending"
+) -> list[dict]:
+    ensure_coupon_tables(conn)
+    st = (status or "pending").strip().lower()
+    if st == "all":
+        rows = conn.execute(
+            """
+            SELECT s.*, u.email AS user_email, u.display_name AS user_name,
+                   c.name AS campaign_name
+            FROM promo_submissions s
+            JOIN users u ON u.id = s.user_id
+            JOIN coupon_campaigns c ON c.id = s.campaign_id
+            ORDER BY s.id DESC LIMIT 100
+            """
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT s.*, u.email AS user_email, u.display_name AS user_name,
+                   c.name AS campaign_name
+            FROM promo_submissions s
+            JOIN users u ON u.id = s.user_id
+            JOIN coupon_campaigns c ON c.id = s.campaign_id
+            WHERE s.status = ?
+            ORDER BY s.id DESC LIMIT 100
+            """,
+            (st,),
+        ).fetchall()
+    out = []
+    for r in rows:
+        d = promo_submission_to_dict(r)
+        d["user_email"] = r["user_email"] or ""
+        d["user_name"] = r["user_name"] or ""
+        d["campaign_name"] = r["campaign_name"] or ""
+        out.append(d)
+    return out
+
+
+def review_promo_submission(
+    conn: sqlite3.Connection,
+    submission_id: int,
+    *,
+    action: str,
+    admin_note: str = "",
+) -> dict:
+    ensure_coupon_tables(conn)
+    action = (action or "").strip().lower()
+    if action not in ("approve", "reject"):
+        raise ValueError("action must be approve or reject")
+    row = conn.execute(
+        "SELECT * FROM promo_submissions WHERE id = ?", (int(submission_id),)
+    ).fetchone()
+    if not row:
+        raise ValueError("not found")
+    if (row["status"] or "") != "pending":
+        raise ValueError("not pending")
+    now = _now()
+    if action == "reject":
+        conn.execute(
+            """
+            UPDATE promo_submissions SET
+              status = 'rejected', admin_note = ?, reviewed_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            ((admin_note or "")[:300], now, now, int(submission_id)),
+        )
+        notify(
+            conn,
+            int(row["user_id"]),
+            "이벤트 인증 반려",
+            (admin_note or "제출이 반려되었습니다. 가이드를 확인 후 다시 시도해 주세요.")[:200],
+            "/promo/event.html",
+        )
+    else:
+        camp = conn.execute(
+            "SELECT * FROM coupon_campaigns WHERE id = ?",
+            (int(row["campaign_id"]),),
+        ).fetchone()
+        if not camp or not int(camp["active"] or 0):
+            raise ValueError("campaign inactive")
+        if int(camp["redeem_count"] or 0) >= int(camp["max_redemptions"] or 0):
+            raise ValueError("campaign sold out")
+        # Allow approve even if event window ended (user already submitted while open)
+        conn.execute(
+            """
+            UPDATE promo_submissions SET
+              status = 'approved', admin_note = ?, reviewed_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            ((admin_note or "")[:300], now, now, int(submission_id)),
+        )
+        notify(
+            conn,
+            int(row["user_id"]),
+            "이벤트 인증 승인",
+            "승인되었습니다. 앱 → 쿠폰에서 「쿠폰 받기」를 눌러 등록하세요. (성사 수수료 8% 쿠폰)",
+            "/app/#coupons",
+        )
+    fresh = conn.execute(
+        "SELECT * FROM promo_submissions WHERE id = ?", (int(submission_id),)
+    ).fetchone()
+    return promo_submission_to_dict(fresh)
+
+
+def claim_promo_coupon(conn: sqlite3.Connection, user_id: int, submission_id: int) -> dict:
+    """After admin approve, user claims → user_coupon origin=promo."""
+    ensure_coupon_tables(conn)
+    row = conn.execute(
+        "SELECT * FROM promo_submissions WHERE id = ?", (int(submission_id),)
+    ).fetchone()
+    if not row or int(row["user_id"]) != int(user_id):
+        raise ValueError("not found")
+    if (row["status"] or "") != "approved":
+        raise ValueError("not approved")
+    camp = conn.execute(
+        "SELECT * FROM coupon_campaigns WHERE id = ?",
+        (int(row["campaign_id"]),),
+    ).fetchone()
+    if not camp or not int(camp["active"] or 0):
+        raise ValueError("campaign inactive")
+    if int(camp["redeem_count"] or 0) >= int(camp["max_redemptions"] or 0):
+        raise ValueError("campaign sold out")
+    now = _now()
+    conn.execute(
+        "UPDATE coupon_campaigns SET redeem_count = redeem_count + 1 WHERE id = ?",
+        (int(camp["id"]),),
+    )
+    cur = conn.execute(
+        """
+        INSERT INTO user_coupons (
+          user_id, campaign_id, origin, status, created_at, updated_at
+        ) VALUES (?, ?, 'promo', 'available', ?, ?)
+        """,
+        (int(user_id), int(camp["id"]), now, now),
+    )
+    uc_id = int(cur.lastrowid)
+    conn.execute(
+        """
+        UPDATE promo_submissions SET
+          status = 'claimed', claimed_at = ?, user_coupon_id = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (now, uc_id, now, int(submission_id)),
+    )
+    uc = conn.execute("SELECT * FROM user_coupons WHERE id = ?", (uc_id,)).fetchone()
+    notify(
+        conn,
+        int(user_id),
+        "쿠폰 받기 완료",
+        campaign_to_dict(camp).get("label_ko") or "수수료 쿠폰이 등록되었습니다.",
+        "/app/#coupons",
+    )
+    return user_coupon_to_dict(uc, campaign_to_dict(camp))
+
+
+def take_seller_coupon_for_fee(
+    conn: sqlite3.Connection, seller_id: int, project_id: int
+) -> tuple[float, int | None, dict]:
+    """
+    Consume one available coupon for seller fee. Returns (rate, user_coupon_id, fee_dict extras).
+    No expiry. FIFO by id.
+    """
+    ensure_coupon_tables(conn)
+    row = conn.execute(
+        """
+        SELECT uc.*, c.fee_rate AS c_fee_rate, c.name AS c_name
+        FROM user_coupons uc
+        JOIN coupon_campaigns c ON c.id = uc.campaign_id
+        WHERE uc.user_id = ? AND uc.status = 'available'
+        ORDER BY uc.id ASC
+        LIMIT 1
+        """,
+        (int(seller_id),),
+    ).fetchone()
+    if not row:
+        return FEE_RATE, None, {}
+    rate = float(row["c_fee_rate"] or DEFAULT_COUPON_FEE_RATE)
+    if rate <= 0 or rate >= FEE_RATE:
+        rate = DEFAULT_COUPON_FEE_RATE
+    now = _now()
+    conn.execute(
+        """
+        UPDATE user_coupons SET
+          status = 'used',
+          used_project_id = ?,
+          used_at = ?,
+          updated_at = ?
+        WHERE id = ? AND status = 'available'
+        """,
+        (int(project_id), now, now, int(row["id"])),
+    )
+    return (
+        rate,
+        int(row["id"]),
+        {
+            "coupon_id": int(row["id"]),
+            "coupon_name": row["c_name"] or "",
+            "fee_rate": rate,
+        },
+    )
 
 
 # --- Buyer reports (quality / plagiarism / not working) ---
@@ -1534,12 +2893,20 @@ def message_to_dict(row: sqlite3.Row) -> dict:
 
 
 def fee_invoice_to_dict(row: sqlite3.Row) -> dict:
+    fee_rate = _row_get(row, "fee_rate")
+    try:
+        fee_rate_f = float(fee_rate) if fee_rate is not None else FEE_RATE
+    except (TypeError, ValueError):
+        fee_rate_f = FEE_RATE
     return {
         "id": row["id"],
         "project_id": row["project_id"],
         "seller_id": row["seller_id"],
         "deal_amount": row["deal_amount"],
         "fee_amount": row["fee_amount"],
+        "fee_rate": fee_rate_f,
+        "fee_rate_pct": int(round(fee_rate_f * 100)),
+        "user_coupon_id": _row_get(row, "user_coupon_id"),
         "status": row["status"],
         "note": row["note"] or "",
         "created_at": row["created_at"],
@@ -1555,25 +2922,59 @@ def create_fee_invoice(
     deal_amount: int,
     note: str = "",
 ) -> dict:
-    fee = fee_breakdown(deal_amount)
     now = _now()
-    # one open invoice per project
+    # one open invoice per project — do not consume coupon if already exists
     existing = conn.execute(
         "SELECT * FROM fee_invoices WHERE project_id = ? AND status = 'pending'",
         (project_id,),
     ).fetchone()
     if existing:
         return fee_invoice_to_dict(existing)
-    cur = conn.execute(
-        """
-        INSERT INTO fee_invoices (
-          project_id, seller_id, deal_amount, fee_amount, status, note, created_at
-        ) VALUES (?, ?, ?, ?, 'pending', ?, ?)
-        """,
-        (project_id, seller_id, deal_amount, fee["fee"], note[:500], now),
+
+    # Apply one available seller coupon → e.g. 8% fee (「수수료 8% 쿠폰」)
+    rate, coupon_id, cmeta = take_seller_coupon_for_fee(
+        conn, int(seller_id), int(project_id)
     )
+    fee = fee_breakdown(deal_amount, rate=rate if coupon_id else None)
+    note_final = (note or "")[:500]
+    if coupon_id:
+        note_final = (
+            (note_final + " · " if note_final else "")
+            + f"쿠폰 적용 수수료 {fee['rate_pct']}% (user_coupon #{coupon_id})"
+        )[:500]
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO fee_invoices (
+              project_id, seller_id, deal_amount, fee_amount, status, note, created_at,
+              fee_rate, user_coupon_id
+            ) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+            """,
+            (
+                project_id,
+                seller_id,
+                deal_amount,
+                fee["fee"],
+                note_final,
+                now,
+                fee["rate"],
+                coupon_id,
+            ),
+        )
+    except sqlite3.OperationalError:
+        cur = conn.execute(
+            """
+            INSERT INTO fee_invoices (
+              project_id, seller_id, deal_amount, fee_amount, status, note, created_at
+            ) VALUES (?, ?, ?, ?, 'pending', ?, ?)
+            """,
+            (project_id, seller_id, deal_amount, fee["fee"], note_final, now),
+        )
     row = conn.execute("SELECT * FROM fee_invoices WHERE id = ?", (int(cur.lastrowid),)).fetchone()
-    return fee_invoice_to_dict(row)
+    out = fee_invoice_to_dict(row)
+    if cmeta:
+        out["coupon"] = cmeta
+    return out
 
 
 def deal_payment_hours() -> int:
@@ -1668,12 +3069,26 @@ def finalize_sale(
         note=note or "성사 수수료(정산 보류)",
     )
     fee = inv["fee_amount"]
+    # Seed buyer handover checklist from listing assets (parties transfer off-site)
+    if not load_handover_checklist(row):
+        seeded = seed_handover_checklist(row)
+        conn.execute(
+            "UPDATE projects SET handover_checklist_json = ? WHERE id = ?",
+            (json.dumps(seeded, ensure_ascii=False), pid),
+        )
     notify(
         conn,
         owner_id,
         "성사 · 입금 대기",
         f"「{row['title']}」 성사 ₩{sold_price:,}. 구매자 {pay_h}시간 내 입금 후, "
-        f"이전→검수(최대 {insp_h}시간)·인수 확정 시 정산됩니다. 수수료 ₩{fee:,} (10%).",
+        f"이전→검수(최대 {insp_h}시간)·인수 확정 시 정산됩니다. "
+        f"수수료 ₩{fee:,}"
+        + (
+            f" ({int(round(float(inv.get('fee_rate') or FEE_RATE) * 100))}%)"
+            if isinstance(inv, dict)
+            else " (10%)"
+        )
+        + ".",
         f"/project.html?id={pid}",
     )
     if buyer_id:
@@ -2161,6 +3576,182 @@ def public_bidder_handle(display_name: str | None, bidder_id: int | None = None)
     if len(name) > 24:
         return name[:24] + "…"
     return name
+
+
+def _party_label(display_name: str | None, user_id: int | None, *, role_ko: str) -> str:
+    """Confirmation-card label: display name only (no email/phone/account)."""
+    handle = public_bidder_handle(display_name, user_id)
+    if handle and not handle.startswith("입찰자") and "@" not in handle:
+        return handle
+    if user_id:
+        return f"{role_ko} #{int(user_id)}"
+    return role_ko
+
+
+def deal_is_complete_row(row: sqlite3.Row | dict) -> bool:
+    """True only when deal_status is completed (accept / auto-settle)."""
+    try:
+        if isinstance(row, dict):
+            st = row.get("deal_status") or ""
+        else:
+            st = row["deal_status"] if "deal_status" in row.keys() else ""
+    except (IndexError, KeyError):
+        st = ""
+    return (st or "") == "completed"
+
+
+def build_deal_certificate(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    kind: str,
+    viewer_id: int | None = None,
+) -> dict:
+    """
+    Site record confirmation for award or completed deal.
+    Same payload for seller and buyer (both may save the image).
+    """
+    kind = (kind or "").strip().lower()
+    if kind not in ("award", "complete"):
+        raise ValueError("kind must be award or complete")
+
+    pid = int(row["id"])
+    owner_id = int(row["owner_id"])
+    buyer_id = _row_get(row, "buyer_id")
+    buyer_id_i = int(buyer_id) if buyer_id is not None else None
+    astatus = (_row_get(row, "auction_status") or "") or ""
+    if astatus != "sold" and not (_row_get(row, "sold_at") or ""):
+        raise ValueError("not_sold")
+
+    if kind == "complete" and not deal_is_complete_row(row):
+        raise ValueError("not_complete")
+
+    sold_at = (_row_get(row, "sold_at") or "") or ""
+    completed_at = (
+        (_row_get(row, "settled_at") or "")
+        or (_row_get(row, "buyer_accepted_at") or "")
+        or ""
+    )
+    amount = _row_get(row, "sold_price")
+    if amount is None:
+        amount = _row_get(row, "price_current")
+    amount = int(amount or 0)
+
+    seller_u = conn.execute(
+        "SELECT id, display_name FROM users WHERE id = ?", (owner_id,)
+    ).fetchone()
+    buyer_u = None
+    if buyer_id_i:
+        buyer_u = conn.execute(
+            "SELECT id, display_name FROM users WHERE id = ?", (buyer_id_i,)
+        ).fetchone()
+
+    seller_label = _party_label(
+        seller_u["display_name"] if seller_u else None,
+        owner_id,
+        role_ko="판매자",
+    )
+    buyer_label = _party_label(
+        buyer_u["display_name"] if buyer_u else None,
+        buyer_id_i,
+        role_ko="구매자",
+    )
+
+    # Stable confirmation no. (same for both parties; re-issue keeps same id)
+    seed = f"{pid}|{sold_at}|{kind}|{amount}|{buyer_id_i or 0}"
+    token = hashlib.sha256(seed.encode("utf-8")).hexdigest()[:8].upper()
+    day = (sold_at or _now())[:10].replace("-", "")
+    suffix = "A" if kind == "award" else "C"
+    doc_id = f"WA-{pid}-{day}-{token}-{suffix}"
+
+    issued = _now()
+    event_at = sold_at if kind == "award" else (completed_at or sold_at)
+    title = row["title"] or ""
+
+    if kind == "award":
+        doc_title_ko = "낙찰 기록 확인서"
+        doc_title_en = "Award record confirmation"
+        status_label_ko = "낙찰"
+        status_label_en = "Awarded"
+        status_note_ko = "입금 · 자산 이전 · 인수 절차가 남아 있을 수 있습니다."
+        status_note_en = "Payment, transfer, and acceptance may still be pending."
+        event_label_ko = "낙찰 시각"
+        event_label_en = "Awarded at"
+        lead_ko = "사이트에 아래 낙찰이 기록되었습니다."
+        lead_en = "The following award is recorded on WakeAgain."
+        file_stem = f"WakeAgain-낙찰확인-{pid}-{token}"
+    else:
+        doc_title_ko = "거래 기록 확인서"
+        doc_title_en = "Transaction record confirmation"
+        status_label_ko = "거래 절차 완료"
+        status_label_en = "Procedure completed"
+        status_note_ko = "사이트에 기록된 거래 절차가 완료된 상태입니다."
+        status_note_en = "Site-recorded deal steps are complete."
+        event_label_ko = "완료 시각"
+        event_label_en = "Completed at"
+        lead_ko = "사이트에 아래 거래 절차 완료가 기록되었습니다."
+        lead_en = "The following completed deal is recorded on WakeAgain."
+        file_stem = f"WakeAgain-거래확인-{pid}-{token}"
+
+    disclaimer_ko = (
+        "본 확인서는 WakeAgain에 저장된 거래 기록의 요약입니다. "
+        "플랫폼(코어랩스)은 통신판매중개자이며 거래 당사자가 아닙니다. "
+        "매물 품질·내용·권리·자산 이전의 1차 책임은 판매자·구매자에게 있습니다. "
+        "이용약관 및 거래 당시 사이트 절차에 따릅니다."
+    )
+    disclaimer_en = (
+        "This confirmation summarizes a record stored on WakeAgain. "
+        "CoreLabs is an intermediary, not a party to the deal. "
+        "Quality, rights, and transfer are the parties' responsibility. "
+        "Subject to the Terms and site procedures at the time of the deal."
+    )
+
+    viewer_role = None
+    if viewer_id is not None:
+        if int(viewer_id) == owner_id:
+            viewer_role = "seller"
+        elif buyer_id_i is not None and int(viewer_id) == buyer_id_i:
+            viewer_role = "buyer"
+
+    return {
+        "ok": True,
+        "kind": kind,
+        "doc_id": doc_id,
+        "doc_title_ko": doc_title_ko,
+        "doc_title_en": doc_title_en,
+        "lead_ko": lead_ko,
+        "lead_en": lead_en,
+        "issued_at": issued,
+        "event_at": event_at or issued,
+        "event_label_ko": event_label_ko,
+        "event_label_en": event_label_en,
+        "venue": "WakeAgain (https://wakeagain.com)",
+        "project_id": pid,
+        "project_title": title,
+        "amount": amount,
+        "currency": "KRW",
+        "seller_label": seller_label,
+        "buyer_label": buyer_label,
+        "status_label_ko": status_label_ko,
+        "status_label_en": status_label_en,
+        "status_note_ko": status_note_ko,
+        "status_note_en": status_note_en,
+        "fee_note_ko": "판매자 수수료 10% · 구매자는 위 거래 금액만 부담 (약관 제13조)",
+        "fee_note_en": "10% seller fee · buyer pays the amount above only (Terms §13)",
+        "disclaimer_ko": disclaimer_ko,
+        "disclaimer_en": disclaimer_en,
+        "file_stem": file_stem,
+        "viewer_role": viewer_role,
+        "shared": True,
+        "note_ko": (
+            "판매자·구매자 동일한 확인서입니다. 각자 저장할 수 있습니다. "
+            "실명·연락처는 넣지 않습니다. 상대 연락은 매물 쪽지 또는 성사 후 판매자 정보에서 하세요."
+        ),
+        "note_en": (
+            "Same confirmation for seller and buyer; either may save it. "
+            "No real name or phone on this card — contact via listing messages or post-sale seller info."
+        ),
+    }
 
 
 def bid_to_public(row: sqlite3.Row | dict) -> dict:

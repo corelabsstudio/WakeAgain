@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>소문내고 수수료 8% 쿠폰 받기 — WakeAgain</title>
+  <meta name="description" content="X·링크드인·블로그·커뮤니티·인스타 중 하나에 WakeAgain을 소개하고 성사 수수료 8% 쿠폰을 받으세요. 계정당 1회 · 코드 공개 없음." />
+  <meta name="theme-color" content="#050508" />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ux9.css" />
+  <link rel="stylesheet" href="/legal/legal.css" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    .promo-page { max-width: 680px; }
+    .promo-hero {
+      margin: 0 0 1.25rem; padding: 1.15rem 1.2rem; border-radius: 16px;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: linear-gradient(145deg, rgba(124, 58, 237, 0.2), rgba(15, 15, 22, 0.92));
+    }
+    .promo-hero h1 { margin: 0.3rem 0 0.5rem; font-size: clamp(1.3rem, 4vw, 1.7rem); line-height: 1.25; }
+    .promo-hero p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 0.95rem; }
+    .promo-callout {
+      margin: 0 0 1.1rem; padding: 0.85rem 1rem; border-radius: 12px;
+      border: 1px solid rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08);
+      font-size: 0.9rem; line-height: 1.55; color: var(--text);
+    }
+    .promo-callout strong { color: #86efac; }
+    .promo-channels {
+      display: grid; gap: 0.65rem; margin: 0 0 1.25rem;
+    }
+    .promo-ch {
+      display: block; width: 100%; text-align: left; cursor: pointer;
+      padding: 0.9rem 1rem; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--text); font: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .promo-ch:hover { border-color: rgba(168, 85, 247, 0.45); }
+    .promo-ch.is-on {
+      border-color: rgba(168, 85, 247, 0.65);
+      background: rgba(124, 58, 237, 0.15);
+      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.25);
+    }
+    .promo-ch .ch-title { font-weight: 700; font-size: 0.98rem; margin: 0 0 0.25rem; }
+    .promo-ch .ch-meta { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+    .promo-ch .ch-reward { margin: 0.35rem 0 0; font-size: 0.82rem; color: #c4b5fd; font-weight: 600; }
+    .promo-steps { margin: 0 0 1.25rem; padding: 0; list-style: none; counter-reset: ps; }
+    .promo-steps li {
+      position: relative; margin: 0 0 0.65rem; padding: 0.85rem 0.95rem 0.85rem 3.1rem;
+      border-radius: 12px; border: 1px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 0.92rem; line-height: 1.5;
+    }
+    .promo-steps li::before {
+      counter-increment: ps; content: counter(ps);
+      position: absolute; left: 0.85rem; top: 0.85rem;
+      width: 1.55rem; height: 1.55rem; border-radius: 999px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(124, 58, 237, 0.35); font-size: 0.8rem; font-weight: 700; color: #e9d5ff;
+    }
+    .promo-form label { display: block; margin: 0.5rem 0 0.35rem; font-weight: 600; }
+    .promo-form input {
+      width: 100%; padding: 0.65rem 0.75rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg-elev, #12121a); color: var(--text);
+      font: inherit;
+    }
+    .promo-status {
+      margin: 1rem 0; padding: 0.85rem 1rem; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--card); font-size: 0.9rem; line-height: 1.5;
+    }
+    .promo-status.ok { border-color: rgba(52, 211, 153, 0.35); }
+    .promo-status.wait { border-color: rgba(251, 191, 36, 0.35); }
+    .promo-status.closed { border-color: rgba(148, 163, 184, 0.35); }
+  </style>
+</head>
+<body class="form-body">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="/app/#list">마켓</a>
+        <a href="/app/#coupons">쿠폰</a>
+        <a href="/guide/">이용안내</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/app/#login" id="promoLogin">로그인</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page promo-page">
+    <div class="promo-hero">
+      <p class="eyebrow" style="margin:0">Event</p>
+      <h1 id="promoTitle">소문내고 수수료 8% 쿠폰 받기</h1>
+      <p id="promoLead">
+        채널 <strong style="color:var(--text)">중 하나</strong>에 WakeAgain 소개를 올린 뒤 URL을 제출하세요.
+        운영 확인 후 앱에서 <strong style="color:var(--text)">쿠폰 받기</strong>로 등록합니다.
+        보상은 전부 같습니다: <strong style="color:var(--text)">성사 수수료 8% 쿠폰 1장</strong>.
+      </p>
+    </div>
+
+    <div class="promo-callout" id="promoOnce">
+      <strong>계정당 1회</strong> · 인스타·X·블로그·커뮤니티를 합쳐 <strong>한 번만</strong> 받을 수 있습니다.
+      여러 채널에 올려도 보상은 1장입니다. 기본 수수료 10% → 쿠폰 적용 시 <strong>8%</strong> (판매 성사 시에만).
+    </div>
+
+    <p class="muted fine" id="promoMeta">이벤트 불러오는 중…</p>
+
+    <div class="promo-status closed" id="promoClosed" hidden></div>
+
+    <ol class="promo-steps" id="promoSteps"></ol>
+
+    <h2 style="font-size:1.05rem;margin:0 0 0.55rem" id="chHeading" hidden>채널 선택 (하나만)</h2>
+    <div class="promo-channels" id="promoChannels" hidden></div>
+
+    <div class="promo-status" id="promoBox" hidden></div>
+
+    <form class="form-card promo-form" id="promoForm" hidden>
+      <label for="postUrl" id="urlLabel">게시물 URL</label>
+      <input id="postUrl" type="url" required maxlength="500" placeholder="https://…" autocomplete="off" />
+      <p class="muted fine" id="urlHint" style="margin:0.45rem 0 0.85rem">본인이 올린 글·게시물 링크를 넣어 주세요.</p>
+      <button type="submit" class="btn btn-primary btn-lg" id="promoSubmit">인증 제출</button>
+      <p class="form-error" id="promoErr" hidden></p>
+    </form>
+
+    <p class="muted fine" id="promoNeedLogin" hidden style="margin-top:1rem">
+      제출하려면 <a class="text-link" href="/app/#login">로그인</a>이 필요합니다.
+      (로그인 후 이 페이지로 돌아와 제출해 주세요.)
+    </p>
+
+    <ul class="muted fine" id="promoRules" style="margin:1.5rem 0;padding-left:1.15rem;line-height:1.55"></ul>
+
+    <p class="muted fine">
+      <a class="text-link" href="/app/#coupons">앱에서 쿠폰 확인</a> ·
+      성사 수수료에만 적용 · 유효기간 없음 · 매매 중개 없음
+    </p>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    (function () {
+      var api = window.WakeAgainAPI;
+      var $ = function (id) { return document.getElementById(id); };
+      var selectedChannel = "instagram";
+      var channels = [];
+
+      function show(el, on) {
+        if (el) el.hidden = !on;
+      }
+
+      function setErr(msg) {
+        var e = $("promoErr");
+        if (!e) return;
+        if (!msg) {
+          e.hidden = true;
+          e.textContent = "";
+          return;
+        }
+        e.hidden = false;
+        e.textContent = msg;
+      }
+
+      function prefChannelFromQuery() {
+        try {
+          var q = new URLSearchParams(location.search || "");
+          var c = (q.get("channel") || "").toLowerCase();
+          if (c === "ig") c = "instagram";
+          if (c === "twitter") c = "x";
+          if (c === "blog" || c === "linkedin") c = "linkedin_blog";
+          if (c === "discord") c = "community";
+          return c || "";
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function applyChannelUI() {
+        var ch = null;
+        for (var i = 0; i < channels.length; i++) {
+          if (channels[i].id === selectedChannel) {
+            ch = channels[i];
+            break;
+          }
+        }
+        if (!ch && channels.length) ch = channels[0];
+        if (!ch) return;
+        selectedChannel = ch.id;
+        var cards = document.querySelectorAll(".promo-ch");
+        cards.forEach(function (el) {
+          el.classList.toggle("is-on", el.getAttribute("data-ch") === selectedChannel);
+        });
+        if ($("urlLabel")) $("urlLabel").textContent = ch.label_ko + " URL";
+        if ($("postUrl")) $("postUrl").placeholder = ch.placeholder || "https://…";
+        if ($("urlHint")) {
+          $("urlHint").textContent =
+            (ch.hint_ko || "본인이 올린 글 링크") +
+            " · 보상: 성사 수수료 8% 쿠폰 1장 (다른 채널과 동일)";
+        }
+      }
+
+      function renderChannels(list) {
+        channels = list || [];
+        var host = $("promoChannels");
+        if (!host) return;
+        host.innerHTML = "";
+        var pref = prefChannelFromQuery();
+        if (pref) {
+          for (var i = 0; i < channels.length; i++) {
+            if (channels[i].id === pref) {
+              selectedChannel = pref;
+              break;
+            }
+          }
+        }
+        channels.forEach(function (ch) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "promo-ch" + (ch.id === selectedChannel ? " is-on" : "");
+          btn.setAttribute("data-ch", ch.id);
+          btn.innerHTML =
+            '<p class="ch-title"></p><p class="ch-meta"></p><p class="ch-reward"></p>';
+          btn.querySelector(".ch-title").textContent = ch.label_ko || ch.id;
+          btn.querySelector(".ch-meta").textContent = ch.hint_ko || "";
+          btn.querySelector(".ch-reward").textContent =
+            "보상 · " + (ch.reward_ko || "성사 수수료 8% 쿠폰 1장");
+          btn.addEventListener("click", function () {
+            selectedChannel = ch.id;
+            applyChannelUI();
+          });
+          host.appendChild(btn);
+        });
+        applyChannelUI();
+      }
+
+      async function load() {
+        var meta = $("promoMeta");
+        var data;
+        try {
+          var res = await fetch("/api/v1/promo/event", { credentials: "same-origin" });
+          data = await res.json();
+        } catch (e) {
+          meta.textContent = "이벤트를 불러오지 못했습니다.";
+          return;
+        }
+        if (data.title_ko && $("promoTitle")) $("promoTitle").textContent = data.title_ko;
+
+        var steps = data.steps_ko || [];
+        $("promoSteps").innerHTML = steps
+          .map(function (s) {
+            return "<li>" + s + "</li>";
+          })
+          .join("");
+        var rules = data.rules_ko || [];
+        $("promoRules").innerHTML = rules
+          .map(function (s) {
+            return "<li>" + s + "</li>";
+          })
+          .join("");
+
+        if (!data.active) {
+          meta.textContent = "";
+          var closed = $("promoClosed");
+          closed.hidden = false;
+          closed.textContent =
+            data.message_ko || "진행 중인 이벤트가 없습니다. 홈 배너도 함께 숨겨집니다.";
+          show($("promoForm"), false);
+          show($("promoChannels"), false);
+          show($("chHeading"), false);
+          show($("promoNeedLogin"), false);
+          return;
+        }
+
+        var c = data.campaign || {};
+        meta.textContent =
+          (c.label_ko || "성사 수수료 8% 쿠폰") +
+          " · 남은 수량 " +
+          (c.remaining != null ? c.remaining : "?") +
+          " / " +
+          (c.max_redemptions || 100) +
+          (c.ends_at ? " · 종료 예정 있음" : "");
+
+        renderChannels(data.channels || []);
+        show($("promoChannels"), true);
+        show($("chHeading"), true);
+
+        var loggedIn = api && api.isLoggedIn && api.isLoggedIn();
+        show($("promoNeedLogin"), !loggedIn);
+        show($("promoForm"), loggedIn);
+        if (loggedIn) {
+          $("promoLogin").textContent = "앱 · 쿠폰";
+          $("promoLogin").href = "/app/#coupons";
+          try {
+            var mine = null;
+            if (api.myPromoEvent) mine = await api.myPromoEvent();
+            else if (api.myPromoInstagram) mine = await api.myPromoInstagram();
+            if (mine && mine.submissions && mine.submissions.length) {
+              var last = mine.submissions[0];
+              var box = $("promoBox");
+              box.hidden = false;
+              var st = last.status;
+              var chLabel = last.channel_label_ko || last.channel || "";
+              box.className =
+                "promo-status " + (st === "approved" || st === "claimed" ? "ok" : "wait");
+              if (st === "pending") {
+                box.textContent =
+                  "제출 완료 · 운영 확인 대기 (" +
+                  chLabel +
+                  "): " +
+                  (last.post_url || "");
+                show($("promoForm"), false);
+                show($("promoChannels"), false);
+              } else if (st === "approved") {
+                box.innerHTML =
+                  "승인되었습니다. <a class=\"text-link\" href=\"/app/#coupons\"><strong>앱 → 쿠폰</strong></a>에서 「쿠폰 받기」를 눌러 주세요.";
+                show($("promoForm"), false);
+                show($("promoChannels"), false);
+              } else if (st === "claimed") {
+                box.textContent =
+                  "이미 이벤트 쿠폰을 받으셨습니다. (계정당 1회) 앱 → 쿠폰에서 확인하세요.";
+                show($("promoForm"), false);
+                show($("promoChannels"), false);
+              } else if (st === "rejected") {
+                box.textContent =
+                  "반려됨" +
+                  (last.admin_note ? ": " + last.admin_note : "") +
+                  " · 수정 후 다시 제출할 수 있습니다.";
+              }
+            }
+          } catch (e2) {
+            /* ignore */
+          }
+        }
+      }
+
+      $("promoForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        setErr("");
+        if (!api || !api.isLoggedIn()) {
+          location.href = "/app/#login";
+          return;
+        }
+        var url = ($("postUrl").value || "").trim();
+        try {
+          var r;
+          if (api.submitPromoEvent) {
+            r = await api.submitPromoEvent(selectedChannel, url);
+          } else {
+            var res = await fetch("/api/v1/me/promo/event/submit", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + (api.token() || ""),
+              },
+              body: JSON.stringify({ channel: selectedChannel, post_url: url }),
+            });
+            var data = await res.json().catch(function () {
+              return {};
+            });
+            if (!res.ok) {
+              var d = data.detail;
+              var msg =
+                typeof d === "string"
+                  ? d
+                  : d && d.message
+                    ? d.message
+                    : "제출 실패";
+              setErr(msg);
+              return;
+            }
+            r = data;
+          }
+          $("promoBox").hidden = false;
+          $("promoBox").className = "promo-status wait";
+          $("promoBox").textContent =
+            (r.message_ko || "제출되었습니다.") +
+            " 승인 후 앱 → 쿠폰에서 받을 수 있습니다.";
+          $("promoForm").hidden = true;
+          show($("promoChannels"), false);
+        } catch (ex) {
+          setErr(ex.message || "제출 실패");
+        }
+      });
+
+      load();
+    })();
+  </script>
+</body>
+</html>
