@@ -58,6 +58,36 @@
       header.app-top .user-chip-meta { display: none !important; }
       header.app-top .user-chip { max-width: min(7rem, 32vw) !important; }
     }
+    /* Critical: checkboxes must not inherit full-width text-field styles */
+    .form-card input[type="checkbox"],
+    .form-card input[type="radio"],
+    .app-form input[type="checkbox"],
+    .app-form input[type="radio"] {
+      -webkit-appearance: auto !important;
+      appearance: auto !important;
+      width: 1.2rem !important;
+      height: 1.2rem !important;
+      min-width: 1.2rem !important;
+      max-width: 1.2rem !important;
+      padding: 0 !important;
+      margin: 0.15rem 0 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      accent-color: #a855f7;
+      cursor: pointer !important;
+      flex-shrink: 0 !important;
+    }
+    .asset-checks label {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.45rem !important;
+      cursor: pointer !important;
+      padding: 0.45rem 0.7rem !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: rgba(255,255,255,0.04) !important;
+    }
   </style>
   <link rel="stylesheet" href="/styles.css?v=20260725-checkfix" />
   <link rel="stylesheet" href="/ux9.css?v=20260725-checkfix" />
