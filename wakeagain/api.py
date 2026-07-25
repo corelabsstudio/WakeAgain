@@ -3418,9 +3418,13 @@ async def upload_demo_image(
         "ext": saved["ext"],
         "limits": {
             "max_bytes": media_mod.MAX_IMAGE_BYTES,
+            "min_per_listing": media_mod.MIN_IMAGES_PER_LISTING,
             "max_per_listing": media_mod.MAX_IMAGES_PER_LISTING,
             "formats": ["jpg", "png", "webp"],
-            "hint_ko": "장당 최대 약 1.5MB · 매물당 최대 5장 · 클라이언트에서 가로 1280px 권장",
+            "hint_ko": (
+                f"장당 최대 약 1.5MB · 매물당 {media_mod.MIN_IMAGES_PER_LISTING}~"
+                f"{media_mod.MAX_IMAGES_PER_LISTING}장 · 가로 1280px 권장"
+            ),
         },
     }
 
@@ -3572,19 +3576,14 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             detail={"code": "demo_images_invalid", "message": str(e)},
         ) from e
 
-    hollow_text = (
-        len(demo) < 12
-        or demo_low in ("없음", "없어요", "나중에", "none", "n/a", "no", "x", "-")
-        or demo_low.startswith("나중에")
-    )
-    if hollow_text and not demo_images:
+    if len(demo_images) < media_mod.MIN_IMAGES_PER_LISTING:
         raise HTTPException(
             status_code=400,
             detail={
-                "code": "demo_required",
+                "code": "demo_images_min",
                 "message": (
-                    "스크린샷을 1장 이상 올리거나, 화면 설명을 12자 이상 적어 주세요. "
-                    "URL은 필수가 아닙니다."
+                    f"실행 화면 스크린샷을 최소 {media_mod.MIN_IMAGES_PER_LISTING}장 이상 올려 주세요. "
+                    f"(최대 {media_mod.MAX_IMAGES_PER_LISTING}장)"
                 ),
             },
         )

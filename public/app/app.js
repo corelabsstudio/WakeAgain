@@ -1935,6 +1935,7 @@
 
   /** Uploaded demo screenshot public URLs (max 5). */
   let demoImageUrls = [];
+  const DEMO_MIN = 2;
   const DEMO_MAX = 5;
   const DEMO_MAX_EDGE = 1280;
   const DEMO_JPEG_Q = 0.82;
@@ -1954,7 +1955,15 @@
   function renderDemoShots() {
     const grid = $("demoShotGrid");
     const hint = $("demoShotHint");
-    if (hint) hint.textContent = demoImageUrls.length + " / " + DEMO_MAX + "장";
+    if (hint) {
+      hint.textContent =
+        demoImageUrls.length +
+        " / " +
+        DEMO_MAX +
+        "장 · 최소 " +
+        DEMO_MIN +
+        "장";
+    }
     if (!grid) return;
     if (!demoImageUrls.length) {
       grid.innerHTML = "";
@@ -2321,10 +2330,12 @@
       demo.length < 12 ||
       ["없음", "없어요", "나중에", "none", "n/a", "no", "x", "-"].includes(demoLow) ||
       demoLow.startsWith("나중에");
-    if (hollowDemoText && !demoImageUrls.length) {
+    if (demoImageUrls.length < DEMO_MIN) {
       showErr(
         $("projErr"),
-        "실행 화면 스크린샷을 1장 이상 올리거나, 추가 설명을 12자 이상 적어 주세요. URL은 필요 없습니다."
+        "실행 화면 스크린샷을 최소 " +
+          DEMO_MIN +
+          "장 이상 올려 주세요. (서로 다른 화면이면 더 좋습니다)"
       );
       const box = document.querySelector(".demo-shot-box");
       if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
