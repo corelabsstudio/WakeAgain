@@ -75,7 +75,7 @@
       "buyers.buy_label": "WakeAgain에서 사기",
       "buyers.buy_t": "실행 가능한 것부터 시작",
       "buyers.buy_1": "데모·지금 가격·입찰자 수 공개",
-      "buyers.buy_2": "사는 쪽 추가 수수료 없음",
+      "buyers.buy_2": "구매자 수수료 없음",
       "buyers.buy_3": "가격 쓰기 → PG 안전결제 → 검수·인수",
       "buyers.why_title": "왜 여기서 사나",
       "buyers.m1_t": "시간 절약",
