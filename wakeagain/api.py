@@ -4050,9 +4050,168 @@ class AdminPurgeUsersIn(BaseModel):
     confirm: str = Field(min_length=8, max_length=40)
 
 
+class AdminPurgeExceptIn(BaseModel):
+    """남길 이메일 외 회원 삭제 — confirm 문자열이 정확히 일치해야 함."""
+    confirm: str = Field(min_length=8, max_length=40)
+    keep_emails: list[str] = Field(default_factory=list, max_length=20)
+
+
 def _destructive_admin_allowed() -> bool:
     """Hard gate: purge/restore only when operator explicitly enables ALLOW_DESTRUCTIVE_ADMIN=1."""
     return (os.environ.get("ALLOW_DESTRUCTIVE_ADMIN") or "").strip() in {"1", "true", "TRUE", "yes", "on"}
+
+
+def _require_destructive_admin() -> None:
+    if not _destructive_admin_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "destructive_locked",
+                "message": (
+                    "파괴적 관리 작업이 잠겨 있습니다. "
+                    "ALLOW_DESTRUCTIVE_ADMIN=1 을 설정한 뒤에만 가능합니다. "
+                    "(실수 방지 — 기본 차단)"
+                ),
+            },
+        )
+
+
+def _purge_users_except_emails(conn: Any, keep_emails: list[str]) -> dict[str, Any]:
+    """
+    Delete all users whose email is not in keep_emails (case-insensitive),
+    plus their related rows. Kept users and their owned data remain.
+    """
+    keep_norm = sorted({(e or "").strip().lower() for e in keep_emails if (e or "").strip()})
+    if not keep_norm:
+        raise ValueError("keep_emails must contain at least one email")
+
+    keep_rows = conn.execute(
+        f"SELECT id, email FROM users WHERE lower(email) IN ({','.join('?' for _ in keep_norm)})",
+        keep_norm,
+    ).fetchall()
+    keep_ids = [int(r["id"]) for r in keep_rows]
+    found_emails = {str(r["email"]).strip().lower() for r in keep_rows}
+    missing = [e for e in keep_norm if e not in found_emails]
+    if missing:
+        raise ValueError(f"keep email not found: {', '.join(missing)}")
+
+    drop_rows = conn.execute(
+        f"SELECT id, email FROM users WHERE lower(email) NOT IN ({','.join('?' for _ in keep_norm)})",
+        keep_norm,
+    ).fetchall()
+    drop_ids = [int(r["id"]) for r in drop_rows]
+    dropped_emails = [str(r["email"]) for r in drop_rows]
+    deleted: dict[str, int] = {}
+
+    if not drop_ids:
+        return {
+            "deleted": deleted,
+            "dropped_emails": [],
+            "kept_ids": keep_ids,
+            "kept_emails": [str(r["email"]) for r in keep_rows],
+        }
+
+    placeholders = ",".join("?" for _ in drop_ids)
+
+    def _del(sql: str, params: tuple | list = ()) -> int:
+        cur = conn.execute(sql, params)
+        return int(cur.rowcount or 0)
+
+    # Related to drop users
+    try:
+        deleted["bids_as_bidder"] = _del(
+            f"DELETE FROM bids WHERE bidder_id IN ({placeholders})", drop_ids
+        )
+    except Exception as e:
+        deleted["bids_as_bidder"] = -1
+        print(f"[admin purge-except] bids: {e}", flush=True)
+
+    # Projects owned by drop users (and their bids)
+    try:
+        proj_ids = [
+            int(r["id"])
+            for r in conn.execute(
+                f"SELECT id FROM projects WHERE owner_id IN ({placeholders})", drop_ids
+            ).fetchall()
+        ]
+        if proj_ids:
+            pp = ",".join("?" for _ in proj_ids)
+            deleted["bids_on_dropped_projects"] = _del(
+                f"DELETE FROM bids WHERE project_id IN ({pp})", proj_ids
+            )
+            deleted["reports_on_dropped_projects"] = _del(
+                f"DELETE FROM reports WHERE project_id IN ({pp})", proj_ids
+            ) if _table_has(conn, "reports") else 0
+            deleted["projects"] = _del(
+                f"DELETE FROM projects WHERE id IN ({pp})", proj_ids
+            )
+        else:
+            deleted["projects"] = 0
+    except Exception as e:
+        deleted["projects"] = -1
+        print(f"[admin purge-except] projects: {e}", flush=True)
+
+    for table, col in (
+        ("messages", "sender_id"),
+        ("messages", "recipient_id"),
+        ("notifications", "user_id"),
+        ("fee_invoices", "user_id"),
+        ("reports", "reporter_id"),
+        ("user_blocks", "blocker_id"),
+        ("user_blocks", "blocked_id"),
+        ("interests", "user_id"),
+        ("reviews", "user_id"),
+        ("showcases", "user_id"),
+        ("user_coupons", "user_id"),
+        ("promo_submissions", "user_id"),
+        ("leads", "user_id"),
+    ):
+        key = f"{table}_{col}"
+        try:
+            if not _table_has(conn, table):
+                deleted[key] = 0
+                continue
+            # column may not exist on older schemas
+            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            if col not in cols:
+                deleted[key] = 0
+                continue
+            deleted[key] = _del(
+                f"DELETE FROM {table} WHERE {col} IN ({placeholders})", drop_ids
+            )
+        except Exception as e:
+            deleted[key] = -1
+            print(f"[admin purge-except] {key}: {e}", flush=True)
+
+    # Buyer fields on kept projects pointing at dropped users
+    try:
+        if _table_has(conn, "projects"):
+            pcols = {r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
+            if "buyer_id" in pcols:
+                deleted["projects_clear_buyer"] = _del(
+                    f"UPDATE projects SET buyer_id = NULL WHERE buyer_id IN ({placeholders})",
+                    drop_ids,
+                )
+    except Exception as e:
+        deleted["projects_clear_buyer"] = -1
+        print(f"[admin purge-except] clear buyer: {e}", flush=True)
+
+    deleted["users"] = _del(f"DELETE FROM users WHERE id IN ({placeholders})", drop_ids)
+
+    return {
+        "deleted": deleted,
+        "dropped_emails": dropped_emails,
+        "kept_ids": keep_ids,
+        "kept_emails": [str(r["email"]) for r in keep_rows],
+    }
+
+
+def _table_has(conn: Any, name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name = ?",
+        (name,),
+    ).fetchone()
+    return bool(row)
 
 
 @router.post("/admin/users/purge-all")
@@ -4065,18 +4224,7 @@ def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_adm
       2) confirm == DELETE_ALL_USERS
     삭제 직전 자동 백업을 남긴다. 회원 데이터 유실은 서비스 파산급 사고다.
     """
-    if not _destructive_admin_allowed():
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "code": "destructive_locked",
-                "message": (
-                    "회원 전체 삭제가 잠겨 있습니다. "
-                    "ALLOW_DESTRUCTIVE_ADMIN=1 을 설정한 뒤에만 가능합니다. "
-                    "(실수 방지 — 기본 차단)"
-                ),
-            },
-        )
+    _require_destructive_admin()
     if (body.confirm or "").strip() != "DELETE_ALL_USERS":
         raise HTTPException(
             status_code=400,
@@ -4134,6 +4282,76 @@ def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_adm
         "deleted": deleted,
         "pre_purge_backup": pre.get("name"),
         "message": f"회원 {before}명 삭제 완료 (남은 회원 {after}명). 백업: {pre.get('name')}",
+    }
+
+
+@router.post("/admin/users/purge-except")
+def admin_purge_users_except(body: AdminPurgeExceptIn, _: None = Depends(require_admin)):
+    """
+    keep_emails 에 있는 회원만 남기고 나머지 회원·연관 데이터 삭제.
+
+    **프로덕션 기본 차단.** 실행 조건:
+      1) env ALLOW_DESTRUCTIVE_ADMIN=1
+      2) confirm == DELETE_EXCEPT_KEPT
+      3) keep_emails 가 DB에 실제 존재
+    삭제 직전 자동 백업.
+    """
+    _require_destructive_admin()
+    if (body.confirm or "").strip() != "DELETE_EXCEPT_KEPT":
+        raise HTTPException(
+            status_code=400,
+            detail="confirm must be exactly DELETE_EXCEPT_KEPT",
+        )
+    keep = [(e or "").strip() for e in (body.keep_emails or []) if (e or "").strip()]
+    if not keep:
+        raise HTTPException(status_code=400, detail="keep_emails required")
+
+    from wakeagain import backup as db_backup
+
+    pre = db_backup.create_backup(reason="pre-purge")
+    if not pre.get("ok") and not pre.get("skipped"):
+        raise HTTPException(
+            status_code=500,
+            detail=f"pre-purge backup failed; aborting purge: {pre.get('error')}",
+        )
+
+    with database.db() as conn:
+        try:
+            conn.execute("PRAGMA foreign_keys=ON")
+        except Exception:
+            pass
+        before = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+        try:
+            result = _purge_users_except_emails(conn, keep)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        after = int(conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"])
+        remaining = [
+            {"id": int(r["id"]), "email": r["email"]}
+            for r in conn.execute("SELECT id, email FROM users ORDER BY id").fetchall()
+        ]
+
+    print(
+        f"[WakeAgain][CRITICAL] admin purge-except users_before={before} after={after} "
+        f"kept={result.get('kept_emails')} dropped={len(result.get('dropped_emails') or [])} "
+        f"backup={pre.get('name')}",
+        flush=True,
+    )
+    db_backup.record_counts_tick()
+    return {
+        "ok": True,
+        "users_before": before,
+        "users_after": after,
+        "kept_emails": result.get("kept_emails"),
+        "dropped_emails": result.get("dropped_emails"),
+        "deleted": result.get("deleted"),
+        "remaining_users": remaining,
+        "pre_purge_backup": pre.get("name"),
+        "message": (
+            f"남김 {len(result.get('kept_emails') or [])}명 · "
+            f"삭제 {len(result.get('dropped_emails') or [])}명 · "
+            f"백업 {pre.get('name')}"
+        ),
     }
 
 
