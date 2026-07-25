@@ -564,6 +564,10 @@ header.nav-pill-wrap,
   flex-wrap: wrap;
   gap: 0.7rem;
   margin-bottom: 0.65rem;
+  /* Keep diagnose CTA visually centered under the copy block (not stuck to the left edge) */
+  justify-content: center;
+  width: 100%;
+  max-width: min(38rem, 100%);
 }
 .hero-cta.center { justify-content: center; }
 .hero-cta-benefit {
@@ -577,14 +581,29 @@ header.nav-pill-wrap,
   color: #e9d5ff;
   font-weight: 700;
 }
-/* 3 stats in a row; note sits under the middle column (관심 있어요) */
+/* 3 stats in a row — align under centered CTA */
 .hero-stats-block {
   display: grid;
   grid-template-columns: repeat(3, minmax(4.5rem, auto));
   column-gap: 1.75rem;
   row-gap: 0.4rem;
   width: fit-content;
+  max-width: min(38rem, 100%);
   justify-items: center;
+  margin-inline: auto 0;
+  /* When CTA is centered in the same max-width band, keep stats centered too */
+  margin-left: 0;
+  margin-right: auto;
+}
+/* Match CTA band: center stats under the button group */
+.hero-copy .hero-stats-block {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: min(38rem, 100%);
+  justify-content: center;
+  justify-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .hero-stats {
   list-style: none;
