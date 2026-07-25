@@ -412,6 +412,8 @@ class ProjectIn(BaseModel):
     attest_rights: bool = False
     attest_features: bool = False
     attest_transfer: bool = False
+    # Required when demo_images present: screenshots match real product
+    attest_shots: bool = False
 
 
 class KeywordSuggestIn(BaseModel):
@@ -3586,6 +3588,17 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 ),
             },
         )
+    if demo_images and not body.attest_shots:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "attest_shots_required",
+                "message": (
+                    "스크린샷이 실제 실행 화면과 같다는 확인에 체크해 주세요. "
+                    "실제 제품과 다른 화면은 매물 중단·이용 제한 대상이 될 수 있습니다."
+                ),
+            },
+        )
     if not demo and demo_images:
         demo = f"스크린샷 {len(demo_images)}장 (실행 화면)"
 
@@ -3663,6 +3676,7 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         "license": True,
         "rights": True,
         "transfer": True,
+        "shots": bool(demo_images and body.attest_shots),
         "at": now,
     }
     with database.db() as conn:

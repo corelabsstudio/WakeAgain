@@ -2330,6 +2330,18 @@
       if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    const shotAck = $("pAttestShots");
+    if (demoImageUrls.length && shotAck && !shotAck.checked) {
+      showErr(
+        $("projErr"),
+        "스크린샷이 실제 실행 화면과 같다는 확인에 체크해 주세요. 허위·과장 화면은 이용 제한 대상입니다."
+      );
+      if (shotAck) {
+        shotAck.focus();
+        shotAck.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
     const acquisition = selectedAcquisition();
     if (!acquisition) {
       showErr($("projErr"), "매물 취득 경로(직접 제작 / 재판매 / 기타)를 선택해 주세요.");
@@ -2460,6 +2472,7 @@
       attest_license: true,
       attest_rights: true,
       attest_transfer: true,
+      attest_shots: !!(demoImageUrls.length && $("pAttestShots") && $("pAttestShots").checked),
     };
     if (buyNowRaw != null && buyNowRaw > 0) {
       payload.price_buy_now = buyNowRaw;
