@@ -300,7 +300,7 @@
       "buyers.build_2": "Deploy, payments, and polish still block you",
       "buyers.build_3": "Opportunity cost rarely feels “free”",
       "buyers.buy_label": "Buy on WakeAgain",
-      "buyers.buy_t": "Start from something that runs (executable)",
+      "buyers.buy_t": "Start from something you can run",
       "buyers.buy_1": "Demo, live price, and bidder count are public",
       "buyers.buy_2": "No extra fee for buyers",
       "buyers.buy_3": "Bid → PG safe pay → inspect & accept",
