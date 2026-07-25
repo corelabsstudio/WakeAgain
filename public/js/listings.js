@@ -584,6 +584,35 @@
       timer.removeAttribute("title");
       timer.classList.remove("timer-urgent", "timer-ended");
     }
+
+    // Progress line: show real start price + bidder count (not vague "vs start")
+    var progP = card.querySelector(".live-progress p");
+    var progBar = card.querySelector(".live-progress-bar span");
+    var start = first.price_start != null ? Number(first.price_start) : null;
+    var cur =
+      first.price_current != null ? Number(first.price_current) : start;
+    var bidders = bidderCount(first);
+    if (progP) {
+      var en = isEn();
+      var startTxt = start != null && !isNaN(start) ? money(start) : "—";
+      if (en) {
+        progP.textContent =
+          "Start " + startTxt + " · " + bidders + " bidder" + (bidders === 1 ? "" : "s");
+      } else {
+        progP.textContent =
+          "시작가 " + startTxt + " · 입찰자 " + bidders + "명";
+      }
+      // i18n must not overwrite dynamic numbers
+      progP.removeAttribute("data-i18n");
+    }
+    if (progBar && start != null && start > 0 && cur != null && !isNaN(cur)) {
+      // Fill vs start: 0% at start, ~100% when 2× start (cap 100%)
+      var ratio = Math.max(0, (cur - start) / start);
+      var pct = Math.min(100, Math.round(ratio * 100));
+      // Always show a little bar when listed
+      if (pct < 4 && cur >= start) pct = 4;
+      progBar.style.setProperty("--w", pct + "%");
+    }
   }
 
   function updateTicker(ticker) {
