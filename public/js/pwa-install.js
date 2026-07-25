@@ -155,7 +155,7 @@
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("/sw.js?v=12")
+        .register("/sw.js?v=20")
         .then(function (reg) {
           try {
             if (reg.update) reg.update();
