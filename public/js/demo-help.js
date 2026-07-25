@@ -1,130 +1,165 @@
 /**
- * Demo guidance for non-technical / vibe-coding sellers.
- * Used by app registration + sell form.
+ * Demo guidance — plain language first. URL is optional, not required.
  */
 (function (global) {
   var TIPS = {
     website: {
-      title: "웹사이트 데모 — 이렇게 올리세요",
-      easy: "가장 쉬운 방법: 접속 가능한 주소 한 줄",
+      title: "웹사이트 — 이렇게 적으면 됩니다",
+      easy: "주소가 없어도 됩니다. 화면을 글로 적어도 OK.",
       steps: [
-        "브라우저 주소창 링크를 복사해 붙여 넣기 (예: https://…)",
-        "로그인이 필요하면 체험 계정 또는 「비회원으로 볼 수 있는 화면」을 적기",
-        "주소가 없으면: 폰/PC 화면 녹화 후 YouTube 비공개·Loom에 올리고 링크 적기",
+        "가장 쉬움: 「메인 화면 → 무슨 버튼 → 결과가 뭐」 3줄 글",
+        "주소가 있으면 붙여 넣기 (선택)",
+        "화면 녹화 영상이 있으면 링크 추가 (선택)",
       ],
       example:
-        "[사이트] https://my-trace.example\n[영상] https://… (2분, 메인→기능→결과)\n[계정] 게스트 / 샘플 로그인",
+        "1) 메인에서 프로젝트를 고름\n2) 시작 버튼을 누르면 진행 화면\n3) 끝나면 결과 요약이 보임\n(주소·영상 링크는 있으면 적고, 없어도 됨)",
+      fill:
+        "1) 홈/메인에서 무엇을 고르거나 입력함\n2) 핵심 버튼을 누르면 이런 화면으로 바뀜\n3) 결과로 ○○가 보임\n지원: 웹 브라우저\n참고: 주소·영상 링크는 있으면 추가 (없어도 등록 가능)",
     },
     webapp: {
-      title: "웹 앱·SaaS 데모 — 이렇게 올리세요",
-      easy: "공개 URL이 없어도 됩니다. 동작 영상만으로도 검수 가능합니다.",
+      title: "웹 앱·SaaS — 이렇게 적으면 됩니다",
+      easy: "공개 주소 없어도 됩니다. 쓰는 흐름만 적으면 됩니다.",
       steps: [
-        "가능하면 스테이징·임시 주소. 없으면 화면 녹화 1~2분",
-        "Windows: Win+G 또는 브라우저 확장 / Mac: Cmd+Shift+5 로 화면 녹화",
-        "Loom·YouTube(링크 있는 사람만)·Drive 공유 후 링크를 데모 칸에 적기",
-        "핵심 화면 2~3개만: 로그인 → 메인 기능 → 결과",
+        "가입 → 메인 기능 → 결과 순서를 글로",
+        "주소·영상은 있으면 좋고, 없어도 등록 가능",
+        "안 되는 기능은 「지금 안 되는 것」칸에",
       ],
       example:
-        "[영상] https://loom.com/share/…\n[흐름] 가입 없이 대시보드 → 분석 실행 → 리포트\n[제한] 샘플 데이터만",
+        "1) 로그인(또는 게스트) 후 대시보드\n2) ○○ 기능을 실행하면 진행 표시\n3) 결과 리포트/목록이 나옴\n주소·영상은 선택",
+      fill:
+        "1) 시작 화면에서 로그인 또는 바로 시작\n2) 핵심 기능(○○)을 실행하면 처리됨\n3) 결과 화면/목록을 볼 수 있음\n주소·영상 링크: 있으면 적기 (없어도 됨)",
     },
     mobile: {
-      title: "모바일 앱 데모 — 이렇게 올리세요 (코딩 몰라도 OK)",
-      easy: "스토어 링크가 없어도 됩니다. 폰 화면 녹화가 가장 확실합니다.",
+      title: "모바일 앱 — 이렇게 적으면 됩니다",
+      easy: "스토어 링크 없어도 됩니다. 폰 화면 순서만 적어도 OK.",
       steps: [
-        "아이폰: 제어센터 → 화면 기록 / 안드로이드: 빠른 설정 → 화면 녹화",
-        "앱을 켜고 핵심 기능만 1~2분 찍기 (말 안 해도 됨)",
-        "영상 파일을 YouTube 비공개·Drive·Loom에 올리고 링크 붙여 넣기",
-        "있으면: TestFlight / Play 내부 테스트 링크도 같이",
-        "스크린샷만 있어도 됨 → 사진 순서대로 설명 글로 적기",
+        "홈 → 핵심 기능 → 결과 화면을 글로",
+        "영상·스토어 링크는 선택",
+        "iOS/Android 중 어디인지 한 줄",
       ],
       example:
-        "[영상] https://… (아이폰 화면 기록 1분 40초)\n1) 홈 2) 추적 시작 3) 결과 화면\n[체험] 없음 · 소스·설치는 성사 후",
+        "1) 앱 켜면 홈\n2) ○○ 탭에서 기능 실행\n3) 결과 화면\n지원: Android (예시)",
+      fill:
+        "1) 앱을 켜면 홈/목록이 보임\n2) ○○ 기능을 누르면 동작함\n3) 결과 화면이 나옴\n지원 OS: (Android / iOS)\n스토어·영상 링크: 있으면 추가 (없어도 됨)",
     },
     desktop: {
-      title: "데스크톱·로컬 프로그램 데모 — 이렇게 올리세요",
-      easy: "설치 파일·소스를 지금 올리지 마세요. 「실제로 돌아가는 화면 영상」이 필수에 가깝습니다.",
+      title: "PC 프로그램 — 이렇게 적으면 됩니다",
+      easy: "URL 필요 없습니다. 「실행하면 뭐가 되는지」만 적으면 됩니다.",
       steps: [
-        "PC에서 실행 → 화면 녹화 필수 (Win+G / Cmd+Shift+5). GIF·짧은 동영상 OK",
-        "설치→실행→핵심 기능 1~2개. 2분 안이 좋습니다",
-        "데모 칸에 반드시: 동작 영상 링크 + 지원 OS(예: Windows 10/11, macOS 14)",
-        "필수 환경: .NET / Python 버전 / Visual C++ 재배포 등 의존성을 「지금 되는 것·한계」에 적기",
-        "exe·app·소스는 공개 매물에 올리지 말고, 입금 확인 후 쪽지로 이전",
+        "실행 → 첫 화면 → 핵심 기능 1~2개를 글로",
+        "Windows/Mac 등 지원 OS 한 줄",
+        "영상 링크는 있으면 좋고, 없어도 됨",
       ],
       example:
-        "[영상] https://… (Windows 실행 2분)\n[환경] Windows 11 · .NET 8 런타임 필요\n[한계] Mac 미지원 · 코드사인 없음\n[이전] 성사·입금 후 설치파일 또는 소스+프로젝트 파일",
+        "1) ReachKit.bat 실행 시 홈 화면\n2) ① 사이트 주소 넣으면 홍보글 생성\n3) ②③으로 올릴 곳·작성 보조\n지원: Windows 10/11\n(영상 있으면 링크 추가)",
+      fill:
+        "1) 실행하면 홈(또는 메인 창)이 뜸\n2) 핵심 기능: ○○ 하면 △△ 됨\n3) 이어서 □□ 까지 가능\n지원 OS: Windows 10/11\n필수 환경: (예: Python 없어도 실행 / .NET 필요 등)\n영상·설치 링크: 있으면 추가 (없어도 등록 가능)",
     },
     api: {
-      title: "API·백엔드 데모 — 이렇게 올리세요",
-      easy: "서버를 공개 안 해도 됩니다. 요청·응답 예시가 있으면 됩니다.",
+      title: "API·백엔드 — 이렇게 적으면 됩니다",
+      easy: "서버 공개 주소가 없어도 됩니다. 요청·응답 예시면 OK.",
       steps: [
-        "Postman/스크린으로 API 호출하는 짧은 영상",
-        "또는 JSON 응답 예시 + 엔드포인트 목록을 글로",
-        "Swagger/OpenAPI 링크가 있으면 최고",
+        "주요 엔드포인트 2~3개와 응답 예시를 글/코드 블록으로",
+        "문서·영상 링크는 선택",
       ],
       example:
-        "[문서] https://…/docs\n[예시] POST /v1/trace → 200 {…}\n[영상] 호출 30초 녹화",
+        "POST /v1/… → 200 { … }\nGET /v1/… → 목록\n문서·영상은 선택",
+      fill:
+        "주요 API:\n1) POST /… → 성공 시 … 반환\n2) GET /… → 목록 조회\n실행 방법: (로컬 / 도커 / 문서 참고)\n공개 문서·영상: 있으면 추가 (없어도 됨)",
     },
     game: {
-      title: "게임 데모 — 이렇게 올리세요",
-      easy: "플레이 영상 1~2분이면 충분합니다.",
+      title: "게임 — 이렇게 적으면 됩니다",
+      easy: "플레이 흐름을 글로 적어도 됩니다. 영상은 선택.",
       steps: [
-        "플레이 화면 녹화 (시작→조작→한 판 클리어/패배)",
-        "웹 빌드가 있으면 링크, 없으면 영상만",
-        "조작법 한 줄 적기",
+        "시작 → 조작 → 한 판 결과 순서로 글",
+        "플랫폼(PC/모바일) 한 줄",
       ],
-      example: "[영상] https://…\n[플랫폼] PC · 키보드\n[상태] 프로토타입 1스테이지",
+      example:
+        "1) 시작 화면\n2) 방향키로 이동·공격\n3) 스테이지 클리어/실패\nPC · 키보드",
+      fill:
+        "1) 시작하면 타이틀/스테이지 선택\n2) 조작: …\n3) 목표/클리어 조건: …\n플랫폼: PC (또는 모바일)\n영상 링크: 있으면 추가 (없어도 됨)",
     },
     other: {
-      title: "기타 제품 데모 — 이렇게 올리세요",
-      easy: "「남이 보고 이해되는 증거」면 됩니다. URL 필수는 아닙니다.",
+      title: "기타 — 이렇게 적으면 됩니다",
+      easy: "남이 읽고 이해할 수 있는 설명이면 됩니다. URL 필수는 아닙니다.",
       steps: [
-        "화면·동작 녹화 또는 사진 + 설명",
-        "무엇을 보여 주는지 3줄로 적기",
-        "설치·계정 필요 여부를 솔직히",
+        "무엇인지 · 어떻게 쓰는지 · 한계 3줄",
+        "링크·영상은 선택",
       ],
-      example: "[영상/설명] …\n[보는 방법] …\n[제한] …",
+      example:
+        "무엇인지: …\n쓰는 방법: …\n한계: …",
+      fill:
+        "무엇인지: …\n쓰는 방법 1)\n2)\n3)\n한계: …\n링크·영상: 있으면 추가 (없어도 됨)",
     },
   };
 
   var DEFAULT = {
-    title: "데모 안내 (바이브 코딩·비개발자도 OK)",
-    easy: "완벽한 배포 URL이 없어도 됩니다. 동작이 보이면 됩니다.",
+    title: "구매자가 알아볼 설명 (URL 필수 아님)",
+    easy: "주소·영상 없어도 됩니다. 화면 순서를 글로 적어도 올릴 수 있어요.",
     steps: [
-      "가장 쉬운 방법: 화면 녹화 1~2분 → 유튜브/룸/드라이브 링크",
-      "그다음: 스크린 설명 (1. 메인 2. 기능 3. 결과)",
-      "과장은 검수·신뢰에 불리합니다. 안 되는 부분은 적기",
+      "가장 쉬움: 1) 첫 화면 2) 핵심 기능 3) 결과 — 세 줄 글",
+      "있으면: 영상 링크나 주소를 덧붙이기",
+      "안 되는 건 「지금 안 되는 것」칸에",
     ],
-    example: "[영상] …\n[설명] …",
+    example: "1) …\n2) …\n3) …\n(링크는 선택)",
+    fill:
+      "1) 시작하면 이런 화면이 보임\n2) 핵심 기능(○○)을 하면 △△ 됨\n3) 결과로 □□ 가 보임\n지원: …\n주소·영상: 있으면 추가 (없어도 등록 가능)",
+  };
+
+  var FILLS = {
+    screen: {
+      label: "화면 글로 쓰기",
+      text:
+        "1) 시작하면 ○○ 화면이 보임\n2) △△ 버튼을 누르면 … 동작함\n3) 결과로 □□ 를 볼 수 있음\n지원 환경: …\n※ 주소·영상 링크 없음 (글 설명만)",
+    },
+    local: {
+      label: "PC 실행 설명",
+      text:
+        "1) 실행 파일/배치로 켜면 메인 창이 뜸\n2) 핵심 기능: … 하면 … 됨\n3) 이어서 … 까지 가능\n지원: Windows 10/11\n※ 설치·소스는 성사·입금 후 이전. 공개 URL 없음.",
+    },
+    video: {
+      label: "영상 있음 (링크 칸)",
+      text:
+        "1) 영상에서 메인 화면 → 핵심 기능 → 결과 순서로 보여 줌\n2) 영상 링크: (여기에 붙여 넣기)\n3) 지원 환경: …\n※ 링크 준비 전이면 「화면 글로 쓰기」를 쓰세요.",
+    },
   };
 
   function tipFor(key) {
     return TIPS[key] || DEFAULT;
   }
 
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function renderHtml(key) {
     var t = tipFor(key);
     var steps = (t.steps || [])
       .map(function (s, i) {
-        return "<li><strong>" + (i + 1) + ".</strong> " + s + "</li>";
+        return "<li><strong>" + (i + 1) + ".</strong> " + escapeHtml(s) + "</li>";
       })
       .join("");
     return (
       '<div class="demo-help-card">' +
       "<strong>" +
-      t.title +
+      escapeHtml(t.title) +
       "</strong>" +
       '<p class="demo-help-easy">' +
-      t.easy +
+      escapeHtml(t.easy) +
       "</p>" +
       "<ol class='demo-help-steps'>" +
       steps +
       "</ol>" +
       (t.example
-        ? '<p class="demo-help-label">데모 칸 예시</p><pre class="demo-help-example">' +
-          t.example +
+        ? '<p class="demo-help-label">데모 칸 예시 (복붙·수정 OK)</p><pre class="demo-help-example">' +
+          escapeHtml(t.example) +
           "</pre>"
         : "") +
-      '<p class="demo-help-foot muted fine">화면 녹화만 할 줄 알면 됩니다. 서버 배포·스토어 등록은 필수가 아닙니다. · <a class="text-link" href="/guide/demo.html" target="_blank" rel="noopener">자세히 보기</a></p>' +
+      '<p class="demo-help-foot muted fine"><strong>URL은 필수가 아닙니다.</strong> 글 설명만으로도 올릴 수 있어요. · <a class="text-link" href="/guide/demo.html" target="_blank" rel="noopener">자세히</a></p>' +
       "</div>"
     );
   }
@@ -142,14 +177,22 @@
     if (textareaEl && key) {
       var t = tipFor(key);
       if (t.example && !textareaEl.value) {
-        textareaEl.placeholder = t.example.replace(/\n/g, " · ");
+        textareaEl.placeholder =
+          "URL 없이 글만 적어도 됩니다. 예)\n" + t.example;
       }
     }
   }
 
+  function fillText(key) {
+    var t = tipFor(key);
+    return t.fill || t.example || DEFAULT.fill;
+  }
+
   global.WakeAgainDemoHelp = {
     tips: TIPS,
+    fills: FILLS,
     tipFor: tipFor,
+    fillText: fillText,
     renderHtml: renderHtml,
     applyTo: applyTo,
   };

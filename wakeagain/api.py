@@ -3528,7 +3528,10 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             status_code=400,
             detail={
                 "code": "demo_required",
-                "message": "데모 URL·영상 링크 또는 화면 설명을 구체적으로 적어 주세요. (배포 없어도 녹화 링크 OK)",
+                "message": (
+                    "구매자가 알아볼 설명을 12자 이상 적어 주세요. "
+                    "URL·영상 링크는 필수가 아닙니다. 화면 순서를 글로 적어도 됩니다."
+                ),
             },
         )
 

@@ -1905,6 +1905,34 @@
   $("pProductType")?.addEventListener("change", applyDemoHelp);
   wireChoiceChips("pProductType", applyDemoHelp);
 
+  // Demo: one-tap fill (no URL required)
+  document.getElementById("demoFillRow")?.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-demo-fill]");
+    if (!btn) return;
+    const kind = btn.getAttribute("data-demo-fill");
+    const ta = $("pDemo");
+    if (!ta) return;
+    const help = window.WakeAgainDemoHelp;
+    let text = "";
+    if (kind === "type" && help) {
+      text = help.fillText(fieldValue("pProductType") || "other");
+    } else if (help && help.fills && help.fills[kind]) {
+      text = help.fills[kind].text;
+    }
+    if (!text) return;
+    if (
+      ta.value.trim() &&
+      !confirm("지금 적어 둔 설명을 예시 문구로 바꿀까요?")
+    ) {
+      return;
+    }
+    ta.value = text;
+    ta.focus();
+    try {
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    } catch (_) {}
+  });
+
   function normalizeKeyword(raw) {
     return String(raw || "")
       .replace(/[#，,|/]+/g, " ")
@@ -2140,7 +2168,10 @@
       ["없음", "없어요", "나중에", "none", "n/a", "no", "x", "-"].includes(demoLow) ||
       demoLow.startsWith("나중에")
     ) {
-      showErr($("projErr"), "데모 URL·영상 링크 또는 화면 설명을 구체적으로 적어 주세요.");
+      showErr(
+        $("projErr"),
+        "구매자가 알아볼 설명을 12자 이상 적어 주세요. 주소 없어도 됩니다. 「화면 글로 쓰기」버튼으로 예시부터 채워 보세요."
+      );
       if ($("pDemo")) $("pDemo").focus();
       return;
     }
