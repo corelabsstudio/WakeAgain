@@ -88,10 +88,42 @@
       border: 1px solid rgba(255,255,255,0.14) !important;
       background: rgba(255,255,255,0.04) !important;
     }
+    .choice-chips {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+      margin: 0.25rem 0 0.75rem !important;
+    }
+    .choice-chip {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.45rem !important;
+      cursor: pointer !important;
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: rgba(255,255,255,0.04) !important;
+      font-weight: 600 !important;
+      color: #f5f5f7 !important;
+      user-select: none !important;
+    }
+    .choice-chip:has(input:checked) {
+      border-color: rgba(168,85,247,0.65) !important;
+      background: rgba(168,85,247,0.18) !important;
+      color: #e9d5ff !important;
+    }
+    .visually-hidden-select {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      clip: rect(0,0,0,0) !important;
+    }
   </style>
-  <link rel="stylesheet" href="/styles.css?v=20260725-checkfix" />
+  <link rel="stylesheet" href="/styles.css?v=20260725-chips" />
   <link rel="stylesheet" href="/ux9.css?v=20260725-checkfix" />
-  <link rel="stylesheet" href="/app/app.css?v=20260725-checkfix" />
+  <link rel="stylesheet" href="/app/app.css?v=20260725-chips" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -695,8 +727,18 @@
           <p class="price-guide muted fine" id="kwCount">0 / 5</p>
         </div>
 
-        <label for="pProductType">제품 형태 *</label>
-        <select id="pProductType" required>
+        <p class="listing-guidelines-title" id="pProductTypeLabel" style="margin:0.85rem 0 0.35rem">제품 형태 * <span class="muted fine">(눌러서 고르기)</span></p>
+        <div class="choice-chips" id="pProductTypeChips" role="radiogroup" aria-labelledby="pProductTypeLabel">
+          <label class="choice-chip"><input type="radio" name="pProductType" value="website" /> 웹사이트</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="webapp" /> 웹 앱 / SaaS</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="mobile" /> 모바일 앱</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="desktop" /> 데스크톱 프로그램</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="api" /> API / SDK / 백엔드</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="game" /> 게임</label>
+          <label class="choice-chip"><input type="radio" name="pProductType" value="other" /> 기타</label>
+        </div>
+        <!-- keep id for JS focus/helpers; value synced from radios -->
+        <select id="pProductType" class="visually-hidden-select" tabindex="-1" aria-hidden="true">
           <option value="">선택하세요</option>
           <option value="website">웹사이트</option>
           <option value="webapp">웹 앱 / SaaS</option>
@@ -708,9 +750,15 @@
         </select>
         <p class="price-guide muted fine">어디에 돌아가는 제품인지 고릅니다. (완성도「상태」와 별개)</p>
         <div id="pDemoHelp" class="demo-help-host" hidden></div>
-        <label for="pStatus">지금 얼마나 만들었나요? *</label>
-        <select id="pStatus" required>
-          <option value="prototype">돌아가는 초안</option>
+        <p class="listing-guidelines-title" id="pStatusLabel" style="margin:0.85rem 0 0.35rem">지금 얼마나 만들었나요? * <span class="muted fine">(눌러서 고르기)</span></p>
+        <div class="choice-chips" id="pStatusChips" role="radiogroup" aria-labelledby="pStatusLabel">
+          <label class="choice-chip"><input type="radio" name="pStatus" value="prototype" checked /> 돌아가는 초안</label>
+          <label class="choice-chip"><input type="radio" name="pStatus" value="beta" /> 써 볼 수 있는 제품</label>
+          <label class="choice-chip"><input type="radio" name="pStatus" value="launched" /> 공개했다가 멈춤</label>
+          <label class="choice-chip"><input type="radio" name="pStatus" value="other" /> 그 외 (도구·코드·자료)</label>
+        </div>
+        <select id="pStatus" class="visually-hidden-select" tabindex="-1" aria-hidden="true">
+          <option value="prototype" selected>돌아가는 초안</option>
           <option value="beta">써 볼 수 있는 제품</option>
           <option value="launched">공개했다가 멈춤</option>
           <option value="other">그 외 (도구·코드·자료)</option>
@@ -855,7 +903,7 @@
   <script src="/js/pwa-install.js?v=20260723-topbar"></script>
   <script src="/js/api.js?v=20260723-topbar"></script>
   <script src="/js/demo-help.js?v=20260723-topbar"></script>
-  <script src="/app/app.js?v=20260723-no-role"></script>
+  <script src="/app/app.js?v=20260725-chips"></script>
   <script>
     (function () {
       try {

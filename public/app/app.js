@@ -1782,8 +1782,58 @@
     return (isEnUi() && band.blurb_en) || band.blurb || "";
   }
 
+  /** Prefer radio chips; fall back to select (legacy). */
+  function fieldValue(nameOrId) {
+    const checked = document.querySelector(
+      'input[type="radio"][name="' + nameOrId + '"]:checked'
+    );
+    if (checked) return String(checked.value || "").trim();
+    const el = $(nameOrId);
+    return el ? String(el.value || "").trim() : "";
+  }
+
+  function setFieldValue(nameOrId, value) {
+    const radios = document.querySelectorAll(
+      'input[type="radio"][name="' + nameOrId + '"]'
+    );
+    if (radios.length) {
+      let matched = false;
+      radios.forEach(function (r) {
+        const on = r.value === value;
+        r.checked = on;
+        if (on) matched = true;
+      });
+      if (!matched && value) {
+        /* leave none checked if unknown */
+      }
+    }
+    const el = $(nameOrId);
+    if (el) el.value = value || "";
+  }
+
+  function syncSelectFromRadios(nameOrId) {
+    const el = $(nameOrId);
+    if (!el) return;
+    const v = fieldValue(nameOrId);
+    if (v) el.value = v;
+  }
+
+  function wireChoiceChips(nameOrId, onChange) {
+    const radios = document.querySelectorAll(
+      'input[type="radio"][name="' + nameOrId + '"]'
+    );
+    if (!radios.length) return;
+    radios.forEach(function (r) {
+      r.addEventListener("change", function () {
+        syncSelectFromRadios(nameOrId);
+        if (typeof onChange === "function") onChange();
+      });
+    });
+    syncSelectFromRadios(nameOrId);
+  }
+
   function applyPriceGuide(forceSuggest) {
-    const st = $("pStatus") && $("pStatus").value;
+    const st = fieldValue("pStatus");
     const band = bandForStatus(st);
     const guide = $("pPriceGuide");
     const hint = $("pPriceHint");
@@ -1840,9 +1890,12 @@
     }
   }
   $("pStatus")?.addEventListener("change", () => applyPriceGuide(true));
+  wireChoiceChips("pStatus", function () {
+    applyPriceGuide(true);
+  });
 
   function applyDemoHelp() {
-    const key = $("pProductType") ? $("pProductType").value : "";
+    const key = fieldValue("pProductType");
     const help = window.WakeAgainDemoHelp;
     if (!help) return;
     // Show under product type and reinforce near demo field
@@ -1850,6 +1903,7 @@
     help.applyTo($("pDemoHelpBelow"), $("pDemo"), key || null);
   }
   $("pProductType")?.addEventListener("change", applyDemoHelp);
+  wireChoiceChips("pProductType", applyDemoHelp);
 
   function normalizeKeyword(raw) {
     return String(raw || "")
@@ -1956,7 +2010,7 @@
         title: title,
         one_liner: one,
         story: $("pStory") ? $("pStory").value.trim() : "",
-        product_type: $("pProductType") ? $("pProductType").value : "",
+        product_type: fieldValue("pProductType"),
         lang: lang,
       });
       setKeywords(data.keywords || []);
@@ -2142,7 +2196,7 @@
       feeAck.focus();
       return;
     }
-    const st = $("pStatus").value;
+    const st = fieldValue("pStatus");
     const band = bandForStatus(st);
     const start = $("pPrice").value ? Number($("pPrice").value) : null;
     if (band && (start == null || start < band.min)) {
@@ -2155,10 +2209,17 @@
       );
       return;
     }
-    const ptype = $("pProductType") ? $("pProductType").value : "";
+    const ptype = fieldValue("pProductType");
     if (!ptype) {
-      showErr($("projErr"), "제품 형태(웹사이트·앱·데스크톱 등)를 선택해 주세요.");
-      if ($("pProductType")) $("pProductType").focus();
+      showErr($("projErr"), "제품 형태(웹사이트·앱·데스크톱 등)를 눌러 선택해 주세요.");
+      const chips = document.getElementById("pProductTypeChips");
+      if (chips) chips.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!st) {
+      showErr($("projErr"), "「지금 얼마나 만들었나요?」상태를 눌러 선택해 주세요.");
+      const chips = document.getElementById("pStatusChips");
+      if (chips) chips.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const PRICE_MAX = 100000000;
