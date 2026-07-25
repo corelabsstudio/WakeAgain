@@ -744,8 +744,8 @@
             안 돌아가는 코드·표절·권한 없는 자산은 반려·신고·정지 대상입니다.
             체크는 <strong>판매자 확인 서약</strong>입니다.
           </p>
-          <p class="listing-guidelines-title" style="margin-top:0.5rem">포함 자산 * <span class="muted fine">(실제로 넘길 수 있는 것만)</span></p>
-          <div class="checks asset-checks" id="pAssetChecks">
+          <p class="listing-guidelines-title" style="margin-top:0.5rem">포함 자산 * <span class="muted fine">(실제로 넘길 수 있는 것만 · 해당 항목을 눌러 체크)</span></p>
+          <div class="checks asset-checks" id="pAssetChecks" role="group" aria-label="포함 자산">
             <label><input type="checkbox" name="pAsset" value="code" /> 코드</label>
             <label><input type="checkbox" name="pAsset" value="design" /> 디자인(피그마 등)</label>
             <label><input type="checkbox" name="pAsset" value="domain" /> 도메인</label>
@@ -753,15 +753,15 @@
             <label><input type="checkbox" name="pAsset" value="accounts" /> 계정/스토어</label>
             <label><input type="checkbox" name="pAsset" value="other" /> 기타</label>
           </div>
-          <label for="pLicense">넘길 때 권리·라이선스 조건 *</label>
+          <label for="pLicense">넘길 때 권리·라이선스 조건 * <span class="muted fine">(직접 입력)</span></label>
           <input
             id="pLicense"
             required
             maxlength="200"
-            placeholder="예: 사유 코드 전부 양도 · 도메인 포함 · MIT 부분 있음"
+            placeholder="직접 입력 · 예: 사유 코드 전부 양도 · MIT 라이브러리 포함"
             autocomplete="off"
           />
-          <p class="price-guide muted fine">잘 모르면: 「제가 가진 범위에서 코드·계정·자료를 구매자에게 넘깁니다」 + 오픈소스면 이름.</p>
+          <p class="price-guide muted fine">드롭다운이 아닙니다. 한 줄로 적어 주세요. 잘 모르면: 「제가 가진 범위에서 코드·계정·자료를 구매자에게 넘깁니다」 + 오픈소스면 이름.</p>
           <label class="checks check-single">
             <input type="checkbox" id="pAttestWorks" required />
             <span>데모(또는 설명한 범위)에서 <strong>지금 되는 것</strong>을 제가 직접 확인했습니다. *</span>
