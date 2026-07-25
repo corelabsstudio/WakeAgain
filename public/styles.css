@@ -564,12 +564,14 @@ header.nav-pill-wrap,
   flex-wrap: wrap;
   gap: 0.7rem;
   margin-bottom: 0.65rem;
-  /* Keep diagnose CTA visually centered under the copy block (not stuck to the left edge) */
+  /* Center only the CTA button under the copy width — not the stats below */
   justify-content: center;
-  width: 100%;
+  width: fit-content;
   max-width: min(38rem, 100%);
+  /* Nudge right of hard left edge without dragging stats along */
+  margin-left: clamp(0.5rem, 2.5vw, 1.75rem);
 }
-.hero-cta.center { justify-content: center; }
+.hero-cta.center { justify-content: center; margin-left: auto; margin-right: auto; }
 .hero-cta-benefit {
   margin: 0 0 1.65rem;
   max-width: 28rem;
@@ -581,29 +583,16 @@ header.nav-pill-wrap,
   color: #e9d5ff;
   font-weight: 700;
 }
-/* 3 stats in a row — align under centered CTA */
+/* Stats stay left under the copy column (original layout) */
 .hero-stats-block {
   display: grid;
   grid-template-columns: repeat(3, minmax(4.5rem, auto));
   column-gap: 1.75rem;
   row-gap: 0.4rem;
   width: fit-content;
-  max-width: min(38rem, 100%);
   justify-items: center;
-  margin-inline: auto 0;
-  /* When CTA is centered in the same max-width band, keep stats centered too */
   margin-left: 0;
   margin-right: auto;
-}
-/* Match CTA band: center stats under the button group */
-.hero-copy .hero-stats-block {
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-  max-width: min(38rem, 100%);
-  justify-content: center;
-  justify-items: center;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .hero-stats {
   list-style: none;
