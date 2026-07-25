@@ -3565,7 +3565,6 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
     from wakeagain import media as media_mod
 
     demo = (body.demo or "").strip()
-    demo_low = demo.lower()
     try:
         demo_images = media_mod.normalize_demo_images(
             list(body.demo_images or []), user_id=int(user["id"])
