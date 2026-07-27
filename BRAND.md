@@ -29,6 +29,7 @@
 | 회사 로고 파일 | 락업 `public/assets/corelabs-logo-lockup.png` · 마크 `public/assets/corelabs-logo-mark.png` · 다크 UI용 `*-light.png` · 바탕화면 `CoreLabs_logo_final.jpg` |
 | 사이트 반영 | 푸터(메인 락업 + 컴팩트 마크) · 사업계획서 표지 HWP/PDF |
 | 문의 이메일 | **corelabs.studio@gmail.com** |
+| 응답 약속 | **영업일 24시간 이내 1차 답변** · 입금·거래·사기 의심 **우선** · 공개 안내 `/guide/contact.html` · 운영 템플릿 `docs/SUPPORT_TEMPLATES.md` |
 | 카피라이트 | **© 2026 CoreLabs. All rights reserved.** |
 | 이용약관 | `/legal/terms.html` · `docs/이용약관.md` |
 | 개인정보처리방침 | `/legal/privacy.html` · `docs/개인정보처리방침.md` |
@@ -45,3 +46,7 @@
 
 에이전트 트리거: 「WakeAgain 이어서」 / 「웨이크어게인 불러와」(말은 한글 가능, 표기는 영문)  
 → 불러올 때 `BRAND.md` + `PLATFORM.md` 필수
+
+마케팅 하네스: 「WakeAgain 마케팅」 / 「웨이크어게인 마케팅」 / 「WakeAgain SEO」 / 「웨이크어게인 SEO」  
+→ `docs/marketing/Context/ONE_PAGER.md` → `docs/marketing/AGENT_TEAM.md` → (SEO면) `docs/marketing/DAILY_SEO_PROMPT.md`  
+→ Research → Writer → Review → 승인 후 배포. RoadLog·ReachKit과 섞지 말 것.
