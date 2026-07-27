@@ -39,7 +39,11 @@
 4. `public/blog/index.html` 카드 목록 상단에 추가
 5. `public/sitemap.xml` URL 추가
 6. git commit/push origin master
-7. 라이브 확인 후 보고
+7. 티스토리 동시 발행 (토큰 있을 때만)  
+   블로그: https://onhae126.tistory.com/  
+   `python C:\Users\hysoo\Projects\RoadLog\tools\tistory_publish\publish.py --file public/blog/<slug>.html --title "..." --tags "웨이크어게인,사이드프로젝트,인디해커"`  
+   설정 파일: `RoadLog/.launch/tistory.env` (없으면 SKIP_NO_TOKEN)
+8. 라이브 확인 후 보고
 
 ## 프로젝트 경로
 `C:\Users\hysoo\Projects\WakeAgain`
@@ -48,6 +52,7 @@
 ```
 DATE: ...
 FLAGSHIP: url or none
+TISTORY: url or SKIP_NO_TOKEN
 LIVE: ok/fail
 NOTES: ...
 ```
