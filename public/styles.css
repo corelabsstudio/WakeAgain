@@ -1187,7 +1187,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 .safety-pair .safety-notice {
   margin: 0;
-  height: 100%;
+  height: auto;
 }
 .safety-pair-wrap {
   max-width: 58rem;
