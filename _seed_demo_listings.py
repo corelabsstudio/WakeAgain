@@ -1,4 +1,8 @@
-"""Replace junk listings with a few realistic demo projects (early launch)."""
+"""LOCAL ONLY — seed demo projects into data/wakeagain.db.
+
+Do NOT run against production. Landing no longer falls back to fake samples;
+production should show real approved listings only (or empty state).
+"""
 from __future__ import annotations
 
 import json
