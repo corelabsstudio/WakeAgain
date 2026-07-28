@@ -8,99 +8,7 @@
   const empty = document.getElementById("filterEmpty");
   if (!grid) return;
 
-  /* Offline fallback — bilingual sample copy */
-  const PREVIEW = [
-    {
-      id: "preview-1",
-      title: "ShopPulse",
-      one_liner: "소상공인 주문·배송 알림 SaaS — 카카오톡 연동 초안",
-      one_liner_en: "Order & shipping alerts for small shops — KakaoTalk draft",
-      status: "출시됨·방치",
-      status_en: "Launched · idle",
-      listing_status: "preview",
-      auction_status: "live",
-      product_type: "webapp",
-      keywords: ["SaaS", "카카오", "주문", "알림", "소상공인"],
-      price_start: 890000,
-      price_current: 1120000,
-      bid_count: 4,
-      bidder_count: 4,
-      cats: "saas",
-      icon: "violet",
-    },
-    {
-      id: "preview-2",
-      title: "ReceiptFold",
-      one_liner: "영수증 사진 → 가계부 자동 분류 모바일 베타",
-      one_liner_en: "Receipt photo → auto expense categories · mobile beta",
-      status: "베타",
-      status_en: "Beta",
-      listing_status: "preview",
-      auction_status: "live",
-      product_type: "mobile",
-      keywords: ["가계부", "영수증", "OCR", "모바일앱", "Flutter"],
-      price_start: 450000,
-      price_current: 450000,
-      bid_count: 0,
-      bidder_count: 0,
-      cats: "mobile",
-      icon: "green",
-    },
-    {
-      id: "preview-3",
-      title: "MeetNotes Lite",
-      one_liner: "회의 녹음 업로드 → 요약·액션 아이템 초안 웹앱",
-      one_liner_en: "Upload meeting audio → summary & action items draft",
-      status: "프로토타입",
-      status_en: "Prototype",
-      listing_status: "preview",
-      auction_status: "live",
-      product_type: "webapp",
-      keywords: ["회의", "요약", "AI", "웹앱", "Whisper"],
-      price_start: 320000,
-      price_current: 380000,
-      bid_count: 2,
-      bidder_count: 2,
-      cats: "saas ai",
-      icon: "purple",
-    },
-    {
-      id: "preview-4",
-      title: "csv-kit",
-      one_liner: "CSV 병합·중복 제거·컬럼 매핑 CLI 도구 모음",
-      one_liner_en: "CSV merge, dedupe & column-mapping CLI toolkit",
-      status: "기타",
-      status_en: "Other",
-      listing_status: "preview",
-      auction_status: "live",
-      product_type: "desktop",
-      keywords: ["CSV", "데이터", "CLI", "Python", "도구"],
-      price_start: 180000,
-      price_current: 210000,
-      bid_count: 1,
-      bidder_count: 1,
-      cats: "saas",
-      icon: "violet",
-    },
-    {
-      id: "preview-5",
-      title: "TraceDraft",
-      one_liner: "AI 인터뷰 답변으로 블로그 초안을 뽑는 웹 도구",
-      one_liner_en: "AI interview answers → blog draft web tool",
-      status: "베타",
-      status_en: "Beta",
-      listing_status: "preview",
-      auction_status: "live",
-      product_type: "webapp",
-      keywords: ["AI", "블로그", "콘텐츠", "웹앱", "초안"],
-      price_start: 550000,
-      price_current: 720000,
-      bid_count: 5,
-      bidder_count: 5,
-      cats: "saas ai",
-      icon: "blue",
-    },
-  ];
+  /* No fake/sample listings — empty market shows empty state only. */
 
   const ICONS = {
     purple:
@@ -375,7 +283,15 @@
     if (clearBtn) clearBtn.hidden = !(searchQ && searchQ.trim());
   }
 
-  function sourceNoteText(fromApi) {
+  function sourceNoteText(fromApi, isEmpty) {
+    if (isEmpty) {
+      return tt(
+        "list.source_empty",
+        isEn()
+          ? "No live listings yet. Be the first to list a project."
+          : "아직 공개 매물이 없습니다. 첫 매물을 올려 보세요."
+      );
+    }
     return fromApi
       ? tt(
           "list.source_api",
@@ -384,22 +300,51 @@
             : "공개 경매 · 현재가는 사이트 방문객 전원에게 실시간 공개 · 4초마다 갱신"
         )
       : tt(
-          "list.source_preview",
-          isEn()
-            ? "No live listings yet — samples shown. Live prices go public once bidding starts."
-            : "아직 등록 매물이 없어 예시입니다. 입찰이 붙으면 현재가가 전원에게 공개됩니다."
+          "list.source_loading",
+          isEn() ? "Loading listings…" : "매물을 불러오는 중…"
         );
+  }
+
+  function showEmptyMarket(message) {
+    source = "api";
+    cache = [];
+    grid.innerHTML = "";
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent =
+        message ||
+        tt(
+          "list.empty_market",
+          isEn()
+            ? "No listings yet. List a project for free."
+            : "등록된 매물이 없습니다. 무료로 프로젝트를 올려 보세요."
+        );
+    }
+    const note = document.getElementById("listingSourceNote");
+    if (note) {
+      note.hidden = false;
+      note.removeAttribute("data-i18n");
+      note.textContent = sourceNoteText(true, true);
+    }
+    updateHeroLive(null, true);
+    var moreBtn = document.getElementById("listingsMore");
+    if (moreBtn) moreBtn.hidden = true;
   }
 
   function render(list, fromApi) {
     source = fromApi ? "api" : "preview";
     cache = list.slice();
+    if (!list.length) {
+      showEmptyMarket();
+      return;
+    }
+    if (empty) empty.hidden = true;
     grid.innerHTML = list.map(cardHtml).join("");
     const note = document.getElementById("listingSourceNote");
     if (note) {
       note.hidden = false;
       note.removeAttribute("data-i18n");
-      note.textContent = sourceNoteText(fromApi);
+      note.textContent = sourceNoteText(fromApi, false);
     }
     if (fromApi) {
       filter = "all";
@@ -514,12 +459,60 @@
 
   function updateHeroLive(first, fromApi) {
     const card = document.querySelector(".live-card");
-    if (!card || !first) return;
+    if (!card) return;
     const name = card.querySelector(".live-card-head strong");
     const sub = card.querySelector(".live-card-head p");
     const bid = card.querySelector(".live-metrics strong.mono");
     const timer = card.querySelector(".timer");
+    const icon = card.querySelector(".live-icon");
+    if (!first) {
+      if (name) name.textContent = tt("live.empty_title", isEn() ? "No live auction" : "진행 중 매물 없음");
+      if (sub) {
+        sub.textContent = tt(
+          "live.empty_sub",
+          isEn() ? "List a project to appear here" : "매물이 등록되면 여기에 표시됩니다"
+        );
+      }
+      if (bid) {
+        bid.textContent = "—";
+        bid.removeAttribute("data-money-krw");
+      }
+      if (icon) icon.textContent = "—";
+      const badgeEl = card.querySelector(".live-badge");
+      if (badgeEl) {
+        const textEl = badgeEl.querySelector(".live-badge-text");
+        const label = tt("live.empty_badge", isEn() ? "WAITING" : "대기 중");
+        if (textEl) textEl.textContent = label;
+      }
+      if (timer) {
+        startHeroCountdown(timer, null);
+        timer.textContent = "—";
+        timer.removeAttribute("data-seconds");
+        timer.removeAttribute("title");
+        timer.classList.remove("timer-urgent", "timer-ended");
+      }
+      var progP = card.querySelector(".live-progress p");
+      if (progP) {
+        progP.textContent = tt(
+          "live.empty_progress",
+          isEn() ? "Open market · free to list" : "마켓 오픈 · 등록 무료"
+        );
+        progP.removeAttribute("data-i18n");
+      }
+      var progBar = card.querySelector(".live-progress-bar span");
+      if (progBar) progBar.style.setProperty("--w", "0%");
+      const toast = card.querySelector(".live-toast");
+      if (toast) {
+        toast.innerHTML =
+          '<span class="pulse-dot"></span> ' +
+          '<a href="/sell.html" style="color:inherit;text-decoration:underline">' +
+          (isEn() ? "List a project" : "매물 등록하기") +
+          "</a>";
+      }
+      return;
+    }
     if (name) name.textContent = first.title || "—";
+    if (icon) icon.textContent = (first.title || "?").trim().charAt(0).toUpperCase() || "—";
     if (sub) {
       if (fromApi) {
         var bc = bidderCount(first);
@@ -691,8 +684,9 @@
 
   async function load(reset) {
     if (!api) {
-      render(PREVIEW, false);
-      applyFilter();
+      showEmptyMarket(
+        tt("list.empty_offline", isEn() ? "Could not load listings." : "매물을 불러오지 못했습니다.")
+      );
       return;
     }
     if (reset !== false) {
@@ -706,20 +700,14 @@
         if (projects.length) {
           render(projects, true);
         } else if (searchQ && searchQ.trim()) {
-          // Active search with zero hits — don't fall back to sample cards
-          source = "api";
-          cache = [];
-          grid.innerHTML = "";
-          if (empty) {
-            empty.hidden = false;
-            empty.textContent = tt(
+          showEmptyMarket(
+            tt(
               "list.empty_search",
               isEn() ? "No matches. Try another keyword." : "검색 결과가 없습니다. 다른 키워드를 시도해 보세요."
-            );
-          }
-          updateHeroLive(null, true);
+            )
+          );
         } else {
-          render(PREVIEW, false);
+          showEmptyMarket();
         }
       } else if (projects.length && source === "api") {
         cache = cache.concat(projects);
@@ -732,7 +720,11 @@
       syncSearchClear();
     } catch (e) {
       console.warn("listings", e);
-      if (pageOffset === 0) render(PREVIEW, false);
+      if (pageOffset === 0) {
+        showEmptyMarket(
+          tt("list.empty_offline", isEn() ? "Could not load listings." : "매물을 불러오지 못했습니다.")
+        );
+      }
     }
   }
 
