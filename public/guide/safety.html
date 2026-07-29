@@ -3,105 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title data-i18n="safety.doc_title">사기 예방법 — WakeAgain</title>
-  <meta name="description" content="WakeAgain에서 사기 당하지 않고 거래하는 법. 사이트 안 결제, 이전 순서, 신고 방법." />
+  <title>사기 예방법 — WakeAgain</title>
+  <meta name="description" content="WakeAgain 사기 예방법. 사이트 안 결제·이전만 쓰기." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-  <link rel="stylesheet" href="/styles.css" />
-<link rel="stylesheet" href="/ux9.css" />
-  <link rel="stylesheet" href="/legal/legal.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260729-guide-v" />
+  <link rel="stylesheet" href="/ux9.css?v=20260729-guide-v" />
+  <link rel="stylesheet" href="/guide/guide-visual.css?v=1" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <style>
-    .safety-page { max-width: 720px; }
-    .safety-rule {
-      margin: 0 0 1.25rem;
-      padding: 1rem 1.1rem;
-      border-radius: 14px;
-      border: 1px solid rgba(212, 160, 23, 0.4);
-      background: linear-gradient(145deg, rgba(180, 120, 40, 0.18), rgba(15, 15, 22, 0.9));
-    }
-    .safety-rule strong {
-      display: block;
-      font-size: 1.05rem;
-      margin-bottom: 0.35rem;
-      color: var(--text);
-    }
-    .safety-rule p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 0.95rem;
-    }
-    .safety-block {
-      margin: 0 0 1.25rem;
-      padding: 1rem 1.1rem;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--card);
-    }
-    .safety-block h2 {
-      margin: 0 0 0.65rem;
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
-    }
-    .safety-block ol,
-    .safety-block ul {
-      margin: 0;
-      padding-left: 1.15rem;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-    .safety-block li { margin: 0.4rem 0; }
-    .safety-block li strong { color: var(--text); }
-    .safety-do { border-color: rgba(52, 211, 153, 0.35); }
-    .safety-dont { border-color: rgba(251, 113, 133, 0.4); }
-    .safety-dont h2 { color: #fecdd3; }
-    .safety-scam-list li { margin: 0.55rem 0; }
-    .safety-scam-list em {
-      display: block;
-      margin-top: 0.15rem;
-      font-style: normal;
-      color: var(--text);
-      font-size: 0.92rem;
-    }
-    .safety-steps {
-      display: grid;
-      gap: 0.55rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: sstep;
-    }
-    .safety-steps li {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-      padding: 0.75rem 0.85rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.92rem;
-    }
-    .safety-steps li::before {
-      counter-increment: sstep;
-      content: counter(sstep);
-      flex: 0 0 1.6rem;
-      height: 1.6rem;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      font-size: 0.78rem;
-      font-weight: 800;
-      color: #fff;
-      background: linear-gradient(135deg, var(--purple), var(--pink, #e8b86d));
-    }
-    .safety-steps li strong { color: var(--text); }
-  </style>
-  <link rel="stylesheet" href="/yard-theme.css?v=20260729-yard-v2" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-guide-v" />
 </head>
 <body class="form-body theme-yard">
   <header class="nav-pill-wrap form-nav">
@@ -110,134 +21,92 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="메뉴">
-        <a href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
-        <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
-        <a href="/guide/" data-i18n="nav.guide">이용안내</a>
+      <nav class="nav-links" aria-label="메뉴">
+        <a href="/app/#list">마켓</a>
+        <a href="/guide/how-to-buy.html">구매 가이드</a>
+        <a href="/guide/">이용안내</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
         </div>
-        <a class="btn btn-primary btn-sm" href="/app/#list" data-i18n="nav.market">마켓</a>
+        <a class="btn btn-primary btn-sm" href="/app/#list">마켓</a>
       </div>
     </div>
   </header>
 
-  <main class="legal-page safety-page">
-    <p class="eyebrow" data-i18n="safety.eyebrow">Guide · Safety</p>
-    <h1 data-i18n="safety.title">사기 예방법</h1>
-    <p class="lede legal-meta" data-i18n="safety.lede" data-i18n-html>
-      짧게 읽어도 됩니다. <strong>사이트 안에서만</strong> 거래하면 대부분 막을 수 있어요.
-    </p>
-
-    <div class="safety-rule">
-      <strong data-i18n="safety.rule_t">한 줄 규칙</strong>
-      <p data-i18n="safety.rule_p">카톡·개인 계좌로 나가면 위험합니다. 결제·이전·인수는 WakeAgain 절차만 쓰세요.</p>
+  <main class="gv-page">
+    <div class="gv-swap" role="navigation" aria-label="가이드 전환">
+      <a href="/guide/how-to-sell.html">판매</a>
+      <a href="/guide/how-to-buy.html">구매</a>
+      <a class="is-on" href="/guide/safety.html" aria-current="page">사기 예방</a>
+      <a href="/guide/">이용안내</a>
     </div>
 
-    <div class="safety-block safety-dont">
-      <h2 data-i18n="safety.dont_t">하지 마세요</h2>
-      <ul>
-        <li data-i18n="safety.dont_1" data-i18n-html><strong>카톡·텔레그램·문자</strong>로 “밖으로 나가자”는 말</li>
-        <li data-i18n="safety.dont_2" data-i18n-html><strong>개인 계좌 번호</strong>로 직접 이체</li>
-        <li data-i18n="safety.dont_3" data-i18n-html><strong>결제 확인 전</strong> 코드·도메인·계정 넘기기</li>
-        <li data-i18n="safety.dont_4" data-i18n-html>데모·화면 확인 없이 <strong>바로 결제</strong></li>
-        <li data-i18n="safety.dont_5">“수수료 아끼자, 사이트 말고 직거래하자”</li>
-      </ul>
+    <h1 class="gv-title">사기 예방법</h1>
+    <p class="gv-sub">한 줄: <strong style="color:var(--text)">카톡·개인 계좌로 나가지 말고, 사이트 절차만</strong> 쓰세요.</p>
+
+    <div class="gv-split">
+      <div class="gv-panel gv-do">
+        <h2>이렇게</h2>
+        <ul>
+          <li>데모 먼저 확인</li>
+          <li>사이트 안 입찰·결제</li>
+          <li>PG 결제만</li>
+          <li>입금 확인 후 이전</li>
+          <li>이상하면 신고·쪽지</li>
+        </ul>
+      </div>
+      <div class="gv-panel gv-dont">
+        <h2>금지</h2>
+        <ul>
+          <li>카톡·텔레그램 밖으로</li>
+          <li>개인 계좌 이체</li>
+          <li>결제 전 코드 넘기기</li>
+          <li>데모 없이 결제</li>
+          <li>“수수료 아끼자 직거래”</li>
+        </ul>
+      </div>
     </div>
 
-    <div class="safety-block safety-do">
-      <h2 data-i18n="safety.do_t">이렇게 하세요</h2>
-      <ul>
-        <li data-i18n="safety.do_1" data-i18n-html><strong>데모</strong>를 먼저 보고 입찰·결제</li>
-        <li data-i18n="safety.do_2" data-i18n-html>낙찰 후 <strong>PG 결제</strong> (사이트 안내대로)</li>
-        <li data-i18n="safety.do_3" data-i18n-html><strong>결제 확인 후</strong>에만 이전 받기</li>
-        <li data-i18n="safety.do_4" data-i18n-html>받은 뒤 확인 → <strong>인수</strong> (또는 자동 확정)</li>
-        <li data-i18n="safety.do_5" data-i18n-html>이상하면 매물 <strong>문제 신고</strong> · 쪽지에 남기기</li>
-      </ul>
+    <ol class="gv-flow">
+      <li class="gv-flow-item"><strong>데모</strong><span>돌아가는지 확인</span></li>
+      <li class="gv-flow-item"><strong>입찰</strong><span>사이트에서만</span></li>
+      <li class="gv-flow-item"><strong>PG 결제</strong><span>낙찰 후 안내대로</span></li>
+      <li class="gv-flow-item"><strong>이전</strong><span>확인 뒤에만</span></li>
+      <li class="gv-flow-item"><strong>인수</strong><span>확정 · 정산</span></li>
+    </ol>
+
+    <div class="gv-shots">
+      <figure class="gv-shot">
+        <div class="gv-phone">
+          <img src="/assets/play-store/screenshots/phone-02-detail.png?v=cream" width="390" height="844" alt="사이트 안 가격 쓰기" loading="lazy" decoding="async" />
+        </div>
+        <figcaption>사이트 안 거래</figcaption>
+      </figure>
+      <figure class="gv-shot">
+        <div class="gv-phone">
+          <img src="/assets/play-store/screenshots/phone-01-market.png?v=cream" width="390" height="844" alt="공개 가격" loading="lazy" decoding="async" />
+        </div>
+        <figcaption>공개 가격 · 비교</figcaption>
+      </figure>
+      <figure class="gv-shot">
+        <div class="gv-phone">
+          <img src="/assets/play-store/screenshots/phone-03-create.png?v=cream" width="390" height="844" alt="정식 등록" loading="lazy" decoding="async" />
+        </div>
+        <figcaption>정식 등록 매물</figcaption>
+      </figure>
     </div>
 
-    <div class="safety-block">
-      <h2 data-i18n="safety.flow_t">안전한 거래 순서</h2>
-      <ol class="safety-steps">
-        <li data-i18n="safety.flow_1" data-i18n-html><strong>데모·가격 확인</strong> — 돌아가는지 먼저 봐요</li>
-        <li data-i18n="safety.flow_2" data-i18n-html><strong>가격 쓰기(입찰)</strong> — 사이트에서만</li>
-        <li data-i18n="safety.flow_3" data-i18n-html><strong>낙찰 → PG 결제</strong> — 1시간 안에 (PG 연동 후)</li>
-        <li data-i18n="safety.flow_4" data-i18n-html><strong>결제 확인 → 이전</strong> — 그전엔 코드·계정 안 받아요</li>
-        <li data-i18n="safety.flow_5" data-i18n-html><strong>인수 또는 자동 확정</strong> — 그다음 판매자 정산</li>
-      </ol>
+    <div class="gv-cta">
+      <a class="btn btn-primary btn-lg" href="/app/#list">마켓 가기</a>
+      <a class="btn btn-ghost btn-lg" href="/guide/how-to-buy.html">구매 가이드</a>
     </div>
-
-    <div class="safety-block">
-      <h2 data-i18n="safety.scam_t">사기꾼이 자주 하는 말</h2>
-      <ul class="safety-scam-list">
-        <li>
-          <span data-i18n="safety.scam_1q">“카톡으로 이야기하자. 더 싸게 해줄게.”</span>
-          <em data-i18n="safety.scam_1a">→ 거절. 쪽지·사이트 절차만.</em>
-        </li>
-        <li>
-          <span data-i18n="safety.scam_2q">“계좌 보내줄게. 입금하면 바로 넘겨줄게.”</span>
-          <em data-i18n="safety.scam_2a">→ 거절. 개인 계좌 이체 금지.</em>
-        </li>
-        <li>
-          <span data-i18n="safety.scam_3q">“먼저 코드 줄게. 나중에 입금해.”</span>
-          <em data-i18n="safety.scam_3a">→ 판매자도 위험. 결제 확인 전 이전 금지.</em>
-        </li>
-        <li>
-          <span data-i18n="safety.scam_4q">“지금 안 사면 다른 사람한테 팔아.” (사이트 밖 압박)</span>
-          <em data-i18n="safety.scam_4a">→ 서두르지 마세요. 데모·절차 확인이 먼저.</em>
-        </li>
-      </ul>
-    </div>
-
-    <div class="safety-block">
-      <h2 data-i18n="safety.who_t">사는 분 / 파는 분</h2>
-      <ul>
-        <li data-i18n="safety.who_buy" data-i18n-html><strong>사는 분</strong> — 데모 확인 · 사이트 결제 · 결제 전엔 이체·이전 요구 거절</li>
-        <li data-i18n="safety.who_sell" data-i18n-html><strong>파는 분</strong> — 결제 확인 전 코드·계정 절대 금지 · 외부 직거래 유도 금지</li>
-      </ul>
-    </div>
-
-    <div class="safety-block">
-      <h2 data-i18n="safety.help_t">이상하면 이렇게</h2>
-      <ol>
-        <li data-i18n="safety.help_1" data-i18n-html>매물 상세 <strong>문제 신고</strong> (구매자 Lv2 · 매물당 1회)</li>
-        <li data-i18n="safety.help_2" data-i18n-html>앱·매물 <strong>쪽지</strong>에 내용 남기기</li>
-        <li data-i18n="safety.help_3" data-i18n-html>긴급: <a class="text-link" href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a> (매물 링크 + 상황 · 우선 처리 · <a class="text-link" href="/guide/contact.html">응답 안내</a>)</li>
-        <li data-i18n="safety.help_4" data-i18n-html>분쟁 절차: <a class="text-link" href="/guide/dispute.html">분쟁 해결 안내</a></li>
-      </ol>
-    </div>
-
-    <p class="muted fine" style="line-height:1.55;margin:1rem 0 1.5rem" data-i18n="safety.legal" data-i18n-html>
-      WakeAgain(코어랩스)은 통신판매중개자입니다. 자세한 책임 범위는
-      <a class="text-link" href="/legal/terms.html">이용약관</a>을 확인해 주세요.
-    </p>
-
-    <div class="legal-nav-links">
-      <a class="btn btn-primary" href="/app/#list" data-i18n="nav.market">마켓플레이스</a>
-      <a class="btn btn-ghost" href="/guide/dispute.html" data-i18n="safety.cta_dispute">분쟁 안내</a>
-      <a class="btn btn-ghost" href="/guide/" data-i18n="nav.guide">이용안내</a>
-    </div>
+    <p class="gv-note">중개 플랫폼 · 1차 책임은 거래 당사자. <a href="/legal/terms.html">이용약관</a> · <a href="/guide/dispute.html">분쟁 안내</a>.</p>
   </main>
 
-  <footer class="site-footer compact-footer">
-    <div class="corelabs-brand-row">
-      <img class="corelabs-mark" src="/assets/corelabs-logo-mark-light.png" alt="CoreLabs" width="22" height="22" loading="lazy" decoding="async" />
-      <span class="muted fine">운영 · 코어랩스(CoreLabs)</span>
-    </div>
-    <p class="footer-broker-notice">
-      <span data-i18n="footer.broker">본 플랫폼은 통신판매중개자이며, 거래되는 상품의 품질과 내용은 판매자가 책임집니다.</span>
-      <span class="footer-broker-sub" data-i18n="footer.broker_sub">이용자 간 사기·분쟁의 1차 책임은 당사자에게 있습니다. WakeAgain(코어랩스)은 거래 당사자가 아니며, 성사·대금·자산 이전을 보증하지 않습니다.</span>
-    </p>
-    <p class="footer-copy">© 2026 CoreLabs · WakeAgain ·
-      <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
-    </p>
-  </footer>
-
-  <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260724g"></script>
-  <script src="/js/i18n.js?v=20260724g"></script>
+  <script src="/js/i18n-messages.js?v=20260725e"></script>
+  <script src="/js/i18n.js?v=20260729-hub"></script>
 </body>
 </html>
