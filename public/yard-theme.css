@@ -43,12 +43,15 @@ body.theme-yard em {
   color: var(--amber);
 }
 
-/* ——— Nav pill: solid yard bar, not glass purple ——— */
+/* ——— Nav pill: frosted glass — background photo shows through ——— */
 body.theme-yard .nav-pill {
-  background: rgba(34, 30, 24, 0.94) !important;
-  border: 1px solid rgba(245, 236, 220, 0.14) !important;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
-  backdrop-filter: blur(8px) !important;
+  background: rgba(28, 24, 20, 0.42) !important;
+  border: 1px solid rgba(245, 236, 220, 0.18) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 245, 220, 0.08) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
   border-radius: 12px !important;
 }
 /* Logo: purple WA mark → warm brown asset; wordmark muted amber */
@@ -803,9 +806,13 @@ body.theme-yard {
 
 body.theme-yard .form-nav .nav-pill,
 body.theme-yard.form-body .nav-pill {
-  background: rgba(34, 30, 24, 0.94) !important;
-  border: 1px solid rgba(245, 236, 220, 0.14) !important;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(28, 24, 20, 0.48) !important;
+  border: 1px solid rgba(245, 236, 220, 0.18) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 245, 220, 0.08) !important;
+  backdrop-filter: blur(18px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
 }
 
 body.theme-yard .how-hero {
