@@ -627,3 +627,20 @@ body.theme-yard .chip {
 body.theme-yard .safety-notice-title {
   color: #e8a070 !important;
 }
+body.theme-yard .buyer-rank-card.is-highlight {
+  border-color: rgba(194, 65, 12, 0.45) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .buyer-rank-badge {
+  background: rgba(212, 160, 23, 0.12) !important;
+  color: #e8d5a3 !important;
+  border: 1px solid rgba(212, 160, 23, 0.3) !important;
+  border-radius: 4px !important;
+}
+body.theme-yard .buyer-rank-card[data-rank="heavy"] .buyer-rank-badge {
+  background: linear-gradient(135deg, rgba(194, 65, 12, 0.45), rgba(212, 160, 23, 0.3)) !important;
+  color: #f5ebd8 !important;
+}
+body.theme-yard .buyer-rank-need {
+  color: #c4a86a !important;
+}
