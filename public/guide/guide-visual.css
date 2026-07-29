@@ -224,7 +224,8 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: hidden; /* clip media; never let thumb scale bleed into text */
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid rgba(90, 72, 52, 0.75);
   background: #262018;
@@ -240,24 +241,26 @@
 .gv-hub-thumb {
   display: block;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
   object-position: top center;
   background: #14110e;
+  flex: 0 0 auto;
 }
-/* Fill the card cell — crop outer PNG margin so icon looks larger */
+/* Crop PNG margins without CSS transform (transform was overflowing card text) */
 .gv-hub-thumb--illust {
   aspect-ratio: 16 / 11;
   height: auto;
   width: 100%;
+  max-width: 100%;
   max-height: none;
   object-fit: cover;
-  object-position: center;
+  object-position: center 42%;
   background: #1a1814;
   padding: 0;
   box-sizing: border-box;
-  transform: scale(1.08);
-  transform-origin: center center;
+  transform: none;
 }
 
 .gv-hub-body {
@@ -266,16 +269,23 @@
   background: #221c16;
   position: relative;
   z-index: 1;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .gv-hub-body strong {
   display: block;
   font-size: 1.05rem;
   margin-bottom: 0.25rem;
+  word-break: keep-all;
 }
 .gv-hub-body span {
+  display: block;
   color: var(--muted);
   font-size: 0.88rem;
-  line-height: 1.4;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 /* Chip facts */
