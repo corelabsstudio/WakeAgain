@@ -1,0 +1,298 @@
+/* ═══════════════════════════════════════════════════
+   WakeAgain — Yard / Auction Warehouse theme
+   AI purple-neon SaaS 클리셰 탈피 (마케팅 랜딩 전용)
+   body.theme-yard 에만 적용
+   ═══════════════════════════════════════════════════ */
+
+body.theme-yard {
+  --bg: #1a1814;
+  --bg-elev: #221f1a;
+  --card: #2a2620;
+  --card-2: #322e27;
+  --border: rgba(245, 236, 220, 0.1);
+  --border-strong: rgba(245, 236, 220, 0.18);
+  --text: #f5f0e6;
+  --muted: #b8ae9c;
+  --muted-2: #8f8576;
+  /* remapped: purple tokens → auction amber / lot red (기존 클래스 호환) */
+  --purple: #d4a017;
+  --purple-2: #c4920f;
+  --purple-3: #a67c00;
+  --purple-soft: rgba(212, 160, 23, 0.12);
+  --purple-glow: rgba(180, 83, 9, 0.25);
+  --pink: #e8b86d;
+  --blue: #8ba4b4;
+  --green: #6b9b6e;
+  --amber: #e3b341;
+  --red: #c2410c;
+  --white: #faf6ef;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-yard::before {
+  background-image:
+    linear-gradient(rgba(245, 236, 220, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 236, 220, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.5;
+}
+
+body.theme-yard em {
+  color: var(--amber);
+}
+
+/* ——— Nav pill: solid yard bar, not glass purple ——— */
+body.theme-yard .nav-pill {
+  background: rgba(34, 30, 24, 0.94) !important;
+  border: 1px solid rgba(245, 236, 220, 0.14) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+  border-radius: 12px !important;
+}
+body.theme-yard .brand-again {
+  color: var(--amber) !important;
+}
+body.theme-yard .brand-mark {
+  box-shadow: none !important;
+  filter: none !important;
+}
+body.theme-yard .nav-links a:hover {
+  color: var(--text);
+  background: rgba(245, 236, 220, 0.06);
+}
+body.theme-yard .btn-primary {
+  background: #c2410c !important;
+  color: #fffaf5 !important;
+  border: 1px solid #9a3412 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+body.theme-yard .btn-primary:hover {
+  background: #9a3412 !important;
+  filter: none !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2) !important;
+}
+body.theme-yard .btn-ghost {
+  border-radius: 6px !important;
+  border-color: rgba(245, 236, 220, 0.18) !important;
+  color: var(--muted) !important;
+}
+body.theme-yard .btn-ghost:hover {
+  background: rgba(245, 236, 220, 0.06) !important;
+  color: var(--text) !important;
+}
+body.theme-yard .btn-white {
+  background: #f5f0e6 !important;
+  color: #1a1814 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+body.theme-yard .btn-white:hover {
+  background: #ebe4d4 !important;
+}
+body.theme-yard .lang-btn.is-on,
+body.theme-yard .lang-btn[aria-pressed="true"] {
+  background: rgba(212, 160, 23, 0.18);
+  color: var(--amber);
+}
+
+/* ——— Hero: no purple glow / shimmer ——— */
+body.theme-yard .hero-glow {
+  background:
+    radial-gradient(ellipse 50% 55% at 20% 40%, rgba(194, 65, 12, 0.12), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 80% 20%, rgba(212, 160, 23, 0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(0, 0, 0, 0.35), transparent 70%);
+  filter: blur(4px);
+  opacity: 0.9;
+}
+body.theme-yard .hero-ecg-bg {
+  opacity: 0.35;
+  filter: grayscale(0.4) sepia(0.25) hue-rotate(-10deg);
+}
+body.theme-yard .hero-badge {
+  border-radius: 4px;
+  border: 1px solid rgba(212, 160, 23, 0.35);
+  background: rgba(212, 160, 23, 0.08);
+  color: #e8d5a3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+body.theme-yard .hero-badge-dot {
+  background: #c2410c;
+  box-shadow: none;
+  border-radius: 1px;
+  width: 6px;
+  height: 6px;
+}
+body.theme-yard .hero-title--sparkle .hero-title-line,
+body.theme-yard .hero-title .grad {
+  animation: none !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  filter: none !important;
+}
+body.theme-yard .hero-title .grad {
+  color: var(--amber) !important;
+  -webkit-text-fill-color: var(--amber) !important;
+  border-bottom: 3px solid rgba(194, 65, 12, 0.85);
+  padding-bottom: 0.05em;
+}
+body.theme-yard .hero-title--sparkle::before,
+body.theme-yard .hero-title--sparkle::after {
+  display: none !important;
+}
+body.theme-yard .hero-cta-benefit strong {
+  color: var(--amber);
+}
+
+/* Event banner — ticket strip */
+body.theme-yard .home-event-banner-link {
+  border-radius: 6px !important;
+  border: 1px dashed rgba(212, 160, 23, 0.4) !important;
+  background: rgba(42, 38, 32, 0.9) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .home-event-pill {
+  background: #c2410c !important;
+  border-radius: 3px !important;
+}
+
+/* Stats — stamped numbers */
+body.theme-yard .hero-stats strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+body.theme-yard .hero-stats strong.is-later {
+  color: var(--muted-2);
+}
+
+/* ——— Lot card (was neon live-card) ——— */
+body.theme-yard .live-card {
+  background: #f5f0e6 !important;
+  color: #1a1814 !important;
+  border: 1px solid #c4b8a0 !important;
+  border-radius: 4px !important;
+  box-shadow:
+    4px 5px 0 rgba(0, 0, 0, 0.15),
+    0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: none !important;
+  animation: none !important;
+  padding: 1.1rem 1.15rem 1.15rem !important;
+}
+body.theme-yard .live-card::before {
+  display: none !important;
+}
+body.theme-yard .live-card::after {
+  content: "LOT";
+  position: absolute;
+  top: 0.85rem;
+  right: 0.9rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #8f8576;
+  border: 1px solid #c4b8a0;
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+}
+body.theme-yard .live-card-top {
+  border-bottom: 1px solid #ddd4c4;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+body.theme-yard .live-badge {
+  background: rgba(194, 65, 12, 0.1) !important;
+  border: 1px solid rgba(194, 65, 12, 0.45) !important;
+  color: #9a3412 !important;
+  border-radius: 3px !important;
+  font-weight: 750;
+}
+body.theme-yard .live-dot {
+  background: #c2410c !important;
+  box-shadow: none !important;
+}
+body.theme-yard .live-dots {
+  opacity: 0.35;
+}
+body.theme-yard .live-card-head strong {
+  color: #1a1814 !important;
+}
+body.theme-yard .live-card-head p {
+  color: #6b6358 !important;
+}
+body.theme-yard .live-icon {
+  background: #1a1814 !important;
+  color: #f5f0e6 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  border: 1px solid #3d3830;
+}
+body.theme-yard .live-metrics .label {
+  color: #8f8576 !important;
+}
+body.theme-yard .live-metrics strong {
+  color: #1a1814 !important;
+  font-weight: 800;
+}
+body.theme-yard .live-progress p {
+  color: #6b6358 !important;
+}
+body.theme-yard .live-progress-bar {
+  background: #e0d8c8 !important;
+  border-radius: 2px !important;
+}
+body.theme-yard .live-progress-bar span {
+  background: #c2410c !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+body.theme-yard .live-toast {
+  background: #ebe4d4 !important;
+  border: 1px solid #c4b8a0 !important;
+  border-radius: 4px !important;
+  color: #3d3830 !important;
+}
+body.theme-yard .live-toast a {
+  color: #9a3412 !important;
+}
+body.theme-yard .pulse-dot {
+  background: #c2410c !important;
+  box-shadow: none !important;
+}
+
+/* Section cards / CTAs on rest of landing */
+body.theme-yard .section .card,
+body.theme-yard .feature-card,
+body.theme-yard .step-card,
+body.theme-yard .price-card,
+body.theme-yard .panel,
+body.theme-yard .showcase-card {
+  border-radius: var(--radius) !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .btn {
+  border-radius: 6px;
+}
+body.theme-yard .scroll-progress span {
+  background: #c2410c !important;
+}
+
+/* Footer */
+body.theme-yard footer,
+body.theme-yard .site-footer {
+  border-top: 1px solid var(--border-strong);
+  background: #14120f;
+}
+
+/* Mobile CTA bar */
+body.theme-yard .mobile-cta {
+  background: rgba(26, 24, 20, 0.96) !important;
+  border-top: 1px solid rgba(245, 236, 220, 0.12) !important;
+}

@@ -248,7 +248,7 @@
     "buy.note": "추가로 보고 싶은 것",
     "buy.note_ph": "예: Next.js 기반, 혼자 개조 가능한 규모",
     "buy.submit": "관심 등록하기",
-    "buy.form_note": "스팸 없이, 맞는 카드가 있을 때만 연락합니다. 운영: 코어랩스 · corelabs.studio@gmail.com",
+    "buy.form_note": "스팸 없이, 맞는 카드가 있을 때만 연락합니다. 운영: 코어랩스 · corelabs.studio@gmail.com · 영업일 24시간 이내 1차 답변 · 문의 안내 /guide/contact.html",
     "buy.ok_title": "관심 등록 완료.",
     "buy.ok_body": "맞는 카드가 모이면 메일로 보내드릴게요. 히어로 지표의 「관심 등록」 수에 바로 반영됩니다.",
     "buy.cta_market": "마켓플레이스 보기",
@@ -537,8 +537,7 @@
     "proj.seller_protect_body": "입금(또는 안내된 확인) <strong>전</strong>에 소스·도메인·계정을 넘기지 마세요. 어긴 손해는 본인 책임이며 플랫폼이 배상하지 않습니다.",
     "proj.close_deal": "최고가에 팔기 확정",
     "proj.bids_title": "사람들이 쓴 가격 (공개)",
-"footer.op_short": "운영 코어랩스(CoreLabs) · Powered by CoreLabs"
-  
+    "footer.op_short": "운영 코어랩스(CoreLabs) · Powered by CoreLabs",
     "diag.ck_feat_count": "기능 목록이 여러 개라 구체성↑",
     "diag.ck_product_none": "제품 설명 없음 → 시작가 오차가 클 수 있음",
     "diag.ck_product_rich": "제품·기능 설명을 반영함 — 힌트 신뢰도↑",
@@ -876,7 +875,7 @@
     "buy.note": "What else matters",
     "buy.note_ph": "e.g. Next.js-based, solo-maintainable size",
     "buy.submit": "Register interest",
-    "buy.form_note": "No spam — we only reach out when a card fits. Ops: CoreLabs · corelabs.studio@gmail.com",
+    "buy.form_note": "No spam — we only reach out when a card fits. Ops: CoreLabs · corelabs.studio@gmail.com · First reply within 1 business day · /guide/contact.html",
     "buy.ok_title": "Interest registered.",
     "buy.ok_body": "We'll email you when matching cards gather. It counts toward the hero 「Interest」 metric right away.",
     "buy.cta_market": "Browse marketplace",
@@ -1165,8 +1164,7 @@
     "proj.seller_protect_body": "Do not transfer source, domain, or accounts <strong>before</strong> payment is confirmed. Losses from early transfer are yours — platform does not reimburse.",
     "proj.close_deal": "Confirm sale at high bid",
     "proj.bids_title": "Public bids",
-"footer.op_short": "Operated by CoreLabs · Powered by CoreLabs"
-  
+    "footer.op_short": "Operated by CoreLabs · Powered by CoreLabs",
     "diag.ck_feat_count": "Multiple features listed → more specificity",
     "diag.ck_product_none": "No product notes → start-price error may be large",
     "diag.ck_product_rich": "Product & features reflected — higher hint confidence",

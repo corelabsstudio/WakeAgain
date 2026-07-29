@@ -1462,3 +1462,34 @@ body.is-native-app .app-top {
   padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
 }
 
+
+/* ——— Yard app shell (matches landing, less purple neon) ——— */
+body.app-body.theme-yard header.app-top,
+body.app-body.theme-yard .app-top {
+  background: rgba(26, 24, 20, 0.94) !important;
+  border-bottom-color: rgba(245, 236, 220, 0.1) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px) !important;
+}
+body.app-body.theme-yard .credit-card {
+  border-color: rgba(212, 160, 23, 0.28);
+  background: rgba(212, 160, 23, 0.08);
+  border-radius: 8px;
+}
+body.app-body.theme-yard .wa-buyer-badge {
+  border-radius: 4px;
+  border-color: rgba(212, 160, 23, 0.4);
+  background: rgba(212, 160, 23, 0.12);
+  color: #f0e0b0;
+}
+body.app-body.theme-yard .choice-chip:has(input:checked) {
+  border-color: rgba(194, 65, 12, 0.55) !important;
+  background: rgba(194, 65, 12, 0.14) !important;
+  color: #fde8d8 !important;
+}
+body.app-body.theme-yard .btn-primary {
+  background: #c2410c !important;
+  border-color: #9a3412 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
