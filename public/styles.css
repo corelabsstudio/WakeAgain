@@ -1543,14 +1543,16 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .quote-mark {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--purple-soft);
   color: #c4b5fd;
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: var(--text-sm);
-  transform: rotate(180deg);
+  font-size: 1.35rem;
+  line-height: 1;
+  /* real quote glyph — not the old "99 rotated → 66" trick */
+  transform: none;
 }
 .quote-accent {
   color: #c4b5fd !important;

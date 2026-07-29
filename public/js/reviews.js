@@ -91,7 +91,7 @@
     const body = isEn() && r.body_en ? r.body_en : r.body;
     return (
       "<article class='glass-card testi-card'>" +
-      "<div class='quote-mark' aria-hidden='true'>99</div>" +
+      "<div class='quote-mark' aria-hidden='true'>“</div>" +
       "<p>" +
       escapeHtml(body) +
       "</p>" +

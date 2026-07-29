@@ -644,3 +644,16 @@ body.theme-yard .buyer-rank-card[data-rank="heavy"] .buyer-rank-badge {
 body.theme-yard .buyer-rank-need {
   color: #c4a86a !important;
 }
+
+/* Review quote badge — amber, not purple numbers */
+body.theme-yard .quote-mark {
+  background: rgba(212, 160, 23, 0.12) !important;
+  color: #e8b86d !important;
+  border: 1px solid rgba(212, 160, 23, 0.28);
+  border-radius: 6px !important;
+  transform: none !important;
+  font-size: 1.35rem !important;
+}
+body.theme-yard .quote-accent {
+  color: #c4a86a !important;
+}
