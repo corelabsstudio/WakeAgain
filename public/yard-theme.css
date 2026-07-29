@@ -319,3 +319,311 @@ body.theme-yard .mobile-cta {
   background: rgba(26, 24, 20, 0.96) !important;
   border-top: 1px solid rgba(245, 236, 220, 0.12) !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   Full-page purple purge (below-hero sections)
+   Hardcoded violet/lilac/neon → warm yard brown + amber
+   ═══════════════════════════════════════════════════ */
+
+/* Gradient titles (초안을 찾으세요 etc.) */
+body.theme-yard .grad,
+body.theme-yard .center-title .grad,
+body.theme-yard .buyers-section .center-title .grad,
+body.theme-yard .buyers-section .grad,
+body.theme-yard .brand-name .brand-again {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--amber) !important;
+  -webkit-text-fill-color: var(--amber) !important;
+  filter: none !important;
+  animation: none !important;
+}
+
+/* Glass cards — deep brown field, no violet hover rim */
+body.theme-yard .glass-card {
+  background: #262018 !important;
+  border: 1px solid rgba(90, 72, 52, 0.7) !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+}
+body.theme-yard .glass-card:hover {
+  border-color: rgba(180, 140, 80, 0.45) !important;
+  box-shadow: none !important;
+}
+
+/* Make vs Buy preferred card (was purple gradient edge) */
+body.theme-yard .makebuy-card.is-preferred {
+  border-color: rgba(194, 65, 12, 0.45) !important;
+  box-shadow: 0 0 0 1px rgba(194, 65, 12, 0.12) !important;
+  background: #2a221a !important;
+}
+body.theme-yard .makebuy-card.is-preferred::after {
+  background: linear-gradient(180deg, #c2410c, #d4a017) !important;
+  border-radius: 0 6px 6px 0 !important;
+}
+body.theme-yard .makebuy-card.is-preferred .makebuy-label {
+  color: #e8b86d !important;
+}
+body.theme-yard .makebuy-card.is-preferred .makebuy-list li::before {
+  color: #d4a017 !important;
+}
+
+/* Buyers section ambient purple glow */
+body.theme-yard .buyers-section {
+  background: transparent !important;
+}
+body.theme-yard .buyers-section::before,
+body.theme-yard .section.buyers-section::before {
+  display: none !important;
+}
+
+/* Safe pay — warm ink, not mint cyber (still “trust” but yard) */
+body.theme-yard .safe-pay-banner {
+  border: 1px solid rgba(180, 140, 80, 0.35) !important;
+  background:
+    linear-gradient(135deg, rgba(60, 42, 24, 0.55), rgba(26, 24, 20, 0.9)) !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+}
+body.theme-yard .safe-pay-badge {
+  color: #1a1814 !important;
+  background: linear-gradient(90deg, #e8b86d, #d4a017) !important;
+  border-radius: 4px !important;
+}
+body.theme-yard .safe-pay-title {
+  color: #f5ebd8 !important;
+}
+body.theme-yard .safe-pay-body strong {
+  color: #e8b86d !important;
+}
+body.theme-yard .safe-pay-steps li {
+  color: #d4c4a8 !important;
+  background: rgba(18, 14, 10, 0.45) !important;
+  border: 1px solid rgba(90, 72, 52, 0.65) !important;
+  border-radius: 6px !important;
+}
+
+/* Icon orbs (violet → amber) */
+body.theme-yard .icon-violet,
+body.theme-yard .icon-orb.icon-violet {
+  background: rgba(212, 160, 23, 0.12) !important;
+  color: #e8b86d !important;
+  box-shadow: none !important;
+}
+
+/* Safety / trust pair (left purple, right red-orange cards) */
+body.theme-yard .safety-card,
+body.theme-yard .safety-pair article,
+body.theme-yard .safety-pair .glass-card {
+  background: #262018 !important;
+  border: 1px solid rgba(90, 72, 52, 0.7) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .safety-pair [class*="violet"],
+body.theme-yard .safety-pair .is-accent,
+body.theme-yard .glass-card.is-accent {
+  background: #2a221a !important;
+  border-color: rgba(194, 65, 12, 0.4) !important;
+}
+
+/* Numbered steps with purple chips */
+body.theme-yard .step-num,
+body.theme-yard .flow-num,
+body.theme-yard .safety-steps li::before,
+body.theme-yard .buyer-merit-n {
+  color: #d4a017 !important;
+  background: rgba(212, 160, 23, 0.1) !important;
+  border-color: rgba(212, 160, 23, 0.3) !important;
+}
+
+/* Guide / trust solid purple panels */
+body.theme-yard .guide-card,
+body.theme-yard .trust-card,
+body.theme-yard .feature-card.is-highlight,
+body.theme-yard .buyer-rank-card.is-highlight,
+body.theme-yard .buyer-rank-card.is-top {
+  background: #2a221a !important;
+  border: 1px solid rgba(194, 65, 12, 0.35) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .buyer-rank-badge {
+  background: rgba(212, 160, 23, 0.12) !important;
+  color: #e8b86d !important;
+  border-color: rgba(212, 160, 23, 0.3) !important;
+}
+
+/* Service cards metric rows */
+body.theme-yard .metric-rows strong,
+body.theme-yard .metric-chip strong {
+  color: #e8b86d !important;
+}
+body.theme-yard .metric-chip {
+  background: #262018 !important;
+  border: 1px solid rgba(90, 72, 52, 0.65) !important;
+}
+
+/* Problem intro ambient */
+body.theme-yard .problem-intro,
+body.theme-yard .problem-intro::before {
+  background-image: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Links / em / scroll accents still using purple token paths */
+body.theme-yard a.text-link,
+body.theme-yard .text-link {
+  color: #e8b86d !important;
+}
+body.theme-yard .tag,
+body.theme-yard .pill,
+body.theme-yard .chip {
+  border-radius: 4px;
+}
+
+/* Listing / showcase cards if injected */
+body.theme-yard .listing-card,
+body.theme-yard .showcase-card,
+body.theme-yard .testi-card,
+body.theme-yard .home-showcase-grid .glass-card {
+  background: #262018 !important;
+  border-color: rgba(90, 72, 52, 0.7) !important;
+}
+
+/* Kill leftover purple radial washes on sections */
+body.theme-yard .section::before,
+body.theme-yard .section::after {
+  background: none !important;
+}
+body.theme-yard main {
+  background: var(--bg);
+}
+
+/* FAQ / accordion if purple borders */
+body.theme-yard details,
+body.theme-yard .faq-item {
+  border-color: rgba(90, 72, 52, 0.65) !important;
+  background: #221c16 !important;
+}
+
+/* Safety step numbered circles that were purple */
+body.theme-yard .safety-steps .n,
+body.theme-yard .handover-steps .n,
+body.theme-yard ol.steps li::marker {
+  color: #d4a017 !important;
+}
+
+/* Explicit hardcode overrides for common purple hexes used in styles.css */
+body.theme-yard [style*="168, 85, 247"],
+body.theme-yard [style*="a855f7"],
+body.theme-yard [style*="c084fc"] {
+  /* inline styles rare; class overrides above cover most */
+}
+
+/* Safety manage block + buyers eyebrow (hardcoded purple) */
+body.theme-yard .buyers-section::before {
+  display: none !important;
+  background: none !important;
+}
+body.theme-yard .buyers-eyebrow {
+  color: #c4a86a !important;
+}
+body.theme-yard .safety-manage {
+  border: 1px solid rgba(180, 140, 80, 0.4) !important;
+  background:
+    linear-gradient(160deg, rgba(60, 42, 24, 0.55), rgba(26, 24, 20, 0.88)) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+body.theme-yard .safety-manage-kicker {
+  color: #e8b86d !important;
+}
+body.theme-yard .safety-manage-steps li {
+  background: rgba(18, 14, 10, 0.4) !important;
+  border: 1px solid rgba(90, 72, 52, 0.6) !important;
+  border-radius: 6px !important;
+}
+body.theme-yard .safety-manage-steps .sm-n {
+  color: #1a1814 !important;
+  background: linear-gradient(135deg, #e8b86d, #c2410c) !important;
+  box-shadow: none !important;
+}
+body.theme-yard .safety-manage-steps strong {
+  color: #f5ebd8 !important;
+}
+body.theme-yard .safety-notice,
+body.theme-yard .safety-pair .safety-notice {
+  background: #262018 !important;
+  border: 1px solid rgba(194, 65, 12, 0.35) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Guide / status cards that used solid purple fill */
+body.theme-yard .guide-tile,
+body.theme-yard .status-guide,
+body.theme-yard .why-card.is-cta,
+body.theme-yard a.glass-card.cta-card,
+body.theme-yard .glass-card.cta-card {
+  background: #2a221a !important;
+  border: 1px solid rgba(194, 65, 12, 0.4) !important;
+  color: #f0e6d4 !important;
+  box-shadow: none !important;
+}
+body.theme-yard .glass-card.cta-card h3,
+body.theme-yard .glass-card.cta-card p {
+  color: #f0e6d4 !important;
+}
+body.theme-yard .glass-card.cta-card a,
+body.theme-yard .glass-card .cta-link {
+  color: #e8b86d !important;
+}
+
+/* Chips in trust section (Email verify etc.) */
+body.theme-yard .chip-row span,
+body.theme-yard .tag-row span,
+body.theme-yard .verify-chips span {
+  background: rgba(212, 160, 23, 0.1) !important;
+  border: 1px solid rgba(212, 160, 23, 0.28) !important;
+  color: #e8d5a3 !important;
+  border-radius: 4px !important;
+}
+
+/* Footer CTA purple washes */
+body.theme-yard .final-cta,
+body.theme-yard .cta-band {
+  background: #221c16 !important;
+  border-color: rgba(90, 72, 52, 0.7) !important;
+}
+
+/* Bento featured purple panel → warm brown */
+body.theme-yard .bento-value.featured,
+body.theme-yard .glass-card.bento-value.featured,
+body.theme-yard .bento .featured {
+  background: #2c241c !important;
+  border: 1px solid rgba(194, 65, 12, 0.4) !important;
+  box-shadow: none !important;
+  color: #f0e6d4 !important;
+}
+body.theme-yard .bento-value.featured h3,
+body.theme-yard .bento-value.featured p {
+  color: #f0e6d4 !important;
+}
+body.theme-yard .bento-value.featured .text-link {
+  color: #e8b86d !important;
+}
+body.theme-yard .icon-violet-solid {
+  background: rgba(194, 65, 12, 0.25) !important;
+  color: #f0c090 !important;
+}
+body.theme-yard .chip-row .chip,
+body.theme-yard .chip {
+  background: rgba(212, 160, 23, 0.1) !important;
+  border: 1px solid rgba(212, 160, 23, 0.28) !important;
+  color: #e8d5a3 !important;
+  border-radius: 4px !important;
+}
+body.theme-yard .safety-notice-title {
+  color: #e8a070 !important;
+}
