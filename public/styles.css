@@ -2940,16 +2940,17 @@ p, li, label, .lede, .center-lead, .manifesto p {
   object-fit: cover;
   object-position: 62% 48%;
   transform: scale(1.04);
-  filter: saturate(0.92) contrast(1.05);
+  filter: saturate(1.02) contrast(1.02) brightness(1.12);
 }
 .hero-photo-scrim {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* lighter scrim: photo should read clearly; text still OK on left */
   background:
-    linear-gradient(105deg, rgba(14, 12, 10, 0.88) 0%, rgba(14, 12, 10, 0.72) 42%, rgba(14, 12, 10, 0.42) 100%),
-    linear-gradient(180deg, rgba(14, 12, 10, 0.55) 0%, transparent 28%, transparent 62%, rgba(14, 12, 10, 0.75) 100%);
+    linear-gradient(105deg, rgba(18, 15, 12, 0.62) 0%, rgba(18, 15, 12, 0.38) 48%, rgba(18, 15, 12, 0.18) 100%),
+    linear-gradient(180deg, rgba(18, 15, 12, 0.35) 0%, transparent 32%, transparent 70%, rgba(18, 15, 12, 0.45) 100%);
 }
 .hero .hero-glow {
   opacity: 0.35;
@@ -2981,7 +2982,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   height: 100%;
   object-fit: cover;
   object-position: center 40%;
-  filter: saturate(0.85) brightness(0.72);
+  filter: saturate(1.0) brightness(1.05);
 }
 .section-photo-scrim {
   position: absolute;
@@ -2989,7 +2990,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(18, 15, 12, 0.82) 0%, rgba(18, 15, 12, 0.7) 45%, rgba(18, 15, 12, 0.88) 100%);
+    linear-gradient(180deg, rgba(18, 15, 12, 0.55) 0%, rgba(18, 15, 12, 0.42) 45%, rgba(18, 15, 12, 0.58) 100%);
 }
 .section-photo-inner {
   position: relative;
@@ -3057,7 +3058,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .hero-photo img { object-position: 70% 45%; }
   .hero-photo-scrim {
     background:
-      linear-gradient(180deg, rgba(14, 12, 10, 0.78) 0%, rgba(14, 12, 10, 0.7) 50%, rgba(14, 12, 10, 0.88) 100%);
+      linear-gradient(180deg, rgba(18, 15, 12, 0.55) 0%, rgba(18, 15, 12, 0.42) 50%, rgba(18, 15, 12, 0.55) 100%);
   }
   .final-cta-grid { grid-template-columns: 1fr; }
   .final-cta-still { max-width: 520px; margin: 0 auto; }
