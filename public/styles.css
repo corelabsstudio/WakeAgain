@@ -2925,7 +2925,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 
 /* ═══════════════════════════════════════════════════
-   Photographic atmosphere — real stills (anti AI-blob landing)
+   Photographic atmosphere — sunlit archive (again / reopen)
    ═══════════════════════════════════════════════════ */
 .hero-photo {
   position: absolute;
@@ -2938,26 +2938,26 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 62% 48%;
-  transform: scale(1.04);
-  filter: saturate(1.02) contrast(1.02) brightness(1.12);
+  object-position: 58% 42%;
+  transform: scale(1.03);
+  filter: saturate(1.04) contrast(1.02) brightness(1.04);
 }
 .hero-photo-scrim {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* lighter scrim: photo should read clearly; text still OK on left */
+  /* bright photo: darken left for copy, keep right window light visible */
   background:
-    linear-gradient(105deg, rgba(18, 15, 12, 0.62) 0%, rgba(18, 15, 12, 0.38) 48%, rgba(18, 15, 12, 0.18) 100%),
-    linear-gradient(180deg, rgba(18, 15, 12, 0.35) 0%, transparent 32%, transparent 70%, rgba(18, 15, 12, 0.45) 100%);
+    linear-gradient(100deg, rgba(22, 18, 14, 0.82) 0%, rgba(22, 18, 14, 0.55) 38%, rgba(22, 18, 14, 0.22) 68%, rgba(22, 18, 14, 0.12) 100%),
+    linear-gradient(180deg, rgba(22, 18, 14, 0.28) 0%, transparent 30%, transparent 72%, rgba(22, 18, 14, 0.4) 100%);
 }
 .hero .hero-glow {
-  opacity: 0.35;
+  opacity: 0.18;
   mix-blend-mode: soft-light;
 }
 .hero .hero-ecg-bg {
-  opacity: 0.22;
+  opacity: 0.12;
   z-index: 0;
 }
 .hero .hero-grid {
@@ -2981,8 +2981,8 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 40%;
-  filter: saturate(1.0) brightness(1.05);
+  object-position: center 45%;
+  filter: saturate(1.03) brightness(1.02);
 }
 .section-photo-scrim {
   position: absolute;
@@ -2990,17 +2990,18 @@ p, li, label, .lede, .center-lead, .manifesto p {
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(18, 15, 12, 0.55) 0%, rgba(18, 15, 12, 0.42) 45%, rgba(18, 15, 12, 0.58) 100%);
+    linear-gradient(180deg, rgba(22, 18, 14, 0.62) 0%, rgba(22, 18, 14, 0.48) 45%, rgba(22, 18, 14, 0.65) 100%);
 }
 .section-photo-inner {
   position: relative;
   z-index: 2;
 }
 .section--photo .glass-card--compact {
-  background: rgba(32, 26, 20, 0.82) !important;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border-color: rgba(180, 140, 80, 0.28) !important;
+  background: rgba(28, 24, 20, 0.78) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(212, 160, 23, 0.22) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .final-cta--photo {
@@ -3055,10 +3056,10 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 
 @media (max-width: 900px) {
-  .hero-photo img { object-position: 70% 45%; }
+  .hero-photo img { object-position: 55% 40%; }
   .hero-photo-scrim {
     background:
-      linear-gradient(180deg, rgba(18, 15, 12, 0.55) 0%, rgba(18, 15, 12, 0.42) 50%, rgba(18, 15, 12, 0.55) 100%);
+      linear-gradient(180deg, rgba(22, 18, 14, 0.72) 0%, rgba(22, 18, 14, 0.58) 48%, rgba(22, 18, 14, 0.7) 100%);
   }
   .final-cta-grid { grid-template-columns: 1fr; }
   .final-cta-still { max-width: 520px; margin: 0 auto; }

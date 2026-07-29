@@ -891,8 +891,8 @@ body.theme-yard .card {
 /* Photo layers under yard tokens */
 body.theme-yard .hero-photo-scrim {
   background:
-    linear-gradient(105deg, rgba(18, 14, 10, 0.58) 0%, rgba(18, 14, 10, 0.34) 45%, rgba(18, 14, 10, 0.14) 100%),
-    linear-gradient(180deg, rgba(18, 14, 10, 0.28) 0%, transparent 35%, transparent 68%, rgba(18, 14, 10, 0.4) 100%) !important;
+    linear-gradient(100deg, rgba(22, 18, 14, 0.8) 0%, rgba(22, 18, 14, 0.52) 40%, rgba(22, 18, 14, 0.2) 70%, rgba(22, 18, 14, 0.1) 100%),
+    linear-gradient(180deg, rgba(22, 18, 14, 0.25) 0%, transparent 32%, transparent 74%, rgba(22, 18, 14, 0.38) 100%) !important;
 }
 body.theme-yard .hero-glow {
   opacity: 0.28 !important;
@@ -905,7 +905,7 @@ body.theme-yard .hero-ecg-bg {
 }
 body.theme-yard .section--photo .section-photo-scrim {
   background:
-    linear-gradient(180deg, rgba(18, 14, 10, 0.5) 0%, rgba(18, 14, 10, 0.38) 50%, rgba(18, 14, 10, 0.55) 100%) !important;
+    linear-gradient(180deg, rgba(22, 18, 14, 0.6) 0%, rgba(22, 18, 14, 0.46) 50%, rgba(22, 18, 14, 0.62) 100%) !important;
 }
 body.theme-yard .final-cta-still {
   border-color: rgba(90, 72, 52, 0.85) !important;
