@@ -2752,36 +2752,35 @@ p, li, label, .lede, .center-lead, .manifesto p {
   color: var(--muted);
   letter-spacing: -0.01em;
 }
-.phone-bezel {
+/* Home product visuals — illustration tiles (not phone chrome) */
+.phone-bezel,
+.shot-illust {
   position: relative;
   margin: 0 auto;
-  width: min(100%, 220px);
-  border-radius: 22px;
-  padding: 8px;
-  background: linear-gradient(160deg, #3a3228 0%, #1a1612 55%, #0e0c0a 100%);
-  border: 1px solid rgba(180, 140, 80, 0.35);
-  box-shadow:
-    0 1px 0 rgba(255, 240, 210, 0.06) inset,
-    0 18px 40px rgba(0, 0, 0, 0.45);
+  width: min(100%, 200px);
+  border-radius: 14px;
+  padding: 0.85rem;
+  background: #1a1814;
+  border: 1px solid rgba(180, 140, 80, 0.32);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
 }
-.phone-shot--focus .phone-bezel {
-  width: min(100%, 248px);
+.phone-shot--focus .phone-bezel,
+.phone-shot--focus .shot-illust {
+  width: min(100%, 210px);
   border-color: rgba(212, 160, 23, 0.45);
-  box-shadow:
-    0 1px 0 rgba(255, 240, 210, 0.08) inset,
-    0 22px 48px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(194, 65, 12, 0.15);
-  transform: translateY(-8px);
+  transform: translateY(-4px);
 }
-.phone-bezel img {
+.phone-bezel img,
+.shot-illust img {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 16px;
-  background: #0a0908;
-  aspect-ratio: 390 / 844;
-  object-fit: cover;
-  object-position: top center;
+  border-radius: 8px;
+  background: transparent;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  object-position: center;
 }
 
 .problem-one-liner {
@@ -2922,8 +2921,8 @@ p, li, label, .lede, .center-lead, .manifesto p {
 @media (max-width: 560px) {
   .shot-row { grid-template-columns: 1fr; max-width: 280px; }
   .phone-shot:last-child { grid-column: auto; }
-  .phone-bezel,
-  .phone-shot--focus .phone-bezel { width: min(100%, 240px); }
+  .phone-bezel, .shot-illust,
+  .phone-shot--focus .phone-bezel, .phone-shot--focus .shot-illust { width: min(100%, 200px); }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -3195,13 +3194,16 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 .product-shots--compact .shot-row {
   margin-top: 0.5rem;
+  align-items: stretch;
 }
-.product-shots--compact .phone-bezel {
+.product-shots--compact .phone-bezel,
+.product-shots--compact .shot-illust {
+  width: min(100%, 170px);
+}
+.product-shots--compact .phone-shot--focus .phone-bezel,
+.product-shots--compact .phone-shot--focus .shot-illust {
   width: min(100%, 180px);
-}
-.product-shots--compact .phone-shot--focus .phone-bezel {
-  width: min(100%, 200px);
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
 .listings--home {
