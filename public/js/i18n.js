@@ -638,7 +638,13 @@
     var titleEl = document.querySelector("title[data-i18n]");
     if (titleEl) {
       document.title = t(titleEl.getAttribute("data-i18n"));
-    } else if (STR[state.lang] && STR[state.lang]["doc.title"]) {
+    } else if (
+      // do not overwrite app shell / form page titles with marketing home title
+      !document.body.classList.contains("app-body") &&
+      !document.body.classList.contains("form-body") &&
+      STR[state.lang] &&
+      STR[state.lang]["doc.title"]
+    ) {
       document.title = STR[state.lang]["doc.title"];
     }
     scope.querySelectorAll("[data-lang-switch]").forEach(function (el) {

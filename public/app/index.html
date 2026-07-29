@@ -12,7 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Critical: compact top bar (beats stale SW/CSS cache; styles.css?v=20260729-deep-qa2"wa-topbar-fix">
+  <!-- Critical: compact top bar (beats stale SW/CSS cache; styles.css header{position:relative} override) -->
+  <style id="wa-topbar-fix">
     header.app-top {
       position: sticky !important;
       top: 0 !important;
@@ -192,7 +193,7 @@
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnCoupons" hidden>쿠폰</button>
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnProfile" hidden data-i18n="nav.profile">내 정보</button>
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnLogout" hidden data-i18n="nav.logout">로그아웃</button>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login" data-i18n="app.login_submit">로그인</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login">로그인</button>
       <a class="btn btn-ghost btn-sm app-top-hide-sm app-top-hide-native" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
       <a class="btn btn-ghost btn-sm" href="/" data-nav-home data-i18n="nav.home">홈</a>
     </div>
