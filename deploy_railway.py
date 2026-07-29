@@ -158,20 +158,44 @@ def main() -> int:
     # Default deploy must NOT rotate APP_SECRET/JWT_SECRET/ADMIN_SECRET (logs everyone out).
     if args.set_vars:
         secrets_path = ROOT / ".launch" / "production-secrets.local.txt"
+        env_path = ROOT / ".env"
+        # Canonical: production-secrets.local.txt, then fill gaps from .env
         existing: dict[str, str] = {}
         if secrets_path.is_file():
-            for line in secrets_path.read_text(encoding="utf-8").splitlines():
+            for line in secrets_path.read_text(encoding="utf-8-sig").splitlines():
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 k, _, v = line.partition("=")
                 existing[k.strip()] = v.strip()
+        if env_path.is_file():
+            for line in env_path.read_text(encoding="utf-8-sig").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                k, v = k.strip(), v.strip()
+                if k not in existing or not existing[k]:
+                    existing[k] = v
 
-        app_secret = existing.get("APP_SECRET") or secrets.token_urlsafe(48)
-        admin_secret = existing.get("ADMIN_SECRET") or secrets.token_urlsafe(32)
+        # Never silently mint a new ADMIN_SECRET — that is what drifts Railway vs local.
+        if not (existing.get("ADMIN_SECRET") or "").strip():
+            raise SystemExit(
+                "ADMIN_SECRET missing in .launch/production-secrets.local.txt and .env.\n"
+                "Copy the current value from Railway Variables first, then re-run --set-vars.\n"
+                "Refusing to generate a new key (prevents admin lockout / secret drift)."
+            )
+        if not (existing.get("APP_SECRET") or "").strip():
+            raise SystemExit(
+                "APP_SECRET missing. Copy from Railway Variables into "
+                ".launch/production-secrets.local.txt before --set-vars."
+            )
+
+        app_secret = existing["APP_SECRET"].strip()
+        admin_secret = existing["ADMIN_SECRET"].strip()
         vars_pairs = {
             "APP_SECRET": app_secret,
-            "JWT_SECRET": existing.get("JWT_SECRET") or app_secret,
+            "JWT_SECRET": (existing.get("JWT_SECRET") or app_secret).strip(),
             "ADMIN_SECRET": admin_secret,
             "EMAIL_DEV_MODE": "0",
             "EMAIL_CODE_FALLBACK": "0",
@@ -185,12 +209,32 @@ def main() -> int:
             "DATA_DIR": "/data",
         }
         secrets_path.parent.mkdir(parents=True, exist_ok=True)
+        header = (
+            "# Production secrets mirror — MUST match Railway Variables\n"
+            "# --set-vars reuses these; never auto-generates ADMIN_SECRET.\n"
+            "# Also keep .env in sync (python _sync_admin_secrets.py).\n"
+            "# Never commit."
+        )
         secrets_path.write_text(
-            "\n".join(f"{k}={v}" for k, v in vars_pairs.items())
-            + "\n# Keep offline. Reuse on --set-vars; never commit.\n",
+            header + "\n" + "\n".join(f"{k}={v}" for k, v in vars_pairs.items()) + "\n",
             encoding="utf-8",
         )
-        print(f"Wrote local secrets mirror: {secrets_path} (gitignored)")
+        # Mirror into .env so local tools use the same ADMIN_SECRET
+        env_lines = [
+            "# Local env — secrets mirrored from production-secrets.local.txt",
+            "# Do not commit.",
+            f"APP_SECRET={vars_pairs['APP_SECRET']}",
+            f"JWT_SECRET={vars_pairs['JWT_SECRET']}",
+            f"ADMIN_SECRET={vars_pairs['ADMIN_SECRET']}",
+            "EMAIL_DEV_MODE=1",
+            "AUCTION_SCHEDULER=1",
+            "AUCTION_SCHEDULER_SEC=60",
+            "ALLOWED_ORIGINS=*",
+            "OAUTH_PUBLIC_BASE=http://127.0.0.1:8080",
+            "",
+        ]
+        env_path.write_text("\n".join(env_lines), encoding="utf-8")
+        print(f"Wrote local secrets mirror: {secrets_path} + {env_path} (gitignored)")
         for k, v in vars_pairs.items():
             r = run(
                 ["railway", "variables", "--set", f"{k}={v}"],
@@ -202,7 +246,10 @@ def main() -> int:
             else:
                 print(f"  set {k}")
     else:
-        print("Skipping variable rotation (default). Pass --set-vars only when intentionally resetting env.")
+        print(
+            "Skipping variable rotation (default). "
+            "Pass --set-vars only to push EXISTING secrets to Railway — never invents new ADMIN_SECRET."
+        )
 
     # Deploy current working tree (latest local files)
     print("Deploying (railway up)...")
