@@ -51,12 +51,27 @@ body.theme-yard .nav-pill {
   backdrop-filter: blur(8px) !important;
   border-radius: 12px !important;
 }
-body.theme-yard .brand-again {
-  color: var(--amber) !important;
-}
-body.theme-yard .brand-mark {
+/* Logo: purple WA mark → warm brown asset; wordmark muted amber */
+body.theme-yard .brand-mark,
+body.theme-yard .nav-pill .brand-mark,
+body.theme-yard .footer-brand .brand-mark,
+body.theme-yard .brand--xl .brand-mark {
+  background-image: url("/assets/logo-mark-yard.png") !important;
   box-shadow: none !important;
   filter: none !important;
+  opacity: 0.92;
+}
+body.theme-yard .brand-name .brand-again,
+body.theme-yard .brand-again {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: #c4a86a !important;
+  -webkit-text-fill-color: #c4a86a !important;
+  filter: none !important;
+}
+body.theme-yard .brand-name {
+  color: #ebe4d4 !important;
 }
 body.theme-yard .nav-links a:hover {
   color: var(--text);
