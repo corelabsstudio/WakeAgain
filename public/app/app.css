@@ -44,8 +44,8 @@ header.app-top,
   margin: 0 0 1.1rem;
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(212, 160, 23, 0.3);
+  background: rgba(212, 160, 23, 0.1);
 }
 .credit-score-line {
   margin: 0 0 0.35rem;
@@ -67,7 +67,7 @@ header.app-top,
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
   border: 1px solid rgba(167, 139, 250, 0.45);
-  background: rgba(124, 58, 237, 0.2);
+  background: rgba(194, 65, 12, 0.2);
   color: #f3e8ff;
 }
 .wa-buyer-badge[data-rank="starter"] {
@@ -82,7 +82,7 @@ header.app-top,
 }
 .wa-buyer-badge[data-rank="heavy"] {
   background: rgba(167, 139, 250, 0.28);
-  border-color: rgba(192, 132, 252, 0.55);
+  border-color: rgba(232, 184, 109, 0.55);
   color: #f5f3ff;
 }
 .wa-buyer-badge[data-rank="whale"] {
@@ -98,15 +98,15 @@ header.app-top,
   margin-left: 0.45rem;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #e9d5ff;
+  color: #f0e0b0;
 }
 /* Demo help for vibe-coding sellers */
 .demo-help-host { margin: 0.5rem 0 0.85rem; }
 .demo-help-card {
   padding: 0.85rem 0.95rem 0.95rem;
   border-radius: 14px;
-  border: 1px solid rgba(168, 85, 247, 0.28);
-  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(212, 160, 23, 0.28);
+  background: rgba(212, 160, 23, 0.08);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -145,7 +145,7 @@ header.app-top,
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border);
-  color: #e9d5ff;
+  color: #f0e0b0;
   font-size: 0.8rem;
   line-height: 1.45;
   white-space: pre-wrap;
@@ -233,8 +233,8 @@ body.is-native-app .app-top-hide-native {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .user-chip:hover {
-  background: rgba(168, 85, 247, 0.14);
-  border-color: rgba(168, 85, 247, 0.35);
+  background: rgba(212, 160, 23, 0.14);
+  border-color: rgba(212, 160, 23, 0.35);
 }
 .user-avatar {
   width: 1.85rem;
@@ -247,8 +247,8 @@ body.is-native-app .app-top-hide-native {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
-  background: linear-gradient(135deg, #c084fc, #7c3aed);
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+  background: linear-gradient(135deg, #e8b86d, #a67c00);
+  box-shadow: 0 0 12px rgba(212, 160, 23, 0.35);
 }
 .user-chip-text {
   display: flex;
@@ -293,7 +293,7 @@ body.is-native-app .app-top-hide-native {
   background: var(--card);
   padding: 0.85rem 1rem;
 }
-.n-card.unread { border-color: rgba(168, 85, 247, 0.4); }
+.n-card.unread { border-color: rgba(212, 160, 23, 0.4); }
 .n-card strong { display: block; margin-bottom: 0.25rem; }
 .n-card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .n-card .n-time { margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted-2); }
@@ -328,7 +328,7 @@ body.is-native-app .app-top-hide-native {
 .auth-need,
 .auth-gate-note {
   background: var(--purple-soft);
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  border: 1px solid rgba(212, 160, 23, 0.25);
   border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   margin: 0 0 1rem;
@@ -360,7 +360,7 @@ body.is-native-app .app-top-hide-native {
   color: #fff;
   background: var(--purple);
   border-color: var(--purple);
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.28);
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.28);
 }
 .app-form {
   margin-top: 0.5rem;
@@ -492,8 +492,8 @@ body.is-native-app .app-top-hide-native {
   cursor: pointer;
 }
 .p-card:hover {
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 12px 32px rgba(88, 28, 180, 0.22), 0 0 0 1px rgba(168, 85, 247, 0.08);
+  border-color: rgba(212, 160, 23, 0.5);
+  box-shadow: 0 12px 32px rgba(120, 70, 20, 0.22), 0 0 0 1px rgba(212, 160, 23, 0.08);
   transform: translateY(-2px);
 }
 .p-card:active { transform: translateY(0); }
@@ -523,9 +523,9 @@ body.is-native-app .app-top-hide-native {
   letter-spacing: 0.03em;
   padding: 0.18rem 0.4rem;
   border-radius: 999px;
-  color: #e9d5ff;
-  background: rgba(168, 85, 247, 0.2);
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #f0e0b0;
+  background: rgba(212, 160, 23, 0.2);
+  border: 1px solid rgba(212, 160, 23, 0.35);
   white-space: nowrap;
 }
 .p-card-badge.is-wait {
@@ -613,7 +613,7 @@ body.is-native-app .app-top-hide-native {
 }
 .seg-btn:hover:not(.is-on) {
   color: var(--text);
-  border-color: rgba(168, 85, 247, 0.3);
+  border-color: rgba(212, 160, 23, 0.3);
 }
 .auth-tabs .tab {
   min-height: 2.5rem;
@@ -664,9 +664,9 @@ body.is-native-app .app-top-hide-native {
 }
 .tabbar-item:hover { color: var(--text); background: rgba(255, 255, 255, 0.04); }
 .tabbar-item.is-on {
-  color: #e9d5ff;
-  background: rgba(168, 85, 247, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.28);
+  color: #f0e0b0;
+  background: rgba(212, 160, 23, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(212, 160, 23, 0.28);
 }
 
 /* Trust UI — positive “verified” tone, not danger/warning reds */
@@ -700,9 +700,9 @@ body.is-native-app .app-top-hide-native {
 }
 /* L3 deal ready — soft violet success */
 .trust-badge--l3 {
-  color: #e9d5ff;
-  background: rgba(168, 85, 247, 0.16);
-  border-color: rgba(192, 132, 252, 0.4);
+  color: #f0e0b0;
+  background: rgba(212, 160, 23, 0.16);
+  border-color: rgba(232, 184, 109, 0.4);
 }
 .trust-badge--credit {
   color: #fde68a;
@@ -711,7 +711,7 @@ body.is-native-app .app-top-hide-native {
 }
 .trust-banner {
   background: var(--purple-soft);
-  border: 1px solid rgba(168, 85, 247, 0.28);
+  border: 1px solid rgba(212, 160, 23, 0.28);
   border-radius: var(--radius-sm);
   padding: 0.75rem 1rem;
   margin: 0 0 1rem;
@@ -738,7 +738,7 @@ body.is-native-app .app-top-hide-native {
 }
 .dev-code-box {
   background: var(--card);
-  border: 1px dashed rgba(168, 85, 247, 0.45);
+  border: 1px dashed rgba(212, 160, 23, 0.45);
   border-radius: var(--radius-sm);
   padding: 0.9rem 1rem;
   margin-bottom: 1rem;
@@ -771,7 +771,7 @@ body.is-native-app .app-top-hide-native {
   margin-top: 0.15rem;
   width: 1.05rem;
   height: 1.05rem;
-  accent-color: var(--purple, #7c3aed);
+  accent-color: var(--purple, #a67c00);
   flex-shrink: 0;
 }
 /* SNS login */
@@ -836,8 +836,8 @@ body.is-native-app .app-top-hide-native {
   margin: 1rem 0 1.15rem;
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  background: rgba(168, 85, 247, 0.07);
+  border: 1px solid rgba(212, 160, 23, 0.35);
+  background: rgba(212, 160, 23, 0.07);
 }
 .listing-guidelines-title {
   margin: 0 0 0.35rem;
@@ -883,7 +883,7 @@ body.is-native-app .app-top-hide-native {
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  accent-color: var(--purple, #a855f7);
+  accent-color: var(--purple, #d4a017);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -920,9 +920,9 @@ body.is-native-app .app-top-hide-native {
 }
 .demo-fill-btn {
   appearance: none;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  background: rgba(168, 85, 247, 0.12);
-  color: #e9d5ff;
+  border: 1px solid rgba(212, 160, 23, 0.4);
+  background: rgba(212, 160, 23, 0.12);
+  color: #f0e0b0;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
@@ -932,8 +932,8 @@ body.is-native-app .app-top-hide-native {
   line-height: 1.3;
 }
 .demo-fill-btn:hover {
-  background: rgba(168, 85, 247, 0.22);
-  border-color: rgba(168, 85, 247, 0.55);
+  background: rgba(212, 160, 23, 0.22);
+  border-color: rgba(212, 160, 23, 0.55);
   color: #fff;
 }
 
@@ -941,8 +941,8 @@ body.is-native-app .app-top-hide-native {
   margin: 0.35rem 0 1rem;
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
-  border: 1px dashed rgba(168, 85, 247, 0.4);
-  background: rgba(168, 85, 247, 0.06);
+  border: 1px dashed rgba(212, 160, 23, 0.4);
+  background: rgba(212, 160, 23, 0.06);
 }
 .demo-shot-box .btn { margin-right: 0.5rem; }
 .demo-shot-grid {
@@ -993,7 +993,7 @@ body.is-native-app .app-top-hide-native {
   display: grid;
   place-items: center;
   font-weight: 800;
-  color: #e9d5ff;
+  color: #f0e0b0;
   background: rgba(0, 0, 0, 0.35);
 }
 .demo-shot-warn {
@@ -1045,7 +1045,7 @@ body.is-native-app .app-top-hide-native {
   padding: 0 !important;
   flex-shrink: 0;
   cursor: pointer;
-  accent-color: var(--purple, #a855f7);
+  accent-color: var(--purple, #d4a017);
 }
 .review-sla-banner {
   margin: 0 0 1rem;
@@ -1111,7 +1111,7 @@ body.is-native-app .app-top-hide-native {
   min-width: 1.15rem;
   margin-top: 0.2rem;
   padding: 0 !important;
-  accent-color: var(--purple, #a855f7);
+  accent-color: var(--purple, #d4a017);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -1155,13 +1155,13 @@ body.is-native-app .app-top-hide-native {
   line-height: 1.3;
 }
 .choice-chip:hover {
-  border-color: rgba(168, 85, 247, 0.45) !important;
-  background: rgba(168, 85, 247, 0.1) !important;
+  border-color: rgba(212, 160, 23, 0.45) !important;
+  background: rgba(212, 160, 23, 0.1) !important;
 }
 .choice-chip:has(input:checked) {
-  border-color: rgba(168, 85, 247, 0.65) !important;
-  background: rgba(168, 85, 247, 0.18) !important;
-  color: #e9d5ff !important;
+  border-color: rgba(212, 160, 23, 0.65) !important;
+  background: rgba(212, 160, 23, 0.18) !important;
+  color: #f0e0b0 !important;
 }
 .choice-chip input[type="radio"] {
   width: 1.05rem !important;
@@ -1169,7 +1169,7 @@ body.is-native-app .app-top-hide-native {
   min-width: 1.05rem !important;
   margin: 0 !important;
   padding: 0 !important;
-  accent-color: var(--purple, #a855f7);
+  accent-color: var(--purple, #d4a017);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -1196,13 +1196,13 @@ body.is-native-app .app-top-hide-native {
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 .asset-checks label:hover {
-  border-color: rgba(168, 85, 247, 0.45);
-  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(212, 160, 23, 0.45);
+  background: rgba(212, 160, 23, 0.1);
 }
 .asset-checks label:has(input:checked) {
-  border-color: rgba(168, 85, 247, 0.65);
-  background: rgba(168, 85, 247, 0.18);
-  color: #e9d5ff;
+  border-color: rgba(212, 160, 23, 0.65);
+  background: rgba(212, 160, 23, 0.18);
+  color: #f0e0b0;
 }
 .asset-checks input[type="checkbox"] {
   width: 1.1rem !important;
@@ -1210,7 +1210,7 @@ body.is-native-app .app-top-hide-native {
   min-width: 1.1rem;
   margin: 0 !important;
   padding: 0 !important;
-  accent-color: var(--purple, #a855f7);
+  accent-color: var(--purple, #d4a017);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -1245,7 +1245,7 @@ body.is-native-app .app-top-hide-native {
   margin: 0 0 0.9rem;
   padding: 0.75rem 0.9rem;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  border: 1px solid rgba(212, 160, 23, 0.25);
   background: var(--purple-soft);
   font-size: 0.85rem;
   line-height: 1.45;
@@ -1279,9 +1279,9 @@ body.is-native-app .app-top-hide-native {
   margin: 0.65rem auto 0;
   max-width: 28rem;
   padding: 0.65rem 0.85rem;
-  border: 1px solid rgba(168, 85, 247, 0.28);
+  border: 1px solid rgba(212, 160, 23, 0.28);
   border-radius: 10px;
-  background: rgba(168, 85, 247, 0.06);
+  background: rgba(212, 160, 23, 0.06);
   color: var(--muted);
   font-size: 0.8rem;
   line-height: 1.5;
@@ -1348,7 +1348,7 @@ body.is-native-app .app-top-hide-native {
 .market-search input[type="search"]:focus {
   outline: none;
   border-color: rgba(167, 139, 250, 0.55);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  box-shadow: 0 0 0 3px rgba(196, 146, 15, 0.18);
 }
 .p-kw {
   display: flex;
@@ -1359,8 +1359,8 @@ body.is-native-app .app-top-hide-native {
 .p-kw-tag {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #c4b5fd;
-  background: rgba(139, 92, 246, 0.14);
+  color: #e8d5a3;
+  background: rgba(196, 146, 15, 0.14);
   border: 1px solid rgba(167, 139, 250, 0.25);
   border-radius: 999px;
   padding: 0.1rem 0.45rem;
@@ -1403,7 +1403,7 @@ body.is-native-app .app-top-hide-native {
   align-items: center;
   gap: 0.35rem;
   border: 1px solid rgba(167, 139, 250, 0.4);
-  background: rgba(139, 92, 246, 0.18);
+  background: rgba(196, 146, 15, 0.18);
   color: var(--text);
   border-radius: 999px;
   padding: 0.28rem 0.55rem 0.28rem 0.7rem;
@@ -1413,7 +1413,7 @@ body.is-native-app .app-top-hide-native {
 }
 .kw-chip:hover {
   border-color: rgba(196, 181, 253, 0.7);
-  background: rgba(139, 92, 246, 0.28);
+  background: rgba(196, 146, 15, 0.28);
 }
 .kw-chip .kw-x {
   opacity: 0.75;

@@ -37,13 +37,13 @@
       "[hidden]{display:none!important}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-panel{max-width:420px;width:100%;max-height:92vh;overflow:auto;border-radius:16px;background:#0f0a1a;border:1px solid rgba(168,85,247,.35);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1rem 1rem 1.1rem}" +
+      " .wa-cert-panel{max-width:420px;width:100%;max-height:92vh;overflow:auto;border-radius:16px;background:#0f0a1a;border:1px solid rgba(212,160,23,.35);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1rem 1rem 1.1rem}" +
       "#" +
       ROOT_ID +
       " .wa-cert-card{background:linear-gradient(165deg,#1a1030 0%,#120a22 55%,#0c0818 100%);border:1px solid rgba(167,139,250,.4);border-radius:14px;padding:1.15rem 1.2rem 1.25rem;color:#e9e4f5}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-brand{font-weight:700;font-size:1.05rem;letter-spacing:-0.02em;margin:0 0 .15rem;background:linear-gradient(90deg,#c4b5fd,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}" +
+      " .wa-cert-brand{font-weight:700;font-size:1.05rem;letter-spacing:-0.02em;margin:0 0 .15rem;background:linear-gradient(90deg,#e8d5a3,#d4a86a);-webkit-background-clip:text;background-clip:text;color:transparent}" +
       "#" +
       ROOT_ID +
       " .wa-cert-title{margin:.35rem 0 .15rem;font-size:1.2rem;font-weight:700;color:#f5f3ff}" +
@@ -55,7 +55,7 @@
       " .wa-cert-meta{font-size:.78rem;color:#8b83a8;margin:0 0 .65rem;line-height:1.45}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-status{display:inline-block;margin:0 0 .75rem;padding:.28rem .65rem;border-radius:999px;font-size:.8rem;font-weight:600;background:rgba(167,139,250,.18);border:1px solid rgba(167,139,250,.4);color:#ddd6fe}" +
+      " .wa-cert-status{display:inline-block;margin:0 0 .75rem;padding:.28rem .65rem;border-radius:999px;font-size:.8rem;font-weight:600;background:rgba(167,139,250,.18);border:1px solid rgba(167,139,250,.4);color:#f0e0b0}" +
       "#" +
       ROOT_ID +
       " .wa-cert-status.is-done{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.4);color:#a7f3d0}" +
@@ -76,7 +76,7 @@
       " .wa-cert-note{margin:.75rem 0 0;font-size:.78rem;color:#9ca3af;line-height:1.45}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-fee{margin:.45rem 0 0;font-size:.78rem;color:#c4b5fd}" +
+      " .wa-cert-fee{margin:.45rem 0 0;font-size:.78rem;color:#e8d5a3}" +
       "#" +
       ROOT_ID +
       " .wa-cert-disc{margin:.65rem 0 0;font-size:.7rem;color:#6b7280;line-height:1.45}" +
@@ -233,7 +233,7 @@
       y += 6;
     }
 
-    text("WakeAgain", 28, "#c4b5fd", "700");
+    text("WakeAgain", 28, "#e8d5a3", "700");
     y += 4;
     text(en ? cert.doc_title_en : cert.doc_title_ko, 32, "#f5f3ff", "700");
     wrap(en ? cert.lead_en : cert.lead_ko, 16, "#a8a0c0", 24);
@@ -260,7 +260,7 @@
       cert.kind === "complete" ? "rgba(52,211,153,0.2)" : "rgba(167,139,250,0.22)";
     roundRect(ctx, x, y - 16, sw, 32, 16);
     ctx.fill();
-    ctx.fillStyle = cert.kind === "complete" ? "#a7f3d0" : "#ddd6fe";
+    ctx.fillStyle = cert.kind === "complete" ? "#a7f3d0" : "#f0e0b0";
     ctx.fillText(st, x + 14, y + 4);
     y += 36;
     wrap(en ? cert.status_note_en : cert.status_note_ko, 14, "#9ca3af", 20);
@@ -298,7 +298,7 @@
     });
 
     y += 12;
-    wrap(en ? cert.fee_note_en : cert.fee_note_ko, 13, "#c4b5fd", 18);
+    wrap(en ? cert.fee_note_en : cert.fee_note_ko, 13, "#e8d5a3", 18);
     wrap(en ? cert.note_en : cert.note_ko, 13, "#86efac", 18);
     y += 4;
     wrap(en ? cert.disclaimer_en : cert.disclaimer_ko, 12, "#6b7280", 17);

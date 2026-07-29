@@ -30,7 +30,7 @@
   color: var(--text);
   font-weight: 700;
 }
-.wa-blog-brand .brand-again { color: var(--purple, #a855f7); }
+.wa-blog-brand .brand-again { color: var(--purple, #d4a017); }
 .wa-blog-links {
   display: flex;
   flex-wrap: wrap;
@@ -46,7 +46,7 @@
 }
 .wa-blog-links a:hover {
   color: var(--text);
-  border-color: rgba(168, 85, 247, 0.35);
+  border-color: rgba(212, 160, 23, 0.35);
 }
 .wa-blog-wrap {
   max-width: 760px;
@@ -54,7 +54,7 @@
   padding: 2.25rem 1.25rem 4.5rem;
 }
 .wa-kicker {
-  color: var(--purple, #a855f7);
+  color: var(--purple, #d4a017);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -95,14 +95,14 @@
   padding-left: 1.2rem;
 }
 .wa-prose li { margin: 0.35rem 0; }
-.wa-prose a { color: #c4b5fd; }
+.wa-prose a { color: #e8d5a3; }
 .wa-prose blockquote {
   margin: 1.25rem 0;
   padding: 0.9rem 1rem;
-  border-left: 3px solid var(--purple, #a855f7);
-  background: rgba(124, 58, 237, 0.12);
+  border-left: 3px solid var(--purple, #d4a017);
+  background: rgba(194, 65, 12, 0.12);
   border-radius: 0 12px 12px 0;
-  color: #ddd6fe;
+  color: #f0e0b0;
 }
 .wa-prose blockquote p { margin: 0; }
 .wa-source {
@@ -120,8 +120,8 @@
   margin: 2rem 0 1.25rem;
   padding: 1.35rem 1.2rem;
   border-radius: 16px;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  background: linear-gradient(145deg, rgba(124, 58, 237, 0.22), rgba(15, 15, 22, 0.95));
+  border: 1px solid rgba(212, 160, 23, 0.4);
+  background: linear-gradient(145deg, rgba(194, 65, 12, 0.22), rgba(15, 15, 22, 0.95));
 }
 .wa-cta h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
 .wa-cta p { margin: 0 0 1rem; color: var(--muted); font-size: 0.98rem; line-height: 1.6; }
@@ -141,7 +141,7 @@
   text-decoration: none;
 }
 .wa-btn-primary {
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  background: linear-gradient(135deg, #d4a017, #a67c00);
   color: #fff;
   border: 1px solid rgba(255,255,255,0.1);
 }
@@ -166,7 +166,7 @@
   flex-wrap: wrap;
   font-size: 0.9rem;
 }
-.wa-blog-foot a { color: #c4b5fd; text-decoration: none; }
+.wa-blog-foot a { color: #e8d5a3; text-decoration: none; }
 .wa-card-grid {
   display: grid;
   gap: 0.9rem;
@@ -183,15 +183,15 @@
   transition: border-color 0.15s, transform 0.15s;
 }
 .wa-card:hover {
-  border-color: rgba(168, 85, 247, 0.45);
+  border-color: rgba(212, 160, 23, 0.45);
   transform: translateY(-1px);
 }
 .wa-card .tag {
   display: inline-block;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #c4b5fd;
-  background: rgba(124, 58, 237, 0.18);
+  color: #e8d5a3;
+  background: rgba(194, 65, 12, 0.18);
   padding: 0.25rem 0.6rem;
   border-radius: 999px;
   margin-bottom: 0.55rem;
@@ -209,7 +209,7 @@
 }
 .wa-card .more {
   margin-top: 0.65rem;
-  color: #c4b5fd;
+  color: #e8d5a3;
   font-size: 0.88rem;
   font-weight: 600;
 }

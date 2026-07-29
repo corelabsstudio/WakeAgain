@@ -906,7 +906,7 @@
         const el = document.createElement("article");
         el.className = "p-card";
         el.style.minHeight = "auto";
-        el.style.borderColor = "rgba(168,85,247,0.35)";
+        el.style.borderColor = "rgba(212,160,23,0.35)";
         el.innerHTML =
           "<div class='p-card-top'><h3>소문내고 8% 쿠폰</h3><span class='p-card-badge is-live'>이벤트</span></div>" +
           "<div class='p-card-foot'><p class='p-meta'></p>" +
