@@ -887,3 +887,28 @@ body.theme-yard .card {
   border-color: rgba(90, 72, 52, 0.7) !important;
   background: #262018 !important;
 }
+
+/* Photo layers under yard tokens */
+body.theme-yard .hero-photo-scrim {
+  background:
+    linear-gradient(105deg, rgba(18, 14, 10, 0.9) 0%, rgba(18, 14, 10, 0.74) 40%, rgba(18, 14, 10, 0.4) 100%),
+    linear-gradient(180deg, rgba(18, 14, 10, 0.5) 0%, transparent 30%, transparent 60%, rgba(18, 14, 10, 0.78) 100%) !important;
+}
+body.theme-yard .hero-glow {
+  opacity: 0.28 !important;
+  background:
+    radial-gradient(ellipse 50% 55% at 20% 40%, rgba(194, 65, 12, 0.18), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 80% 20%, rgba(212, 160, 23, 0.1), transparent 70%) !important;
+}
+body.theme-yard .hero-ecg-bg {
+  opacity: 0.18 !important;
+}
+body.theme-yard .section--photo .section-photo-scrim {
+  background:
+    linear-gradient(180deg, rgba(18, 14, 10, 0.84) 0%, rgba(18, 14, 10, 0.72) 50%, rgba(18, 14, 10, 0.9) 100%) !important;
+}
+body.theme-yard .final-cta-still {
+  border-color: rgba(90, 72, 52, 0.85) !important;
+  background: #1a1612 !important;
+}
+

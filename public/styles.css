@@ -2923,3 +2923,151 @@ p, li, label, .lede, .center-lead, .manifesto p {
   .phone-bezel,
   .phone-shot--focus .phone-bezel { width: min(100%, 240px); }
 }
+
+/* ═══════════════════════════════════════════════════
+   Photographic atmosphere — real stills (anti AI-blob landing)
+   ═══════════════════════════════════════════════════ */
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 48%;
+  transform: scale(1.04);
+  filter: saturate(0.92) contrast(1.05);
+}
+.hero-photo-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, rgba(14, 12, 10, 0.88) 0%, rgba(14, 12, 10, 0.72) 42%, rgba(14, 12, 10, 0.42) 100%),
+    linear-gradient(180deg, rgba(14, 12, 10, 0.55) 0%, transparent 28%, transparent 62%, rgba(14, 12, 10, 0.75) 100%);
+}
+.hero .hero-glow {
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
+}
+.hero .hero-ecg-bg {
+  opacity: 0.22;
+  z-index: 0;
+}
+.hero .hero-grid {
+  z-index: 2;
+}
+
+.section--photo {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-top: clamp(3rem, 6vw, 4.5rem);
+  padding-bottom: clamp(3rem, 6vw, 4.5rem);
+}
+.section-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.section-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: saturate(0.85) brightness(0.72);
+}
+.section-photo-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(18, 15, 12, 0.82) 0%, rgba(18, 15, 12, 0.7) 45%, rgba(18, 15, 12, 0.88) 100%);
+}
+.section-photo-inner {
+  position: relative;
+  z-index: 2;
+}
+.section--photo .glass-card--compact {
+  background: rgba(32, 26, 20, 0.82) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: rgba(180, 140, 80, 0.28) !important;
+}
+
+.final-cta--photo {
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.final-cta-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 3.5vw, 2.75rem);
+  align-items: center;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+.final-cta-still {
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(90, 72, 52, 0.75);
+  box-shadow:
+    0 1px 0 rgba(255, 240, 210, 0.05) inset,
+    0 20px 48px rgba(0, 0, 0, 0.45);
+  background: #1a1612;
+}
+.final-cta-still img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: center;
+}
+.final-cta-copy {
+  text-align: left;
+}
+.final-cta-copy .brand--xl {
+  margin-bottom: 0.75rem;
+}
+.final-cta-copy .center-title,
+.final-cta-copy .center-lead,
+.final-cta-copy .cta-one-liner {
+  text-align: left;
+  margin-left: 0;
+  margin-right: 0;
+}
+.final-cta-copy .hero-cta {
+  justify-content: flex-start;
+  margin-top: 1.25rem;
+}
+.final-cta-copy .fine {
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .hero-photo img { object-position: 70% 45%; }
+  .hero-photo-scrim {
+    background:
+      linear-gradient(180deg, rgba(14, 12, 10, 0.78) 0%, rgba(14, 12, 10, 0.7) 50%, rgba(14, 12, 10, 0.88) 100%);
+  }
+  .final-cta-grid { grid-template-columns: 1fr; }
+  .final-cta-still { max-width: 520px; margin: 0 auto; }
+  .final-cta-copy,
+  .final-cta-copy .center-title,
+  .final-cta-copy .center-lead,
+  .final-cta-copy .cta-one-liner { text-align: center; }
+  .final-cta-copy .brand--xl { justify-content: center; }
+  .final-cta-copy .hero-cta { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-photo img { transform: none; }
+}

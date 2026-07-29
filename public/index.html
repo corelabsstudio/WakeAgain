@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20260729-shots" />
+  <link rel="stylesheet" href="/styles.css?v=20260729-photo" />
   <link rel="stylesheet" href="/ux9.css?v=20260724-ecgline" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -64,7 +64,7 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/yard-theme.css?v=20260729-shots" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-photo" />
 </head>
 <body class="theme-yard">
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
@@ -107,6 +107,18 @@
   <main id="main">
     <!-- 1. HERO -->
     <section class="hero" id="top">
+      <!-- Real photo atmosphere (auction warehouse) — not abstract gradient blobs -->
+      <div class="hero-photo" aria-hidden="true">
+        <img
+          src="/assets/photo/hero-warehouse.jpg"
+          width="1600"
+          height="900"
+          alt=""
+          decoding="async"
+          fetchpriority="high"
+        />
+      </div>
+      <div class="hero-photo-scrim" aria-hidden="true"></div>
       <div class="hero-glow" aria-hidden="true"></div>
       <!-- Background only: the moving green ECG line (not the card monitor chrome) -->
       <div class="hero-ecg-bg" aria-hidden="true">
@@ -249,25 +261,38 @@
       </div>
     </section>
 
-    <!-- PROBLEM — short, not manifesto wall -->
-    <section class="section problem-intro reveal" id="problem">
-      <h2 class="center-title" data-i18n="problem.title">세상 밖으로 못 나온 프로젝트들</h2>
-      <p class="center-lead problem-one-liner" data-i18n="problem.one">
-        출시 전에 멈춘 코드가 많습니다. 쓸모없어서가 아니라, 시간·홍보·타이밍이 안 맞았을 때가 많아요.
-      </p>
-      <div class="problem-cards problem-cards--tight stagger-kids">
-        <article class="glass-card glass-card--compact">
-          <h3 data-i18n="problem.c1_t">시간은 썼는데 수익은 0</h3>
-          <p data-i18n="problem.c1_p_short">서버·도메인 비용만 나가고 더 하기도 어렵습니다.</p>
-        </article>
-        <article class="glass-card glass-card--compact">
-          <h3 data-i18n="problem.c2_t">팔 곳이 애매함</h3>
-          <p data-i18n="problem.c2_p_short">커뮤니티 글은 채팅만 오고 가격·이전 절차가 없습니다.</p>
-        </article>
-        <article class="glass-card glass-card--compact">
-          <h3 data-i18n="problem.c3_t">사고 싶어도 비교 불가</h3>
-          <p data-i18n="problem.c3_p_short">아이디어만 있는 것과 돌아가는 데모가 섞여 고르기 어렵습니다.</p>
-        </article>
+    <!-- PROBLEM — photo band + short copy -->
+    <section class="section problem-intro reveal section--photo" id="problem">
+      <div class="section-photo" aria-hidden="true">
+        <img
+          src="/assets/photo/band-yard-night.jpg"
+          width="1600"
+          height="900"
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div class="section-photo-scrim" aria-hidden="true"></div>
+      <div class="section-photo-inner">
+        <h2 class="center-title" data-i18n="problem.title">세상 밖으로 못 나온 프로젝트들</h2>
+        <p class="center-lead problem-one-liner" data-i18n="problem.one">
+          출시 전에 멈춘 코드가 많습니다. 쓸모없어서가 아니라, 시간·홍보·타이밍이 안 맞았을 때가 많아요.
+        </p>
+        <div class="problem-cards problem-cards--tight stagger-kids">
+          <article class="glass-card glass-card--compact">
+            <h3 data-i18n="problem.c1_t">시간은 썼는데 수익은 0</h3>
+            <p data-i18n="problem.c1_p_short">서버·도메인 비용만 나가고 더 하기도 어렵습니다.</p>
+          </article>
+          <article class="glass-card glass-card--compact">
+            <h3 data-i18n="problem.c2_t">팔 곳이 애매함</h3>
+            <p data-i18n="problem.c2_p_short">커뮤니티 글은 채팅만 오고 가격·이전 절차가 없습니다.</p>
+          </article>
+          <article class="glass-card glass-card--compact">
+            <h3 data-i18n="problem.c3_t">사고 싶어도 비교 불가</h3>
+            <p data-i18n="problem.c3_p_short">아이디어만 있는 것과 돌아가는 데모가 섞여 고르기 어렵습니다.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -513,22 +538,36 @@
       </p>
     </section>
 
-    <!-- FINAL CTA -->
-    <section class="section final-cta reveal" id="cta">
-      <a class="brand brand--xl" href="#top" aria-label="WakeAgain">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
-      </a>
-      <h2 class="center-title xl" data-i18n="cta.title">프로젝트에 두 번째 기회를 주세요.</h2>
-      <p class="center-lead cta-one-liner" data-i18n="cta.strong">멈춘 프로젝트를 다시 살립니다. 등록 무료 · 판매 수수료 10%.</p>
-      <div class="hero-cta center">
-        <a class="btn btn-white btn-lg" href="/sell.html">
-          <span data-i18n="nav.list">내 프로젝트 올리기</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <a class="btn btn-ghost btn-lg" href="/buy.html" data-i18n="nav.interest">관심 등록하기</a>
+    <!-- FINAL CTA — still-life photo + short copy -->
+    <section class="section final-cta final-cta--photo reveal" id="cta">
+      <div class="final-cta-grid">
+        <figure class="final-cta-still">
+          <img
+            src="/assets/photo/still-lot-tags.jpg"
+            width="1200"
+            height="800"
+            alt="경매 로트 태그와 나무 망치 — 다시 가격이 붙는 순간"
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+        <div class="final-cta-copy">
+          <a class="brand brand--xl" href="#top" aria-label="WakeAgain">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+          </a>
+          <h2 class="center-title xl" data-i18n="cta.title">프로젝트에 두 번째 기회를 주세요.</h2>
+          <p class="center-lead cta-one-liner" data-i18n="cta.strong">멈춘 프로젝트를 다시 살립니다. 등록 무료 · 판매 수수료 10%.</p>
+          <div class="hero-cta">
+            <a class="btn btn-white btn-lg" href="/sell.html">
+              <span data-i18n="nav.list">내 프로젝트 올리기</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="btn btn-ghost btn-lg" href="/buy.html" data-i18n="nav.interest">관심 등록하기</a>
+          </div>
+          <p class="fine muted" data-i18n="cta.note">쉽게 시작 · 거래는 확실하게 · 팔리면 판매자 수수료 10% · 구매자는 합의 가격만</p>
+        </div>
       </div>
-      <p class="fine center muted" data-i18n="cta.note">쉽게 시작 · 거래는 확실하게 · 팔리면 판매자 수수료 10% · 구매자는 합의 가격만</p>
     </section>
   </main>
 
