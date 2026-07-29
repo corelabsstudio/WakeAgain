@@ -33,6 +33,7 @@
 | 회사 로고 파일 | 락업 `public/assets/corelabs-logo-lockup.png` · 마크 `public/assets/corelabs-logo-mark.png` · 다크 UI용 `*-light.png` · 바탕화면 `CoreLabs_logo_final.jpg` |
 | 사이트 반영 | 푸터(메인 락업 + 컴팩트 마크) · 사업계획서 표지 HWP/PDF |
 | 문의 이메일 | **corelabs.studio@gmail.com** |
+| 전화 | **TEL 033-818-2021** · **HP 010-5583-2021** |
 | 응답 약속 | **영업일 24시간 이내 1차 답변** · 입금·거래·사기 의심 **우선** · 공개 안내 `/guide/contact.html` · 운영 템플릿 `docs/SUPPORT_TEMPLATES.md` |
 | 카피라이트 | **© 2026 CoreLabs. All rights reserved.** |
 | 이용약관 | `/legal/terms.html` · `docs/이용약관.md` |
