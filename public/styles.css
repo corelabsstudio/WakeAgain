@@ -2119,7 +2119,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 .footer-operator { margin: 0.75rem 0 0.35rem; }
 
-/* Business registration (전자상거래 고지) — hug content, no wide empty right gap */
+/* Business registration (전자상거래 고지) — one shared 2-col grid so all rows align */
 .footer-biz {
   margin: 0.85rem 0 0.35rem;
   padding: 0.7rem 0.85rem;
@@ -2130,6 +2130,14 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: max-content;
   max-width: min(100%, 22.5rem);
   box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, auto);
+  column-gap: 0.55rem;
+  row-gap: 0.28rem;
+  align-items: baseline;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
 }
 .footer-brand .footer-biz {
   margin-top: 0.9rem;
@@ -2139,25 +2147,24 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: max-content;
   max-width: min(100%, 22.5rem);
 }
+/* Children of each line join the parent grid → one label col + one value col */
 .footer-biz-line {
-  margin: 0.2rem 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: var(--muted);
+  display: contents;
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
   word-break: keep-all;
-  display: grid;
-  grid-template-columns: 5.25rem minmax(0, auto);
-  column-gap: 0.4rem;
-  align-items: start;
 }
 .footer-biz-line span {
   display: block;
   min-width: 0;
-  margin-right: 0;
+  margin: 0;
   color: var(--muted-2);
   font-weight: 600;
 }
 .footer-biz-line strong {
+  display: block;
   color: var(--text);
   font-weight: 650;
   min-width: 0;
@@ -2165,8 +2172,27 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .footer-biz-line.footer-biz-addr strong {
   line-height: 1.45;
 }
+/* Kill global .text-link margin/size so TEL·HP sit on the same baseline as labels */
+.footer-biz-line a,
+.footer-biz-line .text-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 650;
+  line-height: inherit;
+  color: #e8d5a3;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+.footer-biz-line a:hover,
+.footer-biz-line .text-link:hover {
+  color: #f5ebd8;
+  text-decoration: underline;
+}
 .footer-biz-links {
-  margin: 0.45rem 0 0;
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
   font-size: 0.78rem;
   display: flex;
   flex-wrap: wrap;
