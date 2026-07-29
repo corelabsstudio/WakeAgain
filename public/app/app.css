@@ -1,4 +1,4 @@
-/* WakeAgain app shell — purple system aligned with landing */
+/* WakeAgain app shell — yard amber/gold aligned with landing */
 .app-body {
   padding-bottom: 5rem;
   padding-top: 0;
@@ -66,9 +66,9 @@ header.app-top,
   font-weight: 800;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(167, 139, 250, 0.45);
+  border: 1px solid rgba(212, 160, 23, 0.45);
   background: rgba(194, 65, 12, 0.2);
-  color: #f3e8ff;
+  color: #f5f0e6;
 }
 .wa-buyer-badge[data-rank="starter"] {
   background: rgba(96, 165, 250, 0.15);
@@ -81,9 +81,9 @@ header.app-top,
   color: #a7f3d0;
 }
 .wa-buyer-badge[data-rank="heavy"] {
-  background: rgba(167, 139, 250, 0.28);
+  background: rgba(212, 160, 23, 0.28);
   border-color: rgba(232, 184, 109, 0.55);
-  color: #f5f3ff;
+  color: #f5f0e6;
 }
 .wa-buyer-badge[data-rank="whale"] {
   background: rgba(245, 158, 11, 0.2);
@@ -1354,7 +1354,7 @@ body.is-native-app .app-top-hide-native {
 }
 .market-search input[type="search"]:focus {
   outline: none;
-  border-color: rgba(167, 139, 250, 0.55);
+  border-color: rgba(212, 160, 23, 0.55);
   box-shadow: 0 0 0 3px rgba(196, 146, 15, 0.18);
 }
 .p-kw {
@@ -1368,7 +1368,7 @@ body.is-native-app .app-top-hide-native {
   font-weight: 600;
   color: #e8d5a3;
   background: rgba(196, 146, 15, 0.14);
-  border: 1px solid rgba(167, 139, 250, 0.25);
+  border: 1px solid rgba(212, 160, 23, 0.25);
   border-radius: 999px;
   padding: 0.1rem 0.45rem;
 }
@@ -1378,8 +1378,8 @@ body.is-native-app .app-top-hide-native {
   margin: 0.85rem 0 0.35rem;
   padding: 0.85rem 0.9rem;
   border-radius: 14px;
-  border: 1px solid rgba(167, 139, 250, 0.22);
-  background: rgba(88, 28, 135, 0.12);
+  border: 1px solid rgba(212, 160, 23, 0.22);
+  background: rgba(90, 62, 20, 0.12);
 }
 .kw-block > label {
   margin-top: 0;
@@ -1409,7 +1409,7 @@ body.is-native-app .app-top-hide-native {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border: 1px solid rgba(167, 139, 250, 0.4);
+  border: 1px solid rgba(212, 160, 23, 0.4);
   background: rgba(196, 146, 15, 0.18);
   color: var(--text);
   border-radius: 999px;
@@ -1419,7 +1419,7 @@ body.is-native-app .app-top-hide-native {
   cursor: pointer;
 }
 .kw-chip:hover {
-  border-color: rgba(196, 181, 253, 0.7);
+  border-color: rgba(232, 184, 109, 0.7);
   background: rgba(196, 146, 15, 0.28);
 }
 .kw-chip .kw-x {

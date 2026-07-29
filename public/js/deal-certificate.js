@@ -40,13 +40,13 @@
       " .wa-cert-panel{max-width:420px;width:100%;max-height:92vh;overflow:auto;border-radius:16px;background:#0f0a1a;border:1px solid rgba(212,160,23,.35);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1rem 1rem 1.1rem}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-card{background:linear-gradient(165deg,#1a1030 0%,#120a22 55%,#0c0818 100%);border:1px solid rgba(167,139,250,.4);border-radius:14px;padding:1.15rem 1.2rem 1.25rem;color:#e9e4f5}" +
+      " .wa-cert-card{background:linear-gradient(165deg,#1a1814 0%,#16140f 55%,#12100c 100%);border:1px solid rgba(212,160,23,.4);border-radius:14px;padding:1.15rem 1.2rem 1.25rem;color:#f0e8d8}" +
       "#" +
       ROOT_ID +
       " .wa-cert-brand{font-weight:700;font-size:1.05rem;letter-spacing:-0.02em;margin:0 0 .15rem;background:linear-gradient(90deg,#e8d5a3,#d4a86a);-webkit-background-clip:text;background-clip:text;color:transparent}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-title{margin:.35rem 0 .15rem;font-size:1.2rem;font-weight:700;color:#f5f3ff}" +
+      " .wa-cert-title{margin:.35rem 0 .15rem;font-size:1.2rem;font-weight:700;color:#f5f0e6}" +
       "#" +
       ROOT_ID +
       " .wa-cert-lead{margin:0 0 .75rem;font-size:.88rem;color:#a8a0c0;line-height:1.45}" +
@@ -55,7 +55,7 @@
       " .wa-cert-meta{font-size:.78rem;color:#8b83a8;margin:0 0 .65rem;line-height:1.45}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-status{display:inline-block;margin:0 0 .75rem;padding:.28rem .65rem;border-radius:999px;font-size:.8rem;font-weight:600;background:rgba(167,139,250,.18);border:1px solid rgba(167,139,250,.4);color:#f0e0b0}" +
+      " .wa-cert-status{display:inline-block;margin:0 0 .75rem;padding:.28rem .65rem;border-radius:999px;font-size:.8rem;font-weight:600;background:rgba(212,160,23,.18);border:1px solid rgba(212,160,23,.4);color:#f0e0b0}" +
       "#" +
       ROOT_ID +
       " .wa-cert-status.is-done{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.4);color:#a7f3d0}" +
@@ -70,7 +70,7 @@
       " .wa-cert-rows .k{flex:0 0 5.5rem;color:#8b83a8;font-size:.8rem}" +
       "#" +
       ROOT_ID +
-      " .wa-cert-rows .v{flex:1;color:#f5f3ff;word-break:break-word}" +
+      " .wa-cert-rows .v{flex:1;color:#f5f0e6;word-break:break-word}" +
       "#" +
       ROOT_ID +
       " .wa-cert-note{margin:.75rem 0 0;font-size:.78rem;color:#9ca3af;line-height:1.45}" +
@@ -189,14 +189,14 @@
 
     // background
     var g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "#1a1030");
-    g.addColorStop(0.55, "#120a22");
-    g.addColorStop(1, "#0c0818");
+    g.addColorStop(0, "#1a1814");
+    g.addColorStop(0.55, "#16140f");
+    g.addColorStop(1, "#12100c");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
     // border
-    ctx.strokeStyle = "rgba(167,139,250,0.55)";
+    ctx.strokeStyle = "rgba(212,160,23,0.55)";
     ctx.lineWidth = 3;
     roundRect(ctx, 18, 18, W - 36, H - 36, 20);
     ctx.stroke();
@@ -206,7 +206,7 @@
     var maxW = W - 112;
 
     function text(str, size, color, weight) {
-      ctx.fillStyle = color || "#e9e4f5";
+      ctx.fillStyle = color || "#f0e8d8";
       ctx.font = (weight || "600") + " " + size + "px system-ui,Segoe UI,sans-serif";
       ctx.fillText(str, x, y);
       y += size + 14;
@@ -235,7 +235,7 @@
 
     text("WakeAgain", 28, "#e8d5a3", "700");
     y += 4;
-    text(en ? cert.doc_title_en : cert.doc_title_ko, 32, "#f5f3ff", "700");
+    text(en ? cert.doc_title_en : cert.doc_title_ko, 32, "#f5f0e6", "700");
     wrap(en ? cert.lead_en : cert.lead_ko, 16, "#a8a0c0", 24);
     y += 4;
     wrap(
@@ -257,7 +257,7 @@
     ctx.font = "600 15px system-ui,Segoe UI,sans-serif";
     var sw = ctx.measureText(st).width + 28;
     ctx.fillStyle =
-      cert.kind === "complete" ? "rgba(52,211,153,0.2)" : "rgba(167,139,250,0.22)";
+      cert.kind === "complete" ? "rgba(52,211,153,0.2)" : "rgba(212,160,23,0.22)";
     roundRect(ctx, x, y - 16, sw, 32, 16);
     ctx.fill();
     ctx.fillStyle = cert.kind === "complete" ? "#a7f3d0" : "#f0e0b0";
@@ -284,7 +284,7 @@
       ctx.fillStyle = "#8b83a8";
       ctx.font = "400 14px system-ui,Segoe UI,sans-serif";
       ctx.fillText(r[0], x, y + 6);
-      ctx.fillStyle = "#f5f3ff";
+      ctx.fillStyle = "#f5f0e6";
       ctx.font = "600 16px system-ui,Segoe UI,sans-serif";
       var val = String(r[1] || "—");
       if (ctx.measureText(val).width > maxW - 140) {
