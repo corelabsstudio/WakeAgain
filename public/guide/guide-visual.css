@@ -40,16 +40,20 @@
   max-width: 36rem;
 }
 
-/* Visual step strip */
+/* Visual step strip — circle numbers only (no ol “1.” markers) */
 .gv-flow {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.65rem;
   margin: 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
   counter-reset: gv;
 }
 .gv-flow-item {
   position: relative;
+  display: list-item; /* keep counter; kill marker */
+  list-style: none;
   margin: 0;
   padding: 1rem 0.85rem 0.95rem;
   border-radius: 12px;
@@ -57,10 +61,14 @@
   background: #262018;
   text-align: center;
 }
+.gv-flow-item::marker {
+  content: "";
+  font-size: 0;
+}
 .gv-flow-item::before {
   counter-increment: gv;
   content: counter(gv);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 1.65rem;
@@ -72,6 +80,9 @@
   color: #f0e0b0;
   font-size: 0.8rem;
   font-weight: 800;
+  /* never show as list bullet outside the circle */
+  float: none;
+  position: static;
 }
 .gv-flow-item strong {
   display: block;
