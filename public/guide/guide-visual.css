@@ -232,14 +232,22 @@
   object-position: top center;
   background: #14110e;
 }
-/* Square illustrations: show full icon, not cropped screenshot */
+/* Compact icon panel — not a full-height square slab */
 .gv-hub-thumb--illust {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: auto;
+  height: clamp(7.5rem, 18vw, 9.5rem);
+  width: 100%;
   object-fit: contain;
   object-position: center;
   background: #1a1814;
-  padding: 0.65rem;
+  padding: 0.85rem 1rem;
   box-sizing: border-box;
+}
+.gv-hub a {
+  /* tighten card overall height */
+}
+.gv-hub-body {
+  padding: 0.75rem 0.95rem 0.9rem;
 }
 .gv-hub-body {
   padding: 0.85rem 1rem 1rem;
