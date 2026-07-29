@@ -44,7 +44,7 @@
   --max: min(92vw, 1440px);
   --section-pad-x: clamp(1.25rem, 3.5vw, 3rem);
   --section-pad-y: clamp(3rem, 5vw, 5.5rem);
-  --hero-min-h: min(92vh, 920px);
+  --hero-min-h: min(86vh, 820px);
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
@@ -2506,7 +2506,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 @media (min-width: 1280px) {
   :root {
     --max: min(94vw, 1520px);
-    --hero-min-h: min(94vh, 980px);
+    --hero-min-h: min(86vh, 860px);
   }
   .live-card { width: min(100%, 460px); }
   .glass-card { padding: 1.5rem 1.55rem; }
@@ -2518,7 +2518,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 @media (min-width: 1600px) {
   :root {
     --max: min(90vw, 1680px);
-    --hero-min-h: min(96vh, 1040px);
+    --hero-min-h: min(88vh, 900px);
     --section-pad-y: clamp(4rem, 5.5vw, 6.5rem);
   }
   .hero-glow {
@@ -2730,7 +2730,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 /* ═══════════════════════════════════════════════════
    Product shots — real app UI on homepage (anti text-wall)
    ═══════════════════════════════════════════════════ */
-.product-shots { padding-top: clamp(2rem, 4vw, 3rem); }
+.product-shots { padding-top: clamp(2.5rem, 5vw, 3.5rem); margin-top: -1px; background: var(--bg); }
 .shot-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2927,6 +2927,11 @@ p, li, label, .lede, .center-lead, .manifesto p {
 /* ═══════════════════════════════════════════════════
    Photographic atmosphere — sunlit archive (again / reopen)
    ═══════════════════════════════════════════════════ */
+/* Contain photo + soft bottom blend into page bg (no hard crop line) */
+.hero {
+  overflow: hidden;
+  isolation: isolate;
+}
 .hero-photo {
   position: absolute;
   inset: 0;
@@ -2938,8 +2943,9 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 58% 42%;
-  transform: scale(1.03);
+  /* favor boxes + window; desk fades into bottom scrim */
+  object-position: 55% 32%;
+  transform: scale(1.02);
   filter: saturate(1.04) contrast(1.02) brightness(1.04);
 }
 .hero-photo-scrim {
@@ -2947,21 +2953,49 @@ p, li, label, .lede, .center-lead, .manifesto p {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* bright photo: darken left for copy, keep right window light visible */
+  /* left: copy legibility · bottom: dissolve fully into --bg */
   background:
-    linear-gradient(100deg, rgba(22, 18, 14, 0.82) 0%, rgba(22, 18, 14, 0.55) 38%, rgba(22, 18, 14, 0.22) 68%, rgba(22, 18, 14, 0.12) 100%),
-    linear-gradient(180deg, rgba(22, 18, 14, 0.28) 0%, transparent 30%, transparent 72%, rgba(22, 18, 14, 0.4) 100%);
+    linear-gradient(100deg, rgba(22, 18, 14, 0.84) 0%, rgba(22, 18, 14, 0.52) 40%, rgba(22, 18, 14, 0.2) 70%, rgba(22, 18, 14, 0.1) 100%),
+    linear-gradient(
+      180deg,
+      rgba(22, 18, 14, 0.32) 0%,
+      transparent 22%,
+      transparent 48%,
+      rgba(26, 24, 20, 0.55) 72%,
+      rgba(26, 24, 20, 0.92) 88%,
+      var(--bg, #1a1814) 100%
+    );
+}
+/* Extra soft bottom veil so the next section never meets a knife-edge */
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(7rem, 22vh, 14rem);
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(26, 24, 20, 0.35) 35%,
+    var(--bg, #1a1814) 100%
+  );
 }
 .hero .hero-glow {
-  opacity: 0.18;
+  opacity: 0.14;
   mix-blend-mode: soft-light;
 }
 .hero .hero-ecg-bg {
-  opacity: 0.12;
+  opacity: 0.1;
   z-index: 0;
 }
 .hero .hero-grid {
+  position: relative;
   z-index: 2;
+  /* keep content clear of the fade zone */
+  padding-bottom: clamp(1.5rem, 4vh, 3rem);
 }
 
 .section--photo {
@@ -3056,10 +3090,13 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 
 @media (max-width: 900px) {
-  .hero-photo img { object-position: 55% 40%; }
+  .hero-photo img { object-position: 50% 28%; }
   .hero-photo-scrim {
     background:
-      linear-gradient(180deg, rgba(22, 18, 14, 0.72) 0%, rgba(22, 18, 14, 0.58) 48%, rgba(22, 18, 14, 0.7) 100%);
+      linear-gradient(180deg, rgba(22, 18, 14, 0.7) 0%, rgba(22, 18, 14, 0.45) 40%, rgba(26, 24, 20, 0.88) 82%, var(--bg, #1a1814) 100%);
+  }
+  .hero::after {
+    height: clamp(5rem, 18vh, 10rem);
   }
   .final-cta-grid { grid-template-columns: 1fr; }
   .final-cta-still { max-width: 520px; margin: 0 auto; }

@@ -891,17 +891,33 @@ body.theme-yard .card {
 /* Photo layers under yard tokens */
 body.theme-yard .hero-photo-scrim {
   background:
-    linear-gradient(100deg, rgba(22, 18, 14, 0.8) 0%, rgba(22, 18, 14, 0.52) 40%, rgba(22, 18, 14, 0.2) 70%, rgba(22, 18, 14, 0.1) 100%),
-    linear-gradient(180deg, rgba(22, 18, 14, 0.25) 0%, transparent 32%, transparent 74%, rgba(22, 18, 14, 0.38) 100%) !important;
+    linear-gradient(100deg, rgba(22, 18, 14, 0.82) 0%, rgba(22, 18, 14, 0.5) 40%, rgba(22, 18, 14, 0.18) 70%, rgba(22, 18, 14, 0.08) 100%),
+    linear-gradient(
+      180deg,
+      rgba(22, 18, 14, 0.28) 0%,
+      transparent 22%,
+      transparent 48%,
+      rgba(26, 24, 20, 0.55) 72%,
+      rgba(26, 24, 20, 0.92) 88%,
+      var(--bg, #1a1814) 100%
+    ) !important;
+}
+body.theme-yard .hero::after {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(26, 24, 20, 0.35) 35%,
+    var(--bg, #1a1814) 100%
+  ) !important;
 }
 body.theme-yard .hero-glow {
-  opacity: 0.28 !important;
+  opacity: 0.14 !important;
   background:
-    radial-gradient(ellipse 50% 55% at 20% 40%, rgba(194, 65, 12, 0.18), transparent 70%),
-    radial-gradient(ellipse 45% 50% at 80% 20%, rgba(212, 160, 23, 0.1), transparent 70%) !important;
+    radial-gradient(ellipse 50% 55% at 20% 40%, rgba(194, 65, 12, 0.12), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 80% 20%, rgba(212, 160, 23, 0.08), transparent 70%) !important;
 }
 body.theme-yard .hero-ecg-bg {
-  opacity: 0.18 !important;
+  opacity: 0.1 !important;
 }
 body.theme-yard .section--photo .section-photo-scrim {
   background:
