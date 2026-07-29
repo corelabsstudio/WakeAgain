@@ -222,7 +222,7 @@
 .gv-hub a {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0;
   padding: 0;
   overflow: hidden;
   border-radius: 12px;
@@ -245,20 +245,27 @@
   object-position: top center;
   background: #14110e;
 }
-/* Compact icon panel — not a full-height square slab */
+/* Fill the card cell — crop outer PNG margin so icon looks larger */
 .gv-hub-thumb--illust {
-  aspect-ratio: auto;
-  height: clamp(7.5rem, 18vw, 9.5rem);
+  aspect-ratio: 16 / 11;
+  height: auto;
   width: 100%;
-  object-fit: contain;
+  max-height: none;
+  object-fit: cover;
   object-position: center;
   background: #1a1814;
-  padding: 0.85rem 1rem;
+  padding: 0;
   box-sizing: border-box;
+  transform: scale(1.08);
+  transform-origin: center center;
 }
 
 .gv-hub-body {
-  padding: 0.85rem 1rem 1rem;
+  padding: 0.8rem 1rem 0.95rem;
+  border-top: 1px solid rgba(90, 72, 52, 0.45);
+  background: #221c16;
+  position: relative;
+  z-index: 1;
 }
 .gv-hub-body strong {
   display: block;
