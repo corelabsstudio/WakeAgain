@@ -758,21 +758,28 @@ body.is-native-app .app-top-hide-native {
 .remember-login,
 .check-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.55rem;
   margin: 0.85rem 0 0.35rem;
   font-size: 0.9rem;
+  line-height: 1.35;
   color: var(--muted, #a1a1aa);
   cursor: pointer;
   user-select: none;
 }
 .remember-login input,
 .check-row input {
-  margin-top: 0.15rem;
+  margin: 0;
   width: 1.05rem;
   height: 1.05rem;
-  accent-color: var(--purple, #a67c00);
+  accent-color: var(--purple, #d4a017);
   flex-shrink: 0;
+  align-self: center;
+}
+.remember-login span,
+.check-row > span {
+  display: block;
+  line-height: 1.35;
 }
 /* SNS login */
 .social-login {
