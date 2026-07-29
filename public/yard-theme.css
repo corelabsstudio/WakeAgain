@@ -702,3 +702,78 @@ body.theme-yard .seller-identity-card {
   border: 1px solid rgba(90, 72, 52, 0.75) !important;
   background: #262018 !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   Landing catch-all: remaining hardcoded violet
+   ═══════════════════════════════════════════════════ */
+body.theme-yard .scroll-progress span {
+  background: #c2410c !important;
+}
+body.theme-yard .nav-pill .btn-primary,
+body.theme-yard .btn-primary {
+  background: #c2410c !important;
+  border-color: #9a3412 !important;
+  box-shadow: none !important;
+}
+body.theme-yard .lang-btn.is-on,
+body.theme-yard .lang-btn[aria-pressed="true"] {
+  background: rgba(212, 160, 23, 0.18) !important;
+  color: #e8b86d !important;
+  border-color: rgba(212, 160, 23, 0.35) !important;
+}
+body.theme-yard .cur-select {
+  border-color: rgba(245, 236, 220, 0.18) !important;
+  background: rgba(26, 24, 20, 0.9) !important;
+  color: var(--text) !important;
+}
+body.theme-yard .home-event-banner-link,
+body.theme-yard .metric-chip,
+body.theme-yard .testi-card,
+body.theme-yard .service-card,
+body.theme-yard .buyer-merit,
+body.theme-yard .bento .glass-card,
+body.theme-yard .problem-intro .glass-card,
+body.theme-yard .problem-grid .glass-card {
+  border-color: rgba(90, 72, 52, 0.7) !important;
+  background: #262018 !important;
+  box-shadow: none !important;
+}
+body.theme-yard .icon-orb,
+body.theme-yard .icon-violet,
+body.theme-yard .icon-violet-solid {
+  background: rgba(212, 160, 23, 0.12) !important;
+  color: #e8b86d !important;
+  box-shadow: none !important;
+}
+body.theme-yard .mobile-cta {
+  background: rgba(20, 18, 14, 0.96) !important;
+  border-top: 1px solid rgba(90, 72, 52, 0.55) !important;
+}
+body.theme-yard .mobile-cta .btn-primary {
+  background: #c2410c !important;
+}
+body.theme-yard .footer-cols a:hover,
+body.theme-yard .footer-links a:hover,
+body.theme-yard .footer-nav a:hover,
+body.theme-yard .footer-copy a:hover {
+  color: #e8b86d !important;
+}
+body.theme-yard .site-footer {
+  background: #14120f !important;
+  border-top-color: rgba(90, 72, 52, 0.55) !important;
+}
+body.theme-yard .footer-broker-notice {
+  border: 1px solid rgba(90, 72, 52, 0.75) !important;
+  background: #262018 !important;
+  border-radius: 8px !important;
+}
+body.theme-yard .footer-broker-notice a,
+body.theme-yard .footer-broker-notice .text-link {
+  color: #e8b86d !important;
+}
+body.theme-yard .wa-buyer-badge,
+body.theme-yard .buyer-rank-badge {
+  background: rgba(212, 160, 23, 0.12) !important;
+  border-color: rgba(212, 160, 23, 0.35) !important;
+  color: #f0e0b0 !important;
+}
