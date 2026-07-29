@@ -3117,12 +3117,8 @@ p, li, label, .lede, .center-lead, .manifesto p {
    Short home hub — destinations, not scroll essays
    ═══════════════════════════════════════════════════ */
 .home-hub {
-  padding-top: clamp(2rem, 4vw, 3rem);
-  padding-bottom: clamp(1.5rem, 3vw, 2.25rem);
-}
-.home-hub-title {
-  margin-bottom: 1.25rem;
-  font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+  padding-top: clamp(1.5rem, 3vw, 2.25rem);
+  padding-bottom: clamp(1.25rem, 2.5vw, 2rem);
 }
 .home-hub-grid {
   display: grid;
