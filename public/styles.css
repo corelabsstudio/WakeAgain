@@ -2142,17 +2142,25 @@ p, li, label, .lede, .center-lead, .manifesto p {
   line-height: 1.45;
   color: var(--muted);
   word-break: keep-all;
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  column-gap: 0.35rem;
+  align-items: start;
 }
 .footer-biz-line span {
-  display: inline-block;
-  min-width: 5.5rem;
-  margin-right: 0.35rem;
+  display: block;
+  min-width: 0;
+  margin-right: 0;
   color: var(--muted-2);
   font-weight: 600;
 }
 .footer-biz-line strong {
   color: var(--text);
   font-weight: 650;
+  min-width: 0;
+}
+.footer-biz-line.footer-biz-addr strong {
+  line-height: 1.45;
 }
 .footer-biz-links {
   margin: 0.45rem 0 0;
