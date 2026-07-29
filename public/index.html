@@ -43,8 +43,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20260729-productB" />
-  <link rel="stylesheet" href="/ux9.css?v=20260729-productB" />
+  <link rel="stylesheet" href="/styles.css?v=20260729-polish3" />
+  <link rel="stylesheet" href="/ux9.css?v=20260729-polish3" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -64,7 +64,7 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/yard-theme.css?v=20260729-productB" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-polish3" />
 </head>
 <body class="theme-yard">
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
@@ -99,9 +99,34 @@
           <span class="label-full" data-i18n="nav.list">내 프로젝트 올리기</span>
           <span class="label-short" data-i18n="nav.list_short">올리기</span>
         </a>
+        <button type="button" class="nav-menu-btn" id="navMenuBtn" aria-expanded="false" aria-controls="navDrawer" aria-label="메뉴 열기">
+          <span class="nav-menu-icon" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
   </header>
+
+  <div class="nav-drawer" id="navDrawer" hidden>
+    <button type="button" class="nav-drawer-backdrop" id="navDrawerBackdrop" aria-label="메뉴 닫기"></button>
+    <div class="nav-drawer-panel" role="dialog" aria-modal="true" aria-label="메뉴">
+      <div class="nav-drawer-head">
+        <strong>메뉴</strong>
+        <button type="button" class="nav-drawer-close" id="navDrawerClose" aria-label="닫기">×</button>
+      </div>
+      <a href="/app/#list" data-i18n="nav.market">마켓</a>
+      <a href="/guide/" data-i18n="nav.guide">이용안내</a>
+      <a href="/guide/how-to-sell.html">판매 가이드</a>
+      <a href="/guide/how-to-buy.html">구매 가이드</a>
+      <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
+      <a href="/blog/">블로그</a>
+      <a href="/app/#login" id="navDrawerAuth" data-i18n="nav.login">로그인</a>
+      <a href="/get-app.html" data-i18n="nav.app">앱 설치</a>
+      <div class="nav-drawer-cta">
+        <a class="btn btn-primary" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
+        <a class="btn btn-ghost" href="/app/#new" data-i18n="nav.list">프로젝트 올리기</a>
+      </div>
+    </div>
+  </div>
 
   <main id="main">
     <!-- 1. HERO -->
@@ -138,10 +163,10 @@
             </a>
           </div>
           <h1 class="hero-title hero-title--sparkle">
-            <span class="hero-title-line" data-i18n="hero.title1">멈춰버린 프로젝트에</span><br />
-            <span class="grad" data-i18n="hero.title2">숨을 불어넣다.</span>
+            <span class="hero-title-line" data-i18n="hero.title1">잠든 프로젝트를</span><br />
+            <span class="grad" data-i18n="hero.title2">다시 사고파세요</span>
           </h1>
-          <p class="hero-sub" data-i18n="hero.sub" data-i18n-html>데모 있는 중단 프로젝트를 사고파는 장터.<br />입찰 → 결제 → 이전, 사이트 안에서.</p>
+          <p class="hero-sub" data-i18n="hero.sub" data-i18n-html>데모·가격 공개. 입찰 → 결제 → 이전.<br />등록 무료 · 사이트 안에서 끝냅니다.</p>
           <div class="hero-cta">
             <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
             <a class="btn btn-white btn-lg" href="/app/#new" data-i18n="nav.list">프로젝트 올리기</a>
@@ -335,16 +360,16 @@
   </footer>
 
   <div class="mobile-cta" aria-label="빠른 행동">
-    <a class="btn btn-ghost" href="/get-app.html" data-i18n="nav.app">앱 설치</a>
-    <a class="btn btn-primary" href="/app/#new" data-i18n="nav.list">내 프로젝트 올리기</a>
+    <a class="btn btn-ghost" href="/app/#list" data-i18n="buyers.cta_market">마켓</a>
+    <a class="btn btn-primary" href="/app/#new" data-i18n="nav.list_short">올리기</a>
   </div>
 
   <script src="/js/ui-sound.js?v=20260722a"></script>
   <script src="/js/i18n-messages.js?v=20260725e"></script>
-  <script src="/js/i18n.js?v=20260729-hub"></script>
+  <script src="/js/i18n.js?v=20260729-herocopy"></script>
   <script src="/js/pwa-install.js?v=20260725e"></script>
   <script src="/js/api.js"></script>
-  <script src="/js/listings.js?v=20260728-no-fake"></script>
+  <script src="/js/listings.js?v=20260729-lotcard"></script>
   <script src="/js/hero-ecg.js?v=20260729-multitrace"></script>
   <script src="/js/hero-stats.js?v=20260729-productB"></script>
   <script src="/js/motion.js"></script>
@@ -378,6 +403,50 @@
           link.href = "/app/#list";
         }
       } catch (e) {}
+
+      /* Mobile nav drawer */
+      (function navDrawer() {
+        var btn = document.getElementById("navMenuBtn");
+        var drawer = document.getElementById("navDrawer");
+        var backdrop = document.getElementById("navDrawerBackdrop");
+        var closeBtn = document.getElementById("navDrawerClose");
+        if (!btn || !drawer) return;
+        function open() {
+          drawer.hidden = false;
+          drawer.classList.add("is-open");
+          btn.setAttribute("aria-expanded", "true");
+          document.body.classList.add("nav-drawer-open");
+        }
+        function close() {
+          drawer.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
+          document.body.classList.remove("nav-drawer-open");
+          window.setTimeout(function () {
+            if (!drawer.classList.contains("is-open")) drawer.hidden = true;
+          }, 180);
+        }
+        btn.addEventListener("click", function () {
+          if (drawer.classList.contains("is-open")) close();
+          else open();
+        });
+        if (backdrop) backdrop.addEventListener("click", close);
+        if (closeBtn) closeBtn.addEventListener("click", close);
+        drawer.querySelectorAll("a").forEach(function (a) {
+          a.addEventListener("click", close);
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && drawer.classList.contains("is-open")) close();
+        });
+        try {
+          var api = window.WakeAgainAPI;
+          var dAuth = document.getElementById("navDrawerAuth");
+          if (api && dAuth && api.isLoggedIn()) {
+            var u = api.getUser();
+            dAuth.textContent = (u && (u.display_name || u.email)) || "내 계정";
+            dAuth.href = "/app/#list";
+          }
+        } catch (e) {}
+      })();
 
       /* Viral event banner/button — only while event is open */
       (function loadHomeEvent() {

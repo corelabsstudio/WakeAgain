@@ -502,11 +502,24 @@ body.theme-yard .chip {
 
 /* Listing / showcase cards if injected */
 body.theme-yard .listing-card,
+body.theme-yard .lot-card,
 body.theme-yard .showcase-card,
 body.theme-yard .testi-card,
 body.theme-yard .home-showcase-grid .glass-card {
   background: #262018 !important;
-  border-color: rgba(90, 72, 52, 0.7) !important;
+  border-color: rgba(90, 72, 52, 0.75) !important;
+}
+body.theme-yard .lot-card-media {
+  background:
+    radial-gradient(ellipse 70% 80% at 30% 40%, rgba(212, 160, 23, 0.12), transparent 65%),
+    linear-gradient(160deg, #2c241c 0%, #1a1612 100%) !important;
+}
+body.theme-yard .mobile-cta {
+  background: rgba(26, 24, 20, 0.96) !important;
+  border-top-color: rgba(90, 72, 52, 0.65) !important;
+}
+body.theme-yard .nav-drawer-panel {
+  background: #1f1a14 !important;
 }
 
 /* Kill leftover purple radial washes on sections */

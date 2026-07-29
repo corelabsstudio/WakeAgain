@@ -220,14 +220,20 @@
         .toLowerCase()
     );
     return (
-      `<article class="listing-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}" data-search="${searchBlob}">` +
+      `<article class="listing-card lot-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}" data-search="${searchBlob}">` +
+      `<div class="lot-card-media">` +
       `<div class="listing-icon ${tone}">${ICONS[tone] || ICONS.violet}</div>` +
+      `<span class="badge ${b.cls}">${b.text}</span>` +
+      `</div>` +
       `<div class="listing-body">` +
-      `<div class="listing-title-row"><h3>${title}</h3><span class="badge ${b.cls}">${b.text}</span></div>` +
-      `<p>${line}</p>${keywordsHtml(p)}${typeBit}${bidNote}` +
-      `<div class="listing-foot"><div><span class="label">${price.label}</span><strong data-price data-money-krw="${escapeAttr(String(p.price_current != null ? p.price_current : p.price_start || 0))}">${price.value}</strong></div>` +
-      `<a class="btn btn-primary btn-sm" href="${href}">${cta}</a></div>` +
-      `</div></article>`
+      `<h3 class="lot-card-title">${title}</h3>` +
+      `<p class="lot-card-line">${line}</p>` +
+      `<div class="lot-card-meta">${typeBit}${keywordsHtml(p)}${bidNote}</div>` +
+      `<div class="listing-foot">` +
+      `<div class="lot-card-price"><span class="label">${price.label}</span>` +
+      `<strong data-price data-money-krw="${escapeAttr(String(p.price_current != null ? p.price_current : p.price_start || 0))}">${price.value}</strong></div>` +
+      `<a class="btn btn-primary btn-sm lot-card-cta" href="${href}">${cta}</a>` +
+      `</div></div></article>`
     );
   }
 
