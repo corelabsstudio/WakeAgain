@@ -15,11 +15,11 @@ body.theme-yard {
   --muted: #b8ae9c;
   --muted-2: #8f8576;
   /* remapped: purple tokens → auction amber / lot red (기존 클래스 호환) */
-  --purple: #d4a017;
-  --purple-2: #c4920f;
-  --purple-3: #a67c00;
-  --purple-soft: rgba(212, 160, 23, 0.12);
-  --purple-glow: rgba(180, 83, 9, 0.25);
+  --accent: #d4a017;
+  --accent-2: #c4920f;
+  --accent-3: #a67c00;
+  --accent-soft: rgba(212, 160, 23, 0.12);
+  --accent-glow: rgba(180, 83, 9, 0.25);
   --pink: #e8b86d;
   --blue: #8ba4b4;
   --green: #6b9b6e;
@@ -809,11 +809,11 @@ body.theme-yard {
   --text: #f5f0e6;
   --muted: #b8ae9c;
   --muted-2: #8f8576;
-  --purple: #d4a017;
-  --purple-2: #c4920f;
-  --purple-3: #a67c00;
-  --purple-soft: rgba(212, 160, 23, 0.12);
-  --purple-glow: rgba(180, 83, 9, 0.25);
+  --accent: #d4a017;
+  --accent-2: #c4920f;
+  --accent-3: #a67c00;
+  --accent-soft: rgba(212, 160, 23, 0.12);
+  --accent-glow: rgba(180, 83, 9, 0.25);
   --pink: #e8b86d;
 }
 
@@ -948,3 +948,12 @@ body.theme-yard .final-cta-still {
   background: #1a1612 !important;
 }
 
+/* legacy purple aliases → yard accent (compat) */
+:root, body, body.theme-yard {
+  --purple: var(--accent);
+  --purple-2: var(--accent-2, var(--accent));
+  --purple-3: var(--accent-3, var(--accent));
+  --purple-soft: var(--accent-soft);
+  --purple-glow: var(--accent-glow, var(--accent-soft));
+  --purple-bright: var(--accent-bright, var(--accent));
+}

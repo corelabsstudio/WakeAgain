@@ -192,7 +192,7 @@
 .app-form textarea:focus,
 .app-form select:focus {
   outline: none;
-  border-color: var(--purple);
+  border-color: var(--accent);
   background: rgba(212, 160, 23, 0.05);
   box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.2);
 }
@@ -451,7 +451,7 @@
   color: var(--muted-2);
 }
 .compact-footer a:hover {
-  color: var(--purple);
+  color: var(--accent);
 }
 
 .success-panel {

@@ -14,11 +14,11 @@
   /* Muted slightly lighter for dark-mode secondary text contrast (≥ ~3:1 feel) */
   --muted: #b8ae9c;
   --muted-2: #8f8576;
-  --purple: #d4a017;
-  --purple-2: #c4920f;
-  --purple-3: #a67c00;
-  --purple-soft: rgba(212, 160, 23, 0.14);
-  --purple-glow: rgba(196, 146, 15, 0.45);
+  --accent: #d4a017;
+  --accent-2: #c4920f;
+  --accent-3: #a67c00;
+  --accent-soft: rgba(212, 160, 23, 0.14);
+  --accent-glow: rgba(196, 146, 15, 0.45);
   --pink: #e8b86d;
   --blue: #60a5fa;
   --green: #34d399;
@@ -110,7 +110,7 @@ img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 strong { font-weight: 600; }
-em { font-style: normal; color: var(--purple); }
+em { font-style: normal; color: var(--accent); }
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;
@@ -123,7 +123,7 @@ h1, h2, h3, h4 {
   position: absolute;
   left: -999px;
   top: 0;
-  background: var(--purple);
+  background: var(--accent);
   color: #fff;
   padding: 0.5rem 1rem;
   z-index: 100;
@@ -143,7 +143,7 @@ h1, h2, h3, h4 {
   width: 100%;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--purple-3), var(--pink));
+  background: linear-gradient(90deg, var(--accent-3), var(--pink));
 }
 
 /* hidden must win over .btn { display: inline-flex } etc. */
@@ -452,8 +452,8 @@ header.nav-pill-wrap,
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--purple);
-  box-shadow: 0 0 10px var(--purple);
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
 }
 .hero-title {
   position: relative;
@@ -1067,7 +1067,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .icon-red { background: rgba(248, 113, 113, 0.15); color: var(--red); }
 .icon-amber { background: rgba(251, 191, 36, 0.14); color: var(--amber); }
 .icon-blue { background: rgba(96, 165, 250, 0.14); color: var(--blue); }
-.icon-violet { background: var(--purple-soft); color: #e8d5a3; }
+.icon-violet { background: var(--accent-soft); color: #e8d5a3; }
 .icon-violet-solid { background: rgba(212, 160, 23, 0.25); color: #f0e0b0; }
 
 .problem-cards {
@@ -1547,7 +1547,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--purple-soft);
+  background: var(--accent-soft);
   color: #e8d5a3;
   display: grid;
   place-items: center;
@@ -1731,8 +1731,8 @@ p, li, label, .lede, .center-lead, .manifesto p {
   border-bottom: 2px solid transparent;
 }
 .tab.is-on {
-  color: var(--purple);
-  border-bottom-color: var(--purple);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 .tab:hover { color: var(--text); }
 .listing-grid {
@@ -1935,7 +1935,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   color: var(--muted);
   font-size: var(--text-sm);
 }
-.socials a:hover { border-color: var(--purple); color: var(--text); }
+.socials a:hover { border-color: var(--accent); color: var(--text); }
 .footer-cols {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1961,7 +1961,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   margin: 0.35rem 0;
 }
 .footer-copy a { color: var(--muted); }
-.footer-copy a:hover { color: var(--purple); }
+.footer-copy a:hover { color: var(--accent); }
 /* 전자상거래법 통신판매중개자 고지 (사이트 하단 필수) */
 .footer-broker-notice {
   margin: 0.65rem auto 0;
@@ -2198,9 +2198,9 @@ p, li, label, .lede, .center-lead, .manifesto p {
   font-size: var(--text-sm);
   font-weight: 600;
 }
-.footer-contact:hover { color: var(--purple); }
+.footer-contact:hover { color: var(--accent); }
 .corelabs-mark {
-  background: linear-gradient(120deg, var(--purple), var(--pink));
+  background: linear-gradient(120deg, var(--accent), var(--pink));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -2386,7 +2386,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   padding: 7rem 1.25rem 4rem;
 }
 .form-page .eyebrow {
-  color: var(--purple);
+  color: var(--accent);
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -2420,7 +2420,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   background: linear-gradient(135deg, rgba(212, 160, 23, 0.12), rgba(12, 12, 16, 0.9));
   box-shadow: 0 8px 28px rgba(212, 160, 23, 0.12);
 }
-.path-card.path-primary:hover { border-color: var(--purple); }
+.path-card.path-primary:hover { border-color: var(--accent); }
 .form-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -2453,7 +2453,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .form-card textarea:focus,
 .form-card select:focus {
   outline: none;
-  border-color: var(--purple);
+  border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18);
 }
 /* Native checkboxes/radios — clickable, not fake empty “select” boxes */
@@ -2473,7 +2473,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
   border-radius: 0.25rem;
   background: transparent !important;
   box-shadow: none !important;
-  accent-color: var(--purple, #d4a017);
+  accent-color: var(--accent, #d4a017);
   cursor: pointer;
   flex-shrink: 0;
   vertical-align: top;
@@ -2600,14 +2600,14 @@ p, li, label, .lede, .center-lead, .manifesto p {
   color: var(--muted);
 }
 .demo-help-steps li { margin: 0.35rem 0; }
-.demo-help-steps strong { color: var(--purple); margin-right: 0.25rem; }
+.demo-help-steps strong { color: var(--accent); margin-right: 0.25rem; }
 .demo-help-label {
   margin: 0.65rem 0 0.25rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--purple);
+  color: var(--accent);
 }
 .demo-help-example {
   margin: 0;
@@ -2651,7 +2651,7 @@ p, li, label, .lede, .center-lead, .manifesto p {
 .listing-bid-note {
   display: block;
   font-size: var(--text-sm);
-  color: var(--purple);
+  color: var(--accent);
   font-weight: 600;
   margin: 0.35rem 0 0.15rem;
 }
@@ -2690,13 +2690,13 @@ p, li, label, .lede, .center-lead, .manifesto p {
   color: var(--muted);
   line-height: 1.5;
 }
-.price-guide strong { color: var(--purple); }
+.price-guide strong { color: var(--accent); }
 .status-criteria {
   margin: 0 0 1rem;
   padding: 0.8rem 0.95rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(212, 160, 23, 0.25);
-  background: var(--purple-soft);
+  background: var(--accent-soft);
   font-size: var(--text-sm);
   line-height: 1.5;
 }
@@ -2708,12 +2708,12 @@ p, li, label, .lede, .center-lead, .manifesto p {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--purple);
+  color: var(--accent);
   margin: 0.5rem 0 0.2rem;
 }
 .fine { font-size: var(--text-sm); }
 .muted { color: var(--muted); }
-.text-link { color: var(--purple); font-weight: 600; }
+.text-link { color: var(--accent); font-weight: 600; }
 
 /* ——— Large screens: fill the monitor more ——— */
 @media (min-width: 1280px) {
@@ -3466,4 +3466,14 @@ p, li, label, .lede, .center-lead, .manifesto p {
     text-align: center;
   }
   .home-exit-cta { justify-content: center; }
+}
+
+/* legacy purple aliases → yard accent (compat) */
+:root, body, body.theme-yard {
+  --purple: var(--accent);
+  --purple-2: var(--accent-2, var(--accent));
+  --purple-3: var(--accent-3, var(--accent));
+  --purple-soft: var(--accent-soft);
+  --purple-glow: var(--accent-glow, var(--accent-soft));
+  --purple-bright: var(--accent-bright, var(--accent));
 }

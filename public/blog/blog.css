@@ -30,7 +30,7 @@
   color: var(--text);
   font-weight: 700;
 }
-.wa-blog-brand .brand-again { color: var(--purple, #d4a017); }
+.wa-blog-brand .brand-again { color: var(--accent, #d4a017); }
 .wa-blog-links {
   display: flex;
   flex-wrap: wrap;
@@ -54,7 +54,7 @@
   padding: 2.25rem 1.25rem 4.5rem;
 }
 .wa-kicker {
-  color: var(--purple, #d4a017);
+  color: var(--accent, #d4a017);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -99,7 +99,7 @@
 .wa-prose blockquote {
   margin: 1.25rem 0;
   padding: 0.9rem 1rem;
-  border-left: 3px solid var(--purple, #d4a017);
+  border-left: 3px solid var(--accent, #d4a017);
   background: rgba(194, 65, 12, 0.12);
   border-radius: 0 12px 12px 0;
   color: #f0e0b0;
