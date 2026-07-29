@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title data-i18n="diag.doc_title">내 프로젝트는 얼마일까? (무료 진단) — WakeAgain</title>
   <meta name="description" content="내 프로젝트는 얼마일까? 무료 진단. 설문 + 선택 제품 설명 반영. 시작가 힌트와 올리기 전 체크리스트. 가입 없이 바로." />
-  <meta name="theme-color" content="#050508" />
+  <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-sitewide" />
   <link rel="stylesheet" href="/ux9.css" />
   <link rel="stylesheet" href="/legal/legal.css" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -36,18 +37,18 @@
       transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
     .diag-opts button:hover {
-      border-color: rgba(168, 85, 247, 0.45);
+      border-color: rgba(212, 160, 23, 0.45);
       transform: translateY(-1px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
     .diag-opts button:active { transform: none; }
     .diag-opts button.is-pick {
-      border-color: rgba(168, 85, 247, 0.6);
-      background: rgba(168, 85, 247, 0.14);
-      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.15), 0 8px 24px rgba(124, 58, 237, 0.15);
+      border-color: rgba(212, 160, 23, 0.6);
+      background: rgba(212, 160, 23, 0.14);
+      box-shadow: 0 0 0 1px rgba(212, 160, 23, 0.15), 0 8px 24px rgba(180, 120, 40, 0.15);
     }
     .diag-opts button:focus-visible {
-      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(168, 85, 247, 0.75);
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(212, 160, 23, 0.75);
     }
     .diag-progress > i { transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
     .diag-price-box {
@@ -106,8 +107,8 @@
     }
     .diag-price-box {
       margin: 1rem 0; padding: 1rem 1.1rem; border-radius: 14px;
-      border: 1px solid rgba(168, 85, 247, 0.35);
-      background: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(212, 160, 23, 0.35);
+      background: rgba(212, 160, 23, 0.08);
     }
     .diag-price-box strong { font-size: 1.25rem; color: var(--text); }
     .diag-list { margin: 0.5rem 0 0; padding-left: 1.15rem; line-height: 1.55; color: var(--muted); }
@@ -133,14 +134,14 @@
     }
     .diag-field textarea:focus {
       outline: none;
-      border-color: rgba(168, 85, 247, 0.55);
-      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+      border-color: rgba(212, 160, 23, 0.55);
+      box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18);
     }
     .diag-field textarea::placeholder { color: var(--muted); opacity: 0.85; }
     .diag-opt-note {
       margin: 0 0 1rem; padding: 0.75rem 0.9rem; border-radius: 12px;
-      border: 1px solid rgba(168, 85, 247, 0.28);
-      background: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(212, 160, 23, 0.28);
+      background: rgba(212, 160, 23, 0.08);
       font-size: 0.88rem; line-height: 1.5; color: var(--muted);
     }
     .diag-opt-note strong { color: var(--text); font-weight: 700; }
@@ -149,8 +150,8 @@
     }
     .diag-reflect-box {
       margin: 0 0 1rem; padding: 0.9rem 1rem; border-radius: 14px;
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      background: rgba(168, 85, 247, 0.07);
+      border: 1px solid rgba(212, 160, 23, 0.3);
+      background: rgba(212, 160, 23, 0.07);
     }
     .diag-reflect-box h3 {
       margin: 0 0 0.45rem; font-size: 0.82rem; font-weight: 700;
@@ -179,7 +180,7 @@
     }
   </style>
 </head>
-<body class="form-body">
+<body class="form-body theme-yard">
   <header class="nav-pill-wrap form-nav">
     <div class="nav-pill">
       <a class="brand" href="/">

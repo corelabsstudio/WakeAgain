@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>매물 상세 — WakeAgain</title>
   <meta name="description" content="WakeAgain 공개 경매. 현재가는 사이트 방문객 전원에게 실시간으로 공개됩니다." />
-  <meta name="theme-color" content="#050508" />
+  <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-sitewide" />
   <link rel="stylesheet" href="/ux9.css" />
   <link rel="stylesheet" href="/legal/legal.css" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -35,7 +36,7 @@
       background:
         radial-gradient(ellipse 100% 70% at 50% -10%, rgba(67, 56, 202, 0.28), transparent 55%),
         radial-gradient(ellipse 60% 50% at 100% 40%, rgba(14, 165, 233, 0.1), transparent 50%),
-        radial-gradient(ellipse 50% 40% at 0% 80%, rgba(139, 92, 246, 0.14), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 0% 80%, rgba(212, 160, 23, 0.14), transparent 50%),
         linear-gradient(180deg, #05060f 0%, #03040a 45%, #020308 100%);
     }
     .auction-page.auction-hot .auction-ambient { filter: saturate(1.08) brightness(1.03); }
@@ -85,7 +86,7 @@
       box-shadow:
         0 0 0 1px rgba(34, 211, 238, 0.08),
         0 24px 64px rgba(0, 0, 0, 0.55),
-        0 0 80px rgba(124, 58, 237, 0.22);
+        0 0 80px rgba(180, 120, 40, 0.22);
       overflow: hidden;
       animation: spotlight-breathe 5s ease-in-out infinite;
     }
@@ -93,17 +94,17 @@
       content: "";
       position: absolute;
       inset: -40% -20%;
-      background: conic-gradient(from 180deg at 50% 50%, transparent, rgba(34, 211, 238, 0.07), transparent 30%, rgba(168, 85, 247, 0.1), transparent 60%);
+      background: conic-gradient(from 180deg at 50% 50%, transparent, rgba(34, 211, 238, 0.07), transparent 30%, rgba(212, 160, 23, 0.1), transparent 60%);
       animation: spotlight-spin 18s linear infinite;
       pointer-events: none;
     }
     .spotlight-card > * { position: relative; z-index: 1; }
     .auction-page.auction-hot .spotlight-card {
-      border-color: rgba(192, 132, 252, 0.55);
+      border-color: rgba(232, 184, 109, 0.55);
       box-shadow:
         0 0 0 1px rgba(34, 211, 238, 0.12),
         0 28px 72px rgba(0, 0, 0, 0.55),
-        0 0 100px rgba(168, 85, 247, 0.28);
+        0 0 100px rgba(212, 160, 23, 0.28);
       animation-duration: 3.6s;
     }
     .auction-page.auction-hotter .spotlight-card {
@@ -119,8 +120,8 @@
         0 0 90px rgba(52, 211, 153, 0.18);
     }
     @keyframes spotlight-breathe {
-      0%, 100% { transform: translateY(0); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.08), 0 24px 64px rgba(0,0,0,0.55), 0 0 70px rgba(124, 58, 237, 0.18); }
-      50% { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.14), 0 28px 72px rgba(0,0,0,0.58), 0 0 100px rgba(168, 85, 247, 0.28); }
+      0%, 100% { transform: translateY(0); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.08), 0 24px 64px rgba(0,0,0,0.55), 0 0 70px rgba(180, 120, 40, 0.18); }
+      50% { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.14), 0 28px 72px rgba(0,0,0,0.58), 0 0 100px rgba(212, 160, 23, 0.28); }
     }
     @keyframes spotlight-spin {
       to { transform: rotate(360deg); }
@@ -166,8 +167,8 @@
       color: var(--text);
     }
     .price-rise-labels .is-now strong {
-      color: #e9d5ff;
-      text-shadow: 0 0 18px rgba(192, 132, 252, 0.45);
+      color: #f0e0b0;
+      text-shadow: 0 0 18px rgba(232, 184, 109, 0.45);
     }
     .price-rise-track {
       height: 8px;
@@ -181,8 +182,8 @@
       height: 100%;
       width: 8%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #22d3ee 0%, #a855f7 55%, #e879f9 100%);
-      box-shadow: 0 0 16px rgba(168, 85, 247, 0.55);
+      background: linear-gradient(90deg, #22d3ee 0%, #d4a017 55%, #e8b86d 100%);
+      box-shadow: 0 0 16px rgba(212, 160, 23, 0.55);
       transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .price-rise-arrow {
@@ -224,7 +225,7 @@
     .auction-page.auction-hotter .pulse-metric { animation-duration: 1.8s; }
     @keyframes metric-pulse {
       0%, 100% { box-shadow: inset 0 0 0 0 rgba(34, 211, 238, 0); transform: scale(1); }
-      50% { box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.25), 0 0 18px rgba(34, 211, 238, 0.08); transform: scale(1.015); }
+      50% { box-shadow: inset 0 0 0 1px rgba(212, 160, 23, 0.25), 0 0 18px rgba(34, 211, 238, 0.08); transform: scale(1.015); }
     }
     .sold-ribbon {
       display: none;
@@ -256,12 +257,12 @@
     }
     .price-panel {
       background: linear-gradient(160deg, rgba(30, 27, 55, 0.88), rgba(8, 10, 22, 0.96));
-      border: 1px solid rgba(192, 132, 252, 0.4);
+      border: 1px solid rgba(232, 184, 109, 0.4);
       border-radius: 20px;
       padding: 1.25rem 1.2rem 1.35rem;
       box-shadow:
         0 16px 48px rgba(0, 0, 0, 0.4),
-        0 0 50px rgba(168, 85, 247, 0.12);
+        0 0 50px rgba(212, 160, 23, 0.12);
       transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
       animation: panel-pulse 4s ease-in-out infinite;
     }
@@ -269,14 +270,14 @@
       border-color: rgba(232, 121, 249, 0.5);
       animation-duration: 3s;
       box-shadow:
-        0 16px 52px rgba(168, 85, 247, 0.26),
+        0 16px 52px rgba(212, 160, 23, 0.26),
         0 0 0 1px rgba(34, 211, 238, 0.1),
-        0 0 70px rgba(168, 85, 247, 0.16);
+        0 0 70px rgba(212, 160, 23, 0.16);
     }
     .auction-page.auction-hotter .price-panel {
       animation-duration: 2.2s;
       box-shadow:
-        0 18px 56px rgba(168, 85, 247, 0.3),
+        0 18px 56px rgba(212, 160, 23, 0.3),
         0 0 80px rgba(34, 211, 238, 0.12);
     }
     .auction-page.auction-sold .price-panel {
@@ -285,7 +286,7 @@
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25), 0 0 40px rgba(52, 211, 153, 0.12);
     }
     @keyframes panel-pulse {
-      0%, 100% { box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 40px rgba(168, 85, 247, 0.1); }
+      0%, 100% { box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 40px rgba(212, 160, 23, 0.1); }
       50% { box-shadow: 0 18px 56px rgba(0,0,0,0.45), 0 0 70px rgba(34, 211, 238, 0.1); }
     }
     .price-panel .live-row {
@@ -299,20 +300,20 @@
       margin: 0.15rem 0 0.35rem;
       font-variant-numeric: tabular-nums;
       color: #f5f3ff;
-      text-shadow: 0 0 22px rgba(192, 132, 252, 0.35);
+      text-shadow: 0 0 22px rgba(232, 184, 109, 0.35);
       transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.35s ease;
     }
     .auction-page.auction-hot .price-big {
       text-shadow: 0 0 28px rgba(34, 211, 238, 0.35), 0 0 40px rgba(232, 121, 249, 0.35);
     }
-    .price-big.flash { color: #f0abfc; transform: scale(1.04); text-shadow: 0 0 28px rgba(232, 121, 249, 0.7); }
+    .price-big.flash { color: #e8b86d; transform: scale(1.04); text-shadow: 0 0 28px rgba(232, 121, 249, 0.7); }
     .price-meta { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0; }
     .bid-form label { display: block; font-weight: 600; font-size: 0.88rem; margin: 0.85rem 0 0.35rem; }
     .bid-form input {
       width: 100%; border-radius: 12px; border: 1px solid var(--border-strong);
       background: var(--bg-elev); color: var(--text); padding: 0.75rem 0.9rem; font: inherit;
     }
-    .bid-form input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18); }
+    .bid-form input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18); }
     .chat-offplatform-warn {
       position: sticky;
       top: 0;
@@ -345,7 +346,7 @@
       padding: 0.85rem 0.9rem;
       border-radius: 14px;
       border: 1px solid rgba(167, 139, 250, 0.4);
-      background: linear-gradient(145deg, rgba(124, 58, 237, 0.16), rgba(15, 15, 22, 0.55));
+      background: linear-gradient(145deg, rgba(180, 120, 40, 0.16), rgba(15, 15, 22, 0.55));
     }
     .top-bidder-kicker {
       margin: 0 0 0.45rem;
@@ -353,7 +354,7 @@
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #c4b5fd;
+      color: #e8b86d;
     }
     .top-bidder-row {
       display: flex;
@@ -403,14 +404,14 @@
       min-width: 1.5rem;
       font-weight: 800;
       font-size: 0.78rem;
-      color: #a78bfa;
+      color: #d4a017;
       margin-right: 0.25rem;
     }
     .bid-list li.is-top .bid-rank { color: #fde68a; }
     .bid-list .bid-handle { font-weight: 700; color: var(--text); }
     .auction-page.auction-hot .bid-list li:first-child {
-      border-color: rgba(192, 132, 252, 0.45);
-      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(232, 184, 109, 0.45);
+      background: rgba(212, 160, 23, 0.1);
     }
     .bid-list .amt { font-weight: 700; color: var(--purple); font-variant-numeric: tabular-nums; }
     .wa-buyer-badge {
@@ -418,7 +419,7 @@
       font-size: 0.68rem; font-weight: 800;
       padding: 0.1rem 0.4rem; border-radius: 999px;
       border: 1px solid rgba(167, 139, 250, 0.4);
-      background: rgba(124, 58, 237, 0.16); color: #e9d5ff;
+      background: rgba(180, 120, 40, 0.16); color: #f0e0b0;
       vertical-align: middle;
     }
     .wa-buyer-badge[data-rank="heavy"] { background: rgba(167, 139, 250, 0.25); color: #f5f3ff; }
@@ -427,21 +428,21 @@
     .auction-mentions {
       margin: 0.85rem 0 0.35rem;
       border-radius: 14px;
-      border: 1px solid rgba(192, 132, 252, 0.28);
-      background: linear-gradient(145deg, rgba(88, 28, 135, 0.22), rgba(15, 15, 22, 0.65));
+      border: 1px solid rgba(232, 184, 109, 0.28);
+      background: linear-gradient(145deg, rgba(90, 72, 52, 0.22), rgba(15, 15, 22, 0.65));
       overflow: hidden;
     }
     .auction-mentions-head {
       display: flex; align-items: center; gap: 0.4rem;
       padding: 0.5rem 0.75rem;
       font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em;
-      color: var(--purple-bright, #d8b4fe);
-      border-bottom: 1px solid rgba(192, 132, 252, 0.2);
+      color: var(--purple-bright, #e8d5a3);
+      border-bottom: 1px solid rgba(232, 184, 109, 0.2);
     }
     .auction-mentions-head .dot {
       width: 7px; height: 7px; border-radius: 50%;
-      background: #c084fc;
-      box-shadow: 0 0 8px rgba(192, 132, 252, 0.9);
+      background: #c4920f;
+      box-shadow: 0 0 8px rgba(232, 184, 109, 0.9);
       animation: mention-pulse 1.4s ease-in-out infinite;
     }
     @keyframes mention-pulse {
@@ -463,13 +464,13 @@
       animation: mention-in 0.35s ease;
     }
     .mention-feed li.is-new {
-      border-color: rgba(192, 132, 252, 0.45);
-      background: rgba(168, 85, 247, 0.14);
+      border-color: rgba(232, 184, 109, 0.45);
+      background: rgba(212, 160, 23, 0.14);
     }
     .mention-feed li .tag {
       display: inline-block;
       font-size: 0.68rem; font-weight: 700;
-      color: #e9d5ff;
+      color: #f0e0b0;
       margin-right: 0.35rem;
       opacity: 0.9;
     }
@@ -483,7 +484,7 @@
       border-radius: 16px;
       border: 1px solid rgba(167, 139, 250, 0.35);
       background:
-        linear-gradient(145deg, rgba(88, 28, 135, 0.28), rgba(15, 15, 22, 0.82));
+        linear-gradient(145deg, rgba(90, 72, 52, 0.28), rgba(15, 15, 22, 0.82));
       box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
       position: sticky;
       top: 4.4rem;
@@ -504,7 +505,7 @@
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #c4b5fd;
+      color: #e8b86d;
       margin-bottom: 0.2rem;
     }
     .seller-trust-name {
@@ -534,7 +535,7 @@
     }
     .seller-trust-metric.is-score {
       border-color: rgba(167, 139, 250, 0.4);
-      background: rgba(168, 85, 247, 0.12);
+      background: rgba(212, 160, 23, 0.12);
     }
     .stm-val {
       display: block;
@@ -546,7 +547,7 @@
       letter-spacing: -0.02em;
     }
     .seller-trust-metric.is-score .stm-val {
-      background: linear-gradient(120deg, #e9d5ff, #6ee7b7);
+      background: linear-gradient(120deg, #f0e0b0, #6ee7b7);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -613,8 +614,8 @@
       margin: 0.75rem 0 0;
       padding: 0.7rem 0.85rem;
       border-radius: 12px;
-      border: 1px dashed rgba(192, 132, 252, 0.4);
-      background: rgba(88, 28, 135, 0.12);
+      border: 1px dashed rgba(232, 184, 109, 0.4);
+      background: rgba(90, 72, 52, 0.12);
       font-size: 0.84rem;
       line-height: 1.5;
       color: var(--text);
@@ -672,12 +673,12 @@
       backdrop-filter: blur(8px);
     }
     .auction-page.auction-hot .public-banner {
-      background: rgba(168, 85, 247, 0.12);
-      border-color: rgba(192, 132, 252, 0.4);
+      background: rgba(212, 160, 23, 0.12);
+      border-color: rgba(232, 184, 109, 0.4);
     }
   </style>
 </head>
-<body class="form-body auction-page">
+<body class="form-body auction-page theme-yard">
   <div class="auction-ambient" aria-hidden="true">
     <canvas class="wave-canvas" id="waveCanvas"></canvas>
     <div class="amb-vignette"></div>
@@ -945,7 +946,7 @@
             가격 쓰기: <a class="text-link" href="/app/#register">이메일 인증(Lv1)</a>이면 가능.
             낙찰 후 결제·인수 때 실명·휴대폰(Lv2). 팔리면 수수료는 <strong>파는 사람 10%</strong>.
           </p>
-          <div class="price-meta bid-notice" style="margin-top:0.45rem;line-height:1.55;padding:0.7rem 0.8rem;border-radius:10px;border:1px solid rgba(168,85,247,0.25);background:rgba(168,85,247,0.08)" data-i18n-html data-i18n="proj.bid_notice">
+          <div class="price-meta bid-notice" style="margin-top:0.45rem;line-height:1.55;padding:0.7rem 0.8rem;border-radius:10px;border:1px solid rgba(212, 160, 23, 0.25);background:rgba(212, 160, 23, 0.08)" data-i18n-html data-i18n="proj.bid_notice">
             <p style="margin:0 0 0.55rem"><strong>낙찰 후 1시간 이내</strong> 입금해야 합니다. 미입금 시 낙찰 무효·신용 점수 반영.</p>
             <p style="margin:0 0 0.55rem">입금 확인 → 판매자 이전 → 구매자 검수 후 <strong>인수하기</strong>. 이전 후 <strong>48시간</strong> 내 이의가 없으면 <strong>자동 구매 확정·정산</strong>.</p>
             <p style="margin:0 0 0.55rem"><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 대금은 인수(또는 자동 확정) 후 판매자에게 정산됩니다.</p>
@@ -1383,7 +1384,7 @@
         var rise = document.getElementById("riseNow");
         if (rise) {
           rise.style.transform = "scale(1.06)";
-          rise.style.color = "#f0abfc";
+          rise.style.color = "#e8b86d";
           setTimeout(function () {
             rise.style.transform = "";
             rise.style.color = "";

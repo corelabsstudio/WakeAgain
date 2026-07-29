@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>매물 검수 — WakeAgain Admin</title>
-  <meta name="theme-color" content="#050508" />
+  <meta name="theme-color" content="#1a1814" />
   <meta name="robots" content="noindex,nofollow" />
   <link rel="manifest" href="/admin/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/assets/logo-mark-192.png" />
@@ -16,6 +16,7 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-sitewide" />
   <link rel="stylesheet" href="/ux9.css" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -42,7 +43,7 @@
       border: 1px solid var(--border); background: var(--card); border-radius: 14px;
       padding: 0.85rem 1rem; color: inherit; font: inherit;
     }
-    .pitem.is-on { border-color: var(--purple); box-shadow: 0 0 0 1px rgba(168,85,247,0.35); }
+    .pitem.is-on { border-color: var(--purple); box-shadow: 0 0 0 1px rgba(212, 160, 23, 0.35); }
     .pitem strong { display: block; margin-bottom: 0.35rem; }
     .pitem span { color: var(--muted); font-size: 0.875rem; }
     .pitem .row-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
@@ -52,9 +53,9 @@
       font-size: 0.78rem; font-weight: 700; letter-spacing: -0.01em;
     }
     .tag-product {
-      background: rgba(168, 85, 247, 0.2);
-      color: #e9d5ff;
-      border: 1px solid rgba(168, 85, 247, 0.45);
+      background: rgba(212, 160, 23, 0.2);
+      color: #f0e0b0;
+      border: 1px solid rgba(212, 160, 23, 0.45);
     }
     .tag-review-pending { background: rgba(251, 191, 36, 0.15); color: #fcd34d; border: 1px solid rgba(251,191,36,0.35); }
     .tag-review-approved { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.35); }
@@ -64,8 +65,8 @@
       margin: 0.75rem 0 1rem;
       padding: 0.85rem 1rem;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(12,12,16,0.9));
-      border: 1px solid rgba(168, 85, 247, 0.4);
+      background: linear-gradient(135deg, rgba(212, 160, 23, 0.18), rgba(12,12,16,0.9));
+      border: 1px solid rgba(212, 160, 23, 0.4);
     }
     .status-callout .label {
       font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
@@ -101,7 +102,7 @@
     .checks input { margin-top: 0.25rem; width: auto; }
     .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
     .hint {
-      background: var(--purple-soft); border: 1px solid rgba(168,85,247,0.3);
+      background: var(--purple-soft); border: 1px solid rgba(212, 160, 23, 0.3);
       border-radius: 12px; padding: 0.75rem 0.9rem; font-size: 0.875rem; line-height: 1.5; margin-bottom: 1rem;
     }
     .empty { color: var(--muted); padding: 2rem 1rem; text-align: center; }
@@ -120,9 +121,9 @@
       background: var(--bg-elev); color: var(--text); font: inherit; font-size: 0.8rem; font-weight: 600;
       padding: 0.35rem 0.7rem; cursor: pointer; line-height: 1.3; text-align: left;
     }
-    .reason-chips button:hover { border-color: var(--purple); color: #e9d5ff; }
+    .reason-chips button:hover { border-color: var(--purple); color: #f0e0b0; }
     .reason-chips button.is-on {
-      background: var(--purple-soft); border-color: rgba(168,85,247,0.55); color: #e9d5ff;
+      background: var(--purple-soft); border-color: rgba(212, 160, 23, 0.55); color: #f0e0b0;
     }
     .reason-presets .rp-hint { margin: 0.35rem 0 0; font-size: 0.78rem; color: var(--muted-2); }
     .rev-grid {
@@ -184,7 +185,7 @@
       display: block;
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #7c3aed, #e879f9);
+      background: linear-gradient(90deg, #a67c00, #e8b86d);
     }
     .user-search {
       display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
@@ -209,9 +210,9 @@
     }
     .code-flash {
       margin: 0.75rem 0; padding: 0.85rem 1rem; border-radius: 12px;
-      background: rgba(168,85,247,0.12); border: 1px dashed rgba(168,85,247,0.45);
+      background: rgba(212, 160, 23, 0.12); border: 1px dashed rgba(212, 160, 23, 0.45);
       font-family: ui-monospace, Menlo, Consolas, monospace;
-      font-size: 1.35rem; font-weight: 800; letter-spacing: 0.2em; color: #e9d5ff;
+      font-size: 1.35rem; font-weight: 800; letter-spacing: 0.2em; color: #f0e0b0;
     }
     .user-toolbar {
       display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
@@ -236,12 +237,12 @@
     }
     .pitem-row .user-cb {
       margin-top: 0.85rem; width: 1.05rem; height: 1.05rem; cursor: pointer;
-      accent-color: #a855f7;
+      accent-color: #d4a017;
     }
     .pitem-row .pitem { margin: 0; }
   </style>
 </head>
-<body class="form-body">
+<body class="form-body theme-yard">
   <header class="nav-pill-wrap form-nav">
     <div class="nav-pill">
       <a class="brand" href="/">

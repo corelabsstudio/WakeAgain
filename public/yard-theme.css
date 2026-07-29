@@ -777,3 +777,113 @@ body.theme-yard .buyer-rank-badge {
   border-color: rgba(212, 160, 23, 0.35) !important;
   color: #f0e0b0 !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   Sitewide: form-body, guide how-*, legal (v=20260729-sitewide)
+   ═══════════════════════════════════════════════════ */
+body.theme-yard.form-body,
+body.form-body.theme-yard,
+body.theme-yard {
+  --bg: #1a1814;
+  --bg-elev: #221f1a;
+  --card: #2a2620;
+  --card-2: #322e27;
+  --border: rgba(245, 236, 220, 0.1);
+  --border-strong: rgba(245, 236, 220, 0.18);
+  --text: #f5f0e6;
+  --muted: #b8ae9c;
+  --muted-2: #8f8576;
+  --purple: #d4a017;
+  --purple-2: #c4920f;
+  --purple-3: #a67c00;
+  --purple-soft: rgba(212, 160, 23, 0.12);
+  --purple-glow: rgba(180, 83, 9, 0.25);
+  --pink: #e8b86d;
+}
+
+body.theme-yard .form-nav .nav-pill,
+body.theme-yard.form-body .nav-pill {
+  background: rgba(34, 30, 24, 0.94) !important;
+  border: 1px solid rgba(245, 236, 220, 0.14) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.theme-yard .how-hero {
+  border: 1px solid rgba(180, 140, 80, 0.4) !important;
+  background: linear-gradient(145deg, rgba(60, 42, 24, 0.55), rgba(26, 24, 20, 0.95)) !important;
+  border-radius: 10px !important;
+}
+body.theme-yard .how-swap a.is-on {
+  border-color: rgba(212, 160, 23, 0.5) !important;
+  background: rgba(212, 160, 23, 0.14) !important;
+  color: #f5ebd8 !important;
+}
+body.theme-yard .how-steps > li {
+  background: #262018 !important;
+  border-color: rgba(90, 72, 52, 0.7) !important;
+  border-radius: 10px !important;
+}
+body.theme-yard .how-steps > li::before {
+  background: rgba(212, 160, 23, 0.2) !important;
+  border-color: rgba(212, 160, 23, 0.45) !important;
+  color: #f0e0b0 !important;
+}
+body.theme-yard .how-callout {
+  border-color: rgba(180, 140, 80, 0.35) !important;
+  background: rgba(60, 42, 24, 0.4) !important;
+}
+body.theme-yard .how-callout strong {
+  color: #e8b86d !important;
+}
+body.theme-yard .how-faq details {
+  background: #262018 !important;
+  border-color: rgba(90, 72, 52, 0.7) !important;
+}
+body.theme-yard .btn-primary,
+body.theme-yard a.btn-primary {
+  background: #c2410c !important;
+  border-color: #9a3412 !important;
+  color: #fffaf5 !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
+body.theme-yard .brand-mark {
+  background-image: url("/assets/logo-mark-yard.png") !important;
+  box-shadow: none !important;
+}
+body.theme-yard .brand-name .brand-again {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: #c4a86a !important;
+  -webkit-text-fill-color: #c4a86a !important;
+}
+
+/* legal.css overrides */
+body.theme-yard .legal-page .eyebrow {
+  color: #d4a017 !important;
+}
+body.theme-yard .legal-body {
+  background: #262018 !important;
+  border-color: rgba(90, 72, 52, 0.7) !important;
+}
+body.theme-yard .legal-body th {
+  background: rgba(212, 160, 23, 0.1) !important;
+}
+body.theme-yard .legal-body a {
+  color: #e8b86d !important;
+}
+body.theme-yard .legal-body blockquote {
+  border-left-color: #d4a017 !important;
+  background: rgba(212, 160, 23, 0.1) !important;
+}
+body.theme-yard .footer-broker-notice {
+  border: 1px solid rgba(90, 72, 52, 0.75) !important;
+  background: #262018 !important;
+  border-radius: 8px !important;
+}
+body.theme-yard .form-card,
+body.theme-yard .card {
+  border-color: rgba(90, 72, 52, 0.7) !important;
+  background: #262018 !important;
+}
