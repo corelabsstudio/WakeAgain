@@ -232,6 +232,15 @@
   object-position: top center;
   background: #14110e;
 }
+/* Square illustrations: show full icon, not cropped screenshot */
+.gv-hub-thumb--illust {
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  object-position: center;
+  background: #1a1814;
+  padding: 0.65rem;
+  box-sizing: border-box;
+}
 .gv-hub-body {
   padding: 0.85rem 1rem 1rem;
 }
