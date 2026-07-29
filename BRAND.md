@@ -22,6 +22,10 @@
 | 항목 | 표기 |
 |------|------|
 | 운영 | **코어랩스(CoreLabs)** |
+| 대표 | **호현수** |
+| 사업자등록번호 | **705-04-02867** |
+| 사업장 주소 | 강원특별자치도 춘천시 세실로192번길 8-3, 1층 왼쪽 상가(후평동) |
+| 사업자 페이지 | `/legal/business.html` · 등록증 `public/assets/legal/corelabs-business-registration.png` |
 | 제품 | **WakeAgain** (사이트·로고 영문) |
 | 제품 로고 마크 | **확정** `WA_unified_purple_white_bigger_A` — 퍼플 그라데이션 배경 + 화이트 WA 모노그램(세리프·리가처) · `public/assets/logo-mark.png` · `favicon.ico` |
 | 제품 로고 락업 | 마크 + 워드마크 **WakeAgain** (`.brand-name` / Again 그라데이션) |

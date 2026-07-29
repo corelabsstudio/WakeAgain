@@ -2119,6 +2119,62 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 .footer-operator { margin: 0.75rem 0 0.35rem; }
 
+/* Business registration (전자상거래 고지) */
+.footer-biz {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 236, 220, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+  text-align: left;
+  max-width: 36rem;
+}
+.footer-brand .footer-biz {
+  margin-top: 0.9rem;
+}
+.footer-bottom .footer-biz {
+  margin: 0.85rem auto 0.35rem;
+  max-width: min(36rem, 100%);
+}
+.footer-biz-line {
+  margin: 0.2rem 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+  word-break: keep-all;
+}
+.footer-biz-line span {
+  display: inline-block;
+  min-width: 5.5rem;
+  margin-right: 0.35rem;
+  color: var(--muted-2);
+  font-weight: 600;
+}
+.footer-biz-line strong {
+  color: var(--text);
+  font-weight: 650;
+}
+.footer-biz-links {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+}
+.footer-biz-links a {
+  color: #e8d5a3;
+  text-decoration: none;
+  font-weight: 600;
+}
+.footer-biz-links a:hover {
+  text-decoration: underline;
+}
+.compact-footer .footer-biz {
+  margin: 0.75rem auto;
+  max-width: min(34rem, 100%);
+  text-align: left;
+}
+
 /* CoreLabs company mark (parent studio — not product WA mark) */
 .corelabs-brand {
   display: inline-flex;
