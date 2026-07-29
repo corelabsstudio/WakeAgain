@@ -1010,7 +1010,7 @@
     });
   });
 
-  $("formLogin").addEventListener("submit", async (e) => {
+  $("formLogin")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("loginErr"));
     const btn = e.target.querySelector('button[type="submit"]');
@@ -1234,7 +1234,7 @@
     }
   });
 
-  $("formRegister").addEventListener("submit", async (e) => {
+  $("formRegister")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("regErr"));
     const terms = $("regTerms");
@@ -1301,7 +1301,7 @@
     }
   });
 
-  $("formVerify").addEventListener("submit", async (e) => {
+  $("formVerify")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("verifyErr"));
     try {
@@ -1322,7 +1322,7 @@
     }
   });
 
-  $("btnResendCode").addEventListener("click", async () => {
+  $("btnResendCode")?.addEventListener("click", async () => {
     showErr($("verifyErr"));
     try {
       const data = await api.resendVerify();
@@ -1340,7 +1340,7 @@
     }
   });
 
-  $("formProfile").addEventListener("submit", async (e) => {
+  $("formProfile")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("profErr"));
     try {
@@ -1412,7 +1412,7 @@
     }
   });
 
-  $("formSettle").addEventListener("submit", async (e) => {
+  $("formSettle")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("setErr"));
     try {
@@ -1444,7 +1444,7 @@
   $("btnLogoutFromProfile")?.addEventListener("click", doLogout);
   $("btnFeesFromProfile")?.addEventListener("click", () => loadFees());
 
-  $("btnGoLogin").addEventListener("click", () => {
+  $("btnGoLogin")?.addEventListener("click", () => {
     pendingAfterAuth = "list";
     setView("auth");
     switchAuthTab("login");
@@ -1642,21 +1642,21 @@
     loadCoupons();
   });
 
-  $("btnBackFromProfile").addEventListener("click", () => loadProjects());
+  $("btnBackFromProfile")?.addEventListener("click", () => loadProjects());
   $("btnGoSettle")?.addEventListener("click", () => {
     fillProfileForm(api.getUser());
     setView("settle");
   });
-  $("btnBackFromSettle").addEventListener("click", () => {
+  $("btnBackFromSettle")?.addEventListener("click", () => {
     fillProfileForm(api.getUser());
     setView("profile");
   });
 
-  $("btnRefresh").addEventListener("click", () => loadProjects());
-  $("btnNew").addEventListener("click", async () => {
+  $("btnRefresh")?.addEventListener("click", () => loadProjects());
+  $("btnNew")?.addEventListener("click", async () => {
     if (await requireListReady()) setView("create");
   });
-  $("btnBackList").addEventListener("click", () => loadProjects());
+  $("btnBackList")?.addEventListener("click", () => loadProjects());
 
   // Brand / 홈 → site landing or marketplace (never dead-end)
   document.querySelectorAll("[data-nav-home]").forEach(function (el) {
@@ -2275,7 +2275,7 @@
   });
   syncAcqNote();
 
-  $("formProject").addEventListener("submit", async (e) => {
+  $("formProject")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("projErr"));
     if (!(await requireListReady())) return;
@@ -2660,7 +2660,7 @@
       const dd = String(now.getDate()).padStart(2, "0");
       $("ageBirth").setAttribute("max", yyyy + "-" + mm + "-" + dd);
     }
-    $("formAge").addEventListener("submit", async (e) => {
+    $("formAge")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       showErr($("ageErr"));
       const birth = $("ageBirth") ? $("ageBirth").value.trim() : "";
