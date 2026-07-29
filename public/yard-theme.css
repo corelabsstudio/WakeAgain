@@ -672,3 +672,33 @@ body.theme-yard .quote-mark {
 body.theme-yard .quote-accent {
   color: #c4a86a !important;
 }
+
+/* Footer legal / broker notice — no purple box */
+body.theme-yard .footer-broker-notice {
+  border: 1px solid rgba(90, 72, 52, 0.75) !important;
+  background: #262018 !important;
+  color: var(--muted) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+body.theme-yard .footer-broker-notice strong {
+  color: #f0e6d4 !important;
+}
+body.theme-yard .footer-broker-sub {
+  color: var(--muted-2) !important;
+}
+body.theme-yard .footer-broker-notice .text-link,
+body.theme-yard .footer-broker-notice a {
+  color: #e8b86d !important;
+}
+body.theme-yard .footer-copy a:hover {
+  color: #e8b86d !important;
+}
+body.theme-yard .site-footer {
+  background: #14120f !important;
+  border-top-color: rgba(90, 72, 52, 0.55) !important;
+}
+body.theme-yard .seller-identity-card {
+  border: 1px solid rgba(90, 72, 52, 0.75) !important;
+  background: #262018 !important;
+}
