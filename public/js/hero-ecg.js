@@ -103,41 +103,79 @@
     ctx.restore();
   }
 
-  function paint(scrollPx, hot) {
-    clearFull();
-    var mid = h * 0.52;
-    // Sized for R-peak only — baseline stays a thin straight line
-    var baseAmp = h * (0.095 + hot * 0.03);
-    var thick = 1.75 + hot * 0.4;
+  function isYard() {
+    return !!(document.body && document.body.classList.contains("theme-yard"));
+  }
+
+  /**
+   * Multiple leads (dream-ish multi-trace). Phase offsets so QRS don't align.
+   * midYFrac / phase / amp / thick / alphaScale
+   */
+  function traces() {
+    return [
+      { mid: 0.36, phase: 0, amp: 0.72, thick: 1.15, a: 0.55 },
+      { mid: 0.52, phase: beatW * 0.34, amp: 1.0, thick: 1.75, a: 1.0 },
+      { mid: 0.69, phase: beatW * 0.61, amp: 0.62, thick: 1.05, a: 0.42 },
+    ];
+  }
+
+  function strokeTrace(scrollPx, hot, tr) {
+    var mid = h * tr.mid;
+    var baseAmp = h * (0.088 + hot * 0.028) * tr.amp;
+    var thick = tr.thick + hot * 0.35;
+    var scroll = scrollPx + tr.phase;
 
     ctx.beginPath();
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     for (var x = 0; x <= w; x += 1) {
-      var y = mid + sampleY(x, scrollPx, baseAmp);
+      var y = mid + sampleY(x, scroll, baseAmp);
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
 
-    // Brightest in mid open zone (not under the card)
-    var a0 = 0.22 + hot * 0.08;
-    var aMid = 0.85 + hot * 0.12;
-    var a1 = 0.4 + hot * 0.1;
+    var a0 = (0.14 + hot * 0.06) * tr.a;
+    var aMid = (0.72 + hot * 0.12) * tr.a;
+    var a1 = (0.28 + hot * 0.08) * tr.a;
     var grad = ctx.createLinearGradient(0, 0, w, 0);
-    grad.addColorStop(0, "rgba(52, 211, 153, " + a0 + ")");
-    grad.addColorStop(0.35, "rgba(74, 222, 128, " + aMid + ")");
-    grad.addColorStop(0.62, "rgba(167, 243, 208, " + aMid + ")");
-    grad.addColorStop(1, "rgba(52, 211, 153, " + a1 + ")");
+    if (isYard()) {
+      // warm amber-green ink on brown field (less neon mint)
+      grad.addColorStop(0, "rgba(120, 150, 100, " + a0 + ")");
+      grad.addColorStop(0.35, "rgba(160, 190, 120, " + aMid + ")");
+      grad.addColorStop(0.62, "rgba(200, 185, 110, " + aMid * 0.95 + ")");
+      grad.addColorStop(1, "rgba(110, 140, 95, " + a1 + ")");
+    } else {
+      grad.addColorStop(0, "rgba(52, 211, 153, " + a0 + ")");
+      grad.addColorStop(0.35, "rgba(74, 222, 128, " + aMid + ")");
+      grad.addColorStop(0.62, "rgba(167, 243, 208, " + aMid + ")");
+      grad.addColorStop(1, "rgba(52, 211, 153, " + a1 + ")");
+    }
     ctx.lineWidth = thick;
     ctx.strokeStyle = grad;
     ctx.shadowBlur = 0;
     ctx.stroke();
+  }
 
-    // Sweep tip in the open mid-right band (left of auction card)
+  function paint(scrollPx, hot) {
+    clearFull();
+    var list = traces();
+    // draw faint traces first, primary last
+    for (var i = 0; i < list.length; i++) {
+      strokeTrace(scrollPx, hot, list[i]);
+    }
+
+    // Sweep tip on primary lead (open mid-right band)
+    var primary = list[1];
+    var mid = h * primary.mid;
+    var baseAmp = h * (0.088 + hot * 0.028) * primary.amp;
     var tipX = w * 0.58;
-    var tipY = mid + sampleY(tipX, scrollPx, baseAmp);
+    var tipY = mid + sampleY(tipX, scrollPx + primary.phase, baseAmp);
     ctx.beginPath();
-    ctx.fillStyle = "rgba(190, 255, 220, " + (0.55 + hot * 0.25) + ")";
+    if (isYard()) {
+      ctx.fillStyle = "rgba(230, 210, 150, " + (0.45 + hot * 0.25) + ")";
+    } else {
+      ctx.fillStyle = "rgba(190, 255, 220, " + (0.55 + hot * 0.25) + ")";
+    }
     ctx.arc(tipX, tipY, 2 + hot, 0, Math.PI * 2);
     ctx.fill();
   }
