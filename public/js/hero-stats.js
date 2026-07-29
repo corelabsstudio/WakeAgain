@@ -77,6 +77,13 @@
 
   /** Update only count cells — never touch label spans (data-i18n). */
   function applyCounts(projects, interests, went, animate) {
+    var block = document.getElementById("heroStatsBlock");
+    if (block) {
+      var p = Number(projects) || 0;
+      var i = Number(interests) || 0;
+      var w = went && went.revealed && went.count != null ? Number(went.count) : 0;
+      block.hidden = !(p > 0 || i > 0 || w > 0);
+    }
     var items = list.querySelectorAll(":scope > li");
     if (!items.length) return;
 
