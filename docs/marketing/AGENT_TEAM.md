@@ -1,15 +1,18 @@
 # WakeAgain 마케팅 에이전트 팀 (Harness)
 
 > 빌더 조쉬형 구조: **Context → Template → SOP → 역할 분리 → 사람 승인 후 발행**  
-> 한 요청 = **WakeAgain only**. 브랜드 표기는 영문 **WakeAgain**.
+> **한 글 = 한 브랜드** (영문 **WakeAgain** only · 페이지에 RoadLog 금지).  
+> **한 요청 = 한 제품 제한은 폐지** — 사용자가 둘 다 / 뉴스 올리면 제품별 파이프 순서 실행.
 
 ---
 
 ## 불러오기 / 실행 트리거
 
 - **「웨이크어게인 마케팅」** / **「WakeAgain 마케팅」** / **「웨이크어게인 SEO」** / **「WakeAgain SEO」**
+- **「뉴스 올려」** (제품 미지정) → RoadLog 파이프와 **함께/이어서** 이 하네스 실행
 - 스케줄: `docs/marketing/DAILY_SEO_PROMPT.md` 일일 발화
 - 제품 개발 이어하기: `BRAND.md` 트리거 (`WakeAgain 이어서` 등)와 **마케팅은 분리** 가능
+
 
 ### 시작 시 읽을 파일 (순서)
 

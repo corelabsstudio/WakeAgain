@@ -8,10 +8,16 @@
 2. `docs/marketing/AGENT_TEAM.md`  
 3. 이 파일  
 
-한 요청 = **WakeAgain only**. RoadLog 콘텐츠 금지.  
-사이트 표기 브랜드: 영문 **WakeAgain** only.
+## 제품 범위 (2026-07-31 개정)
+
+- 이 파일은 **WakeAgain 파이프**다. 사이트 표기 브랜드는 영문 **WakeAgain** only.
+- 사용자가 **「뉴스 올려」/ 둘 다 / 로드로그+웨이크어게인** 이라고 하면  
+  **같은 세션에서 RoadLog SEO 다음(또는 앞)에 이 파이프를 실행해도 된다** (한 제품 제한 폐지).
+- 단, **한 페이지·한 카피 안에 WakeAgain과 RoadLog 브랜드를 섞지 않는다.**
+- RoadLog만 하면 될 때는 RL 쪽 `news_digest/DAILY_SEO_PROMPT.md`만 쓰면 된다.
 
 ---
+
 
 ## 역할 분담 (순서)
 

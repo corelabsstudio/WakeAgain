@@ -66,6 +66,9 @@
 | 짧은 홍보 | `docs/marketing/promo/POST_COPY.md` · `Templates/short-social.md` |
 | 참고 포맷 | `public/blog/mvp-sell-before-delete.html`, `side-project-second-chance.html` |
 
-## 한 요청 = 한 제품
+## 브랜드 분리 (한 글 = 한 제품)
 
-이 Context로 작업할 때 **RoadLog 콘텐츠를 만들지 않는다.**
+- **한 HTML·한 카피 안에는 WakeAgain만.** RoadLog 이름·링크를 섞지 않는다.
+- 사용자가 **둘 다 / 뉴스 올려**라고 하면 **요청 단위로는 두 제품 모두** 처리한다.  
+  제품별로 레포·Context를 바꿔 순서 실행한다.
+- 웨이크어게인만 명시되면 RoadLog는 건드리지 않는다.
