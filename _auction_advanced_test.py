@@ -130,9 +130,18 @@ def create_and_approve(seller: dict, **kwargs) -> int:
         "min_increment": 10_000,
         "license_note": "양도",
         "keywords": ["테스트", "경매", "SaaS", "웹앱", "양도"],
+        "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
+        "audience": "경매 시나리오 검증 사용자",
+        "works_now": "등록부터 낙찰까지 시나리오로 동작합니다.",
+        "limits": "실제 결제 없음 · 테스트 전용",
+        "acquisition": "made",
+        "demo_images": [f"/media/demos/{seller['id']}/test.png"],
         "attest_works": True,
+        "attest_features": True,
         "attest_license": True,
         "attest_rights": True,
+        "attest_transfer": True,
+        "attest_shots": True,
     }
     if kwargs.get("price_buy_now") is not None:
         payload["price_buy_now"] = kwargs["price_buy_now"]

@@ -1,6 +1,7 @@
 """Smoke check: API + static + button ID wiring."""
 from __future__ import annotations
 
+import os
 import re
 import random
 import subprocess
@@ -168,6 +169,7 @@ if token and code:
         },
     )
     ok("settlement L3", r.status_code == 200, str(r.json().get("user", {}).get("credit", {}).get("score")))
+    me_id = cl.get("/api/v1/me", headers=h).json().get("user", {}).get("id")
     # create blocked without seller identity
     r_nosid = cl.post(
         "/api/v1/projects",
@@ -180,12 +182,21 @@ if token and code:
             "demo": "https://example.com",
             "assets": ["code"],
             "keywords": ["스모크", "테스트", "SaaS"],
+            "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
+            "audience": "스모크 테스트 사용자",
+            "works_now": "등록부터 조회까지 스모크 시나리오로 동작합니다.",
+            "limits": "실제 결제 없음 · 스모크 전용",
+            "acquisition": "made",
+            "demo_images": [f"/media/demos/{me_id}/smoke.png"],
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
+            "attest_shots": True,
         },
     )
     ok(
@@ -251,12 +262,21 @@ if token and code:
             "demo": "https://example.com",
             "assets": ["code"],
             "keywords": ["스모크", "테스트", "SaaS", "웹앱", "데모"],
+            "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
+            "audience": "스모크 테스트 사용자",
+            "works_now": "등록부터 조회까지 스모크 시나리오로 동작합니다.",
+            "limits": "실제 결제 없음 · 스모크 전용",
+            "acquisition": "made",
+            "demo_images": [f"/media/demos/{me_id}/smoke.png"],
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
+            "attest_shots": True,
         },
     )
     ok("create project", r.status_code == 200, r.text[:100])
@@ -270,7 +290,7 @@ if token and code:
 
     # --- buyer reports → auto pause at 3 ---
     if pid:
-        admin_h = {"X-Admin-Key": "wakeagain-admin-dev"}
+        admin_h = {"X-Admin-Key": os.environ.get("ADMIN_SECRET", "wakeagain-admin-dev")}
         r = cl.post(
             f"/api/v1/admin/projects/{pid}/review",
             headers=admin_h,

@@ -199,6 +199,8 @@ def main() -> int:
             "demo": "https://example.com/demo-handover-check",
             "assets": ["code", "domain"],
             "keywords": ["검증", "체크리스트", "인수", "테스트", "SaaS"],
+            "demo_images": [f"/media/demos/{seller['id']}/test.png"],
+            "attest_shots": True,
             "price_start": 150000,
             "license_note": "사유 코드 전부 양도",
             "attest_works": True,

@@ -137,9 +137,18 @@ def create_listing(seller: dict, title: str) -> int:
             "min_increment": 10_000,
             "license_note": "MIT",
             "keywords": ["테스트", "차단", "SaaS"],
+            "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
+            "audience": "차단 기능 검증 사용자",
+            "works_now": "등록부터 차단 시나리오까지 동작합니다.",
+            "limits": "실제 결제 없음 · 테스트 전용",
+            "acquisition": "made",
+            "demo_images": [f"/media/demos/{seller['id']}/test.png"],
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
+            "attest_shots": True,
         },
     )
     body = j(r)
