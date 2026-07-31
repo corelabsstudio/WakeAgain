@@ -246,6 +246,105 @@
       width: 100% !important;
     }
 
+    /* 사는 법: 모바일=작은 아이콘만 / 사이트(≥768)=큰 아이콘 — 크기 완전 분리 */
+    .buy-how-proj {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 12px;
+      border: 1px solid rgba(212, 160, 23, 0.3);
+      background: linear-gradient(145deg, rgba(40, 36, 22, 0.5), rgba(10, 12, 18, 0.92));
+    }
+    .buy-how-proj-top {
+      display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.45rem;
+    }
+    .buy-how-proj-top .ico {
+      box-sizing: border-box;
+      display: grid; place-items: center; flex-shrink: 0;
+      background: rgba(0,0,0,0.28); border: 1px solid rgba(212,160,23,0.28);
+    }
+    .buy-how-proj-top .ico svg,
+    .buy-how-proj-grid .ico svg {
+      display: block; max-width: 100%; max-height: 100%;
+      width: 100% !important; height: 100% !important;
+    }
+    .buy-how-proj-top strong { display: block; font-size: 0.9rem; color: #f0e0b0; }
+    .buy-how-proj-top p { margin: 0.15rem 0 0; font-size: 0.76rem; line-height: 1.4; color: rgba(240,224,176,0.72); }
+    .buy-how-proj-grid {
+      list-style: none; margin: 0 0 0.4rem; padding: 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;
+    }
+    .buy-how-proj-grid li {
+      display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto;
+      column-gap: 0.35rem; padding: 0.35rem 0.4rem; border-radius: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    }
+    .buy-how-proj-grid .ico {
+      box-sizing: border-box; border-radius: 8px; display: grid; place-items: center;
+      background: rgba(0,0,0,0.28); border: 1px solid rgba(212,160,23,0.28); grid-row: 1 / span 2;
+    }
+    .buy-how-proj-grid strong { font-size: 0.76rem; color: #f5ecd0; }
+    .buy-how-proj-grid em { font-style: normal; font-size: 0.68rem; color: #e8b86d; font-weight: 600; }
+    .buy-how-proj details { margin: 0; border-radius: 8px; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.06); }
+    .buy-how-proj summary {
+      list-style: none; cursor: pointer; padding: 0.4rem 0.5rem; font-size: 0.74rem;
+      font-weight: 600; color: rgba(240,224,176,0.85);
+    }
+    .buy-how-proj summary::-webkit-details-marker { display: none; }
+    .buy-how-proj summary::before { content: "▸ "; color: #d4a017; }
+    .buy-how-proj details[open] summary::before { content: "▾ "; }
+    .buy-how-proj details p { margin: 0; padding: 0 0.5rem 0.5rem; font-size: 0.72rem; line-height: 1.4; color: rgba(220,210,180,0.7); }
+    .bid-easy-hint {
+      display: flex; gap: 0.4rem; align-items: center; margin: 0 0 0.65rem;
+      padding: 0.45rem 0.55rem; border-radius: 10px;
+      background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.25);
+      font-size: 0.78rem; color: #f0e0b0; line-height: 1.35;
+    }
+    .bid-easy-hint svg { flex-shrink: 0; }
+
+    /* 모바일 전용: 작은 아이콘 */
+    @media (max-width: 767.98px) {
+      .buy-how-proj-top .ico {
+        width: 1.75rem; height: 1.75rem; padding: 0.2rem; border-radius: 7px;
+      }
+      .buy-how-proj-top .ico svg {
+        width: 1.25rem !important; height: 1.25rem !important;
+      }
+      .buy-how-proj-grid .ico {
+        width: 1.75rem; height: 1.75rem; padding: 0.2rem; border-radius: 7px;
+      }
+      .buy-how-proj-grid .ico svg {
+        width: 1.25rem !important; height: 1.25rem !important;
+      }
+      .bid-easy-hint svg { width: 1.15rem !important; height: 1.15rem !important; }
+    }
+
+    /* 사이트(데스크톱): 큰 아이콘 — 모바일과 다름 */
+    @media (min-width: 768px) {
+      .buy-how-proj { padding: 1rem 1.15rem; border-radius: 16px; }
+      .buy-how-proj-top { gap: 0.75rem; margin-bottom: 0.7rem; }
+      .buy-how-proj-top strong { font-size: 1.05rem; }
+      .buy-how-proj-top p { font-size: 0.88rem; }
+      .buy-how-proj-top .ico {
+        width: 3.25rem; height: 3.25rem; padding: 0.4rem; border-radius: 12px;
+      }
+      .buy-how-proj-top .ico svg {
+        width: 2.4rem !important; height: 2.4rem !important;
+      }
+      .buy-how-proj-grid { grid-template-columns: repeat(4, 1fr); gap: 0.55rem; }
+      .buy-how-proj-grid li { padding: 0.65rem 0.7rem; border-radius: 12px; column-gap: 0.55rem; }
+      .buy-how-proj-grid .ico {
+        width: 3.25rem; height: 3.25rem; padding: 0.4rem; border-radius: 12px;
+      }
+      .buy-how-proj-grid .ico svg {
+        width: 2.4rem !important; height: 2.4rem !important;
+      }
+      .buy-how-proj-grid strong { font-size: 0.9rem; }
+      .buy-how-proj-grid em { font-size: 0.78rem; }
+      .buy-how-proj summary { font-size: 0.85rem; padding: 0.55rem 0.65rem; }
+      .buy-how-proj details p { font-size: 0.82rem; }
+      .bid-easy-hint { font-size: 0.88rem; padding: 0.55rem 0.7rem; gap: 0.55rem; }
+      .bid-easy-hint svg { width: 1.6rem !important; height: 1.6rem !important; }
+    }
     .auction-hero {
       display: grid;
       gap: 1.25rem;
@@ -718,6 +817,40 @@
       <span id="publicBannerText" data-i18n="proj.banner_live_t"> — 누구나 지금 가격을 볼 수 있어요. 가격 쓰기는 쉽고, 낙찰되면 안내에 따라 빠르게 입금해야 해요.</span>
     </p>
 
+    <aside class="buy-how-proj" aria-label="사는 법">
+      <div class="buy-how-proj-top">
+        <span class="ico" aria-hidden="true">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 22l6-12h4l6 12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M12 16h8" stroke="#e8c56a" stroke-width="2"/></svg>
+        </span>
+        <div>
+          <strong>이 매물 사는 법</strong>
+          <p>어렵지 않아요. 가격 쓰고 → 이기면 입금 → 받아서 확인. 번거로운 체크는 사기 예방용이에요.</p>
+        </div>
+      </div>
+      <ul class="buy-how-proj-grid">
+        <li>
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="5" width="20" height="22" rx="2" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M10 12h12M10 17h10" stroke="#e8c56a" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+          <strong>1. 읽고</strong><em>화면·설명</em>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><text x="16" y="20" text-anchor="middle" fill="#e8c56a" font-size="12" font-weight="700">₩</text></svg></span>
+          <strong>2. 가격 쓰기</strong><em>아래 버튼</em>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <strong>3. 낙찰 후 입금</strong><em>빠르게</em>
+        </li>
+        <li>
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 16l5 5 11-11" fill="none" stroke="#86efac" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+          <strong>4. 받기·인수</strong><em>이전 확인</em>
+        </li>
+      </ul>
+      <details>
+        <summary>수수료·안전 (펼치기)</summary>
+        <p>사는 사람은 <strong>합의 가격만</strong>. 수수료 10%는 파는 사람. 입금 전 코드·계정 받지 마세요. 카톡·개인 계좌 유도는 위험 — 사이트 절차만.</p>
+      </details>
+    </aside>
+
     <!-- Public heartbeat stage: one listing card over flowing waves -->
     <section class="spotlight-stage" id="spotlightStage" aria-label="경매 현황">
       <div class="spotlight-card" id="spotlightCard">
@@ -841,6 +974,35 @@
             display: block;
           }
         </style>
+        <div class="story-box" id="qCreditBox" style="margin-top:1rem" hidden>
+          <h2>헬프티켓</h2>
+          <p class="price-meta" id="qCreditSummary">—</p>
+          <p class="price-meta muted fine" id="qCreditPolicy">
+            헬프티켓은 판매자(제작자)의 <strong>안내·설명</strong>용입니다. 개발 완료·추가 개발을 플랫폼이나 제작자가 보장하지 않습니다.
+            질문 범위·답변·횟수 등에 의견이 다를 때는 <strong>구매자와 판매자가 서로 맞춰 주세요.</strong>
+            사이트는 헬프티켓 사용 여부·내용에 <strong>중재·개입하지 않습니다.</strong>
+            (사기·약관 위반·결제 장애는 신고 절차를 이용해 주세요.)
+          </p>
+          <ul class="bid-list" id="qThreadList" style="max-height:240px;overflow:auto"></ul>
+          <form id="qAskForm" hidden style="margin-top:0.75rem">
+            <label for="qAskBody">헬프 요청 (한 주제 · 1회 차감은 답변 후)</label>
+            <textarea id="qAskBody" maxlength="2000" required placeholder="예: Windows에서 설정 파일이 어디인가요?" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
+            <div class="form-actions" style="margin-top:0.5rem;gap:0.5rem;display:flex;flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" type="submit">헬프티켓 사용</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="qBuyBtn" hidden>추가 1회 구매</button>
+            </div>
+            <p class="form-error" id="qAskErr" hidden></p>
+          </form>
+          <form id="qAnswerForm" hidden style="margin-top:0.75rem">
+            <input type="hidden" id="qAnswerThreadId" value="" />
+            <label for="qAnswerBody">답변 (대기 중인 헬프티켓)</label>
+            <textarea id="qAnswerBody" maxlength="4000" required placeholder="확인 방법 · 파일 위치 · 다음 액션" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
+            <div class="form-actions" style="margin-top:0.5rem">
+              <button class="btn btn-primary btn-sm" type="submit">답변 보내기</button>
+            </div>
+            <p class="form-error" id="qAnswerErr" hidden></p>
+          </form>
+        </div>
         <div class="story-box chat-box" id="msgBox" style="margin-top:1rem" hidden>
           <h2 data-i18n="proj.messages">쪽지 (판매자 · 입찰자)</h2>
           <div class="chat-offplatform-warn" role="alert" aria-live="polite">
@@ -935,6 +1097,10 @@
         </div>
 
         <form class="bid-form" id="bidForm">
+          <p class="bid-easy-hint">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="#e8c56a" stroke-width="1.8"/><path d="M12 7v6M12 16v1" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
+            <span><strong>가격만 쓰고 버튼</strong> 누르면 끝. 낙찰되면 입금 안내가 가요. (로그인·이메일 인증 필요할 수 있음)</span>
+          </p>
           <label for="bidAmount" data-i18n="proj.bid_label">얼마에 살지 쓰기 (원)</label>
           <input id="bidAmount" type="number" min="0" step="10000" required inputmode="numeric" />
           <div class="form-actions" style="margin-top:0.85rem;flex-wrap:wrap">
@@ -1814,6 +1980,27 @@
         }
         document.getElementById("pStory").textContent =
           (isEn() && p.story_en) ? p.story_en : (p.story || "");
+        // Public offer line (always if set)
+        var qPub = document.getElementById("qCreditPublicLine");
+        if (!qPub) {
+          qPub = document.createElement("p");
+          qPub.id = "qCreditPublicLine";
+          qPub.className = "price-meta";
+          var storyEl = document.getElementById("pStory");
+          if (storyEl && storyEl.parentNode) {
+            storyEl.parentNode.insertBefore(qPub, storyEl.nextSibling);
+          }
+        }
+        var qOff = p.q_credits_offered != null ? Number(p.q_credits_offered) : 1;
+        var qUp = p.q_credit_unit_price != null ? Number(p.q_credit_unit_price) : 0;
+        qPub.textContent =
+          "헬프티켓 " +
+          qOff +
+          "회 포함" +
+          (qUp > 0
+            ? " · 추가 헬프티켓 ₩" + qUp.toLocaleString("ko-KR") + "/회 (판매자 설정 · 답변 후 판매자 정산)"
+            : " · 추가 판매 없음") +
+          " · 성사·이전 후 사용 · 상담용";
         var featBox = document.getElementById("featuresBox");
         var featList = document.getElementById("pFeatures");
         var feats = Array.isArray(p.features) ? p.features.filter(Boolean) : [];
@@ -2389,6 +2576,157 @@
         }
       }
 
+      function escHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      async function loadQCredits() {
+        var box = document.getElementById("qCreditBox");
+        if (!box || !api.isLoggedIn() || !api.getQCredits) {
+          if (box) box.hidden = true;
+          return;
+        }
+        try {
+          var data = await api.getQCredits(id);
+          box.hidden = false;
+          var avail = data.available != null ? data.available : 0;
+          var rem = data.q_credits_remaining != null ? data.q_credits_remaining : 0;
+          var held = data.q_credits_held != null ? data.q_credits_held : 0;
+          var unit = data.q_credit_unit_price != null ? Number(data.q_credit_unit_price) : 0;
+          var offered = data.q_credits_offered != null ? data.q_credits_offered : 0;
+          var sum = document.getElementById("qCreditSummary");
+          if (sum) {
+            sum.textContent =
+              "포함 " +
+              offered +
+              "회 · 남은 사용 가능 " +
+              avail +
+              "회 (잔여 " +
+              rem +
+              (held ? " · 대기 " + held : "") +
+              ")" +
+              (unit > 0
+                ? " · 추가 1회 ₩" + unit.toLocaleString("ko-KR")
+                : " · 추가 판매 없음") +
+              (data.q_window_ends_at
+                ? " · 기한 " + String(data.q_window_ends_at).replace("T", " ").slice(0, 16)
+                : " · 이전 후 활성화");
+          }
+          var polEl = document.getElementById("qCreditPolicy");
+          var pol = data.policy || {};
+          if (polEl && (pol.message_ko || pol.message_en)) {
+            polEl.textContent =
+              (isEn() && pol.message_en) ? pol.message_en : (pol.message_ko || polEl.textContent);
+          }
+          var ul = document.getElementById("qThreadList");
+          var threads = data.threads || [];
+          if (ul) {
+            if (!threads.length) {
+              ul.innerHTML =
+                "<li><span class='muted'>아직 헬프티켓 요청이 없습니다.</span></li>";
+            } else {
+              ul.innerHTML = threads
+                .map(function (th) {
+                  var ans = th.answer_body
+                    ? "<br/><strong>답변</strong> · " + escHtml(th.answer_body)
+                    : "<br/><span class='muted'>답변 대기 (" +
+                      escHtml(th.status) +
+                      ")</span>";
+                  return (
+                    "<li><span><strong>Q</strong> · " +
+                    String(th.created_at || "").replace("T", " ").slice(0, 16) +
+                    "<br/>" +
+                    escHtml(th.body) +
+                    ans +
+                    "</span></li>"
+                  );
+                })
+                .join("");
+            }
+          }
+          var askForm = document.getElementById("qAskForm");
+          var ansForm = document.getElementById("qAnswerForm");
+          var buyBtn = document.getElementById("qBuyBtn");
+          if (askForm) askForm.hidden = !data.is_buyer;
+          if (buyBtn) {
+            buyBtn.hidden = !(data.is_buyer && unit > 0);
+            buyBtn.textContent =
+              "추가 1회 구매" + (unit > 0 ? " ₩" + unit.toLocaleString("ko-KR") : "");
+          }
+          var openHeld = (threads || []).find(function (th) {
+            return th.status === "open" && th.credit_state === "held";
+          });
+          if (ansForm) {
+            ansForm.hidden = !(data.is_seller && openHeld);
+            if (openHeld) {
+              document.getElementById("qAnswerThreadId").value = openHeld.id;
+            }
+          }
+        } catch (e) {
+          // not deal party — still show public offered line via project render
+          box.hidden = true;
+        }
+      }
+
+      document.getElementById("qAskForm")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var err = document.getElementById("qAskErr");
+        if (err) {
+          err.hidden = true;
+          err.textContent = "";
+        }
+        var body = (document.getElementById("qAskBody") || {}).value || "";
+        try {
+          await api.createQThread(id, body.trim());
+          document.getElementById("qAskBody").value = "";
+          await loadQCredits();
+        } catch (ex) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = ex.message || "헬프티켓 등록 실패";
+          }
+        }
+      });
+      document.getElementById("qAnswerForm")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var err = document.getElementById("qAnswerErr");
+        if (err) {
+          err.hidden = true;
+          err.textContent = "";
+        }
+        var tid = document.getElementById("qAnswerThreadId").value;
+        var answer = (document.getElementById("qAnswerBody") || {}).value || "";
+        try {
+          await api.answerQThread(id, tid, answer.trim());
+          document.getElementById("qAnswerBody").value = "";
+          await loadQCredits();
+        } catch (ex) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = ex.message || "답변 실패";
+          }
+        }
+      });
+      document.getElementById("qBuyBtn")?.addEventListener("click", async function () {
+        if (
+          !confirm(
+            "추가 헬프티켓 1회를 구매할까요?\n답변 완료 후 판매자에게 정산됩니다.\n(PG 미연동 시 대기 상태이거나 개발 모드에서만 즉시 지급)"
+          )
+        ) {
+          return;
+        }
+        try {
+          var res = await api.purchaseQCredits(id, 1);
+          alert((res && (res.message_ko || (res.purchase && res.purchase.message_ko))) || "처리되었습니다.");
+          await loadQCredits();
+        } catch (ex) {
+          alert(ex.message || "구매 실패");
+        }
+      });
+
       document.getElementById("msgForm").addEventListener("submit", async function (e) {
         e.preventDefault();
         var err = document.getElementById("msgErr");
@@ -2490,13 +2828,22 @@
         });
       }
 
-      refresh().then(loadMessages);
+      refresh().then(function () {
+        loadMessages();
+        loadQCredits();
+      });
       document.addEventListener("wa:langchange", function () {
         if (window.WakeAgainI18n && window.WakeAgainI18n.apply) window.WakeAgainI18n.apply(document);
-        refresh().then(loadMessages);
+        refresh().then(function () {
+        loadMessages();
+        loadQCredits();
+      });
       });
       setInterval(function () {
-        refresh().then(loadMessages);
+        refresh().then(function () {
+        loadMessages();
+        loadQCredits();
+      });
       }, pollMs);
       document.getElementById("pollHint").textContent = pollMs / 1000 + "초마다 갱신 · 전원 공개";
     })();

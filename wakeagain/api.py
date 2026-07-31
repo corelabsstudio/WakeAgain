@@ -405,6 +405,10 @@ class ProjectIn(BaseModel):
     contact: str = Field(default="", max_length=120)
     min_increment: int | None = Field(default=10000, ge=1000, le=10_000_000)
     auction_days: int = Field(default=7, ge=1, le=30)
+    # 헬프티켓 (Kmong-style)
+    q_credits_offered: int = Field(default=1, ge=1, le=3)  # 무료 헬프티켓 1~3
+    q_credit_unit_price: int = Field(default=0, ge=0, le=100_000)  # 0 = no add-on sale
+    q_credit_sla_hours: int = Field(default=48, ge=24, le=72)
     # Minimum listing guidelines (seller attestation — required)
     license_note: str = Field(default="", max_length=200)
     attest_works: bool = False
@@ -519,9 +523,35 @@ def client_config():
             "poll_seconds": 4,
             "default_min_increment_krw": 10000,
             "default_auction_days": 7,
-            "note": "입찰 중 현재가·호가는 사이트 방문객 전원에게 공개. 입찰자 실명은 마스킹.",
+            "public_board": "live_round_only",
+            "unsold_leaves_board": True,
+            "relist_requires_review": True,
+            "relist_queue": "back_of_line",
+            "sort": "boost_then_trust_score_desc_then_round_asc",
+            "exposure": {
+                "model": "listing_quality_plus_help_tickets",
+                "help_ticket_points_per": database.HELP_TICKET_POINTS_PER,
+                "note_ko": (
+                    "예비 구매자 기준 가산점: 매물 설명·포트폴리오 완성도 + 헬프티켓 개수 비례. "
+                    "점수 높을수록 상위 노출. 같은 점수면 이번 라운드 입장 순(재등록 후순위)."
+                ),
+            },
+            "note": (
+                "공개 목록·라이브 보드는 이번 경매 라운드(live) 매물만 노출합니다. "
+                "유찰 시 자동으로 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
+                "재등록은 줄 맨 뒤(후순위)부터 시작합니다. "
+                "노출 순위는 매물 설명·포트폴리오·헬프티켓 가산점 → 라운드 순입니다. "
+                "입찰 중 현재가·호가는 방문객 전원 공개, 입찰자 실명은 마스킹."
+            ),
+            "note_en": (
+                "Only the current live auction round is listed. "
+                "Unsold listings leave the board at close; re-list requires review "
+                "and joins the back of the queue. "
+                "Ranking: listing quality + help tickets, then round queue order."
+            ),
             "start_price_by_status": price_policy.public_policy(),
         },
+        "q_credit_policy": database.q_credit_policy_public(),
         "fee_policy": {
             "payer": "seller",
             "payer_ko": "판매자",
@@ -1508,23 +1538,30 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
             placeholders = ",".join("?" * len(hidden))
             hide_sql = f" AND owner_id NOT IN ({placeholders})"
             hide_params = list(sorted(hidden))
+        live_where = database.public_live_where_sql("p")
+        # hide_sql uses owner_id → qualify as p.owner_id
+        hide_sql_p = hide_sql.replace("owner_id", "p.owner_id") if hide_sql else ""
+        score_sql = database.listing_trust_score_sql("p", "u")
         rows = conn.execute(
             f"""
-            SELECT * FROM projects
-            WHERE listing_status = 'approved'
-              AND COALESCE(auction_status, 'live') IN ('live', 'ended')
-              {hide_sql}
-            ORDER BY
-              CASE WHEN COALESCE(auction_status, 'live') = 'live' THEN 0 ELSE 1 END,
-              bid_count DESC,
-              updated_at DESC
+            SELECT p.*, ({score_sql}) AS exposure_score
+            FROM projects p
+            LEFT JOIN users u ON u.id = p.owner_id
+            WHERE {live_where}
+              {hide_sql_p}
+            {database.listing_sort_sql("p", "u")}
             LIMIT 50
             """,
-            hide_params,
+            [*hide_params, database._now()],
         ).fetchall()
         snaps = []
         for r in rows:
             r = _refresh_auction_ended(conn, r)
+            # Expiry may have archived this row mid-poll
+            if (r["listing_status"] or "") != "approved" or (
+                (r["auction_status"] or "live") != "live"
+            ):
+                continue
             top = None
             try:
                 if int(r["bid_count"] or 0) > 0:
@@ -1532,7 +1569,7 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
             except Exception:
                 top = None
             snaps.append(database.auction_snapshot(r, top_bid=top))
-        # recent public bid ticker (last 20 across board)
+        # recent public bid ticker (last 20 across board) — live rounds only
         recent_sql = """
             SELECT b.*, u.display_name,
                    COALESCE(u.credit_bought, 0) AS credit_bought,
@@ -1541,6 +1578,7 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
             JOIN users u ON u.id = b.bidder_id
             JOIN projects p ON p.id = b.project_id
             WHERE p.listing_status = 'approved'
+              AND COALESCE(p.auction_status, 'live') = 'live'
             """
         recent_params: list[Any] = []
         if hidden:
@@ -1618,27 +1656,41 @@ def list_projects(
                 "has_more": off + len(projects) < int(total),
                 "q": q_term,
             }
-        where = "listing_status = 'approved'"
+        # Public marketplace: live round only · trust score DESC · then round queue
+        where = database.public_live_where_sql("p")
         params: list[Any] = []
+        # search_sql uses unqualified columns — prefix with p.
+        search_sql_p = search_sql.replace("(", "(p.").replace(" OR ", " OR p.") if like else ""
+        # safer: rebuild from known fields
         if like:
-            where += " AND " + search_sql
+            search_sql_p = (
+                "(p.title LIKE ? OR p.one_liner LIKE ? OR IFNULL(p.story,'') LIKE ? "
+                "OR IFNULL(p.features_json,'') LIKE ? OR IFNULL(p.audience,'') LIKE ? "
+                "OR IFNULL(p.works_now,'') LIKE ? "
+                "OR IFNULL(p.keywords_json,'') LIKE ? OR IFNULL(p.product_type,'') LIKE ?)"
+            )
+            where += " AND " + search_sql_p
             params.extend([like] * search_like_params)
-        # Hide listings from users in a block relationship with the viewer
         hidden_owners = database.blocked_owner_ids(conn, user["id"] if user else None)
         if hidden_owners:
             placeholders = ",".join("?" * len(hidden_owners))
-            where += f" AND owner_id NOT IN ({placeholders})"
+            where += f" AND p.owner_id NOT IN ({placeholders})"
             params.extend(sorted(hidden_owners))
         total = conn.execute(
-            f"SELECT COUNT(*) AS c FROM projects WHERE {where}",
+            f"""
+            SELECT COUNT(*) AS c FROM projects p WHERE {where}
+            """,
             params,
         ).fetchone()["c"]
-        # Active premium boost first (scaffold); no boosts ⇒ same as id DESC
         now = database._now()
+        score_sql = database.listing_trust_score_sql("p", "u")
         rows = conn.execute(
             f"""
-            SELECT * FROM projects WHERE {where}
-            {database.listing_sort_sql()}
+            SELECT p.*, ({score_sql}) AS exposure_score
+            FROM projects p
+            LEFT JOIN users u ON u.id = p.owner_id
+            WHERE {where}
+            {database.listing_sort_sql("p", "u")}
             LIMIT ? OFFSET ?
             """,
             (*params, now, lim, off),
@@ -1711,9 +1763,40 @@ def get_project(
                     },
                 )
     private = bool(user and user["id"] == row["owner_id"])
-    # Non-owners only see approved public listings
-    if not private and row["listing_status"] != "approved":
-        raise HTTPException(status_code=404, detail="not found")
+    # Non-owners: live round (public board) or sold (deal transparency).
+    # Archived/ended/pending/hold/rejected are not public permanent display.
+    # Deal parties (buyer) may always open their deal — including payment_default /
+    # inspection / completed — so 미입금·인수 화면이 404로 끊기지 않음.
+    if not private:
+        ls = (row["listing_status"] or "") or ""
+        ast = (row["auction_status"] if "auction_status" in row.keys() else None) or "live"
+        deal_st = (
+            (row["deal_status"] if "deal_status" in row.keys() else None) or ""
+        )
+        is_buyer = bool(
+            user
+            and row["buyer_id"] is not None
+            and int(user["id"]) == int(row["buyer_id"])
+        )
+        public_ok = (ls == "approved" and ast == "live") or (
+            ast == "sold" and ls in ("approved", "sold", "archived")
+        )
+        if is_buyer and (
+            ast == "sold"
+            or deal_st
+            in (
+                "awaiting_payment",
+                "paid",
+                "inspection",
+                "completed",
+                "disputed",
+                "payment_default",
+            )
+            or (ast == "ended" and deal_st)
+        ):
+            public_ok = True
+        if not public_ok:
+            raise HTTPException(status_code=404, detail="not found")
     project = database.project_to_dict(row, include_private=private)
     with database.db() as conn:
         listed = conn.execute(
@@ -1728,6 +1811,11 @@ def get_project(
             "SELECT * FROM users WHERE id = ?", (row["owner_id"],)
         ).fetchone()
     credit = database.public_credit_summary(u) if u else None
+    try:
+        project["exposure"] = database.compute_listing_exposure_score(row, u)
+        project["exposure_score"] = project["exposure"]["score"]
+    except Exception:
+        pass
     # 전체 연락처: 판매자 본인 또는 성사 매물의 낙찰 구매자만
     reveal_contact = False
     if user and u:
@@ -2928,6 +3016,186 @@ def _can_message_project(conn, project_id: int, user_id: int) -> bool:
     return bool(bid)
 
 
+class QThreadIn(BaseModel):
+    body: str = Field(min_length=10, max_length=2000)
+
+
+class QAnswerIn(BaseModel):
+    answer: str = Field(min_length=5, max_length=4000)
+
+
+class QPurchaseIn(BaseModel):
+    units: int = Field(default=1, ge=1, le=5)
+
+
+def _q_party_row(conn, project_id: int, user: dict):
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="not found")
+    uid = int(user["id"])
+    buyer = row["buyer_id"] if "buyer_id" in row.keys() else None
+    is_seller = uid == int(row["owner_id"])
+    is_buyer = buyer is not None and uid == int(buyer)
+    if not (is_seller or is_buyer):
+        raise HTTPException(status_code=403, detail="deal parties only")
+    return row, is_seller, is_buyer
+
+
+@router.get("/projects/{project_id}/q-credits")
+def get_q_credits(project_id: int, user: dict = Depends(get_current_user)):
+    """Deal parties: remaining credits + threads. Public listing fields are on project."""
+    with database.db() as conn:
+        row, is_seller, is_buyer = _q_party_row(conn, project_id, user)
+        threads = database.list_q_threads(conn, project_id)
+        p = database.project_to_dict(row, include_private=is_seller)
+    return {
+        "ok": True,
+        "policy": database.q_credit_policy_public(),
+        "q_credits_offered": p.get("q_credits_offered"),
+        "q_credit_unit_price": p.get("q_credit_unit_price"),
+        "q_credit_sla_hours": p.get("q_credit_sla_hours"),
+        "q_credits_total": p.get("q_credits_total"),
+        "q_credits_remaining": p.get("q_credits_remaining"),
+        "q_credits_held": p.get("q_credits_held"),
+        "q_credits_purchased": p.get("q_credits_purchased"),
+        "q_window_ends_at": p.get("q_window_ends_at"),
+        "available": max(
+            0, int(p.get("q_credits_remaining") or 0) - int(p.get("q_credits_held") or 0)
+        ),
+        "is_seller": is_seller,
+        "is_buyer": is_buyer,
+        "threads": threads,
+    }
+
+
+@router.post("/projects/{project_id}/q-credits/threads")
+def create_q_thread(
+    project_id: int,
+    body: QThreadIn,
+    user: dict = Depends(get_current_user),
+):
+    with database.db() as conn:
+        row, _is_seller, is_buyer = _q_party_row(conn, project_id, user)
+        if not is_buyer:
+            raise HTTPException(status_code=403, detail="buyer only")
+        try:
+            thread = database.open_q_thread(
+                conn, row, buyer_id=int(user["id"]), body=body.body
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail={"code": "q_thread", "message": str(e)}) from e
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    return {
+        "ok": True,
+        "thread": thread,
+        "project": database.project_to_dict(row, include_private=False),
+    }
+
+
+@router.post("/projects/{project_id}/q-credits/threads/{thread_id}/answer")
+def answer_q_thread_api(
+    project_id: int,
+    thread_id: int,
+    body: QAnswerIn,
+    user: dict = Depends(get_current_user),
+):
+    with database.db() as conn:
+        row, is_seller, _ = _q_party_row(conn, project_id, user)
+        if not is_seller:
+            raise HTTPException(status_code=403, detail="seller only")
+        try:
+            thread = database.answer_q_thread(
+                conn, thread_id, seller_id=int(user["id"]), answer=body.answer
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail={"code": "q_answer", "message": str(e)}) from e
+        if int(thread.get("project_id") or 0) != int(project_id):
+            raise HTTPException(status_code=404, detail="not found")
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    return {
+        "ok": True,
+        "thread": thread,
+        "project": database.project_to_dict(row, include_private=True),
+    }
+
+
+@router.post("/projects/{project_id}/q-credits/threads/{thread_id}/cancel")
+def cancel_q_thread_api(
+    project_id: int,
+    thread_id: int,
+    user: dict = Depends(get_current_user),
+):
+    with database.db() as conn:
+        _row, _s, is_buyer = _q_party_row(conn, project_id, user)
+        if not is_buyer:
+            raise HTTPException(status_code=403, detail="buyer only")
+        try:
+            thread = database.cancel_q_thread(
+                conn, thread_id, buyer_id=int(user["id"])
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail={"code": "q_cancel", "message": str(e)}) from e
+        if int(thread.get("project_id") or 0) != int(project_id):
+            raise HTTPException(status_code=404, detail="not found")
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    return {
+        "ok": True,
+        "thread": thread,
+        "project": database.project_to_dict(row, include_private=False),
+    }
+
+
+@router.post("/projects/{project_id}/q-credits/purchase")
+def purchase_q_credits(
+    project_id: int,
+    body: QPurchaseIn | None = None,
+    user: dict = Depends(get_current_user),
+):
+    """
+    Buy add-on credits at seller-set unit price.
+    Real money: PG later. Set Q_CREDIT_PURCHASE_MOCK=1 for local/dev paid simulation.
+    """
+    body = body or QPurchaseIn()
+    mock = (os.environ.get("Q_CREDIT_PURCHASE_MOCK") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    with database.db() as conn:
+        row, _s, is_buyer = _q_party_row(conn, project_id, user)
+        if not is_buyer:
+            raise HTTPException(status_code=403, detail="buyer only")
+        try:
+            pur = database.purchase_q_credit_units(
+                conn,
+                row,
+                buyer_id=int(user["id"]),
+                units=int(body.units or 1),
+                mock_paid=mock,
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400, detail={"code": "q_purchase", "message": str(e)}
+            ) from e
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not mock and pur.get("status") == "pending_payment":
+        return {
+            "ok": True,
+            "purchase": pur,
+            "project": database.project_to_dict(row, include_private=False),
+            "code": "pg_required",
+            "message_ko": pur.get("message_ko"),
+            "policy": database.q_credit_policy_public(),
+        }
+    return {
+        "ok": True,
+        "purchase": pur,
+        "project": database.project_to_dict(row, include_private=False),
+        "policy": database.q_credit_policy_public(),
+    }
+
+
 @router.get("/projects/{project_id}/messages")
 def list_messages(project_id: int, user: dict = Depends(get_current_user)):
     with database.db() as conn:
@@ -3493,43 +3761,44 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         for f in (body.features or [])
         if isinstance(f, str) and str(f).strip()
     ][:12]
-    features = [f[:120] for f in features if len(f) >= 12]
-    if len(features) < 3:
+    # 최소 등록: 2가지·각 8자 (더 쓰면 가산). 글 실력이 아니라 “뭐 하는지”만 있으면 통과
+    features = [f[:120] for f in features if len(f) >= 8]
+    if len(features) < 2:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "features_required",
-                "message": "「이 제품이 하는 일」을 최소 3가지, 각 12자 이상 쉬운 말로 적어 주세요. (코딩 용어 불필요)",
+                "message": "「이 제품이 하는 일」을 최소 2가지, 각 8자 이상 쉬운 말로 적어 주세요. 아래 예시 칩을 눌러도 됩니다.",
             },
         )
 
     audience = (body.audience or "").strip()
-    if len(audience) < 8:
+    if len(audience) < 4:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "audience_required",
-                "message": "「누구를 위한 제품인가요?」를 8자 이상 적어 주세요.",
+                "message": "「누구를 위한 제품인가요?」를 짧게라도 적어 주세요. (예: 사장님, 학생)",
             },
         )
 
     works_now = (body.works_now or "").strip()
-    if len(works_now) < 20:
+    if len(works_now) < 10:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "works_now_required",
-                "message": "「지금 되는 것」을 데모 기준으로 20자 이상 적어 주세요.",
+                "message": "「지금 되는 것」을 10자 이상 적어 주세요. 예시 칩을 눌러 채울 수 있어요.",
             },
         )
 
     limits_note = (body.limits or "").strip()
-    if len(limits_note) < 10:
+    if len(limits_note) < 5:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "limits_required",
-                "message": "「지금 안 되는 것 · 한계」를 10자 이상 적어 주세요. 솔직할수록 분쟁이 줄어듭니다.",
+                "message": "「지금 안 되는 것 · 한계」를 짧게라도 적어 주세요. (예: 결제 없음)",
             },
         )
 
@@ -3553,12 +3822,12 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         )
 
     story = body.story.strip()
-    if len(story) < 20:
+    if len(story) < 10:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "story_too_short",
-                "message": "「왜 팔나요?」를 20자 이상 적어 주세요. 기능 설명은 위 칸에, 여기엔 배경만.",
+                "message": "「왜 팔나요?」를 10자 이상 적어 주세요. (예: 시간 없어서 넘깁니다)",
             },
         )
 
@@ -3645,7 +3914,13 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             },
         )
     contact = (body.contact or user["email"]).strip()
-    ends = _auction_end_iso(int(body.auction_days or 7))
+    auction_days = int(body.auction_days or 7)
+    auction_days = max(1, min(auction_days, 30))
+    q_offered = database.normalize_q_credits_offered(body.q_credits_offered)
+    q_unit = database.normalize_q_credit_unit_price(body.q_credit_unit_price)
+    q_sla = database.normalize_q_credit_sla_hours(body.q_credit_sla_hours)
+    # ends_at is provisional until approve; start_auction_round refreshes on go-live
+    ends = _auction_end_iso(auction_days)
 
     # buy_now is optional; if set must be within range and >= start
     buy_now = body.price_buy_now
@@ -3686,11 +3961,16 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
               acquisition, acquisition_note,
               price_start, price_buy_now, contact, listing_status,
               price_current, bid_count, min_increment, auction_ends_at, auction_status,
+              auction_days_intended, round_number, round_started_at,
+              q_credits_offered, q_credit_unit_price, q_credit_sla_hours,
               license_note, seller_attest_json,
               created_at, updated_at
             ) VALUES (
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, 'pending', ?, 0, ?, ?, 'live', ?, ?, ?, ?
+              ?, ?, ?, 'pending', ?, 0, ?, ?, 'pending',
+              ?, 0, NULL,
+              ?, ?, ?,
+              ?, ?, ?, ?
             )
             """,
             (
@@ -3716,6 +3996,10 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 start,
                 min_inc,
                 ends,
+                auction_days,
+                q_offered,
+                q_unit,
+                q_sla,
                 license_note[:200],
                 json.dumps(attest, ensure_ascii=False),
                 now,
@@ -3733,9 +4017,13 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
             "min_increment": min_inc,
             "band": price_meta["band"],
         },
-        "note": "등록됨 · 운영 형식 검수(게시 허용) 후 공개 마켓·입찰이 열립니다. 검수는 보통 1~2영업일 내 반영·품질 보증 아님.",
+        "note": (
+            "등록됨 · 운영 형식 검수 후 이번 경매 라운드에 공개됩니다. "
+            "유찰 시 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
+            "검수는 보통 1~2영업일 · 품질 보증 아님."
+        ),
         "review_sla": {
-            "public_after": "approved",
+            "public_after": "approved_live_round",
             "typical": "1–2 business days",
             "message_ko": "등록 즉시 공개되지 않습니다. 운영 형식 검수 후 공개되며, 보통 1~2영업일 안에 게시 허용·보류·반려가 반영됩니다. 검수는 품질·가치 보증이 아닙니다.",
         },
@@ -3743,6 +4031,253 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
     if price_meta.get("soft_high_message"):
         out["warning"] = price_meta["soft_high_message"]
     return out
+
+
+class RelistIn(BaseModel):
+    """Seller re-enters the auction: requires re-review; joins back of queue on approve."""
+
+    auction_days: int = Field(default=7, ge=1, le=30)
+    # Optional updates before re-review (empty = keep existing)
+    title: str | None = Field(default=None, max_length=80)
+    one_liner: str | None = Field(default=None, max_length=120)
+    story: str | None = Field(default=None, max_length=2000)
+    demo: str | None = Field(default=None, max_length=1000)
+    demo_images: list[str] | None = Field(default=None, max_length=5)
+    features: list[str] | None = Field(default=None, max_length=12)
+    audience: str | None = Field(default=None, max_length=120)
+    works_now: str | None = Field(default=None, max_length=500)
+    limits: str | None = Field(default=None, max_length=500)
+    keywords: list[str] | None = Field(default=None, max_length=10)
+    price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    price_buy_now: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    license_note: str | None = Field(default=None, max_length=200)
+    attest_works: bool = False
+    attest_features: bool = False
+    attest_license: bool = False
+    attest_rights: bool = False
+    attest_transfer: bool = False
+    attest_shots: bool = False
+
+
+@router.post("/projects/{project_id}/relist")
+def relist_project(
+    project_id: int,
+    body: RelistIn,
+    user: dict = Depends(get_current_user),
+):
+    """
+    After a round ends (unsold/archived) or is held/rejected:
+    seller submits again → pending re-review → on approve, new round at back of queue.
+    """
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    _require_trust(user, "list")
+    if user.get("is_suspended"):
+        raise HTTPException(status_code=403, detail={"code": "account_suspended", "message": "정지된 계정입니다."})
+    if not all(
+        [
+            body.attest_works,
+            body.attest_features,
+            body.attest_license,
+            body.attest_rights,
+            body.attest_transfer,
+        ]
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "attest_required",
+                "message": "재등록 시에도 동작·기능·권리·양도 확인에 모두 동의해 주세요.",
+            },
+        )
+
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        if int(row["owner_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="not your listing")
+        ast = (row["auction_status"] or "") or ""
+        ls = (row["listing_status"] or "") or ""
+        if ast == "sold" or (row["sold_at"] if "sold_at" in row.keys() else None):
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "already_sold", "message": "성사된 매물은 재등록할 수 없습니다."},
+            )
+        if ls == "approved" and ast == "live":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "still_live",
+                    "message": "진행 중인 라운드입니다. 마감 후 재등록할 수 있습니다.",
+                },
+            )
+        if ls == "pending":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "already_pending",
+                    "message": "이미 검수 대기 중입니다.",
+                },
+            )
+        # Allowed: archived / ended / rejected / hold / paused
+        allowed = ls in ("archived", "rejected", "hold") or ast in ("ended", "paused", "pending")
+        if not allowed and not (ls == "approved" and ast == "ended"):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "not_relistable",
+                    "message": "지금 상태에서는 재등록할 수 없습니다.",
+                },
+            )
+
+        days = max(1, min(int(body.auction_days or 7), 30))
+        now = database._now()
+        # Optional field patches
+        title = (body.title if body.title is not None else row["title"] or "").strip()
+        one_liner = (
+            body.one_liner if body.one_liner is not None else row["one_liner"] or ""
+        ).strip()
+        story = (body.story if body.story is not None else row["story"] or "").strip()
+        demo = body.demo if body.demo is not None else (row["demo"] or "")
+        if body.demo_images is not None:
+            demo_images = [
+                u
+                for u in (body.demo_images or [])
+                if isinstance(u, str) and u.startswith("/media/")
+            ][:5]
+        else:
+            demo_images = database._parse_demo_images(row)
+        if body.features is not None:
+            features = [str(f).strip() for f in body.features if str(f).strip()][:12]
+        else:
+            try:
+                features = json.loads(row["features_json"] or "[]")
+            except Exception:
+                features = []
+        audience = (
+            body.audience if body.audience is not None else (row["audience"] if "audience" in row.keys() else "") or ""
+        )
+        works_now = (
+            body.works_now
+            if body.works_now is not None
+            else (row["works_now"] if "works_now" in row.keys() else "") or ""
+        )
+        limits_note = (
+            body.limits
+            if body.limits is not None
+            else (row["limits_note"] if "limits_note" in row.keys() else "") or ""
+        )
+        if body.keywords is not None:
+            keywords = kw_mod.normalize_keywords(body.keywords)
+        else:
+            try:
+                keywords = json.loads(row["keywords_json"] or "[]")
+            except Exception:
+                keywords = []
+        status = (row["status"] or "prototype") or "prototype"
+        start = int(row["price_start"] or 0)
+        if body.price_start is not None:
+            try:
+                start, _meta = price_policy.validate_start_price(status, body.price_start)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail={"code": "start_price_invalid", "message": str(e)}) from e
+        buy_now = row["price_buy_now"] if "price_buy_now" in row.keys() else None
+        if body.price_buy_now is not None:
+            buy_now = int(body.price_buy_now)
+            if buy_now < start:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "buy_now_too_low", "message": "즉시구매가는 시작가 이상이어야 합니다."},
+                )
+        license_note = (
+            body.license_note
+            if body.license_note is not None
+            else (row["license_note"] if "license_note" in row.keys() else "") or ""
+        )
+        if not title or not one_liner or not story:
+            raise HTTPException(status_code=400, detail="title, one_liner, story required")
+        if demo_images and not body.attest_shots:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "attest_shots_required",
+                    "message": "스크린샷이 있으면 실제 제품 화면 확인에 동의해 주세요.",
+                },
+            )
+
+        attest = {
+            "works": True,
+            "features": True,
+            "license": True,
+            "rights": True,
+            "transfer": True,
+            "shots": bool(demo_images and body.attest_shots),
+            "at": now,
+            "relist": True,
+        }
+        ends = _auction_end_iso(days)
+        conn.execute(
+            """
+            UPDATE projects SET
+              title = ?, one_liner = ?, story = ?, demo = ?, demo_images_json = ?,
+              features_json = ?, audience = ?, works_now = ?, limits_note = ?,
+              keywords_json = ?,
+              price_start = ?, price_buy_now = ?, price_current = ?,
+              license_note = ?, seller_attest_json = ?,
+              listing_status = 'pending',
+              auction_status = 'pending',
+              auction_days_intended = ?,
+              auction_ends_at = ?,
+              boost_until = NULL,
+              boost_tier = 0,
+              boost_product = NULL,
+              paused_reason = '',
+              deal_note = '재등록 · 재검수 대기',
+              review_note = '',
+              updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                title[:80],
+                one_liner[:120],
+                story[:2000],
+                (demo or "")[:1000],
+                json.dumps(demo_images, ensure_ascii=False),
+                json.dumps(features, ensure_ascii=False),
+                (audience or "")[:120],
+                (works_now or "")[:500],
+                (limits_note or "")[:500],
+                json.dumps(keywords, ensure_ascii=False),
+                start,
+                buy_now,
+                start,
+                (license_note or "")[:200],
+                json.dumps(attest, ensure_ascii=False),
+                days,
+                ends,
+                now,
+                project_id,
+            ),
+        )
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        database.notify(
+            conn,
+            int(user["id"]),
+            "재등록 접수",
+            f"「{title}」 재등록이 접수되었습니다. 재검수 후 새 라운드로 게시되며 줄 맨 뒤부터 시작합니다.",
+            "/app/#mine",
+        )
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=True),
+        "note": (
+            "재등록 접수 · 재검수 후 이번 라운드에 공개됩니다. "
+            "승인 시 공개 목록 후순위(줄 맨 뒤)부터 시작합니다. "
+            "오픈마켓식 끌올·도배 상위 노출이 아닙니다."
+        ),
+    }
 
 
 # --- admin review (ops checklist — not code review) ---
@@ -3865,33 +4400,63 @@ def admin_review_project(
         if not row:
             raise HTTPException(status_code=404, detail="not found")
         demo_ok = 1 if checklist.get("demo_ok") else 0
-        conn.execute(
-            """
-            UPDATE projects
-            SET listing_status = ?, review_note = ?, reviewed_at = ?,
-                review_checklist_json = ?, demo_verified = CASE WHEN ? = 'approved' THEN ? ELSE demo_verified END,
-                updated_at = ?
-            WHERE id = ?
-            """,
-            (
-                new_status,
-                (body.note or "").strip(),
-                now,
-                json.dumps(checklist, ensure_ascii=False),
-                new_status,
-                demo_ok,
-                now,
-                project_id,
-            ),
-        )
-        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if action == "approve":
+            # Start a fresh public auction round (queue position = round_started_at now)
+            conn.execute(
+                """
+                UPDATE projects
+                SET review_note = ?, review_checklist_json = ?, demo_verified = ?,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    (body.note or "").strip(),
+                    json.dumps(checklist, ensure_ascii=False),
+                    demo_ok,
+                    now,
+                    project_id,
+                ),
+            )
+            days = int(row["auction_days_intended"] or 7) if "auction_days_intended" in row.keys() else 7
+            row = database.start_auction_round(
+                conn, project_id, auction_days=days, clear_boost=True
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE projects
+                SET listing_status = ?, review_note = ?, reviewed_at = ?,
+                    review_checklist_json = ?, demo_verified = CASE WHEN ? = 'approved' THEN ? ELSE demo_verified END,
+                    auction_status = CASE
+                      WHEN ? IN ('reject', 'hold') THEN COALESCE(auction_status, 'pending')
+                      ELSE auction_status
+                    END,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    new_status,
+                    (body.note or "").strip(),
+                    now,
+                    json.dumps(checklist, ensure_ascii=False),
+                    new_status,
+                    demo_ok,
+                    action,
+                    now,
+                    project_id,
+                ),
+            )
+            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         titles = {
-            "approve": "매물 게시 허용",
+            "approve": "이번 라운드 게시",
             "reject": "매물 반려",
             "hold": "매물 보류",
         }
         bodies = {
-            "approve": f"「{row['title']}」이(가) 공개 마켓에 올라갔습니다.",
+            "approve": (
+                f"「{row['title']}」이(가) 이번 경매 라운드에 공개되었습니다. "
+                f"마감 후 유찰되면 목록에서 내려갑니다."
+            ),
             "reject": f"「{row['title']}」이(가) 반려되었습니다. {body.note or ''}".strip(),
             "hold": f"「{row['title']}」이(가) 보류되었습니다. {body.note or ''}".strip(),
         }
@@ -4011,36 +4576,98 @@ def admin_resolve_report(
     return {"ok": True, "report": database.report_to_dict(row)}
 
 
+class AdminResumeIn(BaseModel):
+    """Re-open policy: default re-queues for review; force starts a new live round (back of queue)."""
+
+    auction_days: int = Field(default=7, ge=1, le=30)
+    force_live: bool = False
+    note: str = Field(default="", max_length=500)
+
+
 @router.post("/admin/projects/{project_id}/resume-auction")
-def admin_resume_auction(project_id: int, _: None = Depends(require_admin)):
+def admin_resume_auction(
+    project_id: int,
+    body: AdminResumeIn | None = None,
+    _: None = Depends(require_admin),
+):
+    body = body or AdminResumeIn()
     with database.db() as conn:
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
-        if (row["auction_status"] or "") not in ("paused", "ended"):
-            raise HTTPException(status_code=400, detail="auction is not paused/ended")
-        if (row["auction_status"] or "") == "sold":
+        ast = (row["auction_status"] or "") or ""
+        if ast == "sold" or (row["sold_at"] if "sold_at" in row.keys() else None):
             raise HTTPException(status_code=400, detail="already sold")
+        if ast not in ("paused", "ended", "pending") and (row["listing_status"] or "") not in (
+            "archived",
+            "hold",
+            "rejected",
+            "pending",
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="auction is not paused/ended/archived — nothing to resume",
+            )
+        days = int(body.auction_days or 7)
+        if body.force_live:
+            # Emergency ops: new round now, back of queue (round_started_at = now)
+            conn.execute(
+                """
+                UPDATE projects SET auction_days_intended = ?, review_note = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (days, (body.note or "admin force live round").strip()[:500], database._now(), project_id),
+            )
+            row = database.start_auction_round(
+                conn, project_id, auction_days=days, clear_boost=True
+            )
+            database.notify(
+                conn,
+                int(row["owner_id"]),
+                "새 라운드 강제 게시",
+                f"「{row['title']}」 운영자가 새 경매 라운드를 열었습니다. (후순위 정렬)",
+                f"/project.html?id={project_id}",
+            )
+            return {
+                "ok": True,
+                "mode": "force_live",
+                "project": database.project_to_dict(row, include_private=True),
+            }
+        # Default: re-queue for review (same discipline as seller relist)
         conn.execute(
             """
             UPDATE projects
-            SET auction_status = 'live',
-                listing_status = CASE WHEN listing_status = 'hold' THEN 'approved' ELSE listing_status END,
+            SET listing_status = 'pending',
+                auction_status = 'pending',
+                auction_days_intended = ?,
                 paused_reason = '',
+                review_note = ?,
+                boost_until = NULL,
+                boost_tier = 0,
                 updated_at = ?
             WHERE id = ?
             """,
-            (database._now(), project_id),
+            (
+                days,
+                (body.note or "재개 요청 · 재검수 대기").strip()[:500],
+                database._now(),
+                project_id,
+            ),
         )
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         database.notify(
             conn,
             int(row["owner_id"]),
-            "경매 재개",
-            f"「{row['title']}」 경매가 운영자에 의해 다시 열렸습니다.",
-            f"/project.html?id={project_id}",
+            "재검수 대기",
+            f"「{row['title']}」 다시 올리기 위해 운영 검수 대기 중입니다.",
+            "/app/#mine",
         )
-    return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
+    return {
+        "ok": True,
+        "mode": "pending_review",
+        "project": database.project_to_dict(row, include_private=True),
+        "note": "재검수 후 승인 시 새 라운드로 게시되며 줄 맨 뒤(후순위)부터 시작합니다.",
+    }
 
 
 def _admin_user_row(conn: Any, row: Any, *, full: bool = False) -> dict[str, Any]:

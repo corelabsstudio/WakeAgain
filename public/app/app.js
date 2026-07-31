@@ -692,16 +692,16 @@
       } else if (ls === "rejected") {
         badgeText = t("app.badge_rejected", "반려");
         badgeCls = "is-bad";
+      } else if (ls === "archived" || aStatus === "ended") {
+        badgeText = t("app.badge_archived", "라운드 종료");
+        badgeCls = "is-wait";
       } else if (aStatus === "sold") {
         badgeText = t("app.badge_sold", "성사");
         badgeCls = "is-sold";
-      } else if (aStatus === "ended") {
-        badgeText = t("app.badge_ended", "종료");
-        badgeCls = "is-wait";
       } else if (bids > 0) {
         badgeText = t("app.badge_live", "입찰 중");
-      } else if (ls === "approved") {
-        badgeText = t("app.badge_open", "공개");
+      } else if (ls === "approved" && aStatus === "live") {
+        badgeText = t("app.badge_open", "이번 라운드");
       }
       badge.textContent = badgeText;
       if (badgeCls) badge.classList.add(badgeCls);
@@ -720,9 +720,25 @@
           cur != null ? "₩" + Number(cur).toLocaleString("ko-KR") : "—";
       }
 
+      const qOff = p.q_credits_offered != null ? Number(p.q_credits_offered) : null;
+      const qPrice = p.q_credit_unit_price != null ? Number(p.q_credit_unit_price) : 0;
+      let qBit = "";
+      if (qOff != null) {
+        qBit =
+          t("app.q_included", "헬프티켓 {n}회", { n: qOff }) +
+          (qPrice > 0
+            ? t("app.q_addon", " · 추가 ₩{p}/회", { p: qPrice.toLocaleString("ko-KR") })
+            : "");
+      }
+      const exp =
+        p.exposure_score != null
+          ? t("app.exposure", "가산 {n}", { n: p.exposure_score })
+          : "";
       el.querySelector(".p-meta").textContent = [
         typeBit,
         statusBit,
+        qBit,
+        exp,
         bids > 0
           ? t("app.bids_n", "입찰자 {n}명", { n: bids })
           : t("app.bids_none", "아직 입찰자 없음"),
@@ -734,16 +750,81 @@
       if (ls === "pending") liveText = t("app.live_pending", "검토 중 · 아직 비공개");
       else if (ls === "hold") liveText = t("app.live_hold", "잠깐 보류");
       else if (ls === "rejected") liveText = t("app.live_reject", "다시 고쳐 주세요");
+      else if (ls === "archived" || aStatus === "ended")
+        liveText = t(
+          "app.live_archived",
+          "이번 라운드 종료 · 목록에서 내려감 · 재등록 시 재검수·후순위"
+        );
       else if (aStatus === "sold") liveText = t("app.live_sold", "팔렸어요");
-      else if (aStatus === "ended") liveText = t("app.live_ended", "끝났어요");
-      else if (ls === "approved") liveText = bids > 0 ? t("app.badge_live", "입찰 중") : t("app.live_wait", "첫 입찰 대기");
+      else if (ls === "approved" && aStatus === "live")
+        liveText = bids > 0 ? t("app.badge_live", "입찰 중") : t("app.live_wait", "첫 입찰 대기");
       el.querySelector(".p-live").textContent = liveText;
+
+      // Mine feed: re-list after round ends (re-review, back of queue)
+      if (feed === "mine" && p.can_relist) {
+        const actions = document.createElement("div");
+        actions.className = "p-card-actions";
+        actions.style.marginTop = "8px";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-sm btn-primary";
+        btn.textContent = t("app.btn_relist", "다시 올리기 (재검수)");
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          relistListing(p);
+        });
+        actions.appendChild(btn);
+        el.appendChild(actions);
+      }
 
       el.addEventListener("click", () => {
         goPage("/project.html?id=" + encodeURIComponent(p.id));
       });
       list.appendChild(el);
     });
+  }
+
+  async function relistListing(p) {
+    if (!p || !p.id) return;
+    const ok = window.confirm(
+      t(
+        "app.relist_confirm",
+        "「{title}」을(를) 다시 올릴까요?\n\n· 운영 재검수가 필요합니다\n· 승인되면 이번 라운드 공개 목록 후순위(줄 맨 뒤)부터 시작합니다\n· 끌올·도배로 상위 고정되지 않습니다",
+        { title: p.title || "" }
+      )
+    );
+    if (!ok) return;
+    try {
+      const daysRaw = window.prompt(
+        t("app.relist_days_prompt", "경매 일수 (1–30, 기본 7)"),
+        "7"
+      );
+      let days = parseInt(daysRaw == null || daysRaw === "" ? "7" : daysRaw, 10);
+      if (!Number.isFinite(days)) days = 7;
+      days = Math.max(1, Math.min(30, days));
+      const res = await api.relistProject(p.id, {
+        auction_days: days,
+        attest_works: true,
+        attest_features: true,
+        attest_license: true,
+        attest_rights: true,
+        attest_transfer: true,
+        attest_shots: true,
+      });
+      window.alert(
+        (res && res.note) ||
+          t("app.relist_ok", "재등록 접수되었습니다. 재검수 후 공개됩니다.")
+      );
+      feed = "mine";
+      loadProjects(true);
+    } catch (err) {
+      const msg =
+        (err && err.detail && (err.detail.message || err.detail)) ||
+        (err && err.message) ||
+        String(err);
+      window.alert(t("app.relist_fail", "재등록 실패") + "\n" + msg);
+    }
   }
 
   async function loadProjects(reset) {
@@ -1935,7 +2016,7 @@
 
   /** Uploaded demo screenshot public URLs (max 5). */
   let demoImageUrls = [];
-  const DEMO_MIN = 2;
+  const DEMO_MIN = 1; // 최소 등록 1장 · 더 올리면 가산
   const DEMO_MAX = 5;
   const DEMO_MAX_EDGE = 1280;
   const DEMO_JPEG_Q = 0.82;
@@ -2242,7 +2323,7 @@
     return String(raw || "")
       .split(/\r?\n/)
       .map((line) => line.replace(/^[\s·•\-\*]+/, "").trim())
-      .filter((line) => line.length >= 12)
+      .filter((line) => line.length >= 8)
       .slice(0, 12);
   }
 
@@ -2286,41 +2367,41 @@
     const transfer = $("pAttestTransfer");
     const licenseNote = $("pLicense") ? $("pLicense").value.trim() : "";
     const one = $("pOne") ? $("pOne").value.trim() : "";
-    if (one.length < 15) {
-      showErr($("projErr"), "한 줄 소개를 15자 이상 적어 주세요. 제품이 뭐 하는지 한 문장으로.");
+    if (one.length < 10) {
+      showErr($("projErr"), "한 줄 소개를 짧게라도 적어 주세요. (최소 10자 · 뭐 하는 제품인지)");
       if ($("pOne")) $("pOne").focus();
       return;
     }
     const features = parseFeatureLines($("pFeatures") ? $("pFeatures").value : "");
-    if (features.length < 3) {
+    if (features.length < 2) {
       showErr(
         $("projErr"),
-        "「이 제품이 하는 일」을 최소 3줄, 각 12자 이상 적어 주세요. 구매자가 화면에서 뭘 할 수 있는지로."
+        "「하는 일」을 최소 2줄, 각 8자 이상 적어 주세요. (더 쓰면 목록 가산 ↑)"
       );
       if ($("pFeatures")) $("pFeatures").focus();
       return;
     }
     const audience = $("pAudience") ? $("pAudience").value.trim() : "";
-    if (audience.length < 8) {
-      showErr($("projErr"), "「누구를 위한 제품인가요?」를 8자 이상 적어 주세요.");
+    if (audience.length < 4) {
+      showErr($("projErr"), "「누구를 위한 제품」을 짧게라도 적어 주세요. (예: 사장님)");
       if ($("pAudience")) $("pAudience").focus();
       return;
     }
     const worksNow = $("pWorksNow") ? $("pWorksNow").value.trim() : "";
-    if (worksNow.length < 20) {
-      showErr($("projErr"), "「지금 되는 것」을 데모 기준으로 20자 이상 적어 주세요.");
+    if (worksNow.length < 10) {
+      showErr($("projErr"), "「지금 되는 것」을 10자 이상 적어 주세요.");
       if ($("pWorksNow")) $("pWorksNow").focus();
       return;
     }
     const limits = $("pLimits") ? $("pLimits").value.trim() : "";
-    if (limits.length < 10) {
-      showErr($("projErr"), "「지금 안 되는 것 · 한계」를 10자 이상 적어 주세요.");
+    if (limits.length < 5) {
+      showErr($("projErr"), "「한계」를 짧게라도 적어 주세요. (예: 결제 없음)");
       if ($("pLimits")) $("pLimits").focus();
       return;
     }
     const story = $("pStory") ? $("pStory").value.trim() : "";
-    if (story.length < 20) {
-      showErr($("projErr"), "「왜 팔나요?」를 20자 이상 적어 주세요. 기능은 위 칸에, 여기엔 배경만.");
+    if (story.length < 10) {
+      showErr($("projErr"), "「왜 팔나요?」를 10자 이상 적어 주세요.");
       if ($("pStory")) $("pStory").focus();
       return;
     }
@@ -2479,9 +2560,24 @@
       attest_rights: true,
       attest_transfer: true,
       attest_shots: !!(demoImageUrls.length && $("pAttestShots") && $("pAttestShots").checked),
+      q_credits_offered: $("pQCredits")
+        ? Math.max(1, Math.min(3, parseInt($("pQCredits").value || "1", 10) || 1))
+        : 1,
+      q_credit_unit_price: $("pQUnitPrice")
+        ? Math.max(0, Math.min(100000, parseInt($("pQUnitPrice").value || "0", 10) || 0))
+        : 0,
+      q_credit_sla_hours: $("pQSla")
+        ? parseInt($("pQSla").value || "48", 10) || 48
+        : 48,
     };
     if (buyNowRaw != null && buyNowRaw > 0) {
       payload.price_buy_now = buyNowRaw;
+    }
+    // 추가 판매 시 하한 5,000 (서버도 clamp)
+    if (payload.q_credit_unit_price > 0 && payload.q_credit_unit_price < 5000) {
+      showErr($("projErr"), "추가 헬프티켓 1회 가격은 0(판매 안 함) 또는 5,000원 이상으로 적어 주세요.");
+      if ($("pQUnitPrice")) $("pQUnitPrice").focus();
+      return;
     }
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;

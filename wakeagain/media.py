@@ -21,7 +21,7 @@ DEMOS_ROOT = UPLOAD_ROOT / "demos"
 
 # Hard server limits (client should resize smaller first)
 MAX_IMAGE_BYTES = int(1.5 * 1024 * 1024)  # 1.5 MB
-MIN_IMAGES_PER_LISTING = 2
+MIN_IMAGES_PER_LISTING = 1  # 최소 등록: 1장 (더 올리면 가산)
 MAX_IMAGES_PER_LISTING = 5
 MAX_UPLOADS_PER_REQUEST = 5
 

@@ -534,6 +534,47 @@
     async createProject(payload) {
       return request("/api/v1/projects", { method: "POST", body: JSON.stringify(payload) });
     },
+    async relistProject(projectId, payload) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/relist", {
+        method: "POST",
+        body: JSON.stringify(payload || {}),
+      });
+    },
+    async getQCredits(projectId) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits");
+    },
+    async createQThread(projectId, body) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits/threads", {
+        method: "POST",
+        body: JSON.stringify({ body: body }),
+      });
+    },
+    async answerQThread(projectId, threadId, answer) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/q-credits/threads/" +
+          encodeURIComponent(threadId) +
+          "/answer",
+        { method: "POST", body: JSON.stringify({ answer: answer }) }
+      );
+    },
+    async cancelQThread(projectId, threadId) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/q-credits/threads/" +
+          encodeURIComponent(threadId) +
+          "/cancel",
+        { method: "POST", body: "{}" }
+      );
+    },
+    async purchaseQCredits(projectId, units) {
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits/purchase",
+        { method: "POST", body: JSON.stringify({ units: units || 1 }) }
+      );
+    },
     /**
      * Upload one demo screenshot. Pass a Blob/File (client-resized preferred).
      * Returns { ok, url, bytes, ext, limits }.

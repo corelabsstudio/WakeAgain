@@ -161,7 +161,7 @@
   </style>
   <link rel="stylesheet" href="/styles.css?v=20260729-deep-qa2" />
   <link rel="stylesheet" href="/ux9.css?v=20260729-deep-qa2" />
-<link rel="stylesheet" href="/app/app.css?v=20260729-deep-qa2" />
+<link rel="stylesheet" href="/app/app.css?v=20260730-qa-easy-path" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -573,6 +573,54 @@
       </div>
       <p class="auth-gate-note muted fine" id="authGateNote" hidden></p>
       <p class="trust-banner" id="trustBanner" hidden></p>
+
+      <!-- 구매 쉽게: 모바일 작은 아이콘 4칸 -->
+      <aside class="buy-how" aria-label="사는 법 한눈에">
+        <div class="buy-how-top">
+          <span class="wa-icon-sm" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v8M16 21v1" stroke="#e8c56a" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <strong>사는 법, 어렵지 않아요</strong>
+            <p>카드 눌러 보기 → 가격 쓰기 → 낙찰되면 입금·받기. 체크는 사기 예방용이에요.</p>
+          </div>
+        </div>
+        <ul class="buy-how-grid">
+          <li>
+            <span class="wa-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><rect x="6" y="5" width="20" height="22" rx="2" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M10 12h12M10 17h12M10 22h8" stroke="#e8c56a" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <strong>1. 보기</strong>
+            <em>카드 탭</em>
+          </li>
+          <li>
+            <span class="wa-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="M8 22l6-12h4l6 12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M12 16h8" stroke="#e8c56a" stroke-width="2"/></svg>
+            </span>
+            <strong>2. 가격 쓰기</strong>
+            <em>입찰</em>
+          </li>
+          <li>
+            <span class="wa-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <strong>3. 빨리 입금</strong>
+            <em>낙찰 후</em>
+          </li>
+          <li>
+            <span class="wa-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 32 32"><path d="M8 16l5 5 11-11" fill="none" stroke="#86efac" stroke-width="2.4" stroke-linecap="round"/></svg>
+            </span>
+            <strong>4. 받기</strong>
+            <em>이전·인수</em>
+          </li>
+        </ul>
+        <details class="buy-how-fold">
+          <summary>수수료·안전 (펼치기)</summary>
+          <p>구매자는 <strong>합의가만</strong> · 판매자 수수료 10%. 입금 전 이전 금지. 외부 카톡·계좌 직거래 유도는 위험해요. 사이트 절차만 쓰세요.</p>
+        </details>
+      </aside>
+
       <div class="seg">
         <button type="button" class="seg-btn is-on" data-feed="all">전체</button>
         <button type="button" class="seg-btn" data-feed="mine">내가 올린 것</button>
@@ -654,96 +702,196 @@
     <section id="viewCreate" class="app-panel" hidden>
       <button type="button" class="text-link back" id="btnBackList">← 목록으로</button>
       <h1>내 프로젝트 올리기</h1>
-      <p class="lede">코딩을 몰라도 됩니다. 구매자가 <strong>「이게 뭐 하는 제품인지」</strong> 알 수 있게만 적어 주세요. Lv2(이름·휴대폰) 확인 계정만 · 운영자 형식 검수 후 공개 · 연락처는 피드에 안 나갑니다.</p>
-      <div class="review-sla-banner" role="note">
-        <strong>검토 안내</strong>
-        <p>올리자마자 바로 공개되지 않아요. 운영자가 <strong>형식 검수</strong> 후, 보통 <strong>1~2일</strong> 안에 게시 허용·보류·반려가 나옵니다. 통과 조건: <strong>기능 설명 구체 · 데모 확인 가능 · 팔 권리·양도 조건 명확</strong>.</p>
-      </div>
-      <div class="fee-notice-banner" role="note">
-        <strong>수수료 안내 (올리기 전 확인)</strong>
-        <ul>
-          <li>프로젝트 <strong>올리는 비용 무료</strong> · 관심·가격 쓰기도 무료</li>
-          <li>거래가 <strong>성사</strong>되면 <strong>파는 사람</strong>에게 거래 금액의 <strong>10%</strong> 수수료</li>
-          <li><strong>구매자</strong>는 합의 가격만 · 구매자 추가 수수료 없음</li>
-          <li>안 팔리면 수수료 없음 · 자세한 내용
-            <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">이용약관 제13조</a>
-          </li>
-        </ul>
-        <p class="fee-purpose">거래 수수료는 모든 유저분들의 공정하고 투명한 거래를 위하여, 사이트 발전에 사용하겠습니다.</p>
-      </div>
-      <div class="safety-notice" role="note">
-        <span class="safety-notice-title">사기 금지 · 플랫폼 면책</span>
-        <ul>
-          <li>허위 매물·남의 자산 판매·기망은 즉시 정지·신고 대상입니다.</li>
-          <li>이해·이전할 수 없는 자산, 남 명의 계정·코드는 올리지 마세요.</li>
-          <li>WakeAgain은 중개 장터입니다. 품질·사기 피해의 1차 책임은 <strong>당사자</strong>에게 있습니다.</li>
-          <li><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 어기면 본인 책임.</li>
-          <li>운영 형식 검수·게시 허용은 형식 확인입니다. 약관
-            <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">제21조</a>
-          </li>
-        </ul>
-      </div>
-      <div class="review-sla-banner" role="note" style="border-color:rgba(52,211,153,0.3);background:rgba(52,211,153,0.07)">
-        <strong style="color:#a7f3d0">공개할 것 · 숨길 것 · 이전 방법</strong>
-        <p>
-          <strong>공개:</strong> 문제 정의 · 기능 · 데모·화면 · 자산 종류 · 양도 조건 요약.
-          <strong>숨김(입금 확인 후 쪽지):</strong> 소스·GitHub · DB·API 키 · 호스팅·도메인 이관.
-          이전 예: GitHub 소유권 이전 또는 ZIP 전달 · 호스팅 팀 초대/재배포 · 도메인 소유자 변경 · 키는 재발급 권장 · README 동봉.
-          사이트 안 파일 업로드 다운로드가 아닙니다.
-        </p>
-      </div>
-      <form id="formProject" class="form-card app-form">
-        <label for="pTitle">제목 *</label>
-        <input id="pTitle" required maxlength="80" placeholder="제품 이름 (기능은 아래「하는 일」에)" />
-        <p class="price-guide muted fine">이름만으로 끝내지 마세요. 기능은 아래 칸에 구체적으로 적습니다.</p>
-        <label for="pOne">한 줄 소개 *</label>
-        <input id="pOne" required maxlength="120" minlength="15" placeholder="예: 소상공인 예약·고객 문자를 한곳에서 보는 웹앱" />
+      <p class="lede">어렵지 않아요. <strong>최소만 채우면 올릴 수 있고</strong>, 더 채우면 목록 위에 더 잘 보여요. 체크 몇 개는 사기 예방용이라 번거로울 수 있어요.</p>
 
-        <label for="pFeatures">이 제품이 하는 일 * <span class="muted fine">(최소 3줄)</span></label>
-        <p class="price-guide muted fine">
-          구매자가 코딩을 몰라도 이해하게, <strong>화면·버튼 기준</strong>으로 적어 주세요. 한 줄에 하나씩.
-        </p>
+      <!-- 최소 vs 잘 보이기: 작은 아이콘 2칸 -->
+      <ul class="easy-path-grid" aria-label="올리기 두 가지 길">
+        <li class="easy-path-card is-min">
+          <span class="wa-icon-sm" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#86efac" stroke-width="2"/><path d="M11 16l3 3 7-7" fill="none" stroke="#86efac" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <strong>최소로 올리기</strong>
+            <span>이름 · 뭐 하는지 2줄 · 화면 1장 · 헬프티켓 1 · 체크</span>
+          </div>
+        </li>
+        <li class="easy-path-card is-boost">
+          <span class="wa-icon-sm" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="M16 4l2.5 7.5H26l-6 4.5 2.3 7.5L16 19.5 9.7 23.5 12 16 6 11.5h7.5z" fill="#e8c56a"/></svg>
+          </span>
+          <div>
+            <strong>더 잘 보이게</strong>
+            <span>설명 길게 · 화면 여러 장 · 헬프티켓 2~3 → 가산점 ↑</span>
+          </div>
+        </li>
+      </ul>
+
+      <details class="easy-fold">
+        <summary>검토·수수료·사기 예방 안내 <span class="muted fine">(번거로움 · 펼치기)</span></summary>
+        <div class="easy-fold-body">
+          <p><strong>검토</strong> — 바로 공개 아님. 형식 검수 보통 1~2일. 기능 설명·화면·팔 권리만 보면 됩니다.</p>
+          <p><strong>수수료</strong> — 올리기 무료. 성사 시에만 판매자 10%. 구매자는 합의가만.</p>
+          <p><strong>사기 예방</strong> — 허위·남 자산 금지. 입금 전 이전 금지. 중개 장터라 1차 책임은 당사자.</p>
+          <p><strong>공개/숨김</strong> — 공개: 기능·화면·자산 종류. 숨김(입금 후 쪽지): 소스·키·이관 정보.</p>
+          <p class="muted fine"><a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">이용약관</a></p>
+        </div>
+      </details>
+
+      <form id="formProject" class="form-card app-form">
+        <!-- 가산점 안내: 모바일 우선 · 작은 아이콘 · 스크롤 짧게 -->
+        <aside class="exposure-guide" aria-labelledby="exposureGuideTitle">
+          <div class="exposure-guide-top">
+            <span class="wa-icon-sm" aria-hidden="true" title="상위 노출">
+              <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="18" width="7" height="11" rx="1.5" fill="#3a3428"/>
+                <rect x="12.5" y="10" width="7" height="19" rx="1.5" fill="#d4a017"/>
+                <rect x="22" y="14" width="7" height="15" rx="1.5" fill="#8a7340"/>
+                <path d="M16 3l1.2 2.4 2.6.4-1.9 1.8.4 2.6L16 8.8l-2.3 1.4.4-2.6-1.9-1.8 2.6-.4z" fill="#f0d78c"/>
+              </svg>
+            </span>
+            <div class="exposure-guide-top-text">
+              <h3 id="exposureGuideTitle">잘 보이려면 이렇게</h3>
+              <p>설명·화면을 채우고 헬프티켓을 붙이면 <strong>목록 위</strong>로. 최소만 채워도 <strong>올릴 수는</strong> 있어요.</p>
+            </div>
+          </div>
+
+          <ul class="exposure-mini-grid" aria-label="가산점 한눈에">
+            <li>
+              <span class="wa-icon-sm" aria-hidden="true">
+                <svg viewBox="0 0 32 32"><rect x="6" y="4" width="20" height="24" rx="3" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M10 11h12M10 16h12M10 21h8" stroke="#e8c56a" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <strong>설명</strong>
+              <em>가산 ↑</em>
+            </li>
+            <li>
+              <span class="wa-icon-sm" aria-hidden="true">
+                <svg viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="2" fill="none" stroke="#e8c56a" stroke-width="2"/><circle cx="12" cy="16" r="3" fill="#e8c56a"/><path d="M18 20l4-5 6 8H8z" fill="#c4a86a" opacity=".85"/></svg>
+              </span>
+              <strong>화면</strong>
+              <em>가산 ↑↑</em>
+            </li>
+            <li>
+              <span class="wa-icon-sm" aria-hidden="true">
+                <svg viewBox="0 0 32 32"><rect x="5" y="10" width="22" height="12" rx="2" fill="none" stroke="#e8c56a" stroke-width="2"/><circle cx="10" cy="16" r="1.8" fill="#e8c56a"/><path d="M14 14h10M14 18h8" stroke="#e8c56a" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <strong>티켓 1~3</strong>
+              <em>+8씩</em>
+            </li>
+            <li>
+              <span class="wa-icon-sm" aria-hidden="true">
+                <svg viewBox="0 0 32 32"><path d="M8 22V10l8-4 8 4v12l-8 4-8-4z" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M12 16l3 3 6-6" fill="none" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
+              <strong>최소 OK</strong>
+              <em>올리기 가능</em>
+            </li>
+          </ul>
+
+          <details class="exposure-details">
+            <summary>자세히 보기 <span class="muted fine">(선택)</span></summary>
+            <ol class="exposure-ladder">
+              <li class="exposure-step">
+                <span class="exposure-step-num">1</span>
+                <div class="exposure-step-body">
+                  <strong>설명</strong>
+                  <span>한 줄 · 하는 일 · 되는 것/안 되는 것</span>
+                </div>
+                <span class="exposure-step-pts">가산 ↑</span>
+              </li>
+              <li class="exposure-step">
+                <span class="exposure-step-num">2</span>
+                <div class="exposure-step-body">
+                  <strong>실행 화면</strong>
+                  <span>서로 다른 스크린샷 (포트폴리오)</span>
+                </div>
+                <span class="exposure-step-pts">가산 ↑↑</span>
+              </li>
+              <li class="exposure-step">
+                <span class="exposure-step-num">3</span>
+                <div class="exposure-step-body">
+                  <strong>헬프티켓 1~3</strong>
+                  <span>장수 비례 · 인수 후 질문</span>
+                </div>
+                <span class="exposure-step-pts">+8~+24</span>
+              </li>
+              <li class="exposure-step">
+                <span class="exposure-step-num">4</span>
+                <div class="exposure-step-body">
+                  <strong>추가 티켓 가격</strong>
+                  <span>선택 · 답변 후 판매자 정산</span>
+                </div>
+                <span class="exposure-step-pts">+4</span>
+              </li>
+            </ol>
+            <p class="exposure-guide-foot">짧게만 적어도 올릴 수 있어요. 잘 채우면 더 위에 보입니다.</p>
+          </details>
+        </aside>
+
+        <!-- 최소 등록 체크 5개: 이것만 되면 올릴 수 있음 -->
+        <div class="min-check5" role="region" aria-labelledby="minCheck5Title">
+          <p class="min-check5-title" id="minCheck5Title">
+            <strong>최소 등록 체크 5개</strong>
+            <span class="field-tag is-req">필수</span>
+          </p>
+          <p class="min-check5-lead">이것만 되면 <strong>올릴 수 있어요</strong>. 더 채우면 목록 위에 더 잘 보여요.</p>
+          <ol class="min-check5-list">
+            <li><span class="min-check5-n">1</span><span>이름 + 한 줄로 <em>뭐 하는 제품</em>인지</span></li>
+            <li><span class="min-check5-n">2</span><span>하는 일 <em>2줄</em> + 되는 것 / 안 되는 것 짧게</span></li>
+            <li><span class="min-check5-n">3</span><span>실행 화면 스크린샷 <em>1장+</em></span></li>
+            <li><span class="min-check5-n">4</span><span>무료 헬프티켓 <em>1~3장</em></span></li>
+            <li><span class="min-check5-n">5</span><span>사기 예방 체크 (권리·사실 확인)</span></li>
+          </ol>
+        </div>
+
+        <p class="field-section-label"><span class="field-tag is-req">필수</span> 기본 정보</p>
+        <label for="pTitle">제목 <span class="field-tag is-req">필수</span></label>
+        <input id="pTitle" required maxlength="80" placeholder="제품 이름" />
+        <p class="price-guide muted fine">짧게 이름만. 기능은 아래「하는 일」에.</p>
+        <label for="pOne">한 줄 소개 <span class="field-tag is-req">필수</span></label>
+        <input id="pOne" required maxlength="120" minlength="10" placeholder="예: 예약·고객 문자를 한곳에서 보는 웹앱" />
+
+        <label for="pFeatures">이 제품이 하는 일 <span class="field-tag is-req">필수</span> <span class="muted fine">(최소 2줄)</span></label>
+        <p class="price-guide muted fine">한 줄에 하나씩. <span class="field-tag is-rec">권장</span> 3줄 이상이면 가산 ↑</p>
         <textarea
           id="pFeatures"
           required
           maxlength="900"
-          rows="5"
-          placeholder="· 예약을 받으면 알림이 가요&#10;· 손님 목록과 방문 이력을 볼 수 있어요&#10;· 사장님용 간단한 통계 화면이 있어요"
+          rows="4"
+          placeholder="· 예약을 받으면 알림이 가요&#10;· 손님 목록을 볼 수 있어요"
         ></textarea>
 
-        <label for="pAudience">누구를 위한 제품인가요? *</label>
+        <label for="pAudience">누구를 위한 제품인가요? <span class="field-tag is-req">필수</span></label>
         <input
           id="pAudience"
           required
           maxlength="120"
-          minlength="8"
-          placeholder="예: 1인 카페 사장님 / 취준생 포트폴리오 / 동아리 일정 관리"
+          minlength="4"
+          placeholder="예: 카페 사장님 / 학생"
         />
 
-        <label for="pWorksNow">지금 되는 것 *</label>
-        <p class="price-guide muted fine">데모에서 <strong>실제로 눌러볼 수 있는 것만</strong> 적어 주세요. 데스크톱이면 <strong>지원 OS</strong>도 함께.</p>
+        <label for="pWorksNow">지금 되는 것 <span class="field-tag is-req">필수</span></label>
+        <p class="price-guide muted fine">데모에서 눌러볼 수 있는 것만. <span class="field-tag is-rec">권장</span> OS·경로까지 적으면 가산 ↑</p>
         <textarea
           id="pWorksNow"
           required
           maxlength="500"
-          rows="3"
-          placeholder="예: 로그인 → 예약 등록 → 목록 조회까지 가능. 결제는 테스트 모드."
+          rows="2"
+          placeholder="예: 로그인 → 목록 조회까지 가능"
         ></textarea>
 
-        <label for="pLimits">지금 안 되는 것 · 한계 *</label>
-        <p class="price-guide muted fine">솔직할수록 분쟁이 줄고 신뢰가 올라갑니다. 데스크톱이면 <strong>미지원 OS · 필수 런타임(.NET, Python 등)</strong>을 적으세요.</p>
+        <label for="pLimits">지금 안 되는 것 · 한계 <span class="field-tag is-req">필수</span></label>
+        <p class="price-guide muted fine">짧게도 OK. <span class="field-tag is-rec">권장</span> 솔직히 적을수록 분쟁 ↓ · 가산 ↑</p>
         <textarea
           id="pLimits"
           required
           maxlength="500"
-          rows="3"
-          placeholder="예: 실제 카드 결제 미연동 · iOS 앱 없음 · 관리자 페이지 미완"
+          rows="2"
+          placeholder="예: 결제 없음 · 모바일 앱 없음"
         ></textarea>
 
         <div class="kw-block" id="kwBlock">
-          <label data-i18n="app.kw_label">검색 키워드 * (최대 5개)</label>
+          <label data-i18n="app.kw_label">검색 키워드 <span class="field-tag is-req">필수</span> (1~5개)</label>
           <p class="price-guide muted fine" data-i18n="app.kw_hint">
-            크몽처럼 구매자가 찾기 쉬운 태그입니다. AI 추천을 받거나 직접 넣을 수 있어요.
+            찾기 쉬운 태그. AI 추천 또는 직접 입력. <span class="field-tag is-rec">권장</span> 3~5개
           </p>
           <div class="kw-mode" role="group" aria-label="키워드 입력 방식">
             <button type="button" class="seg-btn is-on" id="kwModeAi" data-kw-mode="ai" data-i18n="app.kw_mode_ai">AI 추천</button>
@@ -768,7 +916,7 @@
           <p class="price-guide muted fine" id="kwCount">0 / 5</p>
         </div>
 
-        <p class="listing-guidelines-title" id="pProductTypeLabel" style="margin:0.85rem 0 0.35rem">제품 형태 * <span class="muted fine">(눌러서 고르기)</span></p>
+        <p class="listing-guidelines-title" id="pProductTypeLabel" style="margin:0.85rem 0 0.35rem">제품 형태 <span class="field-tag is-req">필수</span> <span class="muted fine">(눌러서 고르기)</span></p>
         <div class="choice-chips" id="pProductTypeChips" role="radiogroup" aria-labelledby="pProductTypeLabel">
           <label class="choice-chip"><input type="radio" name="pProductType" value="website" /> 웹사이트</label>
           <label class="choice-chip"><input type="radio" name="pProductType" value="webapp" /> 웹 앱 / SaaS</label>
@@ -791,7 +939,7 @@
         </select>
         <p class="price-guide muted fine">어디에 돌아가는 제품인지 고릅니다. (완성도「상태」와 별개)</p>
         <div id="pDemoHelp" class="demo-help-host" hidden></div>
-        <p class="listing-guidelines-title" id="pStatusLabel" style="margin:0.85rem 0 0.35rem">지금 얼마나 만들었나요? * <span class="muted fine">(눌러서 고르기)</span></p>
+        <p class="listing-guidelines-title" id="pStatusLabel" style="margin:0.85rem 0 0.35rem">지금 얼마나 만들었나요? <span class="field-tag is-req">필수</span> <span class="muted fine">(눌러서 고르기)</span></p>
         <div class="choice-chips" id="pStatusChips" role="radiogroup" aria-labelledby="pStatusLabel">
           <label class="choice-chip"><input type="radio" name="pStatus" value="prototype" checked /> 돌아가는 초안</label>
           <label class="choice-chip"><input type="radio" name="pStatus" value="beta" /> 써 볼 수 있는 제품</label>
@@ -810,15 +958,17 @@
         </p>
         <div class="status-criteria" id="pStatusCriteria" hidden></div>
         <p class="price-guide" id="pPriceGuide">상태에 따라 시작 입찰가 구간이 달라집니다.</p>
-        <label for="pStory">왜 팔나요? (스토리) *</label>
-        <p class="price-guide muted fine">만든 이유·멈춘 이유, 또는 사서 다시 파는 이유. <strong>기능은 위 칸</strong>에 이미 있으므로 여기엔 배경만.</p>
-        <textarea id="pStory" required maxlength="2000" minlength="20" placeholder="예: 사이드 프로젝트로 만들다 본업 바빠서 멈춤 / 인수 후 방향이 바뀌어 재판매"></textarea>
+        <label for="pStory">왜 팔나요? (스토리) <span class="field-tag is-req">필수</span></label>
+        <p class="price-guide muted fine">짧게 OK. <span class="field-tag is-rec">권장</span> 배경을 더 쓰면 가산 ↑ · 기능은 위 칸에</p>
+        <textarea id="pStory" required maxlength="2000" minlength="10" placeholder="예: 본업 바빠서 멈춤 · 방향 바꿔 재판매"></textarea>
         <p class="listing-guidelines-title" style="margin:0.85rem 0 0.35rem">
-          실행 화면 스크린샷 * <span class="muted fine">(최소 2장 · 최대 5장 · 장당 ~1.5MB)</span>
+          실행 화면 스크린샷 <span class="field-tag is-req">필수</span>
+          <span class="muted fine">(최소 1장 · 최대 5장)</span>
         </p>
         <p class="price-guide muted fine">
-          <strong>돌아가는 화면을 최소 2장</strong> 찍어서 올리세요. (다른 화면이면 더 좋습니다)
-          URL 만들 필요 없습니다. 폰·PC 캡처 후 선택만 하면 됩니다. (가로 약 1280px로 자동 줄여 저장)
+          <strong>최소 1장</strong>이면 올릴 수 있어요.
+          <span class="field-tag is-rec">권장</span> 서로 다른 화면 2~3장 → 가산 ↑↑
+          · 캡처 후 선택만 (자동 리사이즈)
         </p>
         <div class="demo-shot-box">
           <input
@@ -848,7 +998,7 @@
           </div>
         </div>
 
-        <label for="pDemo">추가 설명 <span class="muted fine">(선택 · 스크린샷 있으면 비워도 됨)</span></label>
+        <label for="pDemo">추가 설명 <span class="field-tag is-rec">권장</span> <span class="muted fine">(선택 · 비워도 됨)</span></label>
         <p class="price-guide muted fine">
           필요할 때만 적으세요. 화면 순서 보완, 지원 OS 등.
         </p>
@@ -867,7 +1017,7 @@
         ></textarea>
 
         <fieldset class="acq-fieldset">
-          <legend>이 매물을 어떻게 갖고 있나요? *</legend>
+          <legend>이 매물을 어떻게 갖고 있나요? <span class="field-tag is-req">필수</span></legend>
           <p class="price-guide muted fine">코딩 몰라도 됩니다. 직접 만들었든, 사서 다시 파든 선택만 하면 됩니다.</p>
           <label class="checks check-single">
             <input type="radio" name="pAcquisition" value="made" required />
@@ -892,23 +1042,42 @@
           </div>
         </fieldset>
 
-        <label for="pPrice">시작 입찰가 (원) *</label>
+        <label for="pPrice">시작 입찰가 (원) <span class="field-tag is-req">필수</span></label>
         <input id="pPrice" type="number" min="50000" max="100000000" step="10000" inputmode="numeric" required />
         <p class="price-guide muted fine" id="pPriceHint"></p>
-        <label for="pBuyNow">즉시구매가 (원) — 선택</label>
+        <label for="pBuyNow">즉시구매가 (원) <span class="field-tag is-rec">권장</span> · 선택</label>
         <input id="pBuyNow" type="number" min="50000" max="100000000" step="10000" inputmode="numeric" placeholder="비워 두면 즉시구매 없음" />
         <p class="price-guide muted fine">
           <strong>필수가 아닙니다.</strong> 비우면 가격 쓰기(경매)만 합니다.
           넣을 때: 시작가 이상 · 최대 1억 원. 더 높은 입찰을 기대하면 비워 두세요.
         </p>
 
-        <div class="listing-guidelines" role="group" aria-labelledby="guideTitle">
-          <p class="listing-guidelines-title" id="guideTitle"><strong>최소 등록 가이드</strong> — 전부 체크·적어야 올릴 수 있어요</p>
-          <p class="price-guide muted fine" style="margin:0 0 0.65rem">
-            안 돌아가는 코드·표절·권한 없는 자산은 반려·신고·정지 대상입니다.
-            체크는 <strong>판매자 확인 서약</strong>입니다.
+        <fieldset class="q-credit-fields" style="border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.85rem 1rem;margin:0.75rem 0">
+          <legend style="padding:0 0.35rem"><strong>헬프티켓</strong> <span class="field-tag is-req">필수</span> · 가산</legend>
+          <p class="price-guide muted fine" style="margin-top:0">
+            최소 <strong>1장</strong>이면 됩니다. <span class="field-tag is-rec">권장</span> 2~3장 → 가산 더 큼.
+            판매자 <strong>안내·설명</strong>용이며 개발 완료를 보장하지 않습니다.
+            이용 중 의견 차이는 구매자·판매자가 맞춰 주시고, 사이트는 중재하지 않습니다.
           </p>
-          <p class="listing-guidelines-title" style="margin-top:0.5rem">포함 자산 * <span class="muted fine">(실제로 넘길 수 있는 것만 · 해당 항목을 눌러 체크)</span></p>
+          <label for="pQCredits">무료 헬프티켓 (1~3) <span class="field-tag is-req">필수</span></label>
+          <input id="pQCredits" type="number" min="1" max="3" step="1" value="1" inputmode="numeric" required />
+          <label for="pQUnitPrice">추가 헬프티켓 1회 가격 (원) <span class="field-tag is-rec">권장</span> · 0=판매 안 함</label>
+          <input id="pQUnitPrice" type="number" min="0" max="100000" step="1000" value="0" inputmode="numeric" placeholder="예: 20000" />
+          <p class="price-guide muted fine">추가 판매 시 권장 5,000~100,000원. 플랫폼 수수료(약 15%) 제외 후 판매자 정산.</p>
+          <label for="pQSla">응답 목표 시간</label>
+          <select id="pQSla">
+            <option value="24">24시간</option>
+            <option value="48" selected>48시간</option>
+            <option value="72">72시간</option>
+          </select>
+        </fieldset>
+
+        <div class="listing-guidelines" role="group" aria-labelledby="guideTitle">
+          <p class="listing-guidelines-title" id="guideTitle"><strong>사기 예방 체크</strong> <span class="field-tag is-req">필수</span> — 번거로워도 이건 해야 해요</p>
+          <p class="price-guide muted fine" style="margin:0 0 0.65rem">
+            허위·남 자산은 정지 대상. 체크 = <strong>사실 확인 서약</strong> (글 실력 아님).
+          </p>
+          <p class="listing-guidelines-title" style="margin-top:0.5rem">포함 자산 <span class="field-tag is-req">필수</span> <span class="muted fine">(넘길 수 있는 것만)</span></p>
           <div class="checks asset-checks" id="pAssetChecks" role="group" aria-label="포함 자산">
             <label><input type="checkbox" name="pAsset" value="code" /> 코드</label>
             <label><input type="checkbox" name="pAsset" value="design" /> 디자인(피그마 등)</label>
@@ -917,7 +1086,7 @@
             <label><input type="checkbox" name="pAsset" value="accounts" /> 계정/스토어</label>
             <label><input type="checkbox" name="pAsset" value="other" /> 기타</label>
           </div>
-          <label for="pLicense">넘길 때 권리·라이선스 조건 * <span class="muted fine">(직접 입력)</span></label>
+          <label for="pLicense">넘길 때 권리·라이선스 조건 <span class="field-tag is-req">필수</span></label>
           <input
             id="pLicense"
             required

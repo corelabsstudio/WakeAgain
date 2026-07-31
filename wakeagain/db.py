@@ -372,8 +372,110 @@ def init_db() -> None:
                 "boost_tier": "INTEGER NOT NULL DEFAULT 0",
                 # optional product code e.g. boost_7d (filled when paid product ships)
                 "boost_product": "TEXT",
+                # Auction round model: public board = this live round only
+                # round_started_at: when this listing entered the public board (relist → new time → back of queue)
+                "round_started_at": "TEXT",
+                "round_number": "INTEGER NOT NULL DEFAULT 0",
+                # Intended length; ends_at is set/refreshed on approve (start of round)
+                "auction_days_intended": "INTEGER NOT NULL DEFAULT 7",
+                # 헬프티켓 (Kmong-style: included count + seller-set add-on price)
+                "q_credits_offered": "INTEGER NOT NULL DEFAULT 1",  # free included help tickets 1–3
+                "q_credit_unit_price": "INTEGER NOT NULL DEFAULT 0",  # add-on 1회 가격 KRW; 0 = not sold
+                "q_credit_sla_hours": "INTEGER NOT NULL DEFAULT 48",
+                # Per-deal balances (snapshotted when inspection starts)
+                "q_credits_total": "INTEGER NOT NULL DEFAULT 0",
+                "q_credits_remaining": "INTEGER NOT NULL DEFAULT 0",
+                "q_credits_held": "INTEGER NOT NULL DEFAULT 0",
+                "q_credits_purchased": "INTEGER NOT NULL DEFAULT 0",
+                "q_window_ends_at": "TEXT",
             },
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS q_threads (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              project_id INTEGER NOT NULL,
+              buyer_id INTEGER NOT NULL,
+              seller_id INTEGER NOT NULL,
+              body TEXT NOT NULL,
+              answer_body TEXT,
+              status TEXT NOT NULL DEFAULT 'open',
+              credit_state TEXT NOT NULL DEFAULT 'held',
+              source TEXT NOT NULL DEFAULT 'included',
+              sla_deadline_at TEXT,
+              created_at TEXT NOT NULL,
+              answered_at TEXT,
+              FOREIGN KEY (project_id) REFERENCES projects(id)
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_q_threads_project ON q_threads(project_id)"
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS q_credit_purchases (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              project_id INTEGER NOT NULL,
+              buyer_id INTEGER NOT NULL,
+              seller_id INTEGER NOT NULL,
+              units INTEGER NOT NULL DEFAULT 1,
+              unit_price INTEGER NOT NULL,
+              gross_amount INTEGER NOT NULL,
+              fee_amount INTEGER NOT NULL DEFAULT 0,
+              seller_amount INTEGER NOT NULL DEFAULT 0,
+              status TEXT NOT NULL DEFAULT 'pending_payment',
+              -- pending_payment | paid | escrowed | settled | refunded
+              thread_id INTEGER,
+              created_at TEXT NOT NULL,
+              paid_at TEXT,
+              settled_at TEXT,
+              note TEXT,
+              FOREIGN KEY (project_id) REFERENCES projects(id)
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_q_purchases_project ON q_credit_purchases(project_id)"
+        )
+        # Backfill: live approved rows get a stable round_started_at for queue order
+        try:
+            conn.execute(
+                """
+                UPDATE projects
+                SET round_started_at = COALESCE(
+                      NULLIF(round_started_at, ''),
+                      NULLIF(reviewed_at, ''),
+                      NULLIF(created_at, ''),
+                      updated_at
+                    ),
+                    round_number = CASE
+                      WHEN COALESCE(round_number, 0) < 1
+                           AND listing_status = 'approved'
+                           AND COALESCE(auction_status, 'live') = 'live'
+                      THEN 1
+                      ELSE COALESCE(round_number, 0)
+                    END,
+                    auction_days_intended = CASE
+                      WHEN COALESCE(auction_days_intended, 0) < 1 THEN 7
+                      ELSE auction_days_intended
+                    END
+                WHERE listing_status = 'approved'
+                  AND COALESCE(auction_status, 'live') = 'live'
+                """
+            )
+            # Unsold ended that still look "approved" → archive off public board
+            conn.execute(
+                """
+                UPDATE projects
+                SET listing_status = 'archived',
+                    updated_at = COALESCE(updated_at, datetime('now'))
+                WHERE listing_status = 'approved'
+                  AND COALESCE(auction_status, '') = 'ended'
+                """
+            )
+        except Exception:
+            pass
         _ensure_columns(
             conn,
             "fee_invoices",
@@ -1367,13 +1469,41 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "next_min_bid": next_min,
         "auction_ends_at": ends,
         "auction_status": auction_status,
-        "is_live": auction_status == "live",
+        "is_live": auction_status == "live" and (row["listing_status"] or "") == "approved",
         "is_paused": auction_status == "paused",
         "listing_status": row["listing_status"],
+        "round_started_at": (_row_get(row, "round_started_at") or "") or "",
+        "round_number": int(_row_get(row, "round_number") or 0),
+        "auction_days_intended": int(_row_get(row, "auction_days_intended") or 7),
+        "can_relist": (
+            (row["listing_status"] or "") in ("archived", "rejected", "hold")
+            or (
+                (row["listing_status"] or "") == "approved"
+                and auction_status in ("ended", "paused")
+            )
+        )
+        and auction_status != "sold"
+        and not (_row_get(row, "sold_at") or ""),
+        # 헬프티켓 (공개: 판매자 설정 / 당사자: 잔여)
+        "q_credits_offered": int(_row_get(row, "q_credits_offered") or 0),
+        "q_credit_unit_price": int(_row_get(row, "q_credit_unit_price") or 0),
+        "q_credit_sla_hours": int(_row_get(row, "q_credit_sla_hours") or 48),
+        "q_credits_total": int(_row_get(row, "q_credits_total") or 0),
+        "q_credits_remaining": int(_row_get(row, "q_credits_remaining") or 0),
+        "q_credits_held": int(_row_get(row, "q_credits_held") or 0),
+        "q_credits_purchased": int(_row_get(row, "q_credits_purchased") or 0),
+        "q_window_ends_at": (_row_get(row, "q_window_ends_at") or "") or "",
+        "q_credits_extra_for_sale": int(_row_get(row, "q_credit_unit_price") or 0) > 0,
         "report_count": int(_row_get(row, "report_count", 0) or 0),
         "paused_reason": _row_get(row, "paused_reason") or "",
         "license_note": (_row_get(row, "license_note") or "") or "",
         "demo_verified": bool(int(_row_get(row, "demo_verified", 0) or 0)),
+        # Trust exposure (from SQL join or computed later)
+        "exposure_score": (
+            int(_row_get(row, "exposure_score"))
+            if _row_get(row, "exposure_score") is not None
+            else None
+        ),
         # Premium boost scaffold (no purchase UI yet)
         "boost": project_boost_public(row),
         "sold_price": sold_price,
@@ -1455,17 +1585,273 @@ def project_boost_public(row: sqlite3.Row | dict) -> dict:
     }
 
 
-def listing_sort_sql() -> str:
+def public_live_where_sql(alias: str = "") -> str:
+    """Only the current live auction round is publicly listed."""
+    p = f"{alias}." if alias else ""
+    return (
+        f"{p}listing_status = 'approved' "
+        f"AND COALESCE({p}auction_status, 'live') = 'live'"
+    )
+
+
+# 예비 구매자 기준 가산점: 매물 설명·포트폴리오 완성도 + 헬프티켓 개수 비례
+# (판매자 신용·신원 이력은 별도 — 노출 가산점에 넣지 않음)
+HELP_TICKET_POINTS_PER = 8  # 포함 헬프티켓 1회당
+HELP_TICKET_POINTS_CAP = 24  # 최대 3회 × 8
+PORTFOLIO_POINTS_CAP = 60
+EXPOSURE_SCORE_CAP = 100
+
+
+def listing_trust_score_sql(project_alias: str = "p", user_alias: str = "u") -> str:
     """
-    Marketplace ORDER BY: active boost first (by tier), then newest id.
-    When no rows are boosted, equivalent to ORDER BY id DESC.
-    Placeholder `?` must be bound to "now" ISO string (same as _now()).
+    SQL exposure score for prospective buyers:
+    1) Listing description + portfolio quality
+    2) Help-ticket count (proportional)
+
+    user_alias kept for call-site compatibility; not used in score.
     """
+    p = project_alias
+    _ = user_alias
+    # Portfolio / description quality (max ~60)
+    portfolio = f"""(
+      CASE WHEN LENGTH(COALESCE({p}.one_liner, '')) >= 15 THEN 4 ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.story, '')) >= 80 THEN 8
+             WHEN LENGTH(COALESCE({p}.story, '')) >= 40 THEN 5
+             WHEN LENGTH(COALESCE({p}.story, '')) >= 20 THEN 2
+             ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.features_json, '')) > 80 THEN 10
+             WHEN LENGTH(COALESCE({p}.features_json, '')) > 30 THEN 6
+             WHEN LENGTH(COALESCE({p}.features_json, '')) > 10 THEN 3
+             ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.works_now, '')) >= 40 THEN 8
+             WHEN LENGTH(COALESCE({p}.works_now, '')) >= 20 THEN 5
+             ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.limits_note, '')) >= 20 THEN 6
+             WHEN LENGTH(COALESCE({p}.limits_note, '')) >= 10 THEN 3
+             ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.audience, '')) >= 8 THEN 3 ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.demo, '')) >= 8 THEN 3 ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.demo_images_json, '')) > 120 THEN 12
+             WHEN LENGTH(COALESCE({p}.demo_images_json, '')) > 40 THEN 8
+             WHEN LENGTH(COALESCE({p}.demo_images_json, '')) > 8 THEN 4
+             ELSE 0 END
+      + CASE WHEN COALESCE({p}.demo_verified, 0) = 1 THEN 6 ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.license_note, '')) >= 5 THEN 2 ELSE 0 END
+      + CASE WHEN LENGTH(COALESCE({p}.keywords_json, '')) > 8 THEN 2 ELSE 0 END
+    )"""
+    # Help tickets: linear with offered count (1–3 free) × points, capped
+    help_t = f"""(
+      MIN(
+        {HELP_TICKET_POINTS_CAP},
+        MIN({Q_CREDITS_INCLUDED_MAX}, MAX(0, COALESCE({p}.q_credits_offered, 0)))
+          * {HELP_TICKET_POINTS_PER}
+      )
+      + CASE WHEN COALESCE({p}.q_credit_unit_price, 0) >= 5000 THEN 4 ELSE 0 END
+    )"""
+    return f"MIN({EXPOSURE_SCORE_CAP}, ({portfolio}) + ({help_t}))"
+
+
+def listing_sort_sql(project_alias: str = "p", user_alias: str = "u") -> str:
+    """
+    Marketplace ORDER BY:
+    1) Paid boost (optional)
+    2) Buyer-facing exposure score DESC (portfolio + help tickets)
+    3) round_started_at ASC (same score → round queue; relist back of line)
+    4) id ASC
+
+    Placeholder `?` = now ISO for boost window.
+    """
+    p = project_alias
+    score = listing_trust_score_sql(project_alias, user_alias)
     return (
         "ORDER BY "
-        "CASE WHEN IFNULL(boost_until, '') != '' AND boost_until > ? "
-        "THEN COALESCE(boost_tier, 0) ELSE 0 END DESC, "
-        "id DESC"
+        f"CASE WHEN IFNULL({p}.boost_until, '') != '' AND {p}.boost_until > ? "
+        f"THEN COALESCE({p}.boost_tier, 0) ELSE 0 END DESC, "
+        f"{score} DESC, "
+        f"COALESCE(NULLIF({p}.round_started_at, ''), {p}.created_at, printf('%020d', {p}.id)) ASC, "
+        f"{p}.id ASC"
+    )
+
+
+def compute_listing_exposure_score(
+    project_row: sqlite3.Row | dict,
+    owner_row: sqlite3.Row | dict | None = None,
+) -> dict:
+    """Python mirror: portfolio quality + help tickets only (buyer-facing)."""
+
+    def pg(key: str, default=0):
+        try:
+            if isinstance(project_row, dict):
+                v = project_row.get(key, default)
+            else:
+                v = project_row[key] if key in project_row.keys() else default
+            return default if v is None else v
+        except (IndexError, KeyError):
+            return default
+
+    _ = owner_row  # not used — exposure is listing quality for buyers
+    parts: dict[str, int] = {}
+
+    one = str(pg("one_liner") or "")
+    parts["one_liner"] = 4 if len(one) >= 15 else 0
+    story = str(pg("story") or "")
+    if len(story) >= 80:
+        parts["story"] = 8
+    elif len(story) >= 40:
+        parts["story"] = 5
+    elif len(story) >= 20:
+        parts["story"] = 2
+    else:
+        parts["story"] = 0
+    feats = str(pg("features_json") or "")
+    if len(feats) > 80:
+        parts["features"] = 10
+    elif len(feats) > 30:
+        parts["features"] = 6
+    elif len(feats) > 10:
+        parts["features"] = 3
+    else:
+        parts["features"] = 0
+    works = str(pg("works_now") or "")
+    parts["works_now"] = 8 if len(works) >= 40 else (5 if len(works) >= 20 else 0)
+    limits = str(pg("limits_note") or "")
+    parts["limits"] = 6 if len(limits) >= 20 else (3 if len(limits) >= 10 else 0)
+    parts["audience"] = 3 if len(str(pg("audience") or "")) >= 8 else 0
+    parts["demo_text"] = 3 if len(str(pg("demo") or "")) >= 8 else 0
+    demos = str(pg("demo_images_json") or "")
+    if len(demos) > 120:
+        parts["portfolio_shots"] = 12
+    elif len(demos) > 40:
+        parts["portfolio_shots"] = 8
+    elif len(demos) > 8:
+        parts["portfolio_shots"] = 4
+    else:
+        parts["portfolio_shots"] = 0
+    parts["demo_verified"] = 6 if int(pg("demo_verified") or 0) else 0
+    parts["license"] = 2 if len(str(pg("license_note") or "")) >= 5 else 0
+    parts["keywords"] = 2 if len(str(pg("keywords_json") or "")) > 8 else 0
+
+    portfolio_sub = sum(
+        parts[k]
+        for k in parts
+        if k
+        not in (
+            "help_tickets",
+            "help_addon_sale",
+        )
+    )
+    # soft cap portfolio contribution
+    if portfolio_sub > PORTFOLIO_POINTS_CAP:
+        # scale down proportionally for display consistency with SQL MIN cap on total
+        pass
+
+    q_off = max(
+        0,
+        min(Q_CREDITS_INCLUDED_MAX, int(pg("q_credits_offered") or 0)),
+    )
+    parts["help_tickets"] = min(
+        HELP_TICKET_POINTS_CAP, q_off * HELP_TICKET_POINTS_PER
+    )
+    parts["help_addon_sale"] = (
+        4 if int(pg("q_credit_unit_price") or 0) >= 5000 else 0
+    )
+
+    total = int(sum(parts.values()))
+    total = min(EXPOSURE_SCORE_CAP, total)
+    return {
+        "score": total,
+        "parts": parts,
+        "label_ko": (
+            "높음" if total >= 50 else ("보통" if total >= 25 else "낮음")
+        ),
+        "note_ko": (
+            "예비 구매자 기준 가산점: 매물 설명·포트폴리오 완성도 + 헬프티켓 개수 비례. "
+            "점수 높을수록 공개 목록 상위에 노출됩니다."
+        ),
+        "rules": {
+            "help_ticket_points_per": HELP_TICKET_POINTS_PER,
+            "help_ticket_cap": HELP_TICKET_POINTS_CAP,
+            "portfolio_cap": PORTFOLIO_POINTS_CAP,
+            "score_cap": EXPOSURE_SCORE_CAP,
+        },
+    }
+
+
+def start_auction_round(
+    conn: sqlite3.Connection,
+    project_id: int,
+    *,
+    auction_days: int | None = None,
+    clear_boost: bool = True,
+) -> sqlite3.Row:
+    """
+    Begin a public auction round after ops approve.
+    - New round_started_at (queue position = back if relist)
+    - Fresh auction_ends_at from now + days
+    - Reset bid counters / current price to start for the new round
+    """
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise ValueError("project not found")
+    days = int(auction_days if auction_days is not None else (_row_get(row, "auction_days_intended") or 7))
+    days = max(1, min(days, 30))
+    now = _now()
+    try:
+        from datetime import datetime, timedelta, timezone
+
+        ends = (datetime.now(timezone.utc) + timedelta(days=days)).astimezone().isoformat(
+            timespec="seconds"
+        )
+    except Exception:
+        ends = now
+    start_price = int(_row_get(row, "price_start") or 0)
+    rn = int(_row_get(row, "round_number") or 0) + 1
+    boost_sql = ", boost_until = NULL, boost_tier = 0, boost_product = NULL" if clear_boost else ""
+    conn.execute(
+        f"""
+        UPDATE projects SET
+          listing_status = 'approved',
+          auction_status = 'live',
+          auction_days_intended = ?,
+          auction_ends_at = ?,
+          round_started_at = ?,
+          round_number = ?,
+          price_current = ?,
+          bid_count = 0,
+          bidder_count = 0,
+          paused_reason = '',
+          deal_note = '',
+          reviewed_at = ?,
+          updated_at = ?
+          {boost_sql}
+        WHERE id = ?
+        """,
+        (days, ends, now, rn, start_price, now, now, project_id),
+    )
+    fresh = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not fresh:
+        raise ValueError("project not found after start_auction_round")
+    return fresh
+
+
+def archive_unsold_round(
+    conn: sqlite3.Connection,
+    project_id: int,
+    *,
+    note: str = "마감 · 입찰 없음 · 이번 라운드 종료",
+) -> None:
+    """End a live round with no sale — leave the public board (not permanent display)."""
+    now = _now()
+    conn.execute(
+        """
+        UPDATE projects SET
+          auction_status = 'ended',
+          listing_status = 'archived',
+          deal_note = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (note[:500], now, project_id),
     )
 
 
@@ -3230,7 +3616,486 @@ def mark_deal_transferred(
         f"「{row['title']}」 구매자 검수 중입니다. 인수 또는 {insp_h}시간 후 자동 확정 시 정산됩니다.",
         f"/project.html?id={pid}",
     )
+    # Activate included Q-credits once (inspection handoff)
+    try:
+        activate_q_credits_for_deal(conn, pid)
+    except Exception:
+        pass
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+# --- 헬프티켓 (Kmong-style included + seller-priced add-ons) ---
+
+Q_CREDITS_INCLUDED_MIN = 1
+Q_CREDITS_INCLUDED_MAX = 3  # 무료(포함) 헬프티켓 1~3장
+Q_CREDIT_PRICE_MIN = 5_000
+Q_CREDIT_PRICE_MAX = 100_000
+Q_CREDIT_WINDOW_DAYS = 14
+Q_CREDIT_PLATFORM_FEE_RATE = 0.15  # on add-on purchases; seller gets rest after answer
+
+
+def q_credit_policy_public() -> dict:
+    return {
+        "included_min": Q_CREDITS_INCLUDED_MIN,
+        "included_max": Q_CREDITS_INCLUDED_MAX,
+        "unit_price_min": Q_CREDIT_PRICE_MIN,
+        "unit_price_max": Q_CREDIT_PRICE_MAX,
+        "window_days": Q_CREDIT_WINDOW_DAYS,
+        "platform_fee_rate": Q_CREDIT_PLATFORM_FEE_RATE,
+        "model": "included_plus_seller_priced_addon",
+        "message_ko": (
+            "헬프티켓은 성사·이전 후, 판매자(제작자)가 제공하는 안내·설명 창구입니다. "
+            "플랫폼·제작자의 개발 완료나 추가 개발·무제한 수정을 보장하는 상품이 아닙니다. "
+            "질문 범위·답변 내용·횟수 소진 등 이용과 관련한 의견 차이는 "
+            "구매자와 판매자가 서로 맞춰 주시면 됩니다. "
+            "사이트는 헬프티켓의 사용 여부·내용에 대해 중재하거나 평가하지 않습니다. "
+            "(사기·약관 위반·결제 장애 등은 기존 신고·안내 절차를 이용해 주세요.) "
+            "포함 횟수는 매물에 기본 제공되고, 추가 1회 가격은 판매자가 정하며, "
+            "추가 구매분은 답변 완료 후 판매자에게 정산(플랫폼 수수료 제외)됩니다."
+        ),
+        "message_en": (
+            "Help tickets are seller guidance after transfer—not a guarantee of "
+            "development completion or unlimited changes by the platform or seller. "
+            "Scope, answers, and usage are between buyer and seller; "
+            "the site does not mediate or judge help-ticket content. "
+            "(Fraud, terms violations, and payment issues follow the usual report process.) "
+            "Included tickets come with the listing; add-on price is set by the seller; "
+            "add-ons settle to the seller after an answer (platform fee excluded)."
+        ),
+        "dispute_note_ko": (
+            "헬프티켓 이용에 관한 의견 차이는 당사자 간 협의가 원칙이며, "
+            "사이트 운영은 이에 개입하지 않습니다."
+        ),
+        "deduct_on": "seller_answer",
+        "concurrent_open_max": 1,
+    }
+
+
+def normalize_q_credits_offered(n: int | None) -> int:
+    """Free included help tickets: 1–3 only."""
+    try:
+        v = int(n if n is not None else 1)
+    except (TypeError, ValueError):
+        v = 1
+    return max(Q_CREDITS_INCLUDED_MIN, min(v, Q_CREDITS_INCLUDED_MAX))
+
+
+def normalize_q_credit_unit_price(p: int | None) -> int:
+    """0 = add-on not for sale; otherwise clamp to min/max."""
+    try:
+        v = int(p if p is not None else 0)
+    except (TypeError, ValueError):
+        v = 0
+    if v <= 0:
+        return 0
+    return max(Q_CREDIT_PRICE_MIN, min(v, Q_CREDIT_PRICE_MAX))
+
+
+def normalize_q_credit_sla_hours(h: int | None) -> int:
+    try:
+        v = int(h if h is not None else 48)
+    except (TypeError, ValueError):
+        v = 48
+    if v not in (24, 48, 72):
+        v = 48
+    return v
+
+
+def activate_q_credits_for_deal(conn: sqlite3.Connection, project_id: int) -> sqlite3.Row:
+    """Snapshot included credits when inspection starts. Idempotent if already activated."""
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise ValueError("project not found")
+    # Already activated (window set)
+    if _row_get(row, "q_window_ends_at") or "":
+        return row
+    offered = normalize_q_credits_offered(_row_get(row, "q_credits_offered"))
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat(timespec="seconds")
+    window = (now_dt + timedelta(days=Q_CREDIT_WINDOW_DAYS)).isoformat(timespec="seconds")
+    conn.execute(
+        """
+        UPDATE projects SET
+          q_credits_total = ?,
+          q_credits_remaining = ?,
+          q_credits_held = 0,
+          q_window_ends_at = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (offered, offered, window, now, project_id),
+    )
+    buyer_id = _row_get(row, "buyer_id")
+    if buyer_id:
+        if offered > 0:
+            notify(
+                conn,
+                int(buyer_id),
+                "헬프티켓 지급",
+                f"「{row['title']}」 헬프티켓 {offered}회가 지급되었습니다. "
+                f"{Q_CREDIT_WINDOW_DAYS}일 안에 사용해 주세요. "
+                f"(판매자 안내용 · 개발 보증 아님 · 이용 의견 차이는 당사자 협의)",
+                f"/project.html?id={project_id}",
+            )
+        else:
+            unit = int(_row_get(row, "q_credit_unit_price") or 0)
+            if unit > 0:
+                notify(
+                    conn,
+                    int(buyer_id),
+                    "추가 헬프티켓 구매 가능",
+                    f"「{row['title']}」 포함 헬프티켓은 0회입니다. "
+                    f"필요하면 추가 헬프티켓(1회 ₩{unit:,})을 구매할 수 있습니다.",
+                    f"/project.html?id={project_id}",
+                )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+
+
+def q_credits_available(row: sqlite3.Row | dict) -> int:
+    rem = int(_row_get(row, "q_credits_remaining") if not isinstance(row, dict) else row.get("q_credits_remaining") or 0)
+    held = int(_row_get(row, "q_credits_held") if not isinstance(row, dict) else row.get("q_credits_held") or 0)
+    return max(0, rem - held)
+
+
+def q_window_open(row: sqlite3.Row) -> bool:
+    ends = (_row_get(row, "q_window_ends_at") or "") or ""
+    if not ends:
+        return False
+    exp = _parse_iso(ends) if "_parse_iso" in dir() else None
+    try:
+        from datetime import datetime, timezone
+
+        if exp is None:
+            exp = datetime.fromisoformat(str(ends).replace("Z", "+00:00"))
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) <= exp.astimezone(timezone.utc)
+    except Exception:
+        return True
+
+
+def open_q_thread(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    buyer_id: int,
+    body: str,
+) -> dict:
+    """Buyer spends one credit (held until seller answers)."""
+    body = (body or "").strip()
+    if len(body) < 10:
+        raise ValueError("질문은 10자 이상 적어 주세요.")
+    if len(body) > 2000:
+        raise ValueError("질문은 2000자 이내로 적어 주세요.")
+    pid = int(row["id"])
+    seller_id = int(row["owner_id"])
+    if int(buyer_id) != int(_row_get(row, "buyer_id") or 0):
+        raise ValueError("낙찰 구매자만 헬프티켓을 사용할 수 있습니다.")
+    st = (_row_get(row, "deal_status") or "") or ""
+    if st not in ("inspection", "completed"):
+        raise ValueError("이전·검수 또는 인수 확정 후에 헬프티켓을 사용할 수 있습니다.")
+    if st == "disputed":
+        raise ValueError("분쟁 중에는 새 질문을 등록할 수 없습니다.")
+    if not q_window_open(row):
+        raise ValueError("헬프티켓 사용 기간이 끝났습니다.")
+    avail = q_credits_available(row)
+    if avail < 1:
+        raise ValueError("남은 헬프티켓이 없습니다. 추가 헬프티켓을 구매해 주세요.")
+    open_n = conn.execute(
+        """
+        SELECT COUNT(*) AS c FROM q_threads
+        WHERE project_id = ? AND status = 'open' AND credit_state = 'held'
+        """,
+        (pid,),
+    ).fetchone()["c"]
+    if int(open_n or 0) >= 1:
+        raise ValueError("답변 대기 중인 질문이 있습니다. 답변 후 다시 질문해 주세요.")
+
+    sla_h = normalize_q_credit_sla_hours(_row_get(row, "q_credit_sla_hours"))
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat(timespec="seconds")
+    sla = (now_dt + timedelta(hours=sla_h)).isoformat(timespec="seconds")
+    # Included first: if remaining after this hold is still > purchased pool, it's included
+    purchased = int(_row_get(row, "q_credits_purchased") or 0)
+    remaining = int(_row_get(row, "q_credits_remaining") or 0)
+    held = int(_row_get(row, "q_credits_held") or 0)
+    effective_left = remaining - held
+    source = "purchased" if purchased > 0 and effective_left <= purchased else "included"
+
+    conn.execute(
+        """
+        UPDATE projects SET
+          q_credits_held = COALESCE(q_credits_held, 0) + 1,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (now, pid),
+    )
+    cur = conn.execute(
+        """
+        INSERT INTO q_threads (
+          project_id, buyer_id, seller_id, body, status, credit_state, source,
+          sla_deadline_at, created_at
+        ) VALUES (?, ?, ?, ?, 'open', 'held', ?, ?, ?)
+        """,
+        (pid, buyer_id, seller_id, body[:2000], source, sla, now),
+    )
+    tid = int(cur.lastrowid)
+    notify(
+        conn,
+        seller_id,
+        "헬프티켓 도착",
+        f"「{row['title']}」 구매자 헬프 요청 1건. {sla_h}시간 내 답변해 주세요.",
+        f"/project.html?id={pid}",
+    )
+    trow = conn.execute("SELECT * FROM q_threads WHERE id = ?", (tid,)).fetchone()
+    return q_thread_to_dict(trow)
+
+
+def answer_q_thread(
+    conn: sqlite3.Connection,
+    thread_id: int,
+    *,
+    seller_id: int,
+    answer: str,
+) -> dict:
+    answer = (answer or "").strip()
+    if len(answer) < 5:
+        raise ValueError("답변은 5자 이상 적어 주세요.")
+    trow = conn.execute("SELECT * FROM q_threads WHERE id = ?", (thread_id,)).fetchone()
+    if not trow:
+        raise ValueError("질문을 찾을 수 없습니다.")
+    if int(trow["seller_id"]) != int(seller_id):
+        raise ValueError("판매자만 답변할 수 있습니다.")
+    if (trow["status"] or "") != "open" or (trow["credit_state"] or "") != "held":
+        raise ValueError("이미 처리된 질문입니다.")
+    pid = int(trow["project_id"])
+    now = _now()
+    conn.execute(
+        """
+        UPDATE q_threads SET
+          answer_body = ?, status = 'answered', credit_state = 'consumed',
+          answered_at = ?
+        WHERE id = ?
+        """,
+        (answer[:4000], now, thread_id),
+    )
+    prow = conn.execute(
+        "SELECT q_credits_held, q_credits_remaining FROM projects WHERE id = ?",
+        (pid,),
+    ).fetchone()
+    held_n = max(0, int(prow["q_credits_held"] or 0) - 1)
+    rem_n = max(0, int(prow["q_credits_remaining"] or 0) - 1)
+    conn.execute(
+        """
+        UPDATE projects SET
+          q_credits_held = ?,
+          q_credits_remaining = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (held_n, rem_n, now, pid),
+    )
+    # Settle add-on purchase if this thread used a purchased credit (FIFO escrowed)
+    if (trow["source"] or "") == "purchased":
+        pur = conn.execute(
+            """
+            SELECT * FROM q_credit_purchases
+            WHERE project_id = ? AND buyer_id = ? AND status IN ('paid', 'escrowed')
+              AND (thread_id IS NULL OR thread_id = 0)
+            ORDER BY id ASC LIMIT 1
+            """,
+            (pid, int(trow["buyer_id"])),
+        ).fetchone()
+        if pur:
+            conn.execute(
+                """
+                UPDATE q_credit_purchases SET
+                  status = 'settled', thread_id = ?, settled_at = ?, note = '답변 완료 정산'
+                WHERE id = ?
+                """,
+                (thread_id, now, int(pur["id"])),
+            )
+    notify(
+        conn,
+        int(trow["buyer_id"]),
+        "헬프티켓 답변",
+        f"판매자가 헬프티켓에 답변했습니다. 1회가 사용되었습니다.",
+        f"/project.html?id={pid}",
+    )
+    trow = conn.execute("SELECT * FROM q_threads WHERE id = ?", (thread_id,)).fetchone()
+    return q_thread_to_dict(trow)
+
+
+def cancel_q_thread(
+    conn: sqlite3.Connection,
+    thread_id: int,
+    *,
+    buyer_id: int,
+) -> dict:
+    trow = conn.execute("SELECT * FROM q_threads WHERE id = ?", (thread_id,)).fetchone()
+    if not trow:
+        raise ValueError("질문을 찾을 수 없습니다.")
+    if int(trow["buyer_id"]) != int(buyer_id):
+        raise ValueError("본인 질문만 취소할 수 있습니다.")
+    if (trow["status"] or "") != "open" or (trow["credit_state"] or "") != "held":
+        raise ValueError("이미 처리된 질문입니다.")
+    pid = int(trow["project_id"])
+    now = _now()
+    conn.execute(
+        """
+        UPDATE q_threads SET status = 'cancelled', credit_state = 'released'
+        WHERE id = ?
+        """,
+        (thread_id,),
+    )
+    prow = conn.execute(
+        "SELECT q_credits_held FROM projects WHERE id = ?", (pid,)
+    ).fetchone()
+    held_n = max(0, int(prow["q_credits_held"] or 0) - 1) if prow else 0
+    conn.execute(
+        """
+        UPDATE projects SET
+          q_credits_held = ?,
+          updated_at = ?
+        WHERE id = ?
+        """,
+        (held_n, now, pid),
+    )
+    trow = conn.execute("SELECT * FROM q_threads WHERE id = ?", (thread_id,)).fetchone()
+    return q_thread_to_dict(trow)
+
+
+def list_q_threads(conn: sqlite3.Connection, project_id: int) -> list[dict]:
+    rows = conn.execute(
+        """
+        SELECT * FROM q_threads WHERE project_id = ?
+        ORDER BY id DESC LIMIT 50
+        """,
+        (project_id,),
+    ).fetchall()
+    return [q_thread_to_dict(r) for r in rows]
+
+
+def q_thread_to_dict(row: sqlite3.Row) -> dict:
+    return {
+        "id": int(row["id"]),
+        "project_id": int(row["project_id"]),
+        "buyer_id": int(row["buyer_id"]),
+        "seller_id": int(row["seller_id"]),
+        "body": row["body"] or "",
+        "answer_body": row["answer_body"] or "",
+        "status": row["status"] or "",
+        "credit_state": row["credit_state"] or "",
+        "source": row["source"] or "included",
+        "sla_deadline_at": row["sla_deadline_at"] or "",
+        "created_at": row["created_at"] or "",
+        "answered_at": row["answered_at"] or "",
+    }
+
+
+def purchase_q_credit_units(
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    buyer_id: int,
+    units: int = 1,
+    mock_paid: bool = False,
+) -> dict:
+    """
+    Buyer buys add-on Q credits at seller-set unit price.
+    Real PG: status pending_payment until webhook.
+    mock_paid=True (dev/env): mark paid/escrowed and increment remaining.
+    """
+    units = max(1, min(int(units or 1), 5))
+    if int(buyer_id) != int(_row_get(row, "buyer_id") or 0):
+        raise ValueError("낙찰 구매자만 추가 헬프티켓을 살 수 있습니다.")
+    st = (_row_get(row, "deal_status") or "") or ""
+    if st not in ("inspection", "completed"):
+        raise ValueError("이전·검수 이후에만 추가 헬프티켓을 구매할 수 있습니다.")
+    if not q_window_open(row) and int(_row_get(row, "q_credits_total") or 0) == 0:
+        # allow purchase only if window set; if no window, try activate
+        pass
+    if _row_get(row, "q_window_ends_at") and not q_window_open(row):
+        raise ValueError("헬프티켓 사용 기간이 끝나 추가 구매할 수 없습니다.")
+    price = normalize_q_credit_unit_price(_row_get(row, "q_credit_unit_price"))
+    if price <= 0:
+        raise ValueError("이 매물은 추가 헬프티켓 판매를 하지 않습니다.")
+    gross = price * units
+    fee = int(round(gross * Q_CREDIT_PLATFORM_FEE_RATE))
+    seller_amt = gross - fee
+    pid = int(row["id"])
+    seller_id = int(row["owner_id"])
+    now = _now()
+    status = "paid" if mock_paid else "pending_payment"
+    cur = conn.execute(
+        """
+        INSERT INTO q_credit_purchases (
+          project_id, buyer_id, seller_id, units, unit_price, gross_amount,
+          fee_amount, seller_amount, status, created_at, paid_at, note
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            pid,
+            buyer_id,
+            seller_id,
+            units,
+            price,
+            gross,
+            fee,
+            seller_amt,
+            status,
+            now,
+            now if mock_paid else None,
+            "mock paid" if mock_paid else "awaiting PG",
+        ),
+    )
+    purchase_id = int(cur.lastrowid)
+    if mock_paid:
+        conn.execute(
+            """
+            UPDATE q_credit_purchases SET status = 'escrowed' WHERE id = ?
+            """,
+            (purchase_id,),
+        )
+        conn.execute(
+            """
+            UPDATE projects SET
+              q_credits_total = COALESCE(q_credits_total, 0) + ?,
+              q_credits_remaining = COALESCE(q_credits_remaining, 0) + ?,
+              q_credits_purchased = COALESCE(q_credits_purchased, 0) + ?,
+              updated_at = ?
+            WHERE id = ?
+            """,
+            (units, units, units, now, pid),
+        )
+        notify(
+            conn,
+            seller_id,
+            "추가 헬프티켓 구매",
+            f"「{row['title']}」 구매자가 헬프티켓 {units}회를 구매했습니다. "
+            f"답변 완료 시 약 ₩{seller_amt:,} 정산 예정입니다.",
+            f"/project.html?id={pid}",
+        )
+    pur = conn.execute(
+        "SELECT * FROM q_credit_purchases WHERE id = ?", (purchase_id,)
+    ).fetchone()
+    return {
+        "id": purchase_id,
+        "project_id": pid,
+        "units": units,
+        "unit_price": price,
+        "gross_amount": gross,
+        "fee_amount": fee,
+        "seller_amount": seller_amt,
+        "status": pur["status"],
+        "paid": mock_paid,
+        "message_ko": (
+            f"추가 헬프티켓 {units}회가 지급되었습니다. 답변 완료 후 판매자 정산 ₩{seller_amt:,}."
+            if mock_paid
+            else "PG 결제 연동 후 실제 결제가 가능합니다. (지금은 대기 상태)"
+        ),
+    }
 
 
 def settle_complete(
@@ -3563,19 +4428,15 @@ def process_expired_auctions(conn: sqlite3.Connection) -> int:
                 note="마감 자동 낙찰",
             )
         else:
-            conn.execute(
-                """
-                UPDATE projects SET auction_status = 'ended', updated_at = ?, deal_note = ?
-                WHERE id = ?
-                """,
-                (_now(), "마감 · 입찰 없음", row["id"]),
-            )
+            # Unsold → leave public board (this round only; not permanent display)
+            archive_unsold_round(conn, int(row["id"]))
             notify(
                 conn,
                 int(row["owner_id"]),
-                "경매 마감",
-                f"「{row['title']}」 경매가 입찰 없이 마감되었습니다.",
-                f"/project.html?id={row['id']}",
+                "이번 라운드 종료",
+                f"「{row['title']}」 입찰 없이 마감되어 공개 목록에서 내려갔습니다. "
+                f"다시 올리려면 내용을 다듬은 뒤 재등록·재검수가 필요합니다.",
+                f"/app/#mine",
             )
         n += 1
     return n

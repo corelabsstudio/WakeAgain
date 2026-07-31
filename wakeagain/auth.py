@@ -4,14 +4,15 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 
 from wakeagain import db as database
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt 5.x broke passlib 1.7.4's backend probe ("password cannot be longer than 72 bytes").
+# Use bcrypt directly; existing $2b$ hashes remain compatible.
 security = HTTPBearer(auto_error=False)
 
 JWT_SECRET = os.environ.get("APP_SECRET") or os.environ.get("JWT_SECRET") or "wakeagain-dev-change-me"
@@ -19,12 +20,31 @@ JWT_ALG = "HS256"
 JWT_DAYS = int(os.environ.get("JWT_DAYS", "30"))
 
 
+def _password_bytes(password: str) -> bytes:
+    raw = password.encode("utf-8")
+    # bcrypt hard limit; reject oversize rather than silent truncate
+    if len(raw) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="password too long (max 72 bytes)",
+        )
+    return raw
+
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(_password_bytes(password), bcrypt.gensalt()).decode("ascii")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    if not password_hash:
+        return False
+    try:
+        raw = password.encode("utf-8")
+        if len(raw) > 72:
+            return False
+        return bcrypt.checkpw(raw, password_hash.encode("ascii"))
+    except (ValueError, TypeError):
+        return False
 
 
 def create_token(user_id: int, email: str) -> str:
