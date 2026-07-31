@@ -21,7 +21,7 @@
 | 라이브 | https://wakeagain.com |
 | 원격 | `github.com/corelabsstudio/WakeAgain` · 브랜치 `master` |
 | 배포 | push → Railway 서비스 **wakeagain** 자동 |
-| 로컬 | `uvicorn server:app --host 0.0.0.0 --port 8080` → http://127.0.0.1:8080/ |
+| 로컬 | `pip install -r requirements.txt` → `uvicorn server:app --host 0.0.0.0 --port 8080` → http://127.0.0.1:8080/ |
 | 운영 | 코어랩스 (CoreLabs) · corelabs.studio@gmail.com |
 | 사업자 | 705-04-02867 · `/legal/business.html` 게시 완료 |
 
@@ -33,14 +33,56 @@
 - **인증**: `passlib` 제거 · `bcrypt` 직접 해시 (`wakeagain/auth.py`)
 - 검증 당시: smoke·auction·deal·block·q-credit e2e·predeploy 10/10
 
+## 아키텍처
+
+- `server.py` — FastAPI 진입점.
+- `wakeagain/` — 도메인 패키지: `api.py`, `auth.py`, `db.py`, `scheduler.py`, `backup.py`, `offsite_backup.py`, `oauth.py`, `pricing.py`, `mailer.py`, `media.py`, `keywords.py`, `admin_auth.py`, `global_config.py`, `envutil.py`.
+- `public/` — 정적 사이트 + `app/`(SPA 셸) + `admin/`.
+- `mobile/` — Capacitor 기반 모바일 셸 (자체 `package.json`). 웹·Play·App Store 간 동일 계정/데이터를 목표로 함(`PLATFORM.md`).
+- `scripts/` — i18n 감사, 버그 워처 등.
+- `data/` — SQLite.
+- API 라우트 전체 표 및 아키텍처 목표는 `PLATFORM.md` 참고 (여기서는 중복하지 않음).
+
+## 환경 설정
+
+`.env.example` 기반으로 `.env` 자동 생성됨(README 참고). 주요 변수(`PLATFORM.md` 환경변수 표 참고): `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `JWT_DAYS`, `DB_BACKUP_*`, `OFFSITE_S3_*`, `ALLOW_DESTRUCTIVE_ADMIN`.
+
+- ⚠️ `wakeagain/admin_auth.py`의 `ADMIN_SECRET` 기본값(`wakeagain-admin-dev`)은 개발용 폴백이다 — 프로덕션에서는 반드시 재정의할 것.
+- ⚠️ **회원 데이터 유실 = 사업 실패**(`PLATFORM.md`) — 백업/삭제 관련 변경은 특히 신중히.
+
+## 모바일 빌드 (Capacitor)
+
+```bash
+cd mobile
+npm install
+npm run add:android
+npm run android
+npm run build:store:prep
+```
+
+## 테스트
+
+```bash
+python _smoke_check.py
+python _predeploy_gate.py
+python _test_unit.py
+python _auction_suite_test.py
+python _auction_advanced_test.py
+python _block_user_test.py
+python _deal_flow_test.py
+python _check_live_nav.py
+python _verify_handover.py
+```
+
+모두 전체 스위트 단위 스크립트이며 CLI 인자로 개별 시나리오만 골라 실행하는 기능은 없다.
+
 ## 작업 방식 (사용자 강제)
 
-1. **말한 것만** — 멋대로 범위 확장·하이브리드 기본값 금지  
-2. **애매하면 되묻기** — 추측 구현 금지  
-3. 「완료」 전 핵심 한두 줄 되짚기  
-4. 사이트 기준 위반 아이디어는 코드 반영 금지 (이유만)  
-5. 수익성 → 사업성 → 안정성 순 평가  
-6. 「전부」면 부분 실행으로 끝내지 말 것  
+1. **애매하면 되묻기** — 추측 구현 금지  
+2. 「완료」 전 핵심 한두 줄 되짚기  
+3. 사이트 기준 위반 아이디어는 코드 반영 금지 (이유만)  
+4. 수익성 → 사업성 → 안정성 순 평가  
+5. 「전부」면 부분 실행으로 끝내지 말 것  
 
 ## 금지
 
