@@ -408,9 +408,53 @@
           window.WakeAgainAPI.request("/api/v1/config").then(function (cfg) {
             window.WakeAgainI18n.ingestConfig(cfg);
             window.WakeAgainI18n.apply(document);
+            try {
+              var pol = (cfg && cfg.auction_policy) || {};
+              var seen = sessionStorage.getItem("wa_collection_notice_dismissed") === "1";
+              if (pol.listing_collection_mode && !seen) {
+                showCollectionModeNotice();
+              }
+            } catch (e2) {}
           }).catch(function () {});
         }
       } catch (e) {}
+
+      /* Cold-start notice: listings only for now, buyers come after inventory builds up */
+      function showCollectionModeNotice() {
+        var root = document.createElement("div");
+        root.id = "waCollectionNotice";
+        root.setAttribute("role", "dialog");
+        root.setAttribute("aria-modal", "true");
+        root.style.cssText =
+          "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;" +
+          "padding:1rem;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)";
+        root.innerHTML =
+          '<div style="max-width:420px;width:100%;border-radius:16px;background:linear-gradient(165deg,#1a1814 0%,#16140f 55%,#12100c 100%);' +
+          'border:1px solid rgba(212,160,23,.4);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1.35rem 1.4rem;color:#f0e8d8">' +
+          '<p style="font-weight:700;font-size:1.05rem;margin:0 0 .5rem;background:linear-gradient(90deg,#e8d5a3,#d4a86a);-webkit-background-clip:text;background-clip:text;color:transparent">WakeAgain</p>' +
+          '<h2 style="margin:0 0 .6rem;font-size:1.15rem;font-weight:700;color:#f5f0e6">지금은 매물부터 모으고 있어요</h2>' +
+          '<p style="margin:0 0 .5rem;font-size:.9rem;line-height:1.55;color:#c9c1dd">오픈 초기라 방치된 프로젝트를 먼저 모으는 중입니다. ' +
+          '지금 올려두신 매물은 <b style="color:#f0e0b0">경매 타이머가 바로 흐르지 않아요</b> — 매물이 어느 정도 쌓이면 운영자가 직접 구매자를 찾아다니며 그때 경매를 시작합니다.</p>' +
+          '<p style="margin:0 0 1rem;font-size:.85rem;line-height:1.5;color:#9ca3af">지금은 부담 없이 매물만 올려 주세요. 시작되면 알림으로 알려드릴게요.</p>' +
+          '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+          '<a href="/app/#new" class="btn btn-primary" style="flex:1;min-width:8rem;text-align:center">매물 올리기</a>' +
+          '<button type="button" id="waCollectionNoticeClose" class="btn btn-ghost" style="flex:1;min-width:6rem">나중에</button>' +
+          "</div></div>";
+        document.body.appendChild(root);
+        function dismiss() {
+          try {
+            sessionStorage.setItem("wa_collection_notice_dismissed", "1");
+          } catch (e3) {}
+          root.remove();
+        }
+        root.addEventListener("click", function (e) {
+          if (e.target === root) dismiss();
+        });
+        var closeBtn = document.getElementById("waCollectionNoticeClose");
+        if (closeBtn) closeBtn.addEventListener("click", dismiss);
+        var cta = root.querySelector('a[href="/app/#new"]');
+        if (cta) cta.addEventListener("click", dismiss);
+      }
       /* nav: show account if session exists */
       try {
         var api = window.WakeAgainAPI;

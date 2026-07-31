@@ -550,6 +550,7 @@ def client_config():
                 "Ranking: listing quality + help tickets, then round queue order."
             ),
             "start_price_by_status": price_policy.public_policy(),
+            "listing_collection_mode": database.listing_collection_mode(),
         },
         "q_credit_policy": database.q_credit_policy_public(),
         "fee_policy": {
@@ -4667,6 +4668,54 @@ def admin_resume_auction(
         "mode": "pending_review",
         "project": database.project_to_dict(row, include_private=True),
         "note": "재검수 후 승인 시 새 라운드로 게시되며 줄 맨 뒤(후순위)부터 시작합니다.",
+    }
+
+
+@router.get("/admin/listing-collection-mode")
+def admin_get_listing_collection_mode(_: None = Depends(require_admin)):
+    with database.db() as conn:
+        pending = conn.execute(
+            """
+            SELECT COUNT(*) AS n FROM projects
+            WHERE listing_status = 'approved'
+              AND COALESCE(auction_status, 'live') = 'live'
+              AND (auction_ends_at IS NULL OR auction_ends_at = '')
+            """
+        ).fetchone()
+    return {
+        "ok": True,
+        "enabled": database.listing_collection_mode(),
+        "waiting_count": int(pending["n"] or 0),
+        "note": "WA_LISTING_COLLECTION_MODE 환경변수로 켜고 끕니다 (재배포 필요). 켜져 있으면 승인된 매물은 공개 목록엔 뜨지만 경매 타이머는 시작되지 않습니다.",
+    }
+
+
+@router.post("/admin/auctions/release-all")
+def admin_release_all_auctions(_: None = Depends(require_admin)):
+    """Launch-day trigger: start the countdown for every listing that's been
+    sitting live with no auction clock (listing_collection_mode backlog)."""
+    with database.db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, owner_id, title FROM projects
+            WHERE listing_status = 'approved'
+              AND COALESCE(auction_status, 'live') = 'live'
+              AND (auction_ends_at IS NULL OR auction_ends_at = '')
+            """
+        ).fetchall()
+        released = database.release_all_paused_auctions(conn)
+        for row in rows:
+            database.notify(
+                conn,
+                int(row["owner_id"]),
+                "경매 시작",
+                f"「{row['title']}」 경매가 지금부터 시작되어 카운트다운이 흐릅니다.",
+                f"/project.html?id={row['id']}",
+            )
+    return {
+        "ok": True,
+        "released": released,
+        "note": "released 건수만큼 auction_ends_at이 지금부터 카운트다운 시작으로 설정되었습니다. WA_LISTING_COLLECTION_MODE는 별도로 꺼야 이후 신규 승인 매물도 정상적으로 타이머가 붙습니다.",
     }
 
 

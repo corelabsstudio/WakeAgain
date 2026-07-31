@@ -324,6 +324,62 @@
     a.click();
   }
 
+  function shareCardText(cert) {
+    var en = isEn();
+    if (cert.kind === "complete") {
+      return en
+        ? "Just closed a deal on WakeAgain — " +
+            (cert.project_title || "a project") +
+            " sold for " +
+            won(cert.amount) +
+            "! wakeagain.com"
+        : (cert.project_title || "프로젝트") +
+            "를 " +
+            won(cert.amount) +
+            "에 성사시켰어요! WakeAgain에서 잠든 프로젝트에 두 번째 기회를. wakeagain.com";
+    }
+    return en
+      ? "Won an auction on WakeAgain for " +
+          (cert.project_title || "a project") +
+          "! wakeagain.com"
+      : (cert.project_title || "프로젝트") +
+          " 경매 낙찰받았어요! WakeAgain wakeagain.com";
+  }
+
+  function shareImage(cert) {
+    var canvas = drawCanvas(cert);
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      var stem = cert.file_stem || "WakeAgain-확인서";
+      var file = new File([blob], stem + ".png", { type: "image/png" });
+      var text = shareCardText(cert);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator
+          .share({ files: [file], title: "WakeAgain", text: text })
+          .catch(function (err) {
+            if (err && err.name === "AbortError") return;
+          });
+        return;
+      }
+      // Desktop / unsupported fallback: download + open X compose intent
+      var a = document.createElement("a");
+      var href = URL.createObjectURL(blob);
+      a.href = href;
+      a.download = stem + ".png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () {
+        URL.revokeObjectURL(href);
+      }, 2000);
+      window.open(
+        "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text),
+        "_blank",
+        "noopener"
+      );
+    }, "image/png");
+  }
+
   function show(cert) {
     if (!cert || !cert.doc_id) return;
     ensureStyles();
@@ -343,6 +399,9 @@
       '<button type="button" class="btn btn-primary" id="waCertSave">' +
       t("이미지로 저장", "Save image") +
       "</button>" +
+      '<button type="button" class="btn btn-ghost" id="waCertShare">' +
+      t("공유하기", "Share") +
+      "</button>" +
       '<button type="button" class="btn btn-ghost" id="waCertClose">' +
       t("닫기", "Close") +
       "</button>" +
@@ -351,6 +410,9 @@
     root.querySelector("#waCertClose").addEventListener("click", close);
     root.querySelector("#waCertSave").addEventListener("click", function () {
       downloadPng(cert);
+    });
+    root.querySelector("#waCertShare").addEventListener("click", function () {
+      shareImage(cert);
     });
     root.addEventListener("click", function (e) {
       if (e.target === root) close();
@@ -389,5 +451,6 @@
     close: close,
     openFromApi: openFromApi,
     downloadPng: downloadPng,
+    shareImage: shareImage,
   };
 })(window);

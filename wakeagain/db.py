@@ -1553,6 +1553,51 @@ def premium_boost_feature_enabled() -> bool:
     }
 
 
+def listing_collection_mode() -> bool:
+    """Cold-start mode: approved listings go live but their auction clock does not
+    start (auction_ends_at left empty) until an admin releases them all at once
+    (see release_all_paused_auctions). Default OFF; set WA_LISTING_COLLECTION_MODE=1
+    while stockpiling listings before the public launch/buyer push."""
+    return os.environ.get("WA_LISTING_COLLECTION_MODE", "0").strip() not in {
+        "0",
+        "false",
+        "False",
+        "",
+    }
+
+
+def release_all_paused_auctions(conn: sqlite3.Connection) -> int:
+    """Launch-day trigger: give every live listing that's been waiting with no
+    auction clock (created during listing_collection_mode) a fresh, synchronized
+    countdown starting now. Returns the number of listings released."""
+    rows = conn.execute(
+        """
+        SELECT id, auction_days_intended FROM projects
+        WHERE listing_status = 'approved'
+          AND COALESCE(auction_status, 'live') = 'live'
+          AND (auction_ends_at IS NULL OR auction_ends_at = '')
+        """
+    ).fetchall()
+    now = _now()
+    n = 0
+    for row in rows:
+        days = max(1, min(int(row["auction_days_intended"] or 7), 30))
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            ends = (datetime.now(timezone.utc) + timedelta(days=days)).astimezone().isoformat(
+                timespec="seconds"
+            )
+        except Exception:
+            ends = now
+        conn.execute(
+            "UPDATE projects SET auction_ends_at = ?, round_started_at = ?, updated_at = ? WHERE id = ?",
+            (ends, now, now, int(row["id"])),
+        )
+        n += 1
+    return n
+
+
 def project_boost_active(row: sqlite3.Row | dict, *, now: str | None = None) -> bool:
     until = (_row_get(row, "boost_until") or "") if not isinstance(row, dict) else (row.get("boost_until") or "")
     until = (until or "").strip()
@@ -1796,14 +1841,19 @@ def start_auction_round(
     days = int(auction_days if auction_days is not None else (_row_get(row, "auction_days_intended") or 7))
     days = max(1, min(days, 30))
     now = _now()
-    try:
-        from datetime import datetime, timedelta, timezone
+    if listing_collection_mode():
+        # Cold-start: go live on the board, but don't start the clock yet —
+        # release_all_paused_auctions() starts every held listing at once on launch day.
+        ends = ""
+    else:
+        try:
+            from datetime import datetime, timedelta, timezone
 
-        ends = (datetime.now(timezone.utc) + timedelta(days=days)).astimezone().isoformat(
-            timespec="seconds"
-        )
-    except Exception:
-        ends = now
+            ends = (datetime.now(timezone.utc) + timedelta(days=days)).astimezone().isoformat(
+                timespec="seconds"
+            )
+        except Exception:
+            ends = now
     start_price = int(_row_get(row, "price_start") or 0)
     rn = int(_row_get(row, "round_number") or 0) + 1
     boost_sql = ", boost_until = NULL, boost_tier = 0, boost_product = NULL" if clear_boost else ""
