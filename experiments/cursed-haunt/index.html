@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#F7F4F0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Stasis — simple monitoring</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Stasis — elegant single-developer uptime monitoring." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="stage-clean" data-stage="0">
+  <!-- ===== FAKE BROWSER CHROME (in-page address bar eye-trick) ===== -->
+  <div id="fakeChrome" class="fake-chrome" aria-hidden="true" data-chrome-stage="0">
+    <div class="fake-chrome-traffic" aria-hidden="true">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </div>
+    <div class="fake-chrome-nav" aria-hidden="true">
+      <span class="nav-btn">‹</span>
+      <span class="nav-btn">›</span>
+      <span class="nav-btn">↻</span>
+    </div>
+    <div class="fake-chrome-url find-hot" id="fakeUrlBar" data-find="fakeurl">
+      <span class="url-lock" id="fakeUrlLock" aria-hidden="true"></span>
+      <span class="url-text" id="fakeUrlText">http://localhost:4173/</span>
+    </div>
+    <div class="fake-chrome-tabs" aria-hidden="true">
+      <span class="tab-chip" id="fakeTabTitle">Stasis</span>
+    </div>
+  </div>
+
+  <div id="bloodVeil" class="fx-layer" aria-hidden="true"></div>
+  <div id="staticLayer" class="fx-layer" aria-hidden="true"></div>
+  <div id="scanlines" class="fx-layer" aria-hidden="true"></div>
+  <div id="vignette" class="fx-layer" aria-hidden="true"></div>
+  <div id="faceHint" class="fx-layer" aria-hidden="true"></div>
+  <div id="floatWords" class="fx-layer" aria-hidden="true"></div>
+  <div id="p2DecayLayer" class="p2-decay-layer" aria-hidden="true"></div>
+  <div id="p2DecayGrain" class="p2-decay-grain" aria-hidden="true"></div>
+
+  <!-- WIP 띠: clean 숨김 (wip/branch 트리거는 footer micro) -->
+  <div class="wip-banner" id="wipBanner" aria-hidden="true">
+    <span class="wip-pill" title="">WIP</span>
+    <span class="wip-msg">로컬 드래프트 · 배포 금지 · last open: 47 days ago</span>
+    <span class="wip-git">branch: <code title="">feat/landing-v0</code> · uncommitted: 14</span>
+  </div>
+
+  <!-- ===== CLEAN NAV — 목업 SaaS ===== -->
+  <header class="stasis-nav top">
+    <a class="stasis-logo find-hot" href="#" id="topRec" data-find="logo"
+      data-clean="Stasis"
+      data-mid="Stasis?"
+      data-horror="● REC · DO NOT LOOK AWAY">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="10" fill="#111"/>
+          <path d="M7.2 14.5V7.5h2.1c1.55 0 2.45.85 2.45 2.05 0 .85-.45 1.5-1.2 1.8L12.8 14.5h-1.85l-1.85-2.85H8.55V14.5H7.2zm1.35-4.05h.7c.7 0 1.1-.35 1.1-.9s-.4-.9-1.1-.9h-.7v1.8z" fill="#fff"/>
+        </svg>
+      </span>
+      <span class="logo-text">Stasis</span>
+    </a>
+    <nav class="stasis-pills" aria-label="menu">
+      <span class="pill-link">Product</span>
+      <span class="pill-link pill-todo find-hot" data-find="todo">Pricing <em class="pill-hide-clean">TODO</em></span>
+      <span class="pill-link pill-dead find-hot" data-find="docs">Docs</span>
+      <span class="pill-link pill-stub find-hot" data-find="stub" aria-hidden="true">…</span>
+    </nav>
+    <button type="button" class="stasis-cta" id="navCta"
+      data-clean="Get started"
+      data-mid="Start…?"
+      data-horror="DO NOT TRACK">Get started</button>
+    <!-- 숨은 일기 트리거: 거의 안 보이는 ? -->
+    <button type="button" class="diary-hint find-hot" id="diaryHint" data-find="nav" aria-label="" title="">?</button>
+    <span class="path stasis-path-hide" id="corruptPath"
+      data-clean="~/projects/stasis · dirty"
+      data-mid="C:\Users\…\projects\side\"
+      data-horror="C:\Users\…\abandoned\mvp_final_FINAL2\">~/projects/stasis · dirty</span>
+    <span class="clock stasis-clock-hide" id="clock">--:--:--</span>
+  </header>
+
+  <main class="wrap stasis-main">
+    <!-- HERO — 목업 톤 -->
+    <section class="stasis-hero">
+      <p class="stasis-badge eyebrow find-hot" id="eyebrow" data-find="badge"
+        data-clean="Uptime · Alerts · Solo"
+        data-mid="● System Status: …unstable"
+        data-horror="● System Status: STILL BREATHING">Uptime · Alerts · Solo</p>
+
+      <h1 class="title-horror stasis-h1 find-hot" id="mainTitle" data-find="title">
+        <span class="title-line" id="titleL1"
+          data-clean="Simple monitoring"
+          data-mid="잠들어 있던 것들"
+          data-horror="잠들어 있던 것들이">Simple monitoring</span><br />
+        <span class="title-bleed" id="titleL2"
+          data-clean="for solitary dev"
+          data-mid="깨어나려 하고 있다."
+          data-horror="깨어날 준비를 하고 있다.">for solitary dev</span>
+      </h1>
+      <!-- caret: clean에선 거의 투명, 활성 경로일 때만 약간 보임 -->
+      <p class="wip-cursor-line find-hot" data-find="caret" aria-hidden="true"><span class="wip-caret"></span> <span class="wip-hint">// quiet</span></p>
+
+      <p class="lede lede-horror stasis-lede" id="lede">
+        <span class="morph"
+          data-clean="An elegant, single-developer uptime and performance monitoring tool."
+          data-mid="만들다 만 앱. 끄지 않은 서버. 이름 없는 빌드."
+          data-horror="만들다 만 앱. 끄지 않은 서버. 이름 없는 빌드.">An elegant, single-developer uptime and performance monitoring tool.</span>
+        <br />
+        <span class="morph"
+          data-clean="Instant alerts for your peace of mind."
+          data-mid="주인이 잊은 뒤에도 프로세스는 완전히 죽지 않는다."
+          data-horror="주인이 잊은 뒤에도 프로세스는 <em>완전히 죽지 않았다.</em>">Instant alerts for your peace of mind.</span>
+        <br />
+        <span class="whisper morph" id="whisper"
+          data-clean=""
+          data-mid="…뭔가 이상하다."
+          data-horror="그것들이 당신을 기억한다."></span>
+      </p>
+
+      <!-- Pricing plan cards — 목업 3카드 -->
+      <div class="stasis-plan-row fake-actions plan-cards" role="group">
+        <button type="button" class="btn ghost plan-btn plan-card is-on find-hot" data-find="freehold" data-fake="2" id="planFree">
+          <span class="plan-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 9.2l2.2 2.2 4.8-4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="plan-name">Free</span>
+          <span class="plan-price"><span class="btn-note">$0</span> / mo</span>
+        </button>
+        <button type="button" class="btn ghost plan-btn plan-card" data-fake="1" id="planPro" title="Pro">
+          <span class="plan-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 13.5l1.2-3.6L12.8 2.3a1.2 1.2 0 011.7 1.7L7 12.3 3.5 13.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M10.5 4.5l3 3" stroke="currentColor" stroke-width="1.3"/></svg>
+          </span>
+          <span class="plan-name">Pro</span>
+          <span class="plan-price"><span class="btn-note">$20</span> / mo</span>
+        </button>
+        <button type="button" class="btn ghost plan-btn plan-card danger-btn is-stub find-hot" data-find="team" data-fake="3" id="planTeam">
+          <span class="plan-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6.5" cy="7" r="2.2" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="7.5" r="1.8" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 14c.4-2 2-3.2 4-3.2s3.6 1.2 4 3.2M10.2 12.2c.7-.5 1.6-.8 2.6-.8 1.6 0 2.9.8 3.4 2.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span class="plan-name">Team</span>
+          <span class="plan-price"><span class="btn-note">$39</span> / mo</span>
+        </button>
+      </div>
+      <!-- fixme: clean에선 미세 카피 라인처럼 -->
+      <p class="wip-inline-note find-hot" data-find="fixme">No credit card · Cancel anytime</p>
+      <!-- 세션 경로 chip 일 때만 활성 -->
+      <button type="button" class="wip-file-chip find-hot" id="diaryFileChip" data-find="chip" title="">
+        <span class="wip-file-icon" aria-hidden="true"></span>
+        <span class="wip-file-name">dev_journal.txt</span>
+        <span class="wip-file-meta">modified 47d ago</span>
+      </button>
+      <p class="tiny horror-msg" id="fakeMsg" hidden></p>
+    </section>
+
+    <div class="warning-banner" id="warnBanner" hidden>
+      <span class="wb-icon">⚠</span>
+      <p id="warnText"
+        data-clean=""
+        data-mid="기록이 조금 깨져 보인다. 새로고침을 권장한다."
+        data-horror="이 기록은 정상적으로 열리지 않아야 했다. 스크롤하는 동안 <strong>화면이 당신을 볼 수 있다.</strong>"></p>
+    </div>
+
+    <!-- FEATURES + UI MONITOR — 목업 2컬럼 -->
+    <section class="stasis-cards">
+      <article class="card card-horror stasis-card-light">
+        <div class="wip-card-meta">
+          <span class="wip-file find-hot" data-find="features">Features</span>
+          <span class="wip-status ok">live</span>
+        </div>
+        <h2 id="h2log"
+          data-clean="Features"
+          data-mid="// log"
+          data-horror="// blackbox_log">Features</h2>
+        <ul class="log stasis-feat-list" id="log">
+          <li class="morph-li"
+            data-clean="✓ Healthcheck pings — always on"
+            data-mid="2024-08-03 — first commit. “주말에 이어서.”"
+            data-horror="2024-08-03 — first commit. <span class='strike'>“주말에 이어서.”</span>">✓ Healthcheck pings — always on</li>
+          <li class="morph-li"
+            data-clean="✓ Instant webhook alerts"
+            data-mid="2024-11-19 — last push. message: “나중에.”"
+            data-horror="2024-11-19 — last push. message: <span class='red'>“나중에.”</span>">✓ Instant webhook alerts</li>
+          <li class="morph-li"
+            data-clean="✓ Single-region dashboard"
+            data-mid="2025-03-02 — domain expired. process still listening on :3847"
+            data-horror="2025-03-02 — domain expired. process still listening on <span class='red'>:3847</span>">✓ Single-region dashboard</li>
+          <li class="morph-li log-late"
+            data-clean="✓ Quiet mode for solo deploys"
+            data-mid="2026-07-?? — something moved"
+            data-horror="2026-07-?? — <span class='glitch-text' data-text='something moved behind the glass'>something moved behind the glass</span>">✓ Quiet mode for solo deploys</li>
+          <li class="morph-li log-late log-bad log-pulse" id="logLiveRow" hidden
+            data-clean=""
+            data-mid="???? — tab still open"
+            data-horror="????-??-?? — <span id='logLive'>it knows you opened this tab</span>"></li>
+        </ul>
+      </article>
+
+      <article class="card card-horror stasis-card-dark stasis-monitor-card">
+        <div class="wip-card-meta">
+          <span class="wip-file">Live preview</span>
+          <span class="wip-status open">UI</span>
+        </div>
+        <h2 id="h2notes"
+          data-clean="UI section"
+          data-mid="// notes"
+          data-horror="// autopsy">UI section</h2>
+        <p class="morph monitor-caption"
+          data-clean="실시간 대시보드 미리보기"
+          data-mid="방치된 사이드 프로젝트는 사라지지 않는다."
+          data-horror="방치된 사이드 프로젝트는 사라지지 않는다. 하드 구석, 꺼진 노트북, 잊힌 서버 볼륨 안에서 <strong class='red-glow'>형태를 바꾼다.</strong>">실시간 대시보드 미리보기</p>
+
+        <!-- 모니터 목업 UI -->
+        <div class="monitor-frame" aria-hidden="true">
+          <div class="monitor-chrome">
+            <span class="mc-dot"></span><span class="mc-dot"></span><span class="mc-dot"></span>
+            <span class="mc-title">Stasis · dashboard</span>
+          </div>
+          <div class="monitor-body">
+            <aside class="monitor-side">
+              <span class="ms-item is-on">Overview</span>
+              <span class="ms-item">Checks</span>
+              <span class="ms-item">Alerts</span>
+              <span class="ms-item">Logs</span>
+            </aside>
+            <div class="monitor-main">
+              <div class="monitor-kpis">
+                <div class="mk"><span class="mk-l">Uptime</span><span class="mk-v">99.98%</span></div>
+                <div class="mk"><span class="mk-l">Latency</span><span class="mk-v">42ms</span></div>
+                <div class="mk"><span class="mk-l">Checks</span><span class="mk-v">12</span></div>
+              </div>
+              <div class="monitor-charts">
+                <div class="mc-donut"></div>
+                <div class="mc-bars">
+                  <i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:48%"></i>
+                  <i style="--h:78%"></i><i style="--h:55%"></i><i style="--h:90%"></i>
+                  <i style="--h:70%"></i><i style="--h:45%"></i>
+                </div>
+                <div class="mc-line">
+                  <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+                    <path d="M0 28 C15 26 20 12 35 16 S55 30 70 18 S95 8 120 14" fill="none" stroke="#5b8def" stroke-width="2"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- skeleton 슬롯 자리: 모니터 구석 숨은 핫스팟 -->
+        <div class="wip-skeleton find-hot monitor-hotspot" data-find="skeleton" aria-hidden="true" title="">
+          <div class="sk-bar w80"></div>
+          <div class="sk-bar w60"></div>
+          <div class="sk-box"></div>
+          <div class="sk-bar w40"></div>
+        </div>
+        <p class="morph muted stasis-status-row"
+          data-clean="api · secure &nbsp;·&nbsp; <span class='dot-ok'>LIVE</span>"
+          data-mid="어떤 것들은 조용히 남고, 어떤 것들은 다시 손길을 원한다."
+          data-horror="어떤 것들은 조용히 썩고, 어떤 것들은 <span class='glitch-text' data-text='다시 화면을 원한다'>다시 화면을 원한다</span>.">api · secure &nbsp;·&nbsp; <span class="dot-ok">LIVE</span></p>
+      </article>
+    </section>
+
+    <!-- 빈 슬롯 — clean에선 숨김 (skeleton은 위 모니터로 이동) -->
+    <section class="wip-slot-grid" aria-hidden="true">
+      <div class="wip-slot">
+        <span class="wip-slot-label">Pricing</span>
+        <span class="wip-slot-body">// not started<br />return null;</span>
+      </div>
+      <div class="wip-slot">
+        <span class="wip-slot-label">Testimonials</span>
+        <span class="wip-slot-body">유저 0명 — 스킵</span>
+      </div>
+      <div class="wip-slot wip-slot-broken">
+        <span class="wip-slot-label">Screenshot</span>
+        <span class="wip-slot-body">img src=??? 404</span>
+      </div>
+    </section>
+
+    <!-- 신뢰 문구 블록 — 깔끔한 다크 배너 -->
+    <section class="stasis-quote card card-horror danger-soft wip-readme" id="cardWarn">
+      <h2 id="h2warn"
+        data-clean="Built for quiet nights"
+        data-mid="// warning"
+        data-horror="// do_not_trust">Built for quiet nights</h2>
+      <p class="morph stasis-quote-text wip-readme-body"
+        data-clean="One process. One dashboard. Zero noise until something actually breaks."
+        data-mid="버튼이 항상 기대대로 동작하진 않을 수 있다."
+        data-horror="버튼은 거짓말할 수 있다. 에러 메시지는 친절한 척할 수 있다. <strong>종료되지 않은 것은 항상 돌아온다.</strong>">One process. One dashboard. Zero noise until something actually breaks.</p>
+      <p class="tiny morph stasis-quote-by find-hot" data-find="readme"
+        data-clean="— Stasis · last deploy: today"
+        data-mid="이상 시 Esc 또는 새로고침."
+        data-horror="만약 화면이 미쳐 날뛰면 — 하드웨어 고장이 아니다. (대개는.) 종료: <kbd>Esc</kbd> · 화면 탭/클릭">— Stasis · last deploy: today</p>
+    </section>
+
+    <section class="card card-horror long stasis-later wip-abandon">
+      <h2 id="h2res"
+        data-clean="Stay in the loop"
+        data-mid="// residue"
+        data-horror="// residue">Stay in the loop</h2>
+      <p class="morph"
+        data-clean="Get product notes when we ship. No spam — just signals that matter."
+        data-mid="당신은 몇 개의 폴더를 “나중에”로 닫아 두었는가."
+        data-horror="당신은 몇 개의 폴더를 “나중에”로 닫아 두었는가. README는 비어 있고, .env는 죽은 키를 붙잡고, package.json의 스크립트는 아무도 돌리지 않는다.">Get product notes when we ship. No spam — just signals that matter.</p>
+      <p class="morph find-hot" id="resWait" data-find="console"
+        data-clean="console.log('ship later');"
+        data-mid="그것들은 기다린다."
+        data-horror="<span class='red-glow'>그것들은 기다린다. 당신이 이 페이지를 연 지금처럼.</span>">console.log('ship later');</p>
+      <p class="morph muted"
+        data-clean="// quiet by default"
+        data-mid="스크롤을 내려도 아무 일 없을 수 있다."
+        data-horror="스크롤을 내려도, 버튼을 눌러도, 아무 일도 없을 수 있다. 혹은 — <span class='glitch-text' data-text='이미 일이 시작되었을 수 있다'>이미 일이 시작되었을 수 있다</span>.">// quiet by default</p>
+      <div class="face-row" id="faceRow" aria-hidden="true" hidden>
+        <div class="void-face"></div>
+        <div class="void-face delay"></div>
+        <div class="void-face delay2"></div>
+      </div>
+      <div class="spacer" id="deepSpacer" aria-hidden="true" hidden></div>
+      <p class="tiny terminal" id="terminalLine" hidden>&gt; waiting for signal_</p>
+      <p class="tiny terminal dim" id="terminalLine2" hidden>&gt; …</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="footText"
+      data-clean="Stasis · simple monitoring for solitary dev"
+      data-mid="archive fragment · not affiliated"
+      data-horror="archive fragment · not affiliated · do not bookmark">Stasis · simple monitoring for solitary dev</span>
+    <!-- 숨은 트리거: 푸터 점 · 버전 칩(브랜치) · 베타(WIP) -->
+    <button type="button" class="diary-leak-link find-hot" id="diaryLeakLink" data-find="footer" aria-label="">·</button>
+    <span class="foot-micro find-hot" data-find="branch" title="">v0.9.2</span>
+    <span class="foot-micro find-hot foot-beta" data-find="wip" title="">beta</span>
+    <span id="seedHint" class="seed"></span>
+  </footer>
+
+  <!-- 유출된 개발자 일기 (숨김 발견) -->
+  <aside id="diaryPanel" class="diary-panel" hidden aria-hidden="true">
+    <div class="diary-backdrop" id="diaryBackdrop"></div>
+    <div class="diary-sheet" role="dialog" aria-labelledby="diaryTitle">
+      <header class="diary-head">
+        <p class="diary-tag">LEAKED · personal journal · do not redistribute</p>
+        <h2 id="diaryTitle">dev_journal.txt</h2>
+        <button type="button" class="diary-close" id="diaryClose" aria-label="닫기">×</button>
+      </header>
+      <div class="diary-tabs" role="tablist">
+        <button type="button" class="diary-tab is-on" data-diary-page="0" role="tab">3달 전</button>
+        <button type="button" class="diary-tab" data-diary-page="1" role="tab" disabled>1달 전</button>
+        <button type="button" class="diary-tab" data-diary-page="2" role="tab" disabled>오늘</button>
+      </div>
+      <div class="diary-body" id="diaryBody">
+        <article class="diary-page is-on" data-page="0">
+          <p class="diary-date">— 약 3개월 전 —</p>
+          <p>
+            오늘도 야근이다. 이 서비스만 완성하면 대박 날 줄 알았는데, 버그가 잡히지 않는다.
+            하지만 포기할 순 없다.
+          </p>
+          <p class="diary-aside">Stasis 베타… 주말엔 꼭 README부터 쓰자.</p>
+        </article>
+        <article class="diary-page" data-page="1" hidden>
+          <p class="diary-date">— 약 1개월 전 —</p>
+          <p>
+            이상하다. 내가 짠 코드가 아닌데 새벽마다 코드가 스스로 수정되어 있다.
+            서버 로그에 자꾸 자아를 가진 듯한 문장이 찍힌다.
+          </p>
+          <p class="diary-fear">내 컴퓨터가 미쳐가는 걸까?</p>
+        </article>
+        <article class="diary-page diary-page-today" data-page="2" hidden>
+          <p class="diary-date diary-term-date">— 오늘 — <span class="diary-term-live">LIVE INPUT</span></p>
+          <p class="diary-term-status" id="diaryTermStatus">&gt; open dev_journal.txt — append mode_</p>
+          <div class="diary-live-type" id="diaryLiveType" aria-live="polite"></div>
+          <p class="diary-term-cursor-line" id="diaryCursorLine" hidden>
+            <span class="diary-caret">█</span>
+          </p>
+        </article>
+      </div>
+      <footer class="diary-foot">
+        <button type="button" class="diary-next" id="diaryNext">다음 페이지 →</button>
+        <p class="diary-hint-foot">발견됨. 읽는 동안 메인 페이지가… 변할 수 있다.</p>
+      </footer>
+    </div>
+  </aside>
+
+  <button type="button" id="hauntHit" class="haunt-hit" aria-label="unknown" title=""></button>
+
+  <div id="haunt" class="haunt" hidden aria-hidden="true" data-climax-phase="0">
+    <div class="haunt-noise" aria-hidden="true"></div>
+    <div class="haunt-flash" aria-hidden="true"></div>
+    <div class="haunt-scan" aria-hidden="true"></div>
+    <div class="haunt-blood" aria-hidden="true"></div>
+    <div class="haunt-faces" id="hauntFaces" aria-hidden="true"></div>
+    <div class="haunt-rain" id="hauntRain" aria-hidden="true"></div>
+    <div class="haunt-wake-storm" id="hauntWakeStorm" aria-hidden="true"></div>
+
+    <div class="haunt-phase" data-phase="1" id="hauntP1" hidden>
+      <p class="hp-mono hp-blink">SIGNAL INTERRUPT</p>
+      <p class="hp-big">연결이 끊기지 않았다</p>
+      <p class="hp-mono dim">carrier lost · rebinding…</p>
+    </div>
+
+    <div class="haunt-phase" data-phase="2" id="hauntP2" hidden>
+      <p class="hp-mono">ZOMBIE PROCESS LIST</p>
+      <ul class="haunt-list" id="hauntList"></ul>
+      <p class="haunt-sub" id="hauntSub">WakeAgain · still running</p>
+    </div>
+
+    <div class="haunt-phase" data-phase="3" id="hauntP3" hidden>
+      <p class="hp-mono red">VIEWPORT CORRUPT</p>
+      <p class="hp-big glitch-title">화면이 당신을 보고 있다</p>
+      <p class="hp-mono dim">do not look away_</p>
+    </div>
+
+    <div class="haunt-phase" data-phase="4" id="hauntP4" hidden>
+      <p class="hp-brand" id="hauntBrand">WakeAgain</p>
+      <p class="hp-mono dim">imprint · remember this name</p>
+    </div>
+
+    <div class="haunt-phase" data-phase="5" id="hauntP5" hidden>
+      <p class="haunt-tag" id="hauntTag">PROCESS_NOT_DEAD</p>
+      <h2 class="haunt-title" id="hauntTitle">당신이 버린 것이<br />당신을 호출한다</h2>
+      <p class="hp-mono">종료할 수 없습니다</p>
+      <p class="haunt-exit" id="hauntExit">[ 신호 종료 대기… ]</p>
+    </div>
+  </div>
+
+  <div id="endingVoid" class="ending-void" hidden aria-hidden="true">
+    <div class="ending-inner">
+      <p class="ending-line" id="endingL1"></p>
+      <p class="ending-line" id="endingL2"></p>
+    </div>
+  </div>
+
+  <div id="reducedNote" class="reduced-note" hidden>
+    모션 축소 설정이 켜져 있어 강한 연출을 줄였습니다.
+  </div>
+
+  <div id="findHintToast" class="find-hint-toast" hidden aria-live="polite">
+    <span class="find-hint-tag" id="findHintTag">HINT</span>
+    <p class="find-hint-text" id="findHintText"></p>
+    <button type="button" class="find-hint-x" id="findHintClose" aria-label="닫기">×</button>
+  </div>
+
+  <div id="p2HintToast" class="find-hint-toast p2-hint-toast" hidden aria-live="polite">
+    <span class="find-hint-tag p2">PHASE 2</span>
+    <p class="find-hint-text" id="p2HintText"></p>
+    <button type="button" class="find-hint-x" id="p2HintClose" aria-label="닫기">×</button>
+  </div>
+  <button type="button" id="p2MissionChip" class="p2-mission-chip" hidden title="3페이즈 진입 조건">
+    <span class="p2-chip-dot"></span>
+    <span class="p2-chip-label">다음 층</span>
+  </button>
+
+  <div id="p3HintToast" class="find-hint-toast p3-hint-toast" hidden aria-live="polite">
+    <span class="find-hint-tag p3">PHASE 3</span>
+    <p class="find-hint-text" id="p3HintText"></p>
+    <button type="button" class="find-hint-x" id="p3HintClose" aria-label="닫기">×</button>
+  </div>
+  <button type="button" id="p3MissionChip" class="p3-mission-chip" hidden title="클라이맥스 조건">
+    <span class="p3-chip-dot"></span>
+    <span class="p3-chip-label">최종 조건</span>
+  </button>
+
+  <script src="app.js"></script>
+  <script src="haunt-audio.js"></script>
+  <script src="diary-stories.js"></script>
+  <script src="diary.js"></script>
+  <script src="corruption-progress.js"></script>
+  <script src="address-bar.js"></script>
+  <script src="dread-ambient.js"></script>
+  <script src="anomalies.js"></script>
+  <script src="climax-triggers.js"></script>
+  <script src="phase3-triggers.js"></script>
+  <script src="climax-sequence.js"></script>
+  <script src="ending.js"></script>
+</body>
+</html>

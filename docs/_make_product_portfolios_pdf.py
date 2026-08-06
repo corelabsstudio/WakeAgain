@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CoreLabs 제품 포트폴리오 PDF 3종 — WakeAgain / RoadLog / Trace."""
+"""CoreLabs 제품 포트폴리오 PDF — WakeAgain / RoadLog / Trace / niagaekaw."""
 from __future__ import annotations
 
 import base64
@@ -111,17 +111,20 @@ PRODUCTS: list[dict] = [
         "subtitle": "잠든 디지털 프로젝트 거래 장터",
         "tagline": "프로젝트에 두 번째 기회를 주세요.",
         "role": "주사업 · 통신판매중개",
-        "version_label": "2026년 7월 25일 · v2.0",
+        "version_label": "2026년 7월 31일 · v2.3",
+        "doc_ver": "v2.3",
         "bullets": [
-            "사이드·MVP·프로토타입을 공개 호가（경매）로 연결하는 시간 거래소",
-            "키워드 검색 · 안전거래 루프 · 신원 게이트 · 유저 차단까지 구현",
-            "웹 · PWA · Android（Play AAB 제출 패키지 준비）· https://wakeagain.com 라이브",
+            "사이드·MVP·프로토타입을 공개 호가（경매 라운드）로 연결하는 시간 거래소",
+            "헬프티켓 · 노출 가산점 · 쉬운 UX · 야드 톤 랜딩 · 신원 게이트 · 구매자 수수료 0%",
+            "웹 · PWA · Android（Play AAB 완료）· 사업자 정보 게시 완료 · https://wakeagain.com",
         ],
         "domain_label": "도메인 · 접속 · 채널",
         "domain_value": (
             "공식 도메인 <strong>https://wakeagain.com</strong>（등록·소유 완료 · 라이브）<br/>"
-            "클라우드: Railway · 앱 셸 <strong>/app/</strong> · PWA · "
-            "Capacitor Android · <strong>Google Play AAB·스크린샷 패키지 준비（2026-07-25）</strong>"
+            "클라우드: Railway · 앱 셸 <strong>/app/</strong> · PWA · Capacitor Android · "
+            "<strong>Play 패키지 완료</strong>（서명 AAB · 업로드 키스토어 · 피처그래픽 · 스크린샷 · "
+            "계정삭제 URL · 내부 테스트 업로드 대기）· "
+            "사업자 <strong>705-04-02867</strong> · /legal/business.html · 2026-07-31 최신화"
         ),
         "screenshots": [
             ("메인 랜딩", "wa_home.png"),
@@ -137,25 +140,54 @@ PRODUCTS: list[dict] = [
             "거래 당사자가 아닙니다. 매물 품질·사기 1차 책임은 이용자에게 있습니다. "
             "서비스는 이미 <strong>https://wakeagain.com</strong> 에서 라이브이며, "
             "웹·PWA·네이티브 앱（Capacitor）이 <strong>동일 JWT API·동일 데이터</strong>를 공유합니다. "
-            "실결제·실홍보는 <strong>사업자 등록 및 PG 연동 후</strong>에만 진행합니다."
+            "공개 목록은 <strong>라이브 경매 라운드만</strong> 노출하고, 유찰 매물은 아카이브·재검수 후 재등록합니다. "
+            "성사 후 <strong>헬프티켓</strong>으로 안내·설명을 주고받으며, 티켓은 개발 완료 의무가 아니고 "
+            "이용 의견 차이는 당사자 협의·사이트 비중재를 원칙으로 합니다. "
+            "히어로·통계는 <strong>DB 실건수（live_counts）</strong>만 노출합니다. "
+            "랜딩은 <strong>야드 톤·밝은 창가 아카이브 히어로·단문 카피</strong>로 정리했습니다. "
+            "<strong>사업자등록 완료（2026-07-29）</strong> — 푸터·약관·등록증 게시. "
+            "실결제는 <strong>PG 연동 후</strong>에만 진행합니다."
         ),
         "snapshot": [
             ("제품명", "WakeAgain"),
             ("운영 회사", "코어랩스（CoreLabs）· 대표 호현수"),
+            ("사업자", "705-04-02867 · 춘천 · TEL 033-818-2021 · /legal/business.html"),
             ("포지션", "디지털 프로젝트 장터 · 사이드·MVP 특화 · 시간 거래소"),
-            ("형태", "웹 + PWA + Android（Play AAB 준비）· iOS 후속"),
-            ("법적 지위", "통신판매중개자（거래 당사자 아님）"),
-            ("수익", "등록 무료 · 성사 시 판매자 수수료 10% · 향후 상위 노출（부스트）"),
+            ("형태", "웹 + PWA + Android（Play AAB 완료）· iOS 후속"),
+            ("법적 지위", "통신판매중개자（거래 당사자 아님）· 사업자 고지 완료"),
+            (
+                "수익",
+                "등록 무료 · 성사 시 판매자 수수료 10% · <strong>구매자 0%</strong> · 헬프티켓 추가 판매 수수료 · 향후 부스트",
+            ),
             ("도메인", "https://wakeagain.com （등록 완료 · 라이브）"),
             ("문의", "corelabs.studio@gmail.com"),
         ],
         "status": [
-            ("마켓·검색", "목록·상세·관심 · 키워드 1~5 등록 · 서버사이드 검색 · AI 키워드 추천 · 카테고리"),
-            ("경매·거래", "공개 호가 · 입찰 동기화 · 스케줄러 마감 · 딜 상태머신 · 차순위 재낙찰 · 수수료 10%"),
-            ("신뢰", "Lv1 입찰 / Lv2 결제·인수 / Lv3 정산 · 만14세 · 유저 차단 · 신고 · 외부직거래 고지"),
-            ("멀티채널", "웹 랜딩 · /app 셸 · PWA · Capacitor Android · Play 제출용 AAB·에셋"),
-            ("운영·품질", "관리자（매물·회원·매출 등）· Resend 메일 · 백업 · bug_watch · 자동화 테스트"),
-            ("의도적 미완", "사업자 번호 게시 · PG 실결제·웹훅 · SNS OAuth · iOS · 부스트 유료 UI"),
+            (
+                "마켓·노출",
+                "라이브 라운드 보드 · 키워드 검색 · 노출 가산점（포트폴리오+헬프티켓）· 히어로 실건수",
+            ),
+            (
+                "경매·거래",
+                "공개 호가 · 유찰 아카이브 · 재등록 재검수 · 스케줄러 마감 · 딜 상태머신 · 차순위 · 판매자 10% · 구매자 0%",
+            ),
+            (
+                "헬프티켓·UX·비주얼",
+                "포함 1~3장 · 추가 단가 · 당사자 협의 · 사는 법 · 반응형 아이콘 · 야드 톤 랜딩·밝은 히어로",
+            ),
+            (
+                "신뢰·사업자",
+                "Lv1~3 · 만14세 · 차단 · 분쟁 가이드 · 약관 제11조의2 · "
+                "사업자 번호·주소·등록증 게시 완료（통신판매중개 행정 신고 번호는 미게시）",
+            ),
+            (
+                "멀티채널·품질",
+                "웹 · /app · PWA · Capacitor · Play AAB 패키지 · 스모크·딜·경매 스위트 · predeploy 10/10",
+            ),
+            (
+                "의도적 미완",
+                "PG 실결제·웹훅 · 통신판매중개 행정 신고 번호 · Play 내부 테스트 업로드 · 카카오 알림톡 · SNS OAuth · iOS · 부스트 유료 UI",
+            ),
         ],
         "problems": [
             "사이드 프로젝트·MVP 대량 생산 후 유저·수익 없이 방치",
@@ -179,29 +211,37 @@ PRODUCTS: list[dict] = [
             ("6. 정산", "Lv3 계좌 정산 · 플랫폼 수수료 10% · 입금 확인=PG 웹훅 전용"),
         ],
         "features": [
-            "키워드 검색·등록（필수 1~5）· AI 키워드 추천 또는 수동 입력",
-            "신원 게이트: Lv1 이메일→입찰 / Lv2 실명·휴대폰→결제·인수 / Lv3 계좌→판매자 정산 · 만 14세 미만 차단",
+            "키워드 검색·등록 · 노출 가산점（설명·포트폴리오 완성도 + 헬프티켓 개수 비례）· 라운드 순 정렬",
+            "경매 라운드: 라이브만 공개 · 유찰 아카이브 · 재등록 시 재검수·대기열 후미",
+            "헬프티켓: 무료 1~3 · 추가 판매 옵션 · 성사·이전 후 사용 · 개발 완료 의무 아님 · 사이트 비중재",
+            "신원 게이트: Lv1 이메일→입찰 / Lv2 실명·휴대폰→결제·인수·신고 "
+            "（매물 등록=Lv2 + 판매자 공개 신원）/ Lv3 계좌→정산 · 만 14세 미만 차단",
             "안전거래 루프: 낙찰 → PG（1h）→ 이전 → 검수·인수（48h）→ 정산 · 차순위 자동 낙찰 골격",
-            "공개 입찰 보드 · 최고 입찰자 카드 · 헤비 구매자 배지 · 쪽지 외부거래 경고 고정",
-            "유저↔유저 차단（Play 콘텐츠 등급 대응）· 신고 임계·경매 중단 · 관리자 검수·회원·매출",
-            "스케줄러: 경매 마감 자동 낙찰 · 입금·검수 기한 처리",
-            "Resend 인증 메일 · 로그인 기억하기 · KO/EN UI · 표시 통화 기반（정산 원화 우선）",
-            "프리미엄 상위 노출（부스트）: DB·목록 정렬 골격 완료 · 결제 상품 UI는 PG 후",
+            "쉬운 UX: 등록 최소 체크·필수/권장 라벨 · 사는 법 4칸 · 모바일/사이트 아이콘 크기 분리",
+            "쪽지 외부거래 경고 · 분쟁 가이드 · 유저 차단 · 신고 임계 · 관리자 검수·PWA",
+            "스케줄러: 마감 자동 낙찰 · 입금·검수 기한 · 유찰 아카이브",
+            "Resend 인증 메일 · KO/EN · Play 계정 삭제 URL · predeploy·E2E 테스트 스위트",
+            "프리미엄 부스트: DB·정렬 골격 완료 · 결제 상품 UI는 PG 후",
         ],
         "tech": [
             ("스택", "FastAPI（/api/v1 JWT）+ 정적 웹 · SQLite · Railway"),
             ("도메인", "https://wakeagain.com 등록·라이브"),
             ("데이터", "서버 저장 · 관리자 검수 · 로컬·오프사이트 백업 골격"),
             ("결제", "딜 상태머신 완료 · PG 웹훅 연동 후 실운영（수동 입금 확인 경로 없음）"),
-            ("플랫폼", "웹 · PWA · Capacitor Android（AAB）· App Store 후속"),
+            (
+                "플랫폼",
+                "웹 · PWA · Capacitor Android · Play 패키지 완료（AAB·키스토어·에셋）· App Store 후속",
+            ),
+            ("지표", "live_counts 정책 — 허수 GMV·가짜 성공률 금지"),
             ("품질", "입찰·딜 E2E 테스트 · bug_watch 상시 감시 · predeploy 게이트"),
         ],
         "business": [
             "등록·관심·입찰 무료",
             "성사 시 판매자 거래대금의 10%（미성사 시 0）",
-            "구매자 추가 수수료 없음（초기）",
+            "<strong>구매자 추가 수수료 0%</strong>（랜딩·정책 명시）",
             "향후: 상위 노출 부스트 등 부가 상품（DB 골격 완료 · PG 후 상품화）",
-            "오프플랫폼 입금 경로 없음 · PG 연동 후 실거래 · 사업자 전 실홍보 금지",
+            "오프플랫폼 입금 경로 없음 · PG 연동 후 실거래 · PG 전 대규모 실홍보 신중",
+            "다음 스토어 단계: Play 내부 테스트 업로드 → 비공개（12~14인）→ 프로덕션",
         ],
         "users": [
             "판매자: 사이드·MVP 메이커, 바이브 코더, 인디 메이커 — 프로토타입 정리·현금화",
@@ -221,7 +261,7 @@ PRODUCTS: list[dict] = [
             "본 포트폴리오는 제품 소개·구현 현황 공유용입니다. WakeAgain은 통신판매중개 플랫폼이며, "
             "매물 품질·가치·사기에 대한 1차 책임은 이용자에게 있습니다. "
             "세부 수수료·일정·기능은 운영 정책에 따라 조정될 수 있습니다. "
-            "PG·사업자 전 실결제·실홍보는 하지 않습니다. 라이브: https://wakeagain.com"
+            "사업자 고지 완료 · PG 연동 전 실결제는 하지 않습니다. 라이브: https://wakeagain.com"
         ),
         "abbr": (
             "<strong>약어</strong> — "
@@ -238,19 +278,23 @@ PRODUCTS: list[dict] = [
     {
         "id": "roadlog",
         "file": "RoadLog_포트폴리오.pdf",
+        "file_alias": "RoadLog 포트폴리오.pdf",
         "name": "RoadLog",
         "subtitle": "AI 운행·외근 일지 · 제출용 문서 정리",
         "tagline": "오늘 현장 기록, 제출까지 한 번에.",
         "role": "부사업 ① · 캐시카우 · 직접 제공 SaaS",
+        "version_label": "2026년 7월 31일 · v2.2",
+        "doc_ver": "v2.2",
         "bullets": [
             "운행·외근 메모를 회사 제출용 일지로 AI 정리",
-            "Excel · PDF · DOCX 다운로드 · 인쇄 · 저장·이어쓰기",
-            "공식 도메인 https://roadlog.co.kr 라이브 · 코어랩스 운영",
+            "Excel · PDF · DOCX 다운로드 · 인쇄 · 저장·이어쓰기 · 로컬 스위트 42/42 통과",
+            "roadlog.co.kr 라이브 · 사업자 푸터 고지 완료 · 코어랩스 초기 캐시카우",
         ],
         "domain_label": "도메인 · 접속",
         "domain_value": (
             "공식 도메인 <strong>https://roadlog.co.kr</strong>（등록·소유 · production 라이브）<br/>"
-            "Railway 클라우드 · OpenAI 연동 · 데이터 Volume 영속（/data）· 재배포 후 데이터 유지 검증 완료"
+            "Railway 클라우드 · OpenAI 연동 · 데이터 Volume 영속（/data）· "
+            "재배포 후 계정·일지 유지 검증 완료 · PWA 설치 가능"
         ),
         "screenshots": [
             ("메인 · 작성 UI", "rl_home.png"),
@@ -262,7 +306,8 @@ PRODUCTS: list[dict] = [
             "코어랩스（CoreLabs）가 <strong>직접 제공·직접 과금</strong>하며, "
             "Free 체험 후 Pro·Enterprise로 확장할 수 있습니다. "
             "서비스는 이미 <strong>https://roadlog.co.kr</strong> 에서 라이브 중이며, "
-            "코어랩스 초기 <strong>캐시카우（즉시 현금 흐름）</strong> 제품으로 화력을 집중합니다."
+            "코어랩스 초기 <strong>캐시카우（즉시 현금 흐름）</strong> 제품으로 화력을 집중합니다. "
+            "WakeAgain 양면 시장 확장 전에 <strong>RoadLog 유료 전환·운영 신뢰</strong>를 우선합니다."
         ),
         "snapshot": [
             ("제품명", "RoadLog（로드로그）"),
@@ -273,6 +318,19 @@ PRODUCTS: list[dict] = [
             ("요금（런칭가）", "Free 월 15회 · Pro 월 2,900원 · Enterprise 팀"),
             ("도메인", "https://roadlog.co.kr （라이브 production）"),
             ("문의", "corelabs.studio@gmail.com"),
+        ],
+        "status": [
+            ("작성·산출", "퀵 스탬프 · 운행/외근 AI 일지 · Excel·PDF·DOCX · 인쇄·저장·이어쓰기"),
+            ("서식·학습", "회사 서식 업로드·AI 학습 · 제출 전 요약·차량번호 수정"),
+            ("요금·과금", "Free 15회 · Pro claim（스마트스토어）· Enterprise 팀 · 데모 결제 업그레이드 차단"),
+            ("배포·영속", "Railway production · Volume /data · 재배포 후 데이터 유지 스모크 통과"),
+            ("품질", "로컬 E2E 스위트 42/42 · 가입·생성·검증·export · 브라우저 QA（Playwright）"),
+            ("운영", "관리자 대시보드 · 후기·VIP · ntfy 알림 · 약관·개인정보 · KO/EN"),
+            (
+                "사업자·고지",
+                "푸터·/legal/business.html·등록증 게시 완료（705-04-02867 · 2026-07-29）",
+            ),
+            ("의도적 미완", "통신판매 신고 번호 · PG 정식 인앱 결제 확장（claim 경로 우선）"),
         ],
         "problems": [
             "종이·엑셀·메신저에 흩어진 운행·방문 기록",
@@ -304,17 +362,19 @@ PRODUCTS: list[dict] = [
         ],
         "tech": [
             ("스택", "FastAPI + 정적 SPA（web/）· Railway Docker"),
-            ("도메인", "https://roadlog.co.kr 등록·라이브"),
+            ("도메인", "https://roadlog.co.kr 등록·라이브 production"),
             ("데이터", "local JSON + Volume /data · Supabase 선택"),
             ("AI", "OpenAI（gpt-4o-mini）· hybrid 비용 모드 · 키 유효 검증"),
-            ("신뢰", "storage_persistent · launch_ready production"),
+            ("신뢰", "storage_persistent · launch_ready production · 장애 시 최우선 복구"),
+            ("채널", "웹 · PWA · 모바일 반응형"),
         ],
         "business": [
             "Free: 월 15회 생성 · Excel/PDF/DOCX · 서식 학습",
             "Pro: 월 2,900원（런칭가）· 무제한·광고 제거 지향",
             "Enterprise: 팀 좌석 · 승인/반려 · 세금계산서",
             "결제: 스마트스토어 claim · PG 정식 연동 확장",
-            "수익 구조: 코어랩스 직접 과금（중개 아님）· 초기 캐시카우",
+            "수익 구조: 코어랩스 직접 과금（중개 아님）· <strong>초기 캐시카우 1순위</strong>",
+            "화력: Phase 0 약 50% 리소스 · Free→Pro KPI 우선（사업계획서 §01-B 정합）",
         ],
         "users": [
             "영업·외근 직원, 법인차 운전자",
@@ -354,20 +414,23 @@ PRODUCTS: list[dict] = [
     {
         "id": "trace",
         "file": "Trace_포트폴리오.pdf",
+        "file_alias": "Trace 포트폴리오.pdf",
         "name": "Trace",
         "subtitle": "인터뷰 기반 AI 경험글 작성 도구",
         "tagline": "말만 하면, 사람들이 읽고 머물 경험글",
         "role": "부사업 ② · Phase 2 · 직접 제공 데스크톱 도구",
+        "version_label": "2026년 7월 31일 · v2.2",
+        "doc_ver": "v2.2",
         "bullets": [
             "취재형 인터뷰로 행동·사실 재료를 채운다",
-            "내 글처럼 정리 — 창작·물타기 금지",
-            "설치형 Trace.exe · 코어랩스 직접 제공 · BYOK로 원가 방어",
+            "내 글처럼 정리 — 창작·물타기 금지 · E-E-A-T 밀도",
+            "설치형 Trace.exe · 코어랩스 직접 제공 · BYOK로 AI 원가 방어",
         ],
         "domain_label": "배포 · 실행 경로",
         "domain_value": (
             "Windows 설치형 <strong>Trace.exe</strong>（설치 경로 예: C:\\Trace\\Trace.exe）· 라이선스 파일 운영<br/>"
             "웹 SaaS가 아닌 <strong>데스크톱 제품</strong> · 판매·데모 채널은 코어랩스 문의·설치 패키지로 연결 "
-            "（전용 마케팅 랜딩은 채널 확정 시 추가）"
+            "（전용 마케팅 랜딩은 채널 확정 시 추가）· Phase 2 스케일（RoadLog 캐시 안정 후）"
         ),
         "screenshots": [
             ("데스크톱 UI", "trace_ui.png"),
@@ -388,6 +451,14 @@ PRODUCTS: list[dict] = [
             ("가격 지향", "월 약 3만 원대 가성비·인터뷰 퀄 체감"),
             ("AI", "BYOK（사용자 본인 API 키）· 없는 경험 창작 금지"),
             ("문의", "corelabs.studio@gmail.com"),
+        ],
+        "status": [
+            ("인터뷰", "목적 → 순차 행동·사실 →（선택）감정 · 타이핑/음성 답변"),
+            ("작성", "기사 구조 플랜 · 1인칭 경험 후기 초안 · 훅→장면→막힘→결과"),
+            ("패키지", "제목·메타·태그·포스팅 가이드 · Markdown/HTML · 미리보기"),
+            ("원칙", "없는 경험 창작 금지 · 물타기 금지 · E-E-A-T 밀도 · 수익·순위 보장 문구 금지"),
+            ("배포", "Trace.exe 설치형 · 라이선스 파일 · 로컬 실행"),
+            ("스케일", "Phase 2 — RoadLog 캐시 안정 후 전면 마케팅 · 제품 완성·버그 수정은 병행 유지"),
         ],
         "problems": [
             "말은 풍부한데 글로 옮기면 밋밋하거나 AI 티가 남",
@@ -416,6 +487,7 @@ PRODUCTS: list[dict] = [
             "초안 골격: 훅 → 장면 → 막힘 → 생각/행동（말한 것만）→ 결과",
             "산출: Markdown · 티스토리 HTML · 미리보기 · 세션 히스토리·메모리",
             "책임 범위 고지: 읽힐 글·발행 준비까지 — 수익·순위 보장 없음",
+            "Founding Seller 보상 연동 가능: WakeAgain 검수 통과 시 Trace 기간 라이선스（사업계획 정합）",
         ],
         "tech": [
             ("실행", "C:\\Trace\\Trace.exe（설치형 · 실물 배포 가능）"),
@@ -423,6 +495,7 @@ PRODUCTS: list[dict] = [
             ("설치", "Inno Setup 등 설치 패키지"),
             ("AI 키", "XAI 등 BYOK · 로컬 .env — 서버 원가 이전"),
             ("데이터", "history · memory · 초안 · user_profile · license"),
+            ("포지션", "코어랩스 Phase 2 · 중개 아님 · 직접 제공 도구"),
         ],
         "business": [
             "형태: 구독 또는 기간 라이선스（체감 월 약 3만 원）",
@@ -430,6 +503,7 @@ PRODUCTS: list[dict] = [
             "금지: 수익 보장, 감성 일기 AI, 모호한 ‘가장 쉬운 기록’ 포지션",
             "수익 구조: 코어랩스 직접 제공 도구（중개 아님）",
             "원가: BYOK로 AI 호출 비용을 사용자 키로 분산",
+            "화력: Phase 2（약 15%→확대）· 캐시 안정 전에도 제품 완성 유지",
         ],
         "users": [
             "경험·후기·리뷰를 꾸준히 쓰는 블로거·리뷰어",
@@ -459,6 +533,169 @@ PRODUCTS: list[dict] = [
             "<strong>BYOK</strong>（Bring Your Own Key）: 사용자 본인 API 키 / "
             "<strong>E-E-A-T</strong>（Experience, Expertise, Authoritativeness, Trustworthiness）: 경험·전문성·권위·신뢰 / "
             "<strong>KPI</strong>（Key Performance Indicator）: 핵심 성과 지표"
+        ),
+    },
+    {
+        "id": "niagaekaw",
+        "file": "niagaekaw_포트폴리오.pdf",
+        "file_alias": "niagaekaw 포트폴리오.pdf",
+        "name": "niagaekaw",
+        "subtitle": "호러 ARG 인터랙티브 랜딩 · Stasis 페이크 SaaS",
+        "tagline": "평범한 모니터링 랜딩 뒤에, 방치된 프로젝트가 울부짖는다.",
+        "role": "실험·바이럴 · WakeAgain 세계관 마케팅",
+        "version_label": "2026년 7월 31일 · v1.2",
+        "doc_ver": "v1.2",
+        "bullets": [
+            "표면: Stasis — “Simple monitoring for solitary dev” 인디 모니터링 랜딩",
+            "이면: 페이즈형 호러 ARG + 감시 글귀·LIVE visitors 상승（2·3페이즈）",
+            "라이브 https://niagaekaw.site · 티저 영상 · presence · WakeAgain 은유 시드",
+        ],
+        "domain_label": "도메인 · 접속 · 배포",
+        "domain_value": (
+            "공식 도메인 <strong>https://niagaekaw.site</strong>（Gabia · GitHub Pages CNAME · 라이브）<br/>"
+            "정적 프론트: HTML/CSS/JS · repo <strong>corelabsstudio/niagaekaw</strong><br/>"
+            "실시간 접속·총방문: presence 하트비트 · P2/P3 LIVE visitors 연출 상승 · "
+            "감시 행동 반응 글귀（watch-taunts）· 크리에이터 디버그 쿼리"
+        ),
+        "screenshots": [
+            ("메인 히어로 · clean 랜딩", "nk_hero.png"),
+            ("Features + LIVE PREVIEW", "nk_scroll.png"),
+            ("모바일", "nk_mobile.png", "phone"),
+        ],
+        "overview": (
+            "niagaekaw.site는 코어랩스（CoreLabs）가 운영하는 "
+            "<strong>인터랙티브 호러 ARG（Alternate Reality Game）랜딩</strong>입니다. "
+            "방문자는 처음엔 크림 톤·세리프 타이포의 미니멀 SaaS "
+            "「<strong>Stasis</strong> — Simple monitoring for solitary dev」를 봅니다. "
+            "요금 카드·Features·LIVE PREVIEW까지 진짜 인디 모니터링 제품처럼 연출됩니다. "
+            "그러나 가짜 주소창·dev_journal.txt 힌트·실시간 접속자 HUD 등 "
+            "이질 디테일을 따라가면 <strong>일기 발견 → 페이즈 2 이상현상 → 페이즈 3 클라이맥스 → 엔딩</strong> "
+            "내러티브가 열립니다. "
+            "2·3페이즈에서는 <strong>LIVE visitors 숫자가 티저처럼 계속 오르고</strong>, "
+            "클릭·스크롤·복사 등 행동에 반응하는 <strong>감시 글귀</strong>（예: 클릭 15번이면…）가 뜹니다. "
+            "콘셉트 은유는 WakeAgain과 직결됩니다 — "
+            "「방치된 사이드 프로젝트가 원혼이 된다 / 잠든 앱을 다시 깨운다」. "
+            "KPI는 가입 전환이 아니라 <strong>입소문·자발 방문·쇼츠 2차 확산</strong>입니다."
+        ),
+        "snapshot": [
+            ("제품명", "niagaekaw（표면 브랜드: Stasis）"),
+            ("운영 회사", "코어랩스（CoreLabs）· 대표 호현수"),
+            ("포지션", "호러 ARG 랜딩 · 바이럴 실험 · WakeAgain 세계관 시드"),
+            ("형태", "정적 웹 + 실시간 presence · 감시 글귀 · 모바일 반응형"),
+            ("법적 지위", "실험·엔터테인먼트 웹 경험（직접 과금 없음）"),
+            ("수익", "페이지 자체 과금 없음 · 브랜드·트래픽·밈 자산"),
+            ("도메인", "https://niagaekaw.site （등록 · 라이브）"),
+            ("문의", "corelabs.studio@gmail.com"),
+        ],
+        "status": [
+            (
+                "표면 랜딩",
+                "Stasis 히어로 · Free/Pro/Team 카드 · Features · LIVE PREVIEW · 크림+다크 UI 완성",
+            ),
+            (
+                "이질 훅",
+                "가짜 브라우저 크롬·주소창 · dev_journal.txt · presence HUD · 티저 영상 톤",
+            ),
+            (
+                "페이즈 1~3",
+                "일기 찾기 · 이상현상 풀 · P3 클라이맥스 1→5 · 엔딩 카피",
+            ),
+            (
+                "감시·LIVE",
+                "P2/P3 행동 반응 글귀 20+ · LIVE visitors 연출 상승 · 영혼/소멸 직전 실동시 표시",
+            ),
+            (
+                "사운드·연출",
+                "앰비언트·호러 오디오 · 블러드/스캔라인 · P2·P3 분위기 레이어",
+            ),
+            (
+                "배포·운영",
+                "GitHub Pages · CNAME · Gabia DNS · presence 하트비트 · watch-taunts 모듈",
+            ),
+            (
+                "의도적 미완",
+                "대규모 유료 광고 · 즉시 WakeAgain hard CTA · i18n 전면화",
+            ),
+        ],
+        "problems": [
+            "사이드 프로젝트·MVP가 방치되는 현실을 말로만 설명하면 공감이 약함",
+            "일반 랜딩·배너 광고는 개발자·인디 커뮤니티에서 ‘광고 티’로 스킵됨",
+            "쇼츠·스크린샷에 전부 노출되면 방문 동기가 사라져 티저 설계가 필요",
+            "공포·미스터리 경험은 안전 탈출·스포일러 관리 없이 하면 이탈·반감",
+        ],
+        "values": [
+            ("위장", "진짜 같은 인디 SaaS 표면"),
+            ("발견", "일기·훅을 스스로 찾는 구조"),
+            ("페이즈", "1→2→3→엔딩 서사 상승"),
+            ("은유", "방치 앱 = 원혼 → WakeAgain"),
+        ],
+        "flow": [
+            ("1. 진입", "https://niagaekaw.site — 평범한 Stasis 모니터링 랜딩으로 인식"),
+            ("2. 이질감", "가짜 주소창 · journal 힌트 · 실시간 접속자 등 ‘뭔가 이상함’ 포착"),
+            ("3. 일기", "세션별 경로로 일기 발견 → 페이즈 2 이상현상 해금"),
+            ("4. 클라이맥스", "페이즈 3 시퀀스·호러 레이어 · 미션/힌트 연출"),
+            ("5. 엔딩", "정적·시그널 카피（wakeagain… / no signal…）— 입소문 후 본 서비스 연결"),
+        ],
+        "features": [
+            "표면 제품 UX: 히어로 카피 · 요금 티어 · Features · 다크 LIVE PREVIEW 카드",
+            "인페이지 가짜 브라우저 크롬（트래픽 라이트 · URL 바 · 탭 칩）아이 트릭",
+            "실시간 presence HUD（P1 접속/총방문 · P2/P3 LIVE visitors 연출 상승 + 영혼 수）",
+            "감시 글귀 토스트: 클릭·스크롤·복사·탭 이탈 등 행동 반응 20+ 문구",
+            "일기 스토리 풀 · 세션당 발견 경로 · 크리에이터 단축 쿼리",
+            "이상현상 풀 · P3 트리거 · 클라이맥스 1→5 순차",
+            "호러 오디오 · 대기 분위기（손·실루엣·안개 · 생체-디지털 레이어）",
+            "티저 영상（Grok）· 괴담 채널 1편 전략과 정합",
+            "스포 최소화 마케팅 · 모바일 반응형 · 로컬 정적 전체 플로우 재현",
+        ],
+        "tech": [
+            ("프론트", "바닐라 HTML · CSS · JS（diary / anomalies / climax / presence / watch-taunts）"),
+            ("도메인", "https://niagaekaw.site · Gabia DNS · GitHub Pages CNAME"),
+            ("repo", "github.com/corelabsstudio/niagaekaw"),
+            ("presence", "하트비트 · horrorLive 연출 · 테스트 트래픽 총방문 제외"),
+            ("연출", "CSS 레이어 FX · Web Audio · 페이즈 stage · 감시 토스트"),
+            ("품질", "Playwright 감사·데모 녹화 · 크리에이터 디버그 훅"),
+        ],
+        "business": [
+            "형태: 무료 공개 실험 페이지（페이지 자체 구독·결제 없음）",
+            "역할: WakeAgain 세계관·브랜드 시드 · 여름 공포·도시괴담 바이럴 채널",
+            "KPI 우선순위: ① 입소문 ② 자발 방문 ③ 쇼츠·2차 확산（가입·매물 등록은 후순위）",
+            "연결 전략: 입질·밈 확산 후 ‘코어랩스 / WakeAgain 프로모션’ 반전 공개",
+            "비용: 정적 호스팅 + 도메인 + presence 인프라（저원가 유지）",
+            "화력: 사업자·PG 대기 공백·사이드 실험 슬롯 활용",
+        ],
+        "users": [
+            "심야 웹서핑·미니멀 웹·인디 SaaS 감성을 좋아하는 방문자",
+            "개발자·인디해커·바이브 코딩 커뮤니티（‘고장인 줄’ 목격담 유도）",
+            "호러 ARG·도시괴담·쇼츠 2차 창작에 반응하는 크리에이터 시청자",
+        ],
+        "growth_note": (
+            "<strong>초기 확산 실행</strong> — "
+            "직접 첫 쇼츠·발견 톤 티스토리로 ‘최초 발견자’ 시드를 뿌리고, "
+            "영상·스크린샷은 <strong>티저만</strong>（홈 전체·클리어 루트 비공개）. "
+            "방문자가 직접 찾아·경험하게 한 뒤, 입소문이 붙으면 "
+            "「방치하면 악이 된다 / 잠든 앱은 원혼」메시지로 WakeAgain을 연결합니다. "
+            "유료 광고는 밈·체류 검증 후에만."
+        ),
+        "closing": (
+            "겉은 모니터링, 속은 방치된 프로젝트의 목소리. — "
+            "niagaekaw by CoreLabs（대표 호현수） · https://niagaekaw.site"
+        ),
+        "disclaimer": (
+            "본 포트폴리오는 실험 웹·마케팅 자산 소개용입니다. "
+            "niagaekaw.site는 엔터테인먼트·바이럴 경험이며, "
+            "실제 uptime 모니터링 SaaS 구독 상품이 아닙니다. "
+            "호러 연출이 포함되므로 민감한 분은 이용을 권하지 않습니다. "
+            "운영: 코어랩스（CoreLabs）. 라이브: https://niagaekaw.site"
+        ),
+        "abbr": (
+            "<strong>약어</strong> — "
+            "<strong>ARG</strong>（Alternate Reality Game）: 현실과 경계를 섞는 인터랙티브 서사 / "
+            "<strong>SaaS</strong>（Software as a Service）: 구독형 소프트웨어（표면 위장 톤） / "
+            "<strong>MVP</strong>（Minimum Viable Product）: 최소 기능 시제품 / "
+            "<strong>HUD</strong>（Heads-Up Display）: 화면 위 상태 표시 / "
+            "<strong>CNAME</strong>: 도메인 별칭 레코드 / "
+            "<strong>KPI</strong>（Key Performance Indicator）: 핵심 성과 지표 / "
+            "<strong>PWA</strong> 아님 — 본 페이지는 정적 경험 웹 중심"
         ),
     },
 ]
@@ -899,7 +1136,7 @@ def build_html(prod: dict, logo_uri: str, fonts: str) -> str:
             shot_html = (
                 '<h3>실제 화면（UI）</h3>'
                 f'<div class="shot-grid">{"".join(cells)}</div>'
-                f'<p class="fine">캡처: 라이브 웹（wakeagain.com）· Play 제출용 모바일 화면 · 시각 증명용</p>'
+                f'<p class="fine">캡처: 실제 제품 화면 · 시각 증명용（{prod["name"]}）</p>'
             )
 
     growth_html = ""
@@ -910,9 +1147,11 @@ def build_html(prod: dict, logo_uri: str, fonts: str) -> str:
         "wakeagain": "라이브: <strong>https://wakeagain.com</strong><br/>",
         "roadlog": "라이브: <strong>https://roadlog.co.kr</strong><br/>",
         "trace": "배포: <strong>Trace.exe 설치형</strong><br/>",
+        "niagaekaw": "라이브: <strong>https://niagaekaw.site</strong><br/>",
     }.get(prod["id"], "")
-    foot_ver = " v2.0" if prod["id"] == "wakeagain" else ""
-    header_ver = " · v2.0" if prod["id"] == "wakeagain" else ""
+    doc_ver = prod.get("doc_ver") or ""
+    foot_ver = f" {doc_ver}" if doc_ver else ""
+    header_ver = f" · {doc_ver}" if doc_ver else ""
 
     return f"""<!DOCTYPE html>
 <html lang="ko">

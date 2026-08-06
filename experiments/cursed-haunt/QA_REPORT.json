@@ -1,0 +1,375 @@
+{
+  "results": [
+    {
+      "ok": true,
+      "name": "story count 20",
+      "detail": "20"
+    },
+    {
+      "ok": true,
+      "name": "story ids 01-20 sequential",
+      "detail": ""
+    },
+    {
+      "ok": false,
+      "name": "no banned jargon in stories",
+      "detail": "function "
+    },
+    {
+      "ok": true,
+      "name": "past+mid para blocks ≥40",
+      "detail": "40"
+    },
+    {
+      "ok": true,
+      "name": "avg long Korean string ≥45 chars",
+      "detail": "avg=58 n=322"
+    },
+    {
+      "ok": true,
+      "name": "audio has unlock",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has setLevel",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has pulse",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has sting",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has whisper",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has breath",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has staticBurst",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has signalDrop",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has dreadHit",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has hddScratch",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has rumble",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio has typeClick",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "diary-open kills filter",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomaly filters gated",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "address-bar preserves query",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "corruption remorphAll",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "diary layout hazard clear",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomaly sfx wiring",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads app.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads haunt-audio.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads diary-stories.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads diary.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads corruption-progress.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads address-bar.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads dread-ambient.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads anomalies.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads climax-triggers.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads climax-sequence.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "index loads ending.js",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "query preserved",
+      "detail": "?path=nav&debug=1&p3=hold_free&story=1"
+    },
+    {
+      "ok": true,
+      "name": "P1 clean stage",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "P1 no diary / no anomalies",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "audio API present",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomaly catalog",
+      "detail": "47"
+    },
+    {
+      "ok": true,
+      "name": "p3 trigger forced",
+      "detail": "hold_free"
+    },
+    {
+      "ok": true,
+      "name": "story=1 forces #01",
+      "detail": "01"
+    },
+    {
+      "ok": true,
+      "name": "story para counts",
+      "detail": "{\"past\": 6, \"mid\": 6, \"human\": 5, \"pastChars\": 385, \"midChars\": 395, \"humanChars\": 330, \"title\": \"\\ub098\\uc911\\uc5d0 \\ud558\\uc790\\uace0 \\uc7a0\\uadfc \\uac83\"}"
+    },
+    {
+      "ok": true,
+      "name": "story content long enough",
+      "detail": "{\"pastChars\": 385, \"midChars\": 395, \"humanChars\": 330}"
+    },
+    {
+      "ok": true,
+      "name": "runtime 20 stories",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "all 20 stories length+no jargon",
+      "detail": "[]"
+    },
+    {
+      "ok": true,
+      "name": "diary opens",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "diary title Korean journal style",
+      "detail": "잠든 프로젝트 일기 · 나중에 하자고 잠근 것"
+    },
+    {
+      "ok": true,
+      "name": "page0 long text rendered",
+      "detail": "437"
+    },
+    {
+      "ok": true,
+      "name": "body filter none diary-open",
+      "detail": "none"
+    },
+    {
+      "ok": true,
+      "name": "panel fixed",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "3mo→1mo",
+      "detail": "{\"on\": true, \"len\": 451, \"mood\": 2, \"page\": 1}"
+    },
+    {
+      "ok": true,
+      "name": "mood≥2 on page1",
+      "detail": "2"
+    },
+    {
+      "ok": true,
+      "name": "page1 long",
+      "detail": "451"
+    },
+    {
+      "ok": true,
+      "name": "today page mood≥3",
+      "detail": "{\"page\": 2, \"mood\": 3, \"terminal\": true}"
+    },
+    {
+      "ok": true,
+      "name": "stage dread",
+      "detail": "{\"l1\": \"\\uc7a0\\ub4e4\\uc5b4 \\uc788\\ub358 \\uac83\\ub4e4\\uc774\", \"l2\": \"\\uae68\\uc5b4\\ub0a0 \\uc900\\ube44\\ub97c \\ud558\\uace0 \\uc788\\ub2e4.\", \"stage\": \"3\", \"dread\": true, \"phase2\": true}"
+    },
+    {
+      "ok": true,
+      "name": "hero morphed off clean English",
+      "detail": "잠들어 있던 것들이"
+    },
+    {
+      "ok": true,
+      "name": "phase2 active",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomaly fire no throw",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomaly visual/fx",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomalies respect diary-open busy",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "climax phase 1",
+      "detail": "[1, 2, 3, 4, 5]"
+    },
+    {
+      "ok": true,
+      "name": "climax phase 2",
+      "detail": "[1, 2, 3, 4, 5]"
+    },
+    {
+      "ok": true,
+      "name": "climax phase 3",
+      "detail": "[1, 2, 3, 4, 5]"
+    },
+    {
+      "ok": true,
+      "name": "climax phase 4",
+      "detail": "[1, 2, 3, 4, 5]"
+    },
+    {
+      "ok": true,
+      "name": "climax phase 5",
+      "detail": "[1, 2, 3, 4, 5]"
+    },
+    {
+      "ok": true,
+      "name": "ending reached",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "ending l1",
+      "detail": "wakeagain..."
+    },
+    {
+      "ok": true,
+      "name": "ending l2",
+      "detail": "no signal"
+    },
+    {
+      "ok": true,
+      "name": "ending no domain",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "anomalies off in ending",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "stage blocked without diary",
+      "detail": "0"
+    },
+    {
+      "ok": true,
+      "name": "type_kill trigger",
+      "detail": ""
+    },
+    {
+      "ok": false,
+      "name": "type_kill starts climax",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "no page errors",
+      "detail": ""
+    }
+  ],
+  "failed": 2
+}
