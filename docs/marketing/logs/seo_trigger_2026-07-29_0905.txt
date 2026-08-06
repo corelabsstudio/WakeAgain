@@ -1,0 +1,4 @@
+﻿WakeAgain Daily SEO Trigger
+time: 2026-07-29T09:05:01.4553331+09:00
+prompt: C:\Users\hysoo\Projects\WakeAgain\docs\marketing\DAILY_SEO_PROMPT.md
+action: Run Grok with DAILY_SEO_PROMPT.md (or: 웨이크어게인 오늘 블로그 올려)

@@ -22,7 +22,6 @@ import traceback
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-os.environ.setdefault("ADMIN_SECRET", "wakeagain-admin-dev")
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
@@ -30,9 +29,13 @@ from fastapi.testclient import TestClient
 
 from server import app
 from wakeagain import db as database
+from wakeagain.admin_auth import ADMIN_SECRET as _ADMIN_SECRET
 
 cl = TestClient(app)
-ADMIN = {"X-Admin-Key": os.environ.get("ADMIN_SECRET", "wakeagain-admin-dev")}
+from wakeagain.db import init_db
+init_db()  # TestClient may skip lifespan on some versions
+# Use the same secret the API process loaded (env / .env), not a hard-coded dev key.
+ADMIN = {"X-Admin-Key": _ADMIN_SECRET}
 results: list[tuple[str, bool, str]] = []
 
 
@@ -125,6 +128,19 @@ def seller_ready(tag: str = "S") -> dict:
     return s
 
 
+
+def _qa_demo_images(user_id: int) -> list[str]:
+    """Seed 2 tiny PNGs for MIN_IMAGES_PER_LISTING=2."""
+    from wakeagain import media as media_mod
+    png = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010802000000907753de0000000c4944415408d763f8cfc000000301010018dd8db00000000049454e44ae426082")
+    urls = []
+    for i in range(2):
+        meta = media_mod.save_demo_image(user_id=int(user_id), raw=png, filename_hint=f"qa{i}.png")
+        urls.append(meta["url"])
+    return urls
+
+
+
 def create_listing(
     seller: dict,
     *,
@@ -138,17 +154,48 @@ def create_listing(
         "one_liner": "입찰·낙찰 시나리오 테스트",
         "status": "프로토타입",
         "product_type": "webapp",
-        "story": "자동 테스트용 매물 스토리입니다.",
+        "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
         "demo": "https://example.com/demo",
         "assets": ["code"],
+        "demo_images": _qa_demo_images(int(seller["id"])),
+        "attest_shots": True,
+        "features": [
+            "예약과 고객 목록을 한 화면에서 관리한다",
+            "알림으로 다음 일정을 놓치지 않게 한다",
+            "모바일에서도 간단히 상태 변경이 된다",
+        ],
+        "audience": "혼자 예약 관리하는 소상공인",
+        "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+        "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+        "acquisition": "made",
+        "attest_works": True,
+        "attest_features": True,
+        "attest_license": True,
+        "attest_rights": True,
+        "attest_transfer": True,
+
+        "demo_images": _qa_demo_images(int(seller["id"])),
+        "attest_shots": True,
         "price_start": price_start,
         "auction_days": auction_days,
         "min_increment": 10_000,
         "license_note": "양도 테스트",
         "keywords": ["테스트", "경매", "SaaS", "웹앱", "입찰"],
+
+        "features": [
+            "예약과 고객 목록을 한 화면에서 관리한다",
+            "알림으로 다음 일정을 놓치지 않게 한다",
+            "모바일에서도 간단히 상태 변경이 된다",
+        ],
+        "audience": "혼자 예약 관리하는 소상공인",
+        "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+        "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+        "acquisition": "made",
         "attest_works": True,
+        "attest_features": True,
         "attest_license": True,
         "attest_rights": True,
+        "attest_transfer": True,
     }
     if price_buy_now is not None:
         payload["price_buy_now"] = price_buy_now
@@ -176,8 +223,10 @@ def bid(user: dict, pid: int, amount: int):
     )
 
 
-def get_project(pid: int) -> dict:
-    r = cl.get(f"/api/v1/projects/{pid}")
+def get_project(pid: int, user: dict | None = None) -> dict:
+    """Public GET; pass user for party-only states (archived / payment_default)."""
+    headers = user["headers"] if user and user.get("headers") else None
+    r = cl.get(f"/api/v1/projects/{pid}", headers=headers)
     return (j(r).get("project") or {}) if r.status_code == 200 else {}
 
 
@@ -283,8 +332,16 @@ def scenario_C_no_bid_end() -> None:
     pid = create_listing(s, price_start=300_000)
     approve(pid)
     expire_auction(pid)
-    p = get_project(pid)
+    # Unsold archive is not public permanent display — owner may still open.
+    p_pub = get_project(pid)
+    log("C public hidden after archive", not p_pub, str(p_pub.get("auction_status")))
+    p = get_project(pid, s)
     log("C ended without sale", p.get("auction_status") == "ended", str(p.get("auction_status")))
+    log(
+        "C archived listing",
+        p.get("listing_status") == "archived",
+        str(p.get("listing_status")),
+    )
     log("C no buyer", not p.get("buyer_id"), str(p.get("buyer_id")))
 
 
@@ -336,9 +393,16 @@ def scenario_F_payment_default() -> None:
     defaults0 = int(((me0.get("credit") or {}).get("counts") or {}).get("defaults") or 0)
 
     expire_payment(pid)
-    p = get_project(pid)
+    # Buyer (and seller) must still open the deal after 미입금 무효.
+    p = get_project(pid, b)
     log("F payment_default", p.get("deal_status") == "payment_default", str(p.get("deal_status")))
     log("F auction ended", p.get("auction_status") == "ended", str(p.get("auction_status")))
+    p_seller = get_project(pid, s)
+    log(
+        "F seller can open defaulted deal",
+        p_seller.get("deal_status") == "payment_default",
+        str(p_seller.get("deal_status")),
+    )
 
     me1 = j(cl.get("/api/v1/me", headers=b["headers"])).get("user") or {}
     defaults1 = int(((me1.get("credit") or {}).get("counts") or {}).get("defaults") or 0)

@@ -28,6 +28,8 @@ from server import app
 from wakeagain import db as database
 
 cl = TestClient(app)
+from wakeagain.db import init_db
+init_db()  # TestClient may skip lifespan on some versions
 ADMIN = {"X-Admin-Key": os.environ.get("ADMIN_SECRET", "wakeagain-admin-dev")}
 results: list[tuple[str, bool, str]] = []
 
@@ -115,6 +117,19 @@ def seller_ready(tag: str) -> dict:
     return s
 
 
+
+def _qa_demo_images(user_id: int) -> list[str]:
+    """Seed 2 tiny PNGs for MIN_IMAGES_PER_LISTING=2."""
+    from wakeagain import media as media_mod
+    png = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010802000000907753de0000000c4944415408d763f8cfc000000301010018dd8db00000000049454e44ae426082")
+    urls = []
+    for i in range(2):
+        meta = media_mod.save_demo_image(user_id=int(user_id), raw=png, filename_hint=f"qa{i}.png")
+        urls.append(meta["url"])
+    return urls
+
+
+
 def create_and_approve(seller: dict, **kwargs) -> int:
     price_start = kwargs.get("price_start", 300_000)
     payload = {
@@ -122,17 +137,48 @@ def create_and_approve(seller: dict, **kwargs) -> int:
         "one_liner": "레이스·차순위·수수료",
         "status": "프로토타입",
         "product_type": "webapp",
-        "story": "고급 시나리오 테스트 매물",
+        "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
         "demo": "https://example.com/x",
         "assets": ["code"],
+        "demo_images": _qa_demo_images(int(seller["id"])),
+        "attest_shots": True,
+        "features": [
+            "예약과 고객 목록을 한 화면에서 관리한다",
+            "알림으로 다음 일정을 놓치지 않게 한다",
+            "모바일에서도 간단히 상태 변경이 된다",
+        ],
+        "audience": "혼자 예약 관리하는 소상공인",
+        "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+        "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+        "acquisition": "made",
+        "attest_works": True,
+        "attest_features": True,
+        "attest_license": True,
+        "attest_rights": True,
+        "attest_transfer": True,
+
+        "demo_images": _qa_demo_images(int(seller["id"])),
+        "attest_shots": True,
         "price_start": price_start,
         "auction_days": kwargs.get("auction_days", 3),
         "min_increment": 10_000,
         "license_note": "양도",
         "keywords": ["테스트", "경매", "SaaS", "웹앱", "양도"],
+
+        "features": [
+            "예약과 고객 목록을 한 화면에서 관리한다",
+            "알림으로 다음 일정을 놓치지 않게 한다",
+            "모바일에서도 간단히 상태 변경이 된다",
+        ],
+        "audience": "혼자 예약 관리하는 소상공인",
+        "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+        "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+        "acquisition": "made",
         "attest_works": True,
+        "attest_features": True,
         "attest_license": True,
         "attest_rights": True,
+        "attest_transfer": True,
     }
     if kwargs.get("price_buy_now") is not None:
         payload["price_buy_now"] = kwargs["price_buy_now"]

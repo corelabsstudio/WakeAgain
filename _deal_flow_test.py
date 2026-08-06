@@ -25,9 +25,21 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 
 from server import app
+
+def _qa_demo_images(user_id: int) -> list[str]:
+    from wakeagain import media as media_mod
+    png = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010802000000907753de0000000c4944415408d763f8cfc000000301010018dd8db00000000049454e44ae426082")
+    urls = []
+    for i in range(2):
+        meta = media_mod.save_demo_image(user_id=int(user_id), raw=png, filename_hint=f"qa{i}.png")
+        urls.append(meta["url"])
+    return urls
+
 from wakeagain import db as database
 
 cl = TestClient(app)
+from wakeagain.db import init_db
+init_db()
 ADMIN = {"X-Admin-Key": os.environ.get("ADMIN_SECRET", "wakeagain-admin-dev")}
 results: list[tuple[str, bool, str]] = []
 
@@ -152,7 +164,7 @@ def main() -> int:
             "one_liner": "거래 시스템 E2E 테스트용 데모",
             "status": "프로토타입",
             "product_type": "webapp",
-            "story": "모의 거래 시나리오용 스토리. 데모 URL과 함께 형식 검수 통과 가정.",
+            "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
             "demo": "https://example.com/demo",
             "assets": ["code", "domain"],
             "price_start": 500_000,
@@ -161,9 +173,22 @@ def main() -> int:
             "min_increment": 10_000,
             "license_note": "사유 비공개 양도 · 테스트",
             "keywords": ["테스트", "거래", "SaaS", "웹앱", "E2E"],
+            "demo_images": _qa_demo_images(int(seller["id"])),
+            "attest_shots": True,
+            "features": [
+                "예약과 고객 목록을 한 화면에서 관리한다",
+                "알림으로 다음 일정을 놓치지 않게 한다",
+                "모바일에서도 간단히 상태 변경이 된다",
+            ],
+            "audience": "혼자 예약 관리하는 소상공인",
+            "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+            "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+            "acquisition": "made",
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
         },
     )
     body_c = j(r_create)
@@ -425,7 +450,7 @@ def main() -> int:
             "one_liner": "2차 성사 테스트",
             "status": "프로토타입",
             "product_type": "webapp",
-            "story": "두 번째 모의 거래",
+            "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
             "demo": "https://example.com/d2",
             "assets": ["code"],
             "price_start": 300_000,
@@ -433,8 +458,17 @@ def main() -> int:
             "license_note": "양도",
             "keywords": ["테스트", "거래", "SaaS", "웹앱", "성사"],
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
+            "attest_shots": True,
+            "demo_images": _qa_demo_images(int(seller["id"])),
+            "features": ["예약과 고객 목록을 한 화면에서 관리한다","알림으로 다음 일정을 놓치지 않게 한다","모바일에서도 간단히 상태 변경이 된다"],
+            "audience": "혼자 예약 관리하는 소상공인",
+            "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+            "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+            "acquisition": "made",
         },
     )
     pid2 = (j(r_create2).get("project") or {}).get("id")

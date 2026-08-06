@@ -10,8 +10,20 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from server import app
 
+def _qa_demo_images(user_id: int) -> list[str]:
+    from wakeagain import media as media_mod
+    png = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010802000000907753de0000000c4944415408d763f8cfc000000301010018dd8db00000000049454e44ae426082")
+    urls = []
+    for i in range(2):
+        meta = media_mod.save_demo_image(user_id=int(user_id), raw=png, filename_hint=f"qa{i}.png")
+        urls.append(meta["url"])
+    return urls
+
+
 ROOT = Path(__file__).resolve().parent
 cl = TestClient(app)
+from wakeagain.db import init_db
+init_db()
 errors: list[str] = []
 warns: list[str] = []
 
@@ -140,8 +152,10 @@ r_u14 = cl.post(
     },
 )
 ok("register_block_under14", r_u14.status_code == 403, r_u14.text[:120])
-token = r.json().get("token") if r.status_code == 200 else None
-code = r.json().get("dev_email_code") if r.status_code == 200 else None
+_reg = r.json() if r.status_code == 200 else {}
+token = _reg.get("token")
+code = _reg.get("dev_email_code")
+uid = int((_reg.get("user") or {}).get("id") or 0)
 h = {"Authorization": f"Bearer {token}"} if token else {}
 if token and code:
     r = cl.post("/api/v1/auth/verify-email", headers=h, json={"code": code})
@@ -176,16 +190,29 @@ if token and code:
             "title": "스모크 매물",
             "one_liner": "테스트 한줄",
             "status": "프로토타입",
-            "story": "스모크 테스트용 스토리입니다.",
+            "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
             "demo": "https://example.com",
             "assets": ["code"],
             "keywords": ["스모크", "테스트", "SaaS"],
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
+            "demo_images": _qa_demo_images(int(uid)),
+            "attest_shots": True,
+            "features": [
+                "예약과 고객 목록을 한 화면에서 관리한다",
+                "알림으로 다음 일정을 놓치지 않게 한다",
+                "모바일에서도 간단히 상태 변경이 된다",
+            ],
+            "audience": "혼자 예약 관리하는 소상공인",
+            "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+            "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+            "acquisition": "made",
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
         },
     )
     ok(
@@ -232,7 +259,7 @@ if token and code:
             "title": "스모크 매물",
             "one_liner": "테스트 한줄",
             "status": "프로토타입",
-            "story": "스모크 테스트용 스토리입니다.",
+            "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
             "demo": "https://example.com",
             "assets": ["code"],
             "price_start": 2000000,
@@ -247,16 +274,29 @@ if token and code:
             "title": "스모크 매물",
             "one_liner": "테스트 한줄",
             "status": "프로토타입",
-            "story": "스모크 테스트용 스토리입니다.",
+            "story": "자동 테스트용 매물 스토리입니다. 왜 파는지 배경을 충분히 적습니다.",
             "demo": "https://example.com",
             "assets": ["code"],
             "keywords": ["스모크", "테스트", "SaaS", "웹앱", "데모"],
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
+            "demo_images": _qa_demo_images(int(uid)),
+            "attest_shots": True,
+            "features": [
+                "예약과 고객 목록을 한 화면에서 관리한다",
+                "알림으로 다음 일정을 놓치지 않게 한다",
+                "모바일에서도 간단히 상태 변경이 된다",
+            ],
+            "audience": "혼자 예약 관리하는 소상공인",
+            "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
+            "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
+            "acquisition": "made",
             "attest_works": True,
+            "attest_features": True,
             "attest_license": True,
             "attest_rights": True,
+            "attest_transfer": True,
         },
     )
     ok("create project", r.status_code == 200, r.text[:100])
@@ -270,7 +310,9 @@ if token and code:
 
     # --- buyer reports → auto pause at 3 ---
     if pid:
-        admin_h = {"X-Admin-Key": "wakeagain-admin-dev"}
+        from wakeagain.admin_auth import ADMIN_SECRET as _ADMIN_SECRET
+
+        admin_h = {"X-Admin-Key": _ADMIN_SECRET}
         r = cl.post(
             f"/api/v1/admin/projects/{pid}/review",
             headers=admin_h,

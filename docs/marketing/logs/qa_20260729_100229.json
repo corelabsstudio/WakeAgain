@@ -1,0 +1,213 @@
+{
+  "started": "2026-07-29T01:01:45.111809+00:00",
+  "local": {
+    "unit": {
+      "exit": 0,
+      "sec": 1.2,
+      "ok": true,
+      "tail": "== pricing ==\n  [OK] STATUS_PRICING\n  [OK] public_policy\n== auction expire ==\n  [OK] closed at least one expired\n  [OK] status ended or sold\n== scheduler once ==\n[WakeAgain][backup] ok reason=scheduled users=1 file=wakeagain-20260729T010146Z-scheduled.db bytes=172032 integrity=ok offsite=skip\n  [OK] run_once returns int\n  [OK] status has last_run_at\n== SUMMARY ==\nAll unit checks passed.\n"
+    },
+    "smoke": {
+      "exit": 1,
+      "sec": 0.5,
+      "ok": false,
+      "tail": "\nC:\\Users\\hysoo\\projects\\RoadLog\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\_smoke_check.py\", line 11, in <module>\n    from server import app\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\server.py\", line 23, in <module>\n    from wakeagain.api import router as api_router\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\api.py\", line 17, in <module>\n    from wakeagain import oauth as oauth_mod\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\oauth.py\", line 21, in <module>\n    from wakeagain.auth import JWT_ALG, JWT_SECRET\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\auth.py\", line 10, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'"
+    },
+    "auction_suite": {
+      "exit": 1,
+      "sec": 0.3,
+      "ok": false,
+      "tail": "\nC:\\Users\\hysoo\\projects\\RoadLog\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\_auction_suite_test.py\", line 31, in <module>\n    from server import app\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\server.py\", line 23, in <module>\n    from wakeagain.api import router as api_router\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\api.py\", line 17, in <module>\n    from wakeagain import oauth as oauth_mod\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\oauth.py\", line 21, in <module>\n    from wakeagain.auth import JWT_ALG, JWT_SECRET\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\auth.py\", line 10, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'"
+    },
+    "auction_advanced": {
+      "exit": 1,
+      "sec": 0.3,
+      "ok": false,
+      "tail": "\nC:\\Users\\hysoo\\projects\\RoadLog\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\_auction_advanced_test.py\", line 27, in <module>\n    from server import app\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\server.py\", line 23, in <module>\n    from wakeagain.api import router as api_router\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\api.py\", line 17, in <module>\n    from wakeagain import oauth as oauth_mod\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\oauth.py\", line 21, in <module>\n    from wakeagain.auth import JWT_ALG, JWT_SECRET\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\auth.py\", line 10, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'"
+    },
+    "deal_flow": {
+      "exit": 1,
+      "sec": 0.3,
+      "ok": false,
+      "tail": "\nC:\\Users\\hysoo\\projects\\RoadLog\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\_deal_flow_test.py\", line 27, in <module>\n    from server import app\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\server.py\", line 23, in <module>\n    from wakeagain.api import router as api_router\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\api.py\", line 17, in <module>\n    from wakeagain import oauth as oauth_mod\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\oauth.py\", line 21, in <module>\n    from wakeagain.auth import JWT_ALG, JWT_SECRET\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\auth.py\", line 10, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'"
+    },
+    "block_user": {
+      "exit": 1,
+      "sec": 0.3,
+      "ok": false,
+      "tail": "\nC:\\Users\\hysoo\\projects\\RoadLog\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\_block_user_test.py\", line 16, in <module>\n    from server import app\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\server.py\", line 23, in <module>\n    from wakeagain.api import router as api_router\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\api.py\", line 17, in <module>\n    from wakeagain import oauth as oauth_mod\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\oauth.py\", line 21, in <module>\n    from wakeagain.auth import JWT_ALG, JWT_SECRET\n  File \"C:\\Users\\hysoo\\projects\\WakeAgain\\wakeagain\\auth.py\", line 10, in <module>\n    from passlib.context import CryptContext\nModuleNotFoundError: No module named 'passlib'"
+    }
+  },
+  "live": {
+    "base": "https://wakeagain.com",
+    "endpoints": {
+      "/health": 200,
+      "/api/v1/health": 200,
+      "/api/v1/config": 200,
+      "/api/v1/stats": 200,
+      "/api/v1/projects?limit=10": 200,
+      "/api/v1/auctions/live": 200,
+      "/api/v1/reviews?limit=5": 200,
+      "/api/v1/showcases?limit=5": 200,
+      "/api/v1/pricing": 200,
+      "/api/v1/credit-policy": 200,
+      "/": 200,
+      "/app/": 200,
+      "/sell.html": 200,
+      "/buy.html": 200,
+      "/project.html": 200,
+      "/diagnose.html": 200,
+      "/yard-theme.css?v=20260729-logo": 200,
+      "/assets/logo-mark-yard.png": 200,
+      "/js/i18n-messages.js?v=20260725e": 200,
+      "/js/reviews.js?v=20260729-quote": 200
+    },
+    "auction": {},
+    "admin_session": 401,
+    "stats_before": {
+      "ok": true,
+      "mode": "live_counts",
+      "projects": 0,
+      "projects_approved": 0,
+      "projects_pending": 0,
+      "interests": 0,
+      "leads": 0,
+      "users": 1,
+      "users_email_verified": 1,
+      "listing_fee_krw": 0,
+      "went_live": {
+        "revealed": false,
+        "reveal_at": 5,
+        "label_ko": "다시 세상으로 나간 프로젝트",
+        "label_en": "Projects back in the world",
+        "placeholder_ko": "추후 공개",
+        "placeholder_en": "Coming later"
+      },
+      "labels": {
+        "projects": "등록 매물",
+        "interests": "관심 등록",
+        "went_live": "다시 세상으로 나간 프로젝트",
+        "listing_fee": "등록 비용"
+      }
+    },
+    "register_seller": 200,
+    "register_buyer": 200,
+    "settlement": 403,
+    "seller_identity": 403,
+    "create_project": 403,
+    "stats_after": {
+      "ok": true,
+      "mode": "live_counts",
+      "projects": 0,
+      "projects_approved": 0,
+      "projects_pending": 0,
+      "interests": 0,
+      "leads": 0,
+      "users": 3,
+      "users_email_verified": 1,
+      "listing_fee_krw": 0,
+      "went_live": {
+        "revealed": false,
+        "reveal_at": 5,
+        "label_ko": "다시 세상으로 나간 프로젝트",
+        "label_en": "Projects back in the world",
+        "placeholder_ko": "추후 공개",
+        "placeholder_en": "Coming later"
+      },
+      "labels": {
+        "projects": "등록 매물",
+        "interests": "관심 등록",
+        "went_live": "다시 세상으로 나간 프로젝트",
+        "listing_fee": "등록 비용"
+      }
+    },
+    "ui": {
+      "findings": [],
+      "pageerrors_checked": true
+    }
+  },
+  "cleanup": {
+    "user_ids": [
+      20,
+      21
+    ],
+    "project_ids": [],
+    "delete_status": 401,
+    "delete_body": {
+      "detail": "admin key required (header X-Admin-Key)"
+    }
+  },
+  "bugs": [
+    "local/smoke exit 1",
+    "local/auction_suite exit 1",
+    "local/auction_advanced exit 1",
+    "local/deal_flow exit 1",
+    "local/block_user exit 1",
+    "live admin session -> 401",
+    "live seller admin verify-email -> 401 {'detail': 'admin key required (header X-Admin-Key)'}",
+    "live buyer admin verify-email -> 401 {'detail': 'admin key required (header X-Admin-Key)'}",
+    "live seller profile -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 프로필을 저장할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_v",
+    "live buyer profile -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 프로필을 저장할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_v",
+    "live seller settlement -> 403 {'detail': {'code': 'profile_incomplete', 'message': '신원 프로필(실명·휴대폰)을 먼저 완성해 주세요.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'ema",
+    "live seller identity -> 403 {'detail': {'code': 'profile_incomplete', 'message': '실명·휴대폰 프로필(Lv2)을 먼저 완성해 주세요.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'em",
+    "live create project -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 매물을 등록할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_verified': False, 'profile_complete': Fals",
+    "live user delete -> 401 {'detail': 'admin key required (header X-Admin-Key)'}"
+  ],
+  "ok": [
+    "local/unit passed (1.2s)",
+    "local DATA_DIR removed (wa_qa_v7hvopf8)",
+    "live GET /health -> 200",
+    "live GET /api/v1/health -> 200",
+    "live GET /api/v1/config -> 200",
+    "live GET /api/v1/stats -> 200",
+    "live GET /api/v1/projects?limit=10 -> 200",
+    "live GET /api/v1/auctions/live -> 200",
+    "live GET /api/v1/reviews?limit=5 -> 200",
+    "live GET /api/v1/showcases?limit=5 -> 200",
+    "live GET /api/v1/pricing -> 200",
+    "live GET /api/v1/credit-policy -> 200",
+    "live GET / -> 200",
+    "live GET /app/ -> 200",
+    "live GET /sell.html -> 200",
+    "live GET /buy.html -> 200",
+    "live GET /project.html -> 200",
+    "live GET /diagnose.html -> 200",
+    "live GET /yard-theme.css?v=20260729-logo -> 200",
+    "live GET /assets/logo-mark-yard.png -> 200",
+    "live GET /js/i18n-messages.js?v=20260725e -> 200",
+    "live GET /js/reviews.js?v=20260729-quote -> 200",
+    "live seller registered",
+    "live buyer registered",
+    "live projects_approved after cleanup = 0",
+    "home no pageerror",
+    "UI present: primary CTA",
+    "UI present: nav list CTA",
+    "UI present: nav market",
+    "clicked diagnose -> https://wakeagain.com/diagnose.html",
+    "app/#login no pageerror",
+    "sell.html no pageerror",
+    "buy.html no pageerror",
+    "no critical requestfailed"
+  ],
+  "ended": "2026-07-29T01:02:29.525126+00:00",
+  "summary": {
+    "ok_count": 34,
+    "bug_count": 14,
+    "bugs": [
+      "local/smoke exit 1",
+      "local/auction_suite exit 1",
+      "local/auction_advanced exit 1",
+      "local/deal_flow exit 1",
+      "local/block_user exit 1",
+      "live admin session -> 401",
+      "live seller admin verify-email -> 401 {'detail': 'admin key required (header X-Admin-Key)'}",
+      "live buyer admin verify-email -> 401 {'detail': 'admin key required (header X-Admin-Key)'}",
+      "live seller profile -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 프로필을 저장할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_v",
+      "live buyer profile -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 프로필을 저장할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_v",
+      "live seller settlement -> 403 {'detail': {'code': 'profile_incomplete', 'message': '신원 프로필(실명·휴대폰)을 먼저 완성해 주세요.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'ema",
+      "live seller identity -> 403 {'detail': {'code': 'profile_incomplete', 'message': '실명·휴대폰 프로필(Lv2)을 먼저 완성해 주세요.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'em",
+      "live create project -> 403 {'detail': {'code': 'email_unverified', 'message': '이메일 인증 후 매물을 등록할 수 있습니다.', 'trust': {'level': 0, 'label': '가입', 'code': 'Lv0', 'email_verified': False, 'profile_complete': Fals",
+      "live user delete -> 401 {'detail': 'admin key required (header X-Admin-Key)'}"
+    ]
+  }
+}

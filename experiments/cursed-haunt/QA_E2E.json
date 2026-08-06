@@ -1,0 +1,108 @@
+{
+  "passed": 20,
+  "total": 20,
+  "failed": [],
+  "results": [
+    {
+      "name": "load",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts_audio",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts_anomalies",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts_p2_gate",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts_p3",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "faces_assets",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clean_stage",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2_stage",
+      "ok": true,
+      "detail": "stage=2"
+    },
+    {
+      "name": "p2_anomalies_active",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "blood_from_letters",
+      "ok": true,
+      "detail": "{'layers': 1, 'fromLetters': 4, 'onTitle': True}"
+    },
+    {
+      "name": "blood_layer_single",
+      "ok": true,
+      "detail": "{'layers': 1, 'fromLetters': 4, 'onTitle': True}"
+    },
+    {
+      "name": "ring_approach_spawn",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "faces_spawn",
+      "ok": true,
+      "detail": "n=3"
+    },
+    {
+      "name": "hands_spawn",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "audio_codeLaugh",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p3_active",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p3_trigger_id",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "climax_haunting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "climax_panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no_pageerror_critical",
+      "ok": true,
+      "detail": "errs=0"
+    }
+  ],
+  "ts": 1785023161.1341803
+}

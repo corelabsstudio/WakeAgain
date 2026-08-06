@@ -10,9 +10,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DESK = Path(os.path.expanduser("~")) / "Desktop"
 OUT_PDF = DESK / "CoreLabs_사업계획서_WakeAgain_RoadLog_Trace.pdf"
-# User-facing alias (same design as prior “CoreLabs 사업계획서.pdf”)
-OUT_ALIAS_SIMPLE = DESK / "CoreLabs 사업계획서.pdf"
-OUT_ALIAS_SHORT = DESK / "CoreLabs_사업계획서_WakeAgain_RoadLog.pdf"
+# Explorer에서 찾기 쉬운 영문 파일명 (한글 경로 이슈 대비)
+OUT_PDF_EN = DESK / "CoreLabs_Business_Plan_WA_RoadLog_Trace.pdf"
+OUT_PDF_DOCS = ROOT / "docs" / "CoreLabs_Business_Plan_WA_RoadLog_Trace.pdf"
 OUT_HTML = ROOT / "docs" / "_business_plan_preview.html"
 
 LOGO_CANDIDATES = [
@@ -526,15 +526,15 @@ def build_html(logo_uri: str) -> str:
     <div class="cover-points">
       IT 스튜디오 <strong>코어랩스(CoreLabs)</strong> · 대표 호현수<br/>
       전략: <strong>캐시카우(RoadLog)로 현금 흐름 → WakeAgain 양면 시장 확장 → Trace 스케일</strong><br/>
-      이미 라이브: roadlog.co.kr · WakeAgain Railway · Trace 설치형<br/>
-      채널: 웹 · PWA · Android(Capacitor) · <strong>Google Play AAB 제출 패키지 준비</strong>
+      이미 라이브: <strong>roadlog.co.kr</strong> · <strong>wakeagain.com</strong>(Railway) · Trace 설치형<br/>
+      채널: 웹 · PWA · Android(Capacitor) · <strong>Google Play AAB·스토어 에셋 패키지 완료</strong>(내부 테스트 업로드 대기)
     </div>
     <div class="portfolio-strip">
       <div class="p-card main">
         <div class="role">MAIN · 주사업(전략)</div>
         <div class="name">WakeAgain</div>
-        <div class="desc">잠든 사이드 프로젝트 장터<br/>통신판매중개 · 수수료 10%</div>
-        <div class="dom">https://wakeagain.com<br/>웹·PWA·Play AAB 준비</div>
+        <div class="desc">잠든 사이드 프로젝트 장터<br/>통신판매중개 · 성사 10% · 구매자 0%</div>
+        <div class="dom">https://wakeagain.com<br/>웹·PWA·Play AAB 완료</div>
       </div>
       <div class="p-card">
         <div class="role">CASH · 초기 집중</div>
@@ -553,8 +553,8 @@ def build_html(logo_uri: str) -> str:
       <div class="meta-row"><span class="k">운영</span><span class="v">코어랩스 (CoreLabs)</span></div>
       <div class="meta-row"><span class="k">대표</span><span class="v">호현수</span></div>
       <div class="meta-row"><span class="k">문의</span><span class="v">corelabs.studio@gmail.com</span></div>
-      <div class="meta-row"><span class="k">작성</span><span class="v">2026년 7월 25일 · v6.0 최신화</span></div>
-      <div class="meta-row"><span class="k">용도</span><span class="v">사업자등록 · 투자·파트너 · 내부 정렬 · 스토어 제출</span></div>
+      <div class="meta-row"><span class="k">작성</span><span class="v">2026년 7월 31일 · v6.3 최신화</span></div>
+      <div class="meta-row"><span class="k">용도</span><span class="v">사업자등록 · 투자·파트너 · 내부 정렬 · Play 제출</span></div>
     </div>
   </div>
 </section>
@@ -591,9 +591,12 @@ def build_html(logo_uri: str) -> str:
         <span class="tag-side">2단계</span>Trace
       </td></tr>
       <tr><td class="k">실행 현황</td><td>
-        RoadLog production 라이브 · WakeAgain Railway 라이브(키워드 검색·입찰·관리자·PWA) ·
-        <strong>Google Play 제출용 AAB·스크린샷 패키지 준비(2026-07-25)</strong> ·
-        Trace 설치형 제품화 · <strong>사업자·PG 전 → 실홍보·실결제 금지</strong>
+        RoadLog production 라이브 · WakeAgain <strong>wakeagain.com</strong> 라이브
+        (경매 라운드·헬프티켓·노출 가산점·쉬운 UX·야드 톤 랜딩·차단·관리자·PWA·KO/EN) ·
+        <strong>Play 제출 패키지 완료</strong>(서명 AAB · 업로드 키스토어 · 피처그래픽 · 폰/태블릿 스크린샷 ·
+        계정삭제 URL) · Trace 설치형 · niagaekaw.site ARG 시드 ·
+        <strong>사업자등록 완료(2026-07-29)</strong> · 푸터·약관·등록증 게시 ·
+        <strong>남은 게이트: PG 실결제 · 통신판매중개 행정 신고 번호 · Play 내부테스트</strong>
       </td></tr>
     </tbody>
   </table>
@@ -605,7 +608,8 @@ def build_html(logo_uri: str) -> str:
         <td class="k">WakeAgain</td>
         <td>주사업 · 장터</td>
         <td>공식 도메인 <strong>https://wakeagain.com</strong> (등록·소유 완료 · 라이브)<br/>
-        클라우드: Railway · 채널: 웹 + PWA + Capacitor Android(Play AAB) · iOS 후속</td>
+        클라우드: Railway · 채널: 웹 + PWA + Capacitor Android ·
+        <strong>Play 패키지</strong>(AAB·아이콘·그래픽·스크린샷·키스토어) 완료 · iOS 후속</td>
       </tr>
       <tr>
         <td class="k">RoadLog</td>
@@ -658,7 +662,7 @@ def build_html(logo_uri: str) -> str:
       <tr>
         <td class="k">Phase 0<br/>지금~90일</td>
         <td><strong>RoadLog 캐시카우</strong></td>
-        <td>운영·마케팅 약 50% · 사업자·PG·청구 경로 정비 ·
+        <td>운영·마케팅 약 50% · PG·청구 경로 정비（사업자 고지 완료） ·
         지인·현장 직군 Free→Pro 전환 · 월 유료 전환 N명 KPI</td>
       </tr>
       <tr>
@@ -718,48 +722,64 @@ def build_html(logo_uri: str) -> str:
         <strong>거래 중개 마켓플레이스</strong> (“시간 거래소” — 다시 만들기 싫을 때)</td></tr>
         <tr><td class="k">슬로건</td><td>프로젝트에 두 번째 기회를 주세요.</td></tr>
         <tr><td class="k">제품 핵심</td><td>쉽게 올리고 쉽게 가격을 쓰되, 거래는 단계형 안전 절차로 관리 · 웹·앱 동일 계정·API</td></tr>
-        <tr><td class="k">수익</td><td>등록 무료 · 성사 시 판매자 수수료 10% · 구매자 추가 수수료 없음(초기) ·
-        향후 상위 노출(부스트) 등 부가 상품(PG 후)</td></tr>
+        <tr><td class="k">수익</td><td>등록 무료 · 성사 시 <strong>판매자 수수료 10%</strong> ·
+        <strong>구매자 추가 수수료 0%</strong>(랜딩·정책 명시) · 향후 상위 노출(부스트) 등 부가 상품(PG 후)</td></tr>
         <tr><td class="k">도메인</td><td><strong>https://wakeagain.com</strong> (등록 완료 · 라이브) · Railway ·
         Capacitor 네이티브 셸</td></tr>
         <tr><td class="k">법적 역할</td><td>통신판매중개자 (거래 당사자 아님 · 약관·고지·초기 개입 기준 명문화)</td></tr>
-        <tr><td class="k">채널</td><td>웹사이트 + PWA + <strong>Google Play(AAB 패키지 준비)</strong> + Apple App Store(후속) —
-        동일 JWT API·동일 데이터</td></tr>
+        <tr><td class="k">채널</td><td>웹사이트 + PWA + <strong>Google Play(AAB·에셋 패키지 완료, 내부 테스트 업로드 대기)</strong>
+        + Apple App Store(후속) — 동일 JWT API·동일 데이터</td></tr>
+        <tr><td class="k">지표 정책</td><td>히어로·통계 = <strong>DB 실건수(live_counts)</strong>만 · 허수 GMV·가짜 성공률 금지</td></tr>
       </tbody>
     </table>
-    <p><strong>주요 기능 · 안전 장치 (2026-07 구현 반영)</strong></p>
+    <p><strong>주요 기능 · 안전 장치 (2026-07-31 구현 반영 · 코드 정합)</strong></p>
     <ul>
       <li>매물 등록(무료) · 키워드 1~5개 필수 · <strong>AI 키워드 추천</strong>(또는 수동) ·
       <strong>형식·데모 검수 후 공개</strong>(보통 1~2영업일, 가치 감정·품질 보증 아님)</li>
       <li><strong>서버사이드 키워드 검색</strong>(제목·한 줄·스토리·키워드·유형) + 카테고리 탭 ·
-      공개 현재가·고유 입찰자 수 · 관심 등록 · 30초 무료 진단(통계 힌트, 감정가 아님)</li>
-      <li>신원 게이트: <strong>Lv1 이메일 → 입찰</strong> · <strong>Lv2 실명·휴대폰 → 결제·인수</strong> ·
-      <strong>Lv3 계좌 → 판매자 정산</strong> · 만 14세 미만 가입 차단</li>
+      공개 현재가·고유 입찰자 수 · 관심 등록 · 30초 무료 진단(<code>/diagnose</code>, 통계 힌트·감정가 아님)</li>
+      <li>신원 게이트:
+      <strong>Lv1 이메일 → 입찰</strong> ·
+      <strong>Lv2 실명·휴대폰 → 결제·인수·신고</strong>(매물 등록은 Lv2 + 판매자 공개 신원) ·
+      <strong>Lv3 계좌 → 성사·정산</strong> · 만 14세 미만 가입 차단</li>
       <li>안전거래 루프: 낙찰 → <strong>PG 결제(목표 1시간)</strong> → 이전 → 검수·인수(기본 48h 무이의 시 자동 확정) → 정산 ·
-      <strong>1순위 미입금 시 차순위 자동 낙찰</strong>(골격 완료 · 실결제=PG 웹훅 전용)</li>
-      <li>공개 입찰 보드 · 헤비 구매자 배지 · 최고 입찰자 카드 · 쪽지 외부거래 경고 고정</li>
-      <li><strong>유저↔유저 차단</strong>(Play 콘텐츠 등급 대응) · 신고·누적 제재 · 관리자(매물·회원·후기·수수료·매출·신고)</li>
-      <li>채널: 웹 + PWA(앱 셸·하단 탭) + Android Capacitor · <strong>Play 스토어 제출용 AAB·아이콘·스크린샷 준비</strong></li>
-      <li>운영 인프라: Resend 메일 인증 · SQLite 백업·오프사이트 백업 골격 · bug_watch 자동 감시 ·
-      프리미엄 상위노출 DB/정렬 골격(결제 UI는 PG 후)</li>
-      <li><strong>초기 거래 개입</strong>: 런칭 후 성사 건수 초기 구간은 운영자 수동 확인·분쟁 SLA 적용(§11)</li>
+      <strong>1순위 미입금 시 차순위 자동 낙찰</strong>(골격 완료 · 실결제=PG 웹훅 전용 · 관리자 수동 입금 경로 없음)</li>
+      <li>공개 입찰 보드 · 헤비 구매자 배지 · 최고 입찰자 카드 · 쪽지 외부거래 경고 고정 ·
+      <strong>사이트 내 신용 점수</strong>(0~100, 행동 기반) · 분쟁 안내 페이지</li>
+      <li><strong>유저↔유저 차단</strong>(Play 콘텐츠 등급 대응) · 신고·누적 제재 · 관리자(매물·회원·후기·수수료·매출·신고) ·
+      관리자 PWA</li>
+      <li>채널: 웹 + PWA(앱 셸·하단 탭) + Android Capacitor ·
+      <strong>Play 패키지 완료</strong>(서명 AAB · 업로드 키스토어 · 512 아이콘 · 1024×500 그래픽 · 스크린샷 ·
+      계정 삭제 URL: <code>/legal/delete-account.html</code>)</li>
+      <li>운영 인프라: Resend 메일 인증(도메인 Verified) · SQLite 백업·오프사이트 백업 골격 · bug_watch ·
+      프리미엄 상위노출 DB/정렬 골격(결제 UI는 PG 후) · UI KO/EN · 표시 통화 KRW/USD/EUR(정산 원화 우선)</li>
+      <li><strong>경매 라운드</strong>: 공개 보드는 <strong>라이브 라운드만</strong> · 유찰 시 아카이브 · 재등록=재검수·대기열 후미 · 동시 라이브 건수 상한 없음</li>
+      <li><strong>헬프티켓</strong>(크몽식): 무료 포함 1~3장 · 판매자 추가 단가 · 성사·이전 후 안내·설명용 ·
+      <strong>개발 완료 의무 아님</strong> · 이용 의견 차이는 당사자 협의 · 사이트 중재 없음(약관 제11조의2) ·
+      노출 가산점 = 포트폴리오 완성도 + 티켓 개수 비례</li>
+      <li><strong>쉬운 UX</strong>: 등록 최소 체크·필수/권장 라벨 · 사는 법 일러스트 · 모바일 작은 아이콘 / 사이트 큰 아이콘</li>
+      <li><strong>초기 거래 개입</strong>: 런칭 후 성사 건수 초기 구간은 운영자 수동 확인·분쟁 SLA 적용(§11). 헬프티켓 내용 중재는 제외</li>
     </ul>
   </div>
 
   <div class="product-block">
-    <h3>WakeAgain · 기능 현황 스냅샷 (v6.0 · 2026-07-25)</h3>
+    <h3>WakeAgain · 기능 현황 스냅샷 (v6.3 · 2026-07-31)</h3>
     <table>
       <thead><tr><th style="width:28%">영역</th><th>구현 · 상태</th></tr></thead>
       <tbody>
-        <tr><td class="k">마켓·검색</td><td>목록·상세·관심 · 키워드 검색/등록 · AI 키워드 추천 · 카테고리 · 라이브 경매 폴링</td></tr>
-        <tr><td class="k">경매·거래</td><td>공개 호가 · 입찰 레이스 동기화 · 스케줄러 마감 · 딜 상태머신 · 차순위 재낙찰 · 수수료 인보이스(10%)</td></tr>
-        <tr><td class="k">신뢰·컴플라이언스</td><td>Lv1~3 게이트 · 만14세 · 유저 차단 · 신고 임계 · 약관·개인정보 · 외부직거래 고지</td></tr>
-        <tr><td class="k">멀티채널</td><td>웹 랜딩 + /app 셸 + PWA · Capacitor Android · Play AAB·피처그래픽·폰/태블릿 스크린샷</td></tr>
-        <tr><td class="k">관리·품질</td><td>관리자 검수·회원·매출 · Resend 인증메일 · 자동 테스트 스위트 · bug_watch · 데이터 보호 백업</td></tr>
-        <tr><td class="k">미완(의도적)</td><td><strong>사업자 등록·번호 게시</strong> · <strong>PG 실결제·웹훅</strong> · SNS OAuth · iOS 제출 · 부스트 유료 상품 UI</td></tr>
+        <tr><td class="k">마켓·검색</td><td>목록·상세·관심 · 키워드 검색/등록 · 노출 가산점(포트폴리오+헬프티켓) · 라운드 순 · 히어로 실건수</td></tr>
+        <tr><td class="k">경매·거래</td><td>라이브 라운드 · 유찰 아카이브 · 재등록 재검수 · 스케줄러 마감 · 딜 상태머신 · 차순위 재낙찰 · 판매자 10% · 구매자 0%</td></tr>
+        <tr><td class="k">헬프티켓·UX</td><td>포함 1~3 · 추가 유료 옵션 · 당사자 협의 원칙 · 등록 최소 완화 · 사는 법·가산점 안내 · 반응형 아이콘</td></tr>
+        <tr><td class="k">랜딩·비주얼</td><td>야드 톤(퍼플 제거) · 밝은 창가 아카이브 히어로 · 단문 카피 · 앱 미리보기 프레임</td></tr>
+        <tr><td class="k">신뢰·컴플라이언스</td><td>Lv1~3 게이트 · 만14세 · 유저 차단 · 신고 임계 · 약관(헬프티켓) · <strong>사업자 정보 게시 완료</strong>(번호·주소·TEL/HP·등록증 · /legal/business.html)</td></tr>
+        <tr><td class="k">멀티채널</td><td>웹 랜딩 + /app 셸 + PWA · Capacitor Android · <strong>Play AAB·에셋·키스토어 패키지 완료</strong></td></tr>
+        <tr><td class="k">관리·품질</td><td>관리자 검수 · 자동 테스트(스모크·딜·경매 스위트 · predeploy 10/10) · bug_watch · 백업</td></tr>
+        <tr><td class="k">미완(의도적)</td><td><strong>PG 실결제·웹훅</strong> · 통신판매중개 <strong>행정 신고 번호</strong> 게시 · Play 콘솔 내부 테스트 업로드·심사 ·
+        카카오 알림톡 · SNS OAuth · iOS 제출 · 부스트 유료 상품 UI</td></tr>
       </tbody>
     </table>
-    <p class="fine">※ PG 연동 전 실거래·실홍보 없음. 입금 확인은 PG 웹훅만 허용(관리자 수동 입금 확인 경로 없음).</p>
+    <p class="fine">※ 사업자등록(705-04-02867) 완료 · 사이트 푸터·약관·등록증 반영(2026-07-29).
+    PG 연동 전 실결제 없음(입금 확인=PG 웹훅 전용). Play 패키지 준비 완료 · 내부 테스트 업로드 대기.</p>
   </div>
 
   <div class="product-block">
@@ -827,7 +847,7 @@ def build_html(logo_uri: str) -> str:
       <ul>
         <li>등록·관심·입찰: 무료</li>
         <li>성사 시 판매자 10%</li>
-        <li>구매자 추가 수수료 없음(초기)</li>
+        <li><strong>구매자 추가 수수료 0%</strong>(초기·랜딩 고지)</li>
         <li>향후: 상위 노출 부스트(DB·정렬 골격 완료 · PG 후 상품화)</li>
       </ul>
     </div>
@@ -868,7 +888,9 @@ def build_html(logo_uri: str) -> str:
   <ul>
     <li>대형 M&amp;A(인수합병) 플랫폼과 다른 문턱 — 사이드 프로젝트 규모에 맞춤</li>
     <li>입찰 허들 최소화(이메일 Lv1) / 낙찰 후 신원·정산 강화 · 키워드 검색으로 매물 발견성 확보</li>
-    <li>이미 동작하는 라이브 스택(Railway·도메인·검수·입찰·앱 패키지) — 아이디어 단계와 차별</li>
+    <li>구매자 수수료 0%로 수요 측 마찰 제거 · 판매자 성사 수수료 10%로 수익 정렬</li>
+    <li>이미 동작하는 라이브 스택(Railway·도메인·검수·입찰·Play 패키지) — 아이디어 단계와 차별</li>
+    <li>지표·카피 정직성: live_counts만 노출 · 보증·가짜 성과 수치 금지</li>
     <li>RoadLog: 현장 일지 특화 + 회사 서식 학습 + 실제 라이브 도메인 운영</li>
     <li>Trace: 일반 요약 LLM이 아닌 ‘취재 인터뷰 → 경험글’ 전용 워크플로</li>
   </ul>
@@ -881,7 +903,7 @@ def build_html(logo_uri: str) -> str:
       <h3>메시지</h3>
       <ul>
         <li><strong>WA 판매자</strong>: 매물만 올려 주세요. 등록 무료. 손님 모객·오픈은 운영이.</li>
-        <li><strong>WA 구매자</strong>: 다시 만들기 전에, 돌아가는 초안을. + 안전결제.</li>
+        <li><strong>WA 구매자</strong>: 다시 만들기 전에, 돌아가는 초안을. · 구매자 수수료 0 · 안전결제(PG).</li>
         <li><strong>RoadLog</strong>: 제출은 단정하게, 입력은 편하게. · roadlog.co.kr</li>
         <li><strong>Trace</strong>: 말만 하면, 읽고 머물 경험글. (수익 보장 금지)</li>
       </ul>
@@ -947,15 +969,17 @@ def build_html(logo_uri: str) -> str:
   <ul>
     <li>초기: 1인(또는 소수) 스튜디오 — 개발·운영·검수·고객응대 · <strong>주간 리소스 보드</strong>로 제품별 시간 기록</li>
     <li>WakeAgain 매물 형식·데모 검수: 보통 1~2영업일 (가치 감정 아님 · 거절 사유 템플릿)</li>
-    <li>클라우드 호스팅(Railway) · 관리자 탭(매물·회원·후기·수수료·매출·신고) · 신고·차단·경매 중단 ·
-    스케줄러(마감·입금·검수 기한)</li>
+    <li>클라우드 호스팅(Railway) · 관리자 탭(매물·회원·후기·수수료·매출·신고) · 관리자 PWA ·
+    신고·차단·경매 중단 · 스케줄러(마감·입금·검수 기한)</li>
     <li>품질: 거래/입찰 자동화 테스트 · <strong>bug_watch</strong> 상시 감시(알림 ntfy/Telegram/Discord) ·
     SQLite 로컬 백업 + S3 호환 오프사이트 백업 골격</li>
-    <li>메일: Resend(HTTPS) · 도메인 인증 완료 · 발송 실패 시 앱 내 코드 폴백</li>
+    <li>메일: Resend(HTTPS) · <strong>wakeagain.com 도메인 Verified</strong> · 발송 실패 시 앱 내 코드 폴백</li>
+    <li>스토어 패키지: <code>Desktop/WakeAgain-PlayStore/</code> (AAB·키스토어·그래픽·스크린샷) ·
+    다음 단계 = 내부 테스트 업로드 → 비공개(12~14인) → 프로덕션</li>
     <li>RoadLog: production 모니터링 · Volume 영속 · 장애 시 최우선 복구</li>
     <li>Trace: 설치 패키지·업데이트 · BYOK 로컬 키 관리 원칙</li>
     <li>만 14세 미만 가입 불가 · 단계별 신원 · 약관·개인정보처리방침 ·
-    <strong>사업자 번호는 등록 후 푸터·약관 게시</strong></li>
+    <strong>사업자 정보 게시 완료</strong>(상호·대표·705-04-02867·주소·TEL/HP·등록증 · WA·RoadLog 푸터·약관)</li>
   </ul>
 </section>
 
@@ -964,11 +988,12 @@ def build_html(logo_uri: str) -> str:
   <table>
     <thead><tr><th style="width:16%">단계</th><th>내용 · 완료 정의</th></tr></thead>
     <tbody>
-      <tr><td class="k">0. 지금<br/>기반</td>
-        <td><strong>CoreLabs 사업자등록</strong> · 통신판매/중개 고지 · 약관·푸터 상호·사업자번호 ·
-        RoadLog·WA 사이트 반영 · 분쟁 접수 채널·SLA 초안 게시 ·
-        <strong>Google Play 콘솔 제출(AAB·스토어 리스팅)</strong></td></tr>
-      <tr><td class="k">1. 결제</td>
+      <tr><td class="k">0. 기반<br/><span class="fine">완료</span></td>
+        <td><strong>CoreLabs 사업자등록 완료(2026-07-29)</strong> · 등록번호 705-04-02867 ·
+        약관·푸터·/legal/business.html·등록증 이미지 · RoadLog·WA 사이트 반영 ·
+        통신판매중개자 고지(행정 신고 번호는 별도) · 분쟁 채널·SLA 초안 ·
+        <strong>Google Play 패키지 완료</strong> → 다음: 내부 테스트 업로드</td></tr>
+      <tr><td class="k">1. 결제<br/><span class="fine">다음</span></td>
         <td>PG 신청·연동 · RoadLog 유료 경로 안정화 · WA 결제 링크·웹훅·정산 자동화 ·
         차순위·1h 타이머 실동작 · 오프플랫폼 입금 경로 없음 확인</td></tr>
       <tr><td class="k">2. 캐시<br/>집중</td>
@@ -982,8 +1007,11 @@ def build_html(logo_uri: str) -> str:
         SNS OAuth · 분쟁 프로세스 고도화 · 해외는 한국 정산·약관 우선 후 검토</td></tr>
     </tbody>
   </table>
-  <p class="fine">현재(2026-07-25): RoadLog production · WakeAgain Railway 라이브(검색·입찰·차단·관리자·PWA) ·
-  Play 제출 패키지 준비 · Trace 설치형 · <strong>남은 게이트: 사업자 → PG → 실오픈 홍보</strong>.</p>
+  <p class="fine">현재(2026-07-31 · v6.3): RoadLog production · WakeAgain wakeagain.com 라이브
+  (라운드·헬프티켓·가산점·쉬운 UX·야드 랜딩·차단·관리자·PWA·KO/EN) ·
+  <strong>사업자등록·번호·등록증 게시 완료</strong> · <strong>Play AAB·에셋 패키지 완료(콘솔 업로드 대기)</strong> ·
+  Trace 설치형 · niagaekaw.site ARG ·
+  <strong>남은 게이트: PG → 통신판매중개 행정 신고 번호 → Play 내부테스트·실오픈 홍보</strong>.</p>
 </section>
 
 <section class="sec">
@@ -1013,7 +1041,7 @@ def build_html(logo_uri: str) -> str:
       초기 성사 건 정산 전 운영 확인</td></tr>
       <tr><td class="k">미입금·장난 입찰</td><td>1시간 결제 기한 · 미결제 낙찰 무효 · 차순위 자동 재낙찰 · 신용·재입찰 제한</td></tr>
       <tr><td class="k">앱스토어 정책</td><td>만 14세 · 차단·신고 · 개인정보 방침 · Play 콘텐츠 등급 정합 ·
-      실서비스 전 사업자·결제 정책 정비</td></tr>
+      실서비스 전 결제(PG)·통신판매중개 행정 신고 정비</td></tr>
       <tr><td class="k">데이터 유실</td><td>Volume 영속 · 로컬 백업 · 오프사이트(S3 호환) 백업 골격 · 파괴적 작업 잠금</td></tr>
       <tr><td class="k">중개 책임·분쟁</td><td>약관 면책 + <strong>분쟁 접수 창구·처리 기한(SLA)</strong> 명시 ·
       전자상거래 소비자 보호 의무 범위 안내 · 필요 시 전문 자문 ·
@@ -1021,7 +1049,7 @@ def build_html(logo_uri: str) -> str:
       <tr><td class="k">콜드스타트</td><td>판매자 훅 6종(§07) · 시드 매물 전 구매자 광고 금지 ·
       RoadLog 현금으로 운영 지속성 확보</td></tr>
       <tr><td class="k">AI 비용·품질</td><td>RoadLog hybrid·한도 · Trace BYOK · 허위 경험 창작 금지</td></tr>
-      <tr><td class="k">규제·신고</td><td>사업자·통신판매(중개) 고지 · 환불·청약 관련 고지 정비</td></tr>
+      <tr><td class="k">규제·신고</td><td>사업자 고지 완료 · 통신판매중개 행정 신고 번호 확보 시 게시 · 환불·청약 고지 정비</td></tr>
     </tbody>
   </table>
   <h3>WakeAgain · 초기 거래 운영자 개입 기준 (신뢰 구축용)</h3>
@@ -1044,9 +1072,9 @@ def build_html(logo_uri: str) -> str:
   </div>
   <p><strong>향후 90일 실행 약속:</strong></p>
   <ol>
-    <li><strong>사업자등록</strong> 완료 후 약관·중개 고지·분쟁 SLA·푸터 사업자번호를 사이트에 반영</li>
+    <li><strong>사업자등록·사이트 고지 완료</strong> 유지 · 통신판매중개 <strong>행정 신고 번호</strong> 확보 시 푸터·약관 추가 게시</li>
     <li>PG 연동 및 RoadLog 유료 전환 경로 안정화 (캐시카우 KPI) · WA 결제 웹훅 가동</li>
-    <li>Google Play 제출·심사 대응 · (후속) App Store</li>
+    <li>Google Play 내부 테스트 업로드·심사 대응 · (후속) 프로덕션·App Store</li>
     <li>WakeAgain Founding Seller + 시드 매물 게이트 달성 후 오픈 이벤트</li>
     <li>초기 성사 거래 운영자 개입 로그 축적 → 자동화 기준 고도화</li>
   </ol>
@@ -1059,11 +1087,11 @@ def build_html(logo_uri: str) -> str:
     운영: <strong>코어랩스(CoreLabs)</strong> · 대표 호현수<br/>
     문의: <strong>corelabs.studio@gmail.com</strong><br/>
     도메인: <strong>https://wakeagain.com</strong> · <strong>https://roadlog.co.kr</strong> · Trace 설치형<br/>
-    © 2026 CoreLabs · WakeAgain · RoadLog · Trace · Business Plan <strong>v6.0</strong>
+    © 2026 CoreLabs · WakeAgain · RoadLog · Trace · Business Plan <strong>v6.3</strong>
   </div>
 </section>
 
-<p class="doc-foot">corelabs.studio@gmail.com · CoreLabs Business Plan · 2026.07.25 · v6.0</p>
+<p class="doc-foot">corelabs.studio@gmail.com · CoreLabs Business Plan · 2026.07.31 · v6.3</p>
 
 </body>
 </html>
@@ -1105,13 +1133,20 @@ def main() -> int:
         OUT_HTML.write_text(html, encoding="utf-8")
         print("wrote HTML only:", OUT_HTML)
         return 1
-    # Desktop aliases (user-facing names)
-    for alias in (OUT_ALIAS_SHORT, OUT_ALIAS_SIMPLE):
+    # Desktop EN alias + docs copy (visibility)
+    import shutil
+
+    for dest in (OUT_PDF_EN, OUT_PDF_DOCS):
         try:
-            alias.write_bytes(OUT_PDF.read_bytes())
-            print("alias:", alias)
-        except Exception as e:
-            print("alias copy skip:", alias, e)
+            shutil.copy2(OUT_PDF, dest)
+            print("copy:", dest, dest.stat().st_size)
+        except Exception as ex:
+            print("copy fail", dest, ex)
+    if not OUT_PDF.is_file():
+        print("WARN: Korean-named PDF missing on Desktop")
+        return 1
+    print("DESKTOP_KO", OUT_PDF)
+    print("DESKTOP_EN", OUT_PDF_EN)
     return 0
 
 
