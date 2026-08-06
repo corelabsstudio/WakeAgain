@@ -63,6 +63,36 @@
     window.addEventListener("scroll", onParallax, { passive: true });
     onParallax();
 
+    var heroEl = document.querySelector(".hero");
+    var heroPhoto = heroEl && heroEl.querySelector(".hero-photo img");
+    if (heroEl && heroPhoto && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      heroPhoto.classList.add("hero-photo-mouse");
+      var hmx = 0,
+        hmy = 0,
+        hRaf = null;
+      var HERO_STRENGTH = 16;
+      function applyHeroMove() {
+        hRaf = null;
+        heroPhoto.style.setProperty("--hero-mx", hmx.toFixed(1) + "px");
+        heroPhoto.style.setProperty("--hero-my", hmy.toFixed(1) + "px");
+      }
+      function onHeroMove(e) {
+        var rect = heroEl.getBoundingClientRect();
+        var nx = (e.clientX - rect.left) / rect.width - 0.5;
+        var ny = (e.clientY - rect.top) / rect.height - 0.5;
+        hmx = -nx * HERO_STRENGTH * 2;
+        hmy = -ny * HERO_STRENGTH * 2;
+        if (!hRaf) hRaf = requestAnimationFrame(applyHeroMove);
+      }
+      function onHeroLeave() {
+        hmx = 0;
+        hmy = 0;
+        if (!hRaf) hRaf = requestAnimationFrame(applyHeroMove);
+      }
+      heroEl.addEventListener("mousemove", onHeroMove);
+      heroEl.addEventListener("mouseleave", onHeroLeave);
+    }
+
     function countUp(el) {
       if (el.dataset.counted) return;
       el.dataset.counted = "1";

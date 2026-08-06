@@ -3249,6 +3249,12 @@ p, li, label, .lede, .center-lead, .manifesto p {
   transform: scale(1.02);
   filter: saturate(1.04) contrast(1.02) brightness(1.04);
 }
+/* Mouse-follow parallax: JS-gated (hover+pointer:fine, motion not reduced) — scale up first so the pan never reveals an edge */
+.hero-photo img.hero-photo-mouse {
+  transform: scale(1.08) translate3d(var(--hero-mx, 0px), var(--hero-my, 0px), 0);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
 .hero-photo-scrim {
   position: absolute;
   inset: 0;
