@@ -711,6 +711,23 @@
     scope.querySelectorAll("[data-money-krw]").forEach(function (el) {
       el.textContent = formatMoney(el.getAttribute("data-money-krw"));
     });
+    // Legal pages (terms/privacy/business) live at separate KO/EN URLs rather
+    // than being translated in place — point links at whichever one matches
+    // the current language. Leaves the page's own "Korean terms control"
+    // links alone (those intentionally always point at the KO original).
+    var LEGAL_DOCS = ["terms", "privacy", "business"];
+    scope.querySelectorAll('a[href*="/legal/"]').forEach(function (a) {
+      if (a.hasAttribute("data-i18n-legal-fixed")) return;
+      var href = a.getAttribute("href") || "";
+      var m = href.match(/\/legal\/(terms|privacy|business)(\.en)?\.html(\?[^#]*)?(#.*)?$/);
+      if (!m) return;
+      var doc = m[1];
+      if (LEGAL_DOCS.indexOf(doc) === -1) return;
+      var suffix = (m[3] || "") + (m[4] || "");
+      var wantEn = state.lang === "en";
+      var next = "/legal/" + doc + (wantEn ? ".en" : "") + ".html" + suffix;
+      if (href !== next) a.setAttribute("href", next);
+    });
   }
 
   function setLang(lang, opts) {
