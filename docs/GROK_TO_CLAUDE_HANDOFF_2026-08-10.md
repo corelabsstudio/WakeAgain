@@ -65,6 +65,19 @@ git log --oneline -5
 - public/app/app.js: create_ok alert, oauth errors EN; price labels Starting bid
 - keys in i18n-messages.js
 
+### D5. Login foot Korean under EN (screenshot 2026-08-10 100725) — **fixed in code**
+
+- **Root cause:** `app.create_ok` had raw multiline string → `i18n-messages.js` **SyntaxError** → entire `WA_I18N_EXTRA` never loaded → EN overrides missing; cached/old Korean foot could stick.
+- **Fix commit:** `dc9d05b` — escape `\n` in create_ok, naturalize `app.auth_foot` EN, add KO `app.auth_foot`, `app.delete`→Remove, SW `v42-en-auth-foot-fix`
+- **Verify when live is up:** `/app/#login` EN → footer must be English (“You can browse public listings… buyer interest form…”)
+
+### ⚠ LIVE OUTAGE (as of 2026-08-10 ~01:20 UTC)
+
+- `https://wakeagain.com/*` → Railway JSON **404 Application not found** (`x-railway-fallback: true`)
+- GitHub Deployments last registered: **`58d46de`** (inactive). Later pushes (`27018d1`, `047db35`, `dc9d05b`) **no Railway deployment record**.
+- Local `.launch/railway.token` is a **placeholder comment**, not a real Account Token → `deploy_railway.py` / CLI cannot redeploy.
+- **Action for operator:** Railway dashboard `steadfast-dream / production` — restart service, re-enable GitHub auto-deploy, fix custom domain, replace Account Token.
+
 ### D3. App list EN chrome (/app/#list)
 
 - Toolbar, buy-how panel, feed tabs, empty/more: data-i18n (app.buyhow_*, app.feed_*, app.refresh, ...)
