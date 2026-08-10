@@ -2137,15 +2137,29 @@ p, li, label, .lede, .center-lead, .manifesto p {
 }
 .safety-notice ul {
   margin: 0;
-  padding-left: 1.1rem;
-  list-style: disc;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
 }
 .safety-notice li {
-  margin: 0.4rem 0;
-  padding-left: 0.15rem;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
 }
-.safety-notice li::marker {
-  color: rgba(248, 113, 113, 0.65);
+.safety-notice li .sn-icon {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  color: rgba(248, 113, 113, 0.75);
+}
+.safety-notice li .sn-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .footer-bottom {
   max-width: var(--max);

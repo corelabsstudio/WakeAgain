@@ -1,5 +1,19 @@
 /* Supplemental i18n messages (merged by i18n.js) */
 (function (g) {
+  // Small stroke icons for the safety-notice bullets — shared across ko/en so the
+  // markup isn't duplicated. currentColor picks up .safety-notice's red theme.
+  var SN = {
+    info: '<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v4.2M8 4.6v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    warn: '<svg viewBox="0 0 16 16" fill="none"><path d="M8 2.2 14.5 13H1.5L8 2.2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.3v.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    eye: '<svg viewBox="0 0 16 16" fill="none"><path d="M1 8s2.8-4.5 7-4.5S15 8 15 8s-2.8 4.5-7 4.5S1 8 1 8Z" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/></svg>',
+    lock: '<svg viewBox="0 0 16 16" fill="none"><rect x="3" y="7.2" width="10" height="7" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M5 7.2V5.3a3 3 0 0 1 6 0v1.9" stroke="currentColor" stroke-width="1.3"/></svg>',
+    check: '<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 8.2 7.2 10l3.5-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    doc: '<svg viewBox="0 0 16 16" fill="none"><path d="M3 3h7l3 3v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5.5 8h5M5.5 10.3h3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+    mail: '<svg viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3.5" width="13" height="9" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M2 4.5l6 4.5 6-4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  function sn(icon, html) {
+    return '<li><span class="sn-icon">' + icon + "</span><span>" + html + "</span></li>";
+  }
   g.WA_I18N_EXTRA = {
   "ko": {
     "app.tab_projects": "프로젝트",
@@ -509,7 +523,7 @@
     "proj.bid_btn": "이 가격으로 살게요",
     "proj.buy_now": "지금 가격에 바로 사기",
     "proj.bid_fee_note": "가격 쓰기: <a class=\"text-link\" href=\"/app/#register\">이메일 인증(Lv1)</a>이면 가능. 낙찰 후 결제·인수 때 실명·휴대폰(Lv2). 팔리면 수수료는 <strong>파는 사람 10%</strong>.",
-    "proj.bid_notice": "<p style=\"margin:0 0 0.55rem\"><strong>낙찰 후 1시간 이내</strong> PG로 결제해야 합니다. 미결제 시 낙찰 무효·신용 점수 반영.</p><p style=\"margin:0 0 0.55rem\">결제 확인 → 판매자 이전 → 구매자 검수 후 <strong>인수하기</strong>. 이전 후 <strong>48시간</strong> 내 이의가 없으면 <strong>자동 구매 확정·정산</strong>.</p><p style=\"margin:0 0 0.55rem\"><strong>입금 확인 전</strong> 코드·도메인·계정 이전 금지. 대금은 인수(또는 자동 확정) 후 판매자에게 정산됩니다.</p><p style=\"margin:0\">결제는 PG 연동 후 링크·웹훅으로 확인합니다.<br /><a class=\"text-link\" href=\"/guide/credit.html\">점수 설명</a> · <a class=\"text-link\" href=\"/legal/terms.html\">이용약관</a></p>",
+    "proj.bid_notice": "매물 페이지는 <strong>기능·데모</strong> 중심입니다. 소스·키·DB는 입금 확인 후 이전 단계에서 받습니다. <a class=\"text-link\" href=\"/guide/credit.html\">점수 설명</a> · <a class=\"text-link\" href=\"/legal/terms.html\">이용약관</a>",
     "proj.deal_title": "구매자 보호 · 안전거래",
     "chat.offplatform_title": "플랫폼 외부 거래 시 보호 불가",
     "chat.offplatform_body": "카톡·텔레그램·개인 계좌 등 <strong>외부 연락·직거래 유도는 사기 패턴</strong>입니다. 외부로 나가면 안전결제·이의·신고 보호를 받을 수 없습니다. 거래는 반드시 사이트 절차(PG 결제 → 이전 → 인수)로만 진행하세요.",
@@ -524,7 +538,14 @@
     "proj.fair_pledge": "WakeAgain은 공정한 입찰을 위해 끊임없이 개선하겠습니다.",
     "proj.fair_pledge_sub": "지금 가격·입찰자 수·호가는 전원 공개 · 규칙은 이용약관에 따릅니다.",
     "proj.safety_title": "안전 · 책임 고지",
-    "proj.safety_list": "<li>WakeAgain은 <strong>통신판매중개자</strong>이며 거래 당사자가 아닙니다.</li><li>매물 품질·내용·사기 피해의 1차 책임은 <strong>당사자(판매자·가해자)</strong>에게 있습니다.</li><li>운영 형식 검수·게시 허용·사이트 내 신용 점수는 <strong>보증이 아닙니다.</strong> 직접 확인하세요.</li><li>사는 쪽: 검토 없이 보내지 마세요. 파는 쪽: <strong>결제 확인 전</strong> 코드·계정 이전 금지.</li><li>대금은 <strong>PG 결제</strong>로 확인하며, 인수(또는 자동 확정) 후 판매자에게 정산됩니다.</li><li>분쟁 시 — ① 당사자 연락 · ② 이의 제기/신고 · ③ 합의 안 되면 수사·소송·공정위 조정 (<a class=\"text-link\" href=\"/guide/dispute.html\">분쟁 해결 안내</a>)</li><li>사기 의심 메일: <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a></li>",
+    "proj.safety_list":
+      sn(SN.info, "WakeAgain은 <strong>통신판매중개자</strong>이며 거래 당사자가 아닙니다.") +
+      sn(SN.warn, "품질·내용·사기 피해의 1차 책임은 <strong>당사자(판매자·가해자)</strong>에게 있습니다.") +
+      sn(SN.eye, "형식 검수·게시 허용·신용 점수는 <strong>보증이 아닙니다.</strong> 직접 확인하세요.") +
+      sn(SN.lock, "사는 쪽: 검토 없이 보내지 마세요. 파는 쪽: <strong>결제 확인 전</strong> 이전 금지.") +
+      sn(SN.check, "대금은 <strong>PG 결제</strong>로 확인, 인수(또는 자동 확정) 후 정산됩니다.") +
+      sn(SN.doc, "분쟁 시 — 당사자 연락 → 이의 제기/신고 → 수사·소송·공정위 조정 (<a class=\"text-link\" href=\"/guide/dispute.html\">분쟁 해결 안내</a>)") +
+      sn(SN.mail, "사기 의심 메일: <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a>"),
     "proj.report_btn": "문제 신고 (저퀄·표절·미작동)",
     "proj.report_help": "<strong>사는 쪽(Lv2)</strong>만 신고할 수 있어요. 매물당 1회. 서로 다른 사람 신고가 <strong>3건</strong>이면 경매 자동 중단, 판매자 합산 <strong>5건</strong>이면 계정 자동 정지.",
     "proj.report_reason": "신고 사유",
@@ -1536,7 +1557,7 @@
     "proj.bid_btn": "I'll buy at this price",
     "proj.buy_now": "Buy now at this price",
     "proj.bid_fee_note": "Bid with <a class=\"text-link\" href=\"/app/#register\">email verified (Lv1)</a>. After you win, Lv2 (name + phone) for pay/accept. When sold, <strong>seller fee 10%</strong>.",
-    "proj.bid_notice": "<p style=\"margin:0 0 0.55rem\"><strong>Pay via PG within 1 hour</strong> after winning. Miss it and the award is void; credit may drop.</p><p style=\"margin:0 0 0.55rem\">Payment confirmed → seller transfers → buyer inspects and <strong>Accepts</strong>. No dispute within <strong>48 hours</strong> after transfer → <strong>auto-confirm &amp; settle</strong>.</p><p style=\"margin:0 0 0.55rem\"><strong>No asset handoff</strong> before payment is confirmed. Seller is paid after accept (or auto-accept).</p><p style=\"margin:0\">Payment is confirmed by PG link and webhook after integration.<br /><a class=\"text-link\" href=\"/guide/credit.html\">Credit guide</a> · <a class=\"text-link\" href=\"/legal/terms.html\">Terms</a></p>",
+    "proj.bid_notice": "This page focuses on <strong>features &amp; demo</strong>. Source, keys, and DB are handed over after payment is confirmed. <a class=\"text-link\" href=\"/guide/credit.html\">Credit guide</a> · <a class=\"text-link\" href=\"/legal/terms.html\">Terms</a>",
     "proj.deal_title": "Buyer protection · safe deal",
     "chat.offplatform_title": "No protection for off-platform deals",
     "chat.offplatform_body": "Moving to Kakao/Telegram/personal bank accounts is a <strong>common fraud pattern</strong>. Off-platform deals lose protected checkout, disputes, and report tools. Stay on-site: pay → handover → confirm.",
@@ -1551,7 +1572,14 @@
     "proj.fair_pledge": "WakeAgain will keep improving for fair bidding.",
     "proj.fair_pledge_sub": "Live price, bidder count, and bids are public. Rules follow the Terms.",
     "proj.safety_title": "Safety · liability",
-    "proj.safety_list": "<li>WakeAgain is an <strong>intermediary</strong>, not a party to the deal.</li><li>Primary liability for quality, content, or fraud sits with the <strong>parties</strong>.</li><li>Format review, listing approval, and site credit are <strong>not guarantees</strong> — verify yourself.</li><li>Buyers: don't send money without review. Sellers: <strong>no transfer</strong> before payment is confirmed.</li><li>Payment is confirmed via <strong>PG</strong>; seller is paid after accept (or auto-accept).</li><li>Disputes: contact the other party · dispute/report · then investigation/court/KFTC if needed (<a class=\"text-link\" href=\"/guide/dispute.html\">dispute guide</a>)</li><li>Fraud report: <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a></li>",
+    "proj.safety_list":
+      sn(SN.info, "WakeAgain is an <strong>intermediary</strong>, not a party to the deal.") +
+      sn(SN.warn, "Primary liability for quality, content, or fraud sits with the <strong>parties</strong>.") +
+      sn(SN.eye, "Format review, listing approval, and site credit are <strong>not guarantees</strong> — verify yourself.") +
+      sn(SN.lock, "Buyers: don't send money without review. Sellers: <strong>no transfer</strong> before payment confirmed.") +
+      sn(SN.check, "Payment confirmed via <strong>PG</strong>; seller paid after accept (or auto-accept).") +
+      sn(SN.doc, "Disputes: contact the other party → dispute/report → investigation/court/KFTC (<a class=\"text-link\" href=\"/guide/dispute.html\">dispute guide</a>)") +
+      sn(SN.mail, "Fraud report: <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a>"),
     "proj.report_btn": "Report (low quality · plagiarism · broken)",
     "proj.report_help": "Only <strong>buyers (Lv2)</strong> can report · once per listing. <strong>3</strong> distinct reports pause the auction; <strong>5</strong> total on a seller auto-suspends the account.",
     "proj.report_reason": "Reason",
