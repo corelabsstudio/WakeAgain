@@ -246,7 +246,24 @@
         let text = trustBadgeCopy(level);
         if (c.score != null) {
           text += t("app.credit_suffix", " · credit {n}", { n: c.score });
-          if (c.label) text += " " + c.label;
+          if (c.label) {
+            var cl = String(c.label);
+            var enUi =
+              (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en") ||
+              String(document.documentElement.getAttribute("data-wa-lang") || "").indexOf("en") === 0;
+            if (enUi) {
+              var creditLabelEn = {
+                신규: "New",
+                일반: "Standard",
+                우수: "Good",
+                최우수: "Excellent",
+                주의: "Caution",
+                위험: "Risk",
+              };
+              cl = creditLabelEn[cl] || cl;
+            }
+            text += " " + cl;
+          }
         }
         badge.textContent = text;
         badge.title = t("app.trust_tip", "Trust level (eligibility) Lv{n}", { n: level }) +
@@ -690,7 +707,17 @@
       const aStatus = p.auction_status || "live";
       el.querySelector("h3").textContent = titleShow;
       el.querySelector(".p-one").textContent = oneLine;
-      const kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];
+      let kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean) : [];
+      var enK =
+        (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en") ||
+        String(document.documentElement.getAttribute("data-wa-lang") || "").indexOf("en") === 0;
+      if (enK) {
+        var latinOnly = kws.filter(function (k) {
+          return !/[\uac00-\ud7a3]/.test(String(k));
+        });
+        if (latinOnly.length) kws = latinOnly;
+      }
+      kws = kws.slice(0, 5);
       if (kws.length) {
         const kwRow = document.createElement("p");
         kwRow.className = "p-kw";
@@ -738,7 +765,7 @@
             ? money(p.sold_price != null ? p.sold_price : cur)
             : "—";
       } else {
-        priceLabel.textContent = bids > 0 ? t("app.price_now", "Current") : t("app.price_start", "Start");
+        priceLabel.textContent = bids > 0 ? t("app.price_now", "Current bid") : t("app.price_start", "Starting bid");
         priceVal.textContent =
           cur != null ? money(cur) : "—";
       }
@@ -2927,12 +2954,16 @@
       applyPriceGuide(false);
     } catch (e) {}
     try {
-      if (api.isLoggedIn()) loadProjects();
+      // Always re-render market cards (EN title/one-liner/keywords + labels)
+      loadProjects(true);
     } catch (e) {}
   });
   document.addEventListener("wa:currencychange", function () {
     try {
       if (window.WakeAgainI18n) window.WakeAgainI18n.apply(document);
+    } catch (e) {}
+    try {
+      loadProjects(true);
     } catch (e) {}
   });
 })();

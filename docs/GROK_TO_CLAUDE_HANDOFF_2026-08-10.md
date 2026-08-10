@@ -59,6 +59,11 @@ git log --oneline -5
   - 리치킷 → `ReachKit — promo copy & channel recommender`
   - 맵: `LISTING_DEMO_I18N` in `wakeagain/db.py` (KO 제목 exact key)
 
+### D3. App list EN chrome (/app/#list)
+
+- Toolbar, buy-how panel, feed tabs, empty/more: data-i18n (app.buyhow_*, app.feed_*, app.refresh, ...)
+- app.js: Hangul keyword filter in EN, credit label map (신규->New), reload cards on lang/currency change
+
 ### D2. Cold-start 진입 모달 i18n
 
 - public/index.html showCollectionModeNotice() — EN/KO 로케일 분기 + collect.* 키

@@ -270,6 +270,11 @@
       "collect.body2": "지금은 부담 없이 매물만 올려 주세요. 시작되면 알림으로 알려드릴게요.",
       "collect.cta_list": "매물 올리기",
       "collect.cta_later": "나중에",
+    "app.list_title": "프로젝트",
+    "app.refresh": "새로고침",
+    "app.list_cta_new": "내 프로젝트 올리기",
+    "app.feed_all": "전체",
+    "app.feed_mine": "내가 올린 것",
 },
     en: {
       "nav.market": "Listings",
@@ -533,6 +538,11 @@
       "collect.body2": "List now with low pressure. We'll notify you when auctions go live.",
       "collect.cta_list": "List a project",
       "collect.cta_later": "Not now",
+    "app.list_title": "Projects",
+    "app.refresh": "Refresh",
+    "app.list_cta_new": "List a project",
+    "app.feed_all": "All",
+    "app.feed_mine": "My listings",
 },
   };
 

@@ -209,7 +209,7 @@
       <span id="trustBadge" class="trust-badge app-top-hide-sm" hidden></span>
       <button type="button" class="btn btn-ghost btn-sm" id="btnNotif" hidden><span data-i18n="nav.notif">Alerts</span> <span id="notifBadge" class="notif-dot" hidden></span></button>
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnFees" hidden data-i18n="nav.fees">Fees</button>
-      <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnCoupons" hidden>쿠폰</button>
+      <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnCoupons" hidden data-i18n="app.nav_coupons">Coupons</button>
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnProfile" hidden data-i18n="nav.profile">Profile</button>
       <button type="button" class="btn btn-ghost btn-sm app-top-hide-sm" id="btnLogout" hidden data-i18n="nav.logout">Log out</button>
       <button type="button" class="btn btn-ghost btn-sm" id="btnGoLogin" data-i18n="nav.login">Log in</button>
@@ -581,24 +581,24 @@
     <!-- App home -->
     <section id="viewApp" class="app-panel" hidden>
       <div class="app-toolbar">
-        <h1>프로젝트</h1>
+        <h1 data-i18n="app.list_title">Projects</h1>
         <div class="app-toolbar-actions">
-          <button type="button" class="btn btn-ghost" id="btnRefresh">새로고침</button>
-          <button type="button" class="btn btn-primary" id="btnNew">내 프로젝트 올리기</button>
+          <button type="button" class="btn btn-ghost" id="btnRefresh" data-i18n="app.refresh">Refresh</button>
+          <button type="button" class="btn btn-primary" id="btnNew" data-i18n="app.list_cta_new">List a project</button>
         </div>
       </div>
       <p class="auth-gate-note muted fine" id="authGateNote" hidden></p>
       <p class="trust-banner" id="trustBanner" hidden></p>
 
-      <!-- 구매 쉽게: 모바일 작은 아이콘 4칸 -->
-      <aside class="buy-how" aria-label="사는 법 한눈에">
+      <!-- Buyer how-to: compact 4-step -->
+      <aside class="buy-how" aria-label="How buying works" data-i18n-aria="app.buyhow_aria">
         <div class="buy-how-top">
           <span class="wa-icon-sm" aria-hidden="true">
             <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v8M16 21v1" stroke="#e8c56a" stroke-width="2.2" stroke-linecap="round"/></svg>
           </span>
           <div>
-            <strong>사는 법, 어렵지 않아요</strong>
-            <p>카드 눌러 보기 → 가격 쓰기 → 낙찰되면 입금·받기. 체크는 사기 예방용이에요.</p>
+            <strong data-i18n="app.buyhow_title">Buying is simple</strong>
+            <p data-i18n="app.buyhow_lead">Open a card → place a bid → pay if you win → handover. Checks are for safety.</p>
           </div>
         </div>
         <ul class="buy-how-grid">
@@ -606,40 +606,40 @@
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><rect x="6" y="5" width="20" height="22" rx="2" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M10 12h12M10 17h12M10 22h8" stroke="#e8c56a" stroke-width="1.6" stroke-linecap="round"/></svg>
             </span>
-            <strong>1. 보기</strong>
-            <em>카드 탭</em>
+            <strong data-i18n="app.buyhow_1_t">1. Browse</strong>
+            <em data-i18n="app.buyhow_1_d">Open a card</em>
           </li>
           <li>
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><path d="M8 22l6-12h4l6 12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M12 16h8" stroke="#e8c56a" stroke-width="2"/></svg>
             </span>
-            <strong>2. 가격 쓰기</strong>
-            <em>입찰</em>
+            <strong data-i18n="app.buyhow_2_t">2. Bid</strong>
+            <em data-i18n="app.buyhow_2_d">Place a bid</em>
           </li>
           <li>
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
             </span>
-            <strong>3. 빨리 입금</strong>
-            <em>낙찰 후</em>
+            <strong data-i18n="app.buyhow_3_t">3. Pay fast</strong>
+            <em data-i18n="app.buyhow_3_d">After you win</em>
           </li>
           <li>
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><path d="M8 16l5 5 11-11" fill="none" stroke="#86efac" stroke-width="2.4" stroke-linecap="round"/></svg>
             </span>
-            <strong>4. 받기</strong>
-            <em>이전·인수</em>
+            <strong data-i18n="app.buyhow_4_t">4. Receive</strong>
+            <em data-i18n="app.buyhow_4_d">Handover</em>
           </li>
         </ul>
         <details class="buy-how-fold">
-          <summary>수수료·안전 (펼치기)</summary>
-          <p>구매자는 <strong>합의가만</strong> · 판매자 수수료 10%. 입금 전 이전 금지. 외부 카톡·계좌 직거래 유도는 위험해요. 사이트 절차만 쓰세요.</p>
+          <summary data-i18n="app.buyhow_fees_sum">Fees &amp; safety (expand)</summary>
+          <p data-i18n-html data-i18n="app.buyhow_fees_body">Buyers pay only the <strong>agreed price</strong> · sellers pay 10%. No handover before payment. Off-site chats or bank transfers are risky—stay on-platform.</p>
         </details>
       </aside>
 
       <div class="seg">
-        <button type="button" class="seg-btn is-on" data-feed="all">전체</button>
-        <button type="button" class="seg-btn" data-feed="mine">내가 올린 것</button>
+        <button type="button" class="seg-btn is-on" data-feed="all" data-i18n="app.feed_all">All</button>
+        <button type="button" class="seg-btn" data-feed="mine" data-i18n="app.feed_mine">My listings</button>
       </div>
       <form class="market-search" id="formMarketSearch" role="search">
         <label class="sr-only" for="marketSearchQ" data-i18n="app.search_label">Search listings</label>
@@ -650,16 +650,16 @@
           maxlength="80"
           autocomplete="off"
           enterkeyhint="search"
-          placeholder="제목 · 키워드 · 한 줄 소개 검색"
+          placeholder="Search title, tags, or description"
           data-i18n-placeholder="app.search_ph"
         />
         <button type="submit" class="btn btn-primary btn-sm" data-i18n="app.search_btn">Search</button>
         <button type="button" class="btn btn-ghost btn-sm" id="btnMarketSearchClear" hidden data-i18n="app.search_clear">Clear</button>
       </form>
-      <div id="projectList" class="project-list project-list--cards" aria-label="프로젝트 카드 목록"></div>
-      <p id="emptyList" class="empty" hidden>아직 올라온 프로젝트가 없어요.</p>
+      <div id="projectList" class="project-list project-list--cards" aria-label="Project listings" data-i18n-aria="app.list_aria"></div>
+      <p id="emptyList" class="empty" hidden data-i18n="app.empty_all">No public listings yet. Be the first to list.</p>
       <div style="text-align:center;margin-top:0.75rem">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnLoadMore" hidden>더 보기</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLoadMore" hidden data-i18n="app.load_more">Show more</button>
       </div>
     </section>
 
@@ -1172,12 +1172,12 @@
   </footer>
 
   <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260810-ux-en"></script>
-  <script src="/js/i18n.js?v=20260810-ux-en"></script>
+  <script src="/js/i18n-messages.js?v=20260810-app-list-en"></script>
+  <script src="/js/i18n.js?v=20260810-app-list-en"></script>
   <script src="/js/pwa-install.js?v=20260723-topbar"></script>
   <script src="/js/api.js?v=20260725-shots"></script>
   <script src="/js/demo-help.js?v=20260725-demoalign"></script>
-  <script src="/app/app.js?v=20260810-ux-en"></script>
+  <script src="/app/app.js?v=20260810-app-list-en"></script>
   <script>
     (function () {
       try {
