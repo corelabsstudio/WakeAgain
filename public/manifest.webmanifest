@@ -2,14 +2,14 @@
   "id": "/app/",
   "name": "WakeAgain",
   "short_name": "WakeAgain",
-  "description": "잠든 프로젝트를 다시 깨우는 곳. 웹·앱 동일 계정.",
+  "description": "Buy & sell abandoned side projects. Same account on web and app.",
   "start_url": "/app/?source=pwa#login",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#050508",
   "theme_color": "#a67c00",
-  "lang": "ko",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["business", "productivity", "shopping"],
   "icons": [
@@ -34,24 +34,24 @@
   ],
   "shortcuts": [
     {
-      "name": "마켓 보기",
+      "name": "Browse listings",
       "url": "/app/#list",
-      "description": "등록된 프로젝트 목록"
+      "description": "Listed projects"
     },
     {
-      "name": "프로젝트 올리기",
+      "name": "List a project",
       "url": "/app/#new",
-      "description": "매물 등록"
+      "description": "Submit a listing"
     },
     {
-      "name": "무료진단",
+      "name": "Free diagnose",
       "url": "/diagnose.html",
-      "description": "시작가 힌트 후 자랑 등록"
+      "description": "Get a starting price hint, then showcase it"
     },
     {
-      "name": "자랑 보드",
+      "name": "Showcase board",
       "url": "/showcase.html",
-      "description": "프로젝트 쇼케이스 피드"
+      "description": "Project showcase feed"
     }
   ]
 }
