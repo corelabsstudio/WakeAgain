@@ -3,7 +3,7 @@
 이 파일을 읽은 뒤 **현재 디스크·git·라이브**를 재검증하고 작업한다.  
 옛 트랜스크립트·Grok 메모리는 자동 동기화되지 않는다. 아래 문서가 정본이다.
 
-**마지막 문서 갱신:** 2026-08-11 (해외 우선 전략 확정 + 사이트 전체 i18n 정비 + 매물 양방향 번역 + 법적 고지 해외판 + PG사 선정)
+**마지막 문서 갱신:** 2026-08-11 (PortOne V2 결제 연동 착수 — 카드 실제 테스트 완료, PayPal PG 계약 심사 대기)
 
 ## 필수 문서 (순서)
 
@@ -37,6 +37,28 @@
 - **환경변수 추가 후 주의:** Railway는 변수 추가만으로 자동 재시작되지 않을 수 있음 — Variables 탭에 "Apply N change / Deploy" 대기 패널이 뜨면 **Deploy 버튼을 직접 눌러야** 반영됨 (2026-08-11에 XAI_API_KEY 추가 때 실제로 이 단계를 놓쳐서 한동안 반영 안 됐던 적 있음).
 
 ## 최근 배포 이력 (요약 · 최신 우선)
+
+### 2026-08-11 · PortOne V2 결제 연동 착수 + 국가 배지 + 매물 페이지 카피 정리 (`07fca5f`, `ecb6d2a`)
+
+**배경:** PayPal 채널 등록 시 "포트원 전용 링크로 가입/연동한 계정만 가능" 에러를 한 번 겪음 → PortOne 콘솔의 "⚡ 전자결제 신청" (해외결제 → 페이팔 → 결제모듈 **일반결제(SPB)/정기결제(RT) → V2** 선택)으로 재신청해야 정상 등록됨. `hhs1261@naver.com` 네이버 메일함에 전용 온보딩 링크가 옴 — 다음에 또 PG 채널 추가할 때 이 절차부터 밟을 것.
+
+| 커밋 | 내용 |
+|------|------|
+| `07fca5f` | **PortOne V2 카드 결제** — `wakeagain/payments.py`(신규): `build_payment_request`/`fetch_payment`/`verify_webhook`(Standard Webhooks HMAC). `POST /payment/request`·`/payments/verify`·`/payments/webhook` 3개 엔드포인트. `mark_deal_paid()`에 연결. **로컬에서 실제 PortOne 결제창(Toss 채널)까지 뜨는 것 확인** — 카드 정보 입력만 사용자가 직접 함(안전규칙상 대행 불가). ⚠️ 이때 발견: PortOne 응답에서 seller_country가 `_refresh_auction_ended`의 재조회로 날아가는 버그 있었음 → 리프레시 전에 미리 떼어내는 식으로 고침(같은 패턴 재사용 시 주의) |
+| `07fca5f` | **PayPal 채널(SPB)** — `PORTONE_CHANNEL_KEY_PAYPAL`(`.env`, git 미포함). `loadPaymentUI(uiType:"PAYPAL_SPB")` 임베드 버튼 방식(카드 팝업과 다름). STC(위험정보, PayPal이 "중고거래/디지털상품" 고위험군에 필수 요구) bypass 필드는 최소값만 넣음 — 정확한 필드 스펙은 PortOne STC 가이드가 이미지 PDF라 못 읽음, **PG 계약 담당자 연락 오면 확인 필요**. **2026-08-11 기준 PG사 계약 심사 대기 중(영업일 3일)** — 승인 전까진 실결제 안 될 수 있음 |
+| `07fca5f` | **수수료 정책 변경**: 국내 10%(구매자 0원, 그대로) / **해외(PayPal 채널로 결제) 판매자 19%**(`FEE_RATE_CROSSBORDER`, db.py — 페이팔 실제 계약 수수료 나오면 재조정 필요한 **임시값**), 구매자는 여전히 0원(`docs/GLOBAL.md`의 "$0 buyer fees" 유지 결정, `mark_deal_paid` 직전 `adjust_fee_invoice_for_crossborder()`로 자동 상향). **최소 수수료 5,000원** 신설(`FEE_MIN_KRW`) — 이용약관 제13조·terms.html·terms.en.html 동기화 완료 |
+| `07fca5f` | **국가 배지** — `users.country`(ISO alpha-2) 신규 컬럼, 가입·프로필 폼에 국가 선택 추가, `public/js/countries.js`(국기 이모지 헬퍼) 신규, 매물 카드·상세 페이지에 판매자 국기 표시 |
+| `07fca5f` | **OG 메타태그** — `wakeagain/og.py` 신규, `server.py`에 `/project.html` 라우트 가로채서 매물별 영문 OG/Twitter 카드 서버사이드 주입 (크롤러는 JS 안 돌리므로 정적 삽입 필수) |
+| `07fca5f` | **Share & Promote** — 매물 상세 페이지 판매자 전용 영역에 X 공유·링크 복사·Reddit 템플릿 (전부 영문 하드코딩, 사이트 언어 설정과 무관) |
+| `07fca5f` | 하단 탭바 CSS 버그 수정 — `repeat(3,1fr)`인데 버튼 4개(홈·프로젝트·올리기·내 정보)라 4번째가 줄바꿈되던 것 → `repeat(4,1fr)` |
+| `ecb6d2a` | 매물 상세 페이지 **카피 중복 제거** — `.bid-notice`(문단 5개)가 바로 아래 "4단계" 시각 박스랑 같은 내용을 두 번 말하고 있어서 1줄로 축소. "안전·책임 고지" 7개 항목에 아이콘 부착(불릿 점 → SVG 아이콘, 문구는 법적 고지라 거의 유지) |
+
+**미검증/후속 필요:**
+- PayPal 실제 결제 **한 번도 안 해봄** — PG 계약 승인 오면 `loadPaymentUI`의 콜백 시그니처(`onPaymentSuccess`/`onPaymentFail`)·컨테이너 자동감지(`.portone-ui-container` 클래스)가 문서 그대로 작동하는지 실제로 확인 필요
+- STC `bypass.paypal_v2` 필드 최소값만 채움 — PG 담당자 연락 오면 정확한 필드명 확인해서 보강
+- `FEE_RATE_CROSSBORDER = 0.19`는 페이팔 원가(국경간 4.4%+환전 4%≈8.4% 추정치) 기반 임시값 — 실제 계약 수수료율 확정되면 `wakeagain/db.py` 상수 하나만 고치면 됨
+- 웹훅 시크릿(`PORTONE_WEBHOOK_SECRET`) 미설정 — 콘솔 "결제알림(Webhook) 관리"에서 발급 필요(엔드포인트 등록 후 나옴, 도메인 붙은 뒤 진행 권장)
+- 홍보(Reddit/X/HN) 카피·실행은 이번 세션에 **논의만 하고 착수 안 함** — 결제 연동을 먼저 끝내기로 사용자가 결정
 
 ### 2026-08-11 · 해외 우선 전환 + 사이트 전체 i18n 정비 + 매물 양방향 번역 (`92527f3` … `6b3115c`)
 
@@ -129,6 +151,7 @@
 ## 환경 설정
 
 `.env.example` 기반. 주요: `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `XAI_API_KEY`(매물 양방향 번역 — **2026-08-11부터 Railway에 실제 값 등록됨**, 그 전엔 문서에만 있고 비어있어서 번역 기능이 항상 조용히 실패했음), `WA_DEFAULT_LOCALE`, `WA_DEFAULT_DISPLAY_CURRENCY`, `ADMIN_SECRET`.
+- **PortOne 결제** (2026-08-11 추가, 로컬 `.env`에만 있음 — Railway 등록 여부 확인 필요): `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`(카드), `PORTONE_API_SECRET`, `PORTONE_CHANNEL_KEY_PAYPAL`(PG 계약 심사 대기), `PORTONE_PAYPAL_MERCHANT_ID`, `PORTONE_WEBHOOK_SECRET`(아직 미발급)
 - 환경변수 값 확인은 Railway 대시보드 Variables 탭에서만 가능(CLI 미로그인) — **값 실화 여부를 절대 추측하지 말 것**, 문서에 이름이 있다고 실제로 설정돼있다는 뜻 아님(2026-08-11에 실제로 이 착각으로 반나절 헤맴).
 
 - ⚠️ 프로덕션 `ADMIN_SECRET` 기본값 금지.
@@ -179,7 +202,9 @@ python _verify_handover.py
 
 ## 의도적 미완 (사람 행정·다음 코드)
 
-- **PG 실결제·웹훅** — PortOne 가입 완료·통신판매업 신고 진행 중(2026-08-11). API 키·PG 가맹 심사 상태 확인 후 착수. `PLATFORM.md` §B, PG사 선정 근거도 거기 기록됨
+- **PayPal 실결제 검증** — 코드는 다 짜서 배포됨(`07fca5f`), **PG사 계약 심사 대기 중**(2026-08-11 신청, 영업일 3일). 승인 오면 실제 결제 한 번 끝까지 돌려서 `loadPaymentUI` 콜백·STC 필드 확인해야 함
+- **웹훅 시크릿** 미설정 (`PORTONE_WEBHOOK_SECRET`) — 서버 검증(`/payments/verify`)은 이미 동작하므로 급하지 않음, 콘솔에서 발급만 하면 됨
+- **홍보 실행** (Reddit r/SideProject·r/indiehackers, X #buildinpublic, HN Show HN) — 전략은 논의 완료, 카피 초안·실제 게시는 미착수
 - 통신판매중개 **행정 신고 번호** (게시 대기) · Play 내부테스트
 - 백엔드 하드코딩 한국어 문자열 (`db.py`/`api.py` 약 595개 — 신용등급 라벨 등 일부 UI 요소가 언어와 무관하게 항상 한국어)
 - `/app` SPA 46개 키 KO 누락 (쿠폰·선물·정산계좌·프로필 — 지금은 한국 사용자가 봐도 영어)
@@ -194,9 +219,10 @@ python _verify_handover.py
 | WakeAgain EN 카피 이어서 | `docs/GROK_TO_CLAUDE_HANDOFF_2026-08-10.md` 부터 |
 | 백엔드 한국어 문자열 정리 | `db.py`/`api.py` 하드코딩 약 595개 감사부터 (2026-08-11 발견, 미착수) |
 | 앱 SPA 한국어 복구 | `i18n-messages.js` EN-only 46개 키에 KO 대응 추가 |
-| PortOne 연동 | 사용자에게 API 키·PG 가맹 심사 상태 먼저 확인 → 결제 링크·웹훅→`paid`만, pre-PG 우회 금지 (`PLATFORM.md` §B) |
+| PortOne 연동 / 페이팔 이어서 | 카드 결제는 완료·검증됨(`07fca5f`). 페이팔은 PG 계약 심사 상태부터 확인(`hhs1261@naver.com` 메일함) → 승인됐으면 `wakeagain/payments.py`의 `build_paypal_payment_request` 실결제 테스트부터. pre-PG 우회 금지 (`PLATFORM.md` §B) |
 | SNS 로그인 연결 | `docs/OAUTH_*` |
 | PG | 결제 링크·웹훅→`paid` 만 · pre-PG 우회 금지 |
+| 홍보 시작하자 / 매물 채우기 홍보 | Reddit(r/SideProject·r/indiehackers·r/buildinpublic)·X(#buildinpublic)·HN(Show HN) 전략은 확정됨(이번 세션 논의) — 카피 초안부터 시작 |
 
 ## 배포 전 최소 확인
 
