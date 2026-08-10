@@ -47,26 +47,46 @@ def has_hangul(text: str | None) -> bool:
     return bool(text and _HANGUL.search(text))
 
 
+_HEURISTIC_MARKERS = (
+    "paused project marketplace listing",
+    "demo-ready side project for transfer",
+    "Digital project listing",
+)
+
+
+def _is_weak_en(text: str | None) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return True
+    return any(m in t for m in _HEURISTIC_MARKERS)
+
+
 def needs_en_title(title: str | None, title_en: str | None) -> bool:
     te = (title_en or "").strip()
-    if te:
-        return False
     t = (title or "").strip()
     if not t:
         return False
     # Already Latin-only product name → can reuse as EN
     if not has_hangul(t):
         return False
+    if te and not _is_weak_en(te):
+        return False
+    # Missing or weak heuristic → try (re)fill
     return True
 
 
 def needs_en_one_liner(one: str | None, one_en: str | None) -> bool:
-    if (one_en or "").strip():
-        return False
     o = (one or "").strip()
     if not o:
         return False
-    return has_hangul(o)
+    oe = (one_en or "").strip()
+    if not has_hangul(o) and oe:
+        return False
+    if oe and not _is_weak_en(oe) and not has_hangul(o):
+        return False
+    if has_hangul(o) and oe and not _is_weak_en(oe):
+        return False
+    return has_hangul(o) or _is_weak_en(oe)
 
 
 def _xai_key() -> str:
@@ -242,10 +262,15 @@ def fill_en_fields(
             if need_o and b0.get("one_liner_en"):
                 oe = b0["one_liner_en"]
 
-    if need_t and not te:
-        te = heuristic_title_en(title or "")
-    if need_o and not oe:
-        oe = heuristic_one_liner_en(one_liner or "", title or "")
+    if need_t and (not te or _is_weak_en(te)):
+        # Keep AI result if non-weak; else heuristic
+        if not te or _is_weak_en(te):
+            te = te if te and not _is_weak_en(te) else heuristic_title_en(title or "")
+    if need_o and (not oe or _is_weak_en(oe)):
+        if not oe or _is_weak_en(oe):
+            oe = oe if oe and not _is_weak_en(oe) else heuristic_one_liner_en(
+                one_liner or "", title or ""
+            )
     if not te and (title or "").strip() and not has_hangul(title):
         te = (title or "").strip()[:80]
     if not oe and (one_liner or "").strip() and not has_hangul(one_liner):
@@ -320,11 +345,19 @@ def ensure_rows_en(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> in
         te = item["title_en"]
         oe = item["one_liner_en"]
         ai = ai_map.get(str(pid)) or {}
-        if not te:
-            te = (ai.get("title_en") or "").strip() or heuristic_title_en(item["title"])
-        if not oe:
-            oe = (ai.get("one_liner_en") or "").strip() or heuristic_one_liner_en(
-                item["one_liner"], item["title"]
+        ai_te = (ai.get("title_en") or "").strip()
+        ai_oe = (ai.get("one_liner_en") or "").strip()
+        if ai_te and (not te or _is_weak_en(te)):
+            te = ai_te
+        if ai_oe and (not oe or _is_weak_en(oe)):
+            oe = ai_oe
+        if not te or _is_weak_en(te):
+            te = te if te and not _is_weak_en(te) else heuristic_title_en(item["title"])
+        if not oe or _is_weak_en(oe):
+            oe = (
+                oe
+                if oe and not _is_weak_en(oe)
+                else heuristic_one_liner_en(item["one_liner"], item["title"])
             )
         if not te and item["title"] and not has_hangul(item["title"]):
             te = item["title"][:80]
