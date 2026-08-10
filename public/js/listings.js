@@ -172,8 +172,8 @@
     const a = (p.auction_status || "live").toLowerCase();
     if (a === "sold") return { cls: "ending", text: tt("list.badge_sold", isEn() ? "Sold" : "팔림") };
     if (a === "ended") return { cls: "draft", text: tt("list.badge_ended", isEn() ? "Ended" : "끝남") };
-    if (bidderCount(p) > 0) return { cls: "live", text: tt("list.badge_live", isEn() ? "Bidding" : "입찰 중") };
-    if (p.listing_status === "pending") return { cls: "draft", text: tt("list.badge_review", isEn() ? "In review" : "검토 중") };
+    if (bidderCount(p) > 0) return { cls: "live", text: tt("list.badge_live", isEn() ? "Live" : "입찰 중") };
+    if (p.listing_status === "pending") return { cls: "draft", text: tt("list.badge_review", isEn() ? "Under review" : "검토 중") };
     return { cls: "live", text: tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기") };
   }
 
@@ -198,8 +198,8 @@
       return {
         label:
           bidderCount(p) > 0
-            ? tt("list.price_now_pub", en ? "Current · public" : "지금 가격 · 공개")
-            : tt("list.price_start_pub", en ? "Start · public" : "시작 가격 · 공개"),
+            ? tt("list.price_now_pub", en ? "Current bid · public" : "지금 가격 · 공개")
+            : tt("list.price_start_pub", en ? "Starting bid · public" : "시작 가격 · 공개"),
         value: money(cur),
       };
     }
@@ -283,8 +283,8 @@
       (st ? `<span class="listing-type-tag">${st}</span>` : "");
     const cta =
       bids > 0
-        ? tt("list.cta_bid", isEn() ? "Bid & view" : "가격 쓰고 보기")
-        : tt("list.cta_view", isEn() ? "View project" : "프로젝트 자세히 보기");
+        ? tt("list.cta_bid", isEn() ? "Place bid" : "가격 쓰고 보기")
+        : tt("list.cta_view", isEn() ? "View listing" : "프로젝트 자세히 보기");
     const searchBlob = escapeAttr(
       [p.title, p.title_en, p.one_liner, p.one_liner_en, (p.keywords || []).join(" "), p.story]
         .join(" ")
@@ -723,7 +723,7 @@
       const badgeEl = card.querySelector(".badge");
       if (badgeEl) {
         if (bidderCount(a) > 0) {
-          badgeEl.textContent = tt("list.badge_live", isEn() ? "Bidding" : "입찰 중");
+          badgeEl.textContent = tt("list.badge_live", isEn() ? "Live" : "입찰 중");
           badgeEl.className = "badge live";
         } else if (
           badgeEl.textContent === "입찰 중" ||

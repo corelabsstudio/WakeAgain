@@ -8,6 +8,7 @@
 - **HTML / OG defaults:** `lang="en"` + English Open Graph on the landing page.  
 - **KR chrome:** Business registration block, KR phone numbers, Kakao button — visible only when locale is `ko` (`.wa-kr-only`).  
 - **Typography:** Inter (global) · Pretendard/Noto when `data-wa-lang="ko"`.  
+- **EN UX copy (PH/IH):** starting bid / current bid / place bid / handover / listings / $0 buyer fees — see `docs/GROK_TO_CLAUDE_HANDOFF_2026-08-10.md`.  
 - Settlement ledger / PG amounts stay **KRW** until multi-currency payment rails.
 
 **Ops note:** Real KR deals and Korean compliance still matter for settlement; marketing surface is global-first so international visitors do not land on a Korea-only product feel.
