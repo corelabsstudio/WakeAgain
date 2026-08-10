@@ -95,6 +95,11 @@
     return p.status_label || p.status || "";
   }
 
+  function listingTitle(p) {
+    if (isEn() && p.title_en) return p.title_en;
+    return p.title || "";
+  }
+
   function oneLiner(p) {
     if (isEn() && p.one_liner_en) return p.one_liner_en;
     return p.one_liner || "";
@@ -202,7 +207,7 @@
     const href = detailHref(p);
     const cats = p.cats || inferCats(p);
     const bids = bidderCount(p);
-    const title = escapeHtml(p.title || "Untitled");
+    const title = escapeHtml(listingTitle(p) || "Untitled");
     const line = escapeHtml(oneLiner(p));
     const st = escapeHtml(statusLabel(p));
     const top = p.top_bidder || null;
@@ -216,7 +221,7 @@
         ? tt("list.cta_bid", isEn() ? "Bid & view" : "가격 쓰고 보기")
         : tt("list.cta_view", isEn() ? "View project" : "프로젝트 자세히 보기");
     const searchBlob = escapeAttr(
-      [p.title, p.one_liner, p.one_liner_en, (p.keywords || []).join(" "), p.story]
+      [p.title, p.title_en, p.one_liner, p.one_liner_en, (p.keywords || []).join(" "), p.story]
         .join(" ")
         .toLowerCase()
     );
@@ -518,8 +523,9 @@
       }
       return;
     }
-    if (name) name.textContent = first.title || "—";
-    if (icon) icon.textContent = (first.title || "?").trim().charAt(0).toUpperCase() || "—";
+    var liveTitle = listingTitle(first) || first.title || "—";
+    if (name) name.textContent = liveTitle;
+    if (icon) icon.textContent = (liveTitle || "?").trim().charAt(0).toUpperCase() || "—";
     if (sub) {
       if (fromApi) {
         var bc = bidderCount(first);

@@ -1976,8 +1976,9 @@
 
       function renderProject(p) {
         projectCache = p;
-        document.title = (p.title || t("매물", "Listing")) + " — WakeAgain";
-        document.getElementById("pTitle").textContent = p.title || "";
+        var titleShow = (isEn() && p.title_en) ? p.title_en : (p.title || "");
+        document.title = (titleShow || t("매물", "Listing")) + " — WakeAgain";
+        document.getElementById("pTitle").textContent = titleShow || "";
         document.getElementById("pOne").textContent =
           (isEn() && p.one_liner_en) ? p.one_liner_en : (p.one_liner || "");
         var kwHost = document.getElementById("pKeywords");

@@ -388,6 +388,10 @@ def init_db() -> None:
                 "q_credits_held": "INTEGER NOT NULL DEFAULT 0",
                 "q_credits_purchased": "INTEGER NOT NULL DEFAULT 0",
                 "q_window_ends_at": "TEXT",
+                # English marketplace copy (global-first display when UI lang=en)
+                "title_en": "TEXT",
+                "one_liner_en": "TEXT",
+                "story_en": "TEXT",
             },
         )
         conn.execute(
@@ -1404,6 +1408,7 @@ PRODUCT_TYPES_EN: dict[str, str] = {
 # Demo / seed listings — EN copy for marketplace UI when lang=en (seller-authored KO kept)
 LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
     "ShopPulse": {
+        "title_en": "ShopPulse",
         "one_liner_en": "Order & shipping alerts for small shops — KakaoTalk draft",
         "story_en": (
             "A weekend-built order-alert service for neighborhood shops. "
@@ -1412,6 +1417,7 @@ LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
         ),
     },
     "ReceiptFold": {
+        "title_en": "ReceiptFold",
         "one_liner_en": "Receipt photo → auto expense categories · mobile beta",
         "story_en": (
             "Personal expense app in Flutter. OCR via external API; "
@@ -1419,6 +1425,7 @@ LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
         ),
     },
     "MeetNotes Lite": {
+        "title_en": "MeetNotes Lite",
         "one_liner_en": "Upload meeting audio → summary & action items draft",
         "story_en": (
             "Next.js prototype: Whisper API + prompts for summaries. "
@@ -1426,6 +1433,7 @@ LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
         ),
     },
     "csv-kit": {
+        "title_en": "csv-kit",
         "one_liner_en": "CSV merge, dedupe & column-mapping CLI toolkit",
         "story_en": (
             "Python CLI for data cleanup. pip-installable with a README. "
@@ -1433,6 +1441,7 @@ LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
         ),
     },
     "TraceDraft": {
+        "title_en": "TraceDraft",
         "one_liner_en": "AI interview answers → blog draft web tool",
         "story_en": (
             "Answer 5–7 questions and get a blog post draft. "
@@ -1552,12 +1561,29 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     status_raw = _row_get(row, "status")
     title = row["title"] or ""
     demo_i18n = LISTING_DEMO_I18N.get(title) or {}
+    title_en = (_row_get(row, "title_en") or "") or ""
+    one_liner_en = (_row_get(row, "one_liner_en") or "") or ""
+    story_en = (_row_get(row, "story_en") or "") or ""
+    if not title_en:
+        title_en = demo_i18n.get("title_en") or ""
+    if not one_liner_en:
+        one_liner_en = demo_i18n.get("one_liner_en") or ""
+    if not story_en:
+        story_en = demo_i18n.get("story_en") or ""
+    # Latin-only seller titles can be reused as EN without translation
+    if not title_en and title and not re.search(r"[\uac00-\ud7a3]", title):
+        title_en = title
+    if not one_liner_en:
+        ol = row["one_liner"] or ""
+        if ol and not re.search(r"[\uac00-\ud7a3]", ol):
+            one_liner_en = ol
     data = {
         "id": row["id"],
         "owner_id": row["owner_id"],
         "title": title,
+        "title_en": title_en,
         "one_liner": row["one_liner"],
-        "one_liner_en": demo_i18n.get("one_liner_en") or "",
+        "one_liner_en": one_liner_en,
         "status": row["status"],
         "status_label": price_policy.status_label(status_raw, lang="ko"),
         "status_label_en": price_policy.status_label(status_raw, lang="en"),
@@ -1565,7 +1591,7 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "product_type_label": ptype["label"],
         "product_type_label_en": ptype["label_en"],
         "story": row["story"],
-        "story_en": demo_i18n.get("story_en") or "",
+        "story_en": story_en,
         "demo": row["demo"],
         "demo_images": _parse_demo_images(row),
         "assets": assets,
@@ -4923,7 +4949,9 @@ def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
     out = {
         "id": p["id"],
         "title": p["title"],
+        "title_en": p.get("title_en") or "",
         "one_liner": p["one_liner"],
+        "one_liner_en": p.get("one_liner_en") or "",
         "keywords": p.get("keywords") or [],
         "product_type": p.get("product_type"),
         "price_start": p["price_start"],

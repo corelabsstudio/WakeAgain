@@ -672,9 +672,10 @@
       const statusBit =
         (enLang && p.status_label_en) || p.status_label || p.status || "";
       const oneLine = (enLang && p.one_liner_en) || p.one_liner || "";
+      const titleShow = (enLang && p.title_en) || p.title || "—";
       const ls = p.listing_status || "";
       const aStatus = p.auction_status || "live";
-      el.querySelector("h3").textContent = p.title || "—";
+      el.querySelector("h3").textContent = titleShow;
       el.querySelector(".p-one").textContent = oneLine;
       const kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];
       if (kws.length) {

@@ -14,6 +14,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from wakeagain import __version__, db as database
 from wakeagain import keywords as kw_mod
+from wakeagain import listing_i18n
 from wakeagain import oauth as oauth_mod
 from wakeagain import pricing as price_policy
 from wakeagain.admin_auth import require_admin
@@ -1696,6 +1697,14 @@ def list_projects(
                 """,
                 (*params, lim, off),
             ).fetchall()
+            if listing_i18n.ensure_rows_en(conn, rows):
+                rows = conn.execute(
+                    f"""
+                    SELECT * FROM projects WHERE {where}
+                    ORDER BY id DESC LIMIT ? OFFSET ?
+                    """,
+                    (*params, lim, off),
+                ).fetchall()
             projects = [database.project_to_dict(r, include_private=True) for r in rows]
             return {
                 "ok": True,
@@ -1745,6 +1754,18 @@ def list_projects(
             """,
             (*params, now, lim, off),
         ).fetchall()
+        if listing_i18n.ensure_rows_en(conn, rows):
+            rows = conn.execute(
+                f"""
+                SELECT p.*, ({score_sql}) AS exposure_score
+                FROM projects p
+                LEFT JOIN users u ON u.id = p.owner_id
+                WHERE {where}
+                {database.listing_sort_sql("p", "u")}
+                LIMIT ? OFFSET ?
+                """,
+                (*params, now, lim, off),
+            ).fetchall()
         projects = [database.project_to_dict(r, include_private=False) for r in rows]
     return {
         "ok": True,
@@ -1812,6 +1833,8 @@ def get_project(
                         "message": "차단된 사용자의 매물입니다.",
                     },
                 )
+        if listing_i18n.ensure_rows_en(conn, [row]):
+            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     private = bool(user and user["id"] == row["owner_id"])
     # Non-owners: live round (public board) or sold (deal transparency).
     # Archived/ended/pending/hold/rejected are not public permanent display.
@@ -4002,11 +4025,19 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         "shots": bool(demo_images and body.attest_shots),
         "at": now,
     }
+    title_ko = body.title.strip()
+    one_ko = body.one_liner.strip()
+    en_fields = listing_i18n.fill_en_fields(
+        title_ko,
+        one_ko,
+        project_id="new",
+        use_ai=True,
+    )
     with database.db() as conn:
         cur = conn.execute(
             """
             INSERT INTO projects (
-              owner_id, title, one_liner, status, product_type, story, demo, demo_images_json, assets_json,
+              owner_id, title, one_liner, title_en, one_liner_en, status, product_type, story, demo, demo_images_json, assets_json,
               keywords_json, features_json, audience, works_now, limits_note,
               acquisition, acquisition_note,
               price_start, price_buy_now, contact, listing_status,
@@ -4016,17 +4047,23 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
               license_note, seller_attest_json,
               created_at, updated_at
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, 'pending', ?, 0, ?, ?, 'pending',
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?,
+              ?, ?, ?, 'pending',
+              ?, 0, ?, ?, 'pending',
               ?, 0, NULL,
               ?, ?, ?,
-              ?, ?, ?, ?
+              ?, ?,
+              ?, ?
             )
             """,
             (
                 user["id"],
-                body.title.strip(),
-                body.one_liner.strip(),
+                title_ko,
+                one_ko,
+                en_fields.get("title_en") or None,
+                en_fields.get("one_liner_en") or None,
                 status,
                 product_type,
                 story,
