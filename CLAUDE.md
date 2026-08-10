@@ -3,7 +3,7 @@
 이 파일을 읽은 뒤 **현재 디스크·git·라이브**를 재검증하고 작업한다.  
 옛 트랜스크립트·Grok 메모리는 자동 동기화되지 않는다. 아래 문서가 정본이다.
 
-**마지막 문서 갱신:** 2026-08-10 (글로벌 EN 론칭 표면 + Railway Trial 만료 반영)
+**마지막 문서 갱신:** 2026-08-11 (해외 우선 전략 확정 + 사이트 전체 i18n 정비 + 매물 양방향 번역 + 법적 고지 해외판 + PG사 선정)
 
 ## 필수 문서 (순서)
 
@@ -27,20 +27,35 @@
 | 배포 | push → Railway 서비스 **wakeagain** (`steadfast-dream` / production) |
 | 로컬 | `pip install -r requirements.txt` → `uvicorn server:app --host 0.0.0.0 --port 8080` → http://127.0.0.1:8080/ |
 | 운영 | 코어랩스 (CoreLabs) · corelabs.studio@gmail.com |
-| 사업자 | 705-04-02867 · `/legal/business.html` 게시 완료 |
+| 사업자 | 705-04-02867 · `/legal/business.html` (KO) + `/legal/business.en.html` (EN 요약, 2026-08-11 신규) 게시 완료 |
 | 브랜드 | **WakeAgain 영문만** (사이트 한글 음차 금지) |
 
-## ⚠️ 인프라 상태 (2026-08-10 확정)
+## ⚠️ 인프라 상태 (2026-08-11 갱신 — Railway Trial 이슈 해결됨)
 
-- **Railway Trial 만료** → 라이브 `wakeagain.com`이 `Application not found` / offline 일 수 있음.
-- 원인: 코드 버그가 아니라 **Trial 만료 후 서비스 REMOVED**. Hobby(또는 유료) 결제 후 Redeploy 필요.
-- **코드는 `origin/master`에 유지.** 결제 복구 후 `/health`·`?lang=en` 검수.
-- Free 플랜(~월 $1 크레딧)으로는 24/7 + `/data` 상시 운영 비현실적. Hobby가 최소 현실 옵션.
-- 장기 offline 시 볼륨(`/data` DB·업로드) 삭제 가능 → 결제 전 백업 여부 확인.
-- **당분간:** 로컬 개발·커밋·푸시 계속 가능. 라이브 반영은 결제 후.
-- 로컬 Railway CLI 토큰 403 가능 → **GitHub push 자동배포**가 정본. 수동 시 GraphQL `serviceInstanceDeployV2` (토큰·플랜 유효할 때).
+- **Railway Hobby 결제 완료 (2026-08-10) → 라이브 정상.** 이전 "Trial 만료·Application not found" 이슈는 해소됨.
+- 로컬 Railway CLI 는 여전히 **로그인 안 되어 있음** (`railway login`은 이 프로젝트의 비대화형 셸에서 불가 — 사용자가 직접 대화형 터미널에서 실행 필요). 배포는 **GitHub push 자동배포**로만 진행 중, 문제 없음.
+- **환경변수 추가 후 주의:** Railway는 변수 추가만으로 자동 재시작되지 않을 수 있음 — Variables 탭에 "Apply N change / Deploy" 대기 패널이 뜨면 **Deploy 버튼을 직접 눌러야** 반영됨 (2026-08-11에 XAI_API_KEY 추가 때 실제로 이 단계를 놓쳐서 한동안 반영 안 됐던 적 있음).
 
 ## 최근 배포 이력 (요약 · 최신 우선)
+
+### 2026-08-11 · 해외 우선 전환 + 사이트 전체 i18n 정비 + 매물 양방향 번역 (`92527f3` … `6b3115c`)
+
+**배경:** 사용자가 세션 중 시장 우선순위를 뒤집음 — "한국 먼저"(2026-07-20 확정, `PLATFORM.md`) → **"해외 먼저"**(2026-08-11 재확정). 이 커밋들은 전부 그 결정에 따른 후속작업.
+
+| 커밋 | 내용 |
+|------|------|
+| `92527f3` | sell.html/buy.html/manifest.webmanifest EN 전환 잔여 마무리, `$` 이스케이프 깨짐 버그 수정 |
+| `402436b`~`3860981` | 매물 카드에 실제 스크린샷(`demo_images`) 노출 — 예전엔 항상 이니셜 아이콘만 썼음. `loading="lazy"` 제거(above-the-fold라 즉시 로드해야 함) |
+| `be13b5d`~`cf84ed4` | **사이트 전체 data-i18n 키 감사** — 94개 키가 `i18n-messages.js`에 아예 없어서 언어 전환이 안 먹혔음(nav·footer·hero·404·안내카드 등). 전부 채움 + `data-i18n-html` 누락으로 `<strong>` 태그가 문자 그대로 보이던 버그 수정 |
+| `8e33d49`, `ca96b25` | **매물 본문 양방향 자동번역** — `title`/`one_liner`만 되던 걸 `story`/`features`/`audience`/`works_now`/`limits`/`keywords`까지 확장, KO→EN뿐 아니라 EN→KO도. DB에 `*_en`/`*_ko` 컬럼 13개 추가, `listing_i18n.fill_listing_i18n()`이 등록 시점에 xAI로 한 번에 번역(비용 통제), `ensure_rows_i18n()`이 조회 시 누락분 지연 백필. **XAI_API_KEY를 이 세션에서 처음으로 Railway에 등록** — 이전까진 이 번역 기능(기존 title_en 포함) 한 번도 실제로 작동한 적 없었음(항상 휴리스틱/시드데이터였음) |
+| `b17c1b4`, `f7729e4` | **법적 고지 해외판** — `legal/privacy.en.html`, `legal/business.en.html` 신규(사업자 등록정보는 원문 한글 유지, 라벨만 번역). `i18n.js`에 링크 자동전환 로직 추가(25개 페이지 수동수정 없이 해결) + `terms/privacy/business.html` ↔ `.en.html` **양방향 자동 리다이렉트** (직접 URL 접속도 커버) |
+| `6b3115c` | PLATFORM.md 시장우선순위 뒤집기 기록 + **PG사 조사·선정**: Stripe 탈락(한국 사업자 정산 불가) → **PortOne** 선정(파트너 정산 자동화가 경매 수수료 분배 구조와 일치). 사용자가 PortOne 가입 완료·통신판매업 신고 진행 중, 실제 API 키·PG 가맹 심사 상태는 미확인 |
+
+**미검증/후속 필요:**
+- 백엔드(Python)가 직접 내려주는 하드코딩 한국어 문자열이 `db.py`/`api.py`에 **약 595개** — 신용등급 라벨("신규") 등 일부는 여전히 항상 한국어로 뜸. 프론트 i18n 정비로는 못 고침, 별도 백엔드 작업 필요
+- `/app` SPA(쿠폰·선물·정산계좌·프로필 등) 46개 키가 반대로 **EN만 있고 KO 없음** — 한국 사용자가 봐도 영어로 보임
+- `delete-account.html`(Google Play 계정삭제 안내) 영문판 없음
+- PortOne 실제 연동(웹훅→`paid`)은 API 키 확보 전까지 착수 안 함 (`PLATFORM.md` §B)
 
 ### 2026-08-10 · 글로벌 EN 론칭 표면 (`63b6bd3` … `9ce7fef`)
 
@@ -61,7 +76,7 @@
 - KR 전용 UI(사업자 블록·국내 전화·카카오): `.wa-kr-only` (EN에서 숨김)
 - 타이포: Inter 기본 · KO일 때만 Pretendard/Noto
 - 정산 원장/PG 금액은 **KRW 유지** (다통화 결제 전)
-- 매물 필드: `title_en`, `one_liner_en`, `story_en` · `wakeagain/listing_i18n.py` (xAI 번역 또는 휴리스틱)
+- 매물 필드 (2026-08-11 확장): `title`/`one_liner`/`story`/`audience`/`works_now`/`limits_note`/`features`/`keywords` 전부 `_en`+`_ko` 컬럼 보유, 양방향(KO↔EN) 번역 · `wakeagain/listing_i18n.py`의 `fill_listing_i18n()`(생성시) / `ensure_rows_i18n()`(조회시 지연 백필) · xAI 필요(`XAI_API_KEY`, 2026-08-11부터 Railway에 실제 등록됨)
 - 용어 고정(EN): Starting bid · Current bid · Place bid · View listing · Handover · $0 buyer fees · Free price check
 - 소비자 UI에서 **PG** 단어 제거 (홈/핵심 i18n)
 
@@ -113,7 +128,8 @@
 
 ## 환경 설정
 
-`.env.example` 기반. 주요: `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `XAI_API_KEY`(매물 EN 번역), `WA_DEFAULT_LOCALE`, `WA_DEFAULT_DISPLAY_CURRENCY`, `ADMIN_SECRET`.
+`.env.example` 기반. 주요: `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `XAI_API_KEY`(매물 양방향 번역 — **2026-08-11부터 Railway에 실제 값 등록됨**, 그 전엔 문서에만 있고 비어있어서 번역 기능이 항상 조용히 실패했음), `WA_DEFAULT_LOCALE`, `WA_DEFAULT_DISPLAY_CURRENCY`, `ADMIN_SECRET`.
+- 환경변수 값 확인은 Railway 대시보드 Variables 탭에서만 가능(CLI 미로그인) — **값 실화 여부를 절대 추측하지 말 것**, 문서에 이름이 있다고 실제로 설정돼있다는 뜻 아님(2026-08-11에 실제로 이 착각으로 반나절 헤맴).
 
 - ⚠️ 프로덕션 `ADMIN_SECRET` 기본값 금지.
 - ⚠️ **회원 데이터 유실 = 사업 실패** — 백업/삭제 변경은 신중.
@@ -163,19 +179,22 @@ python _verify_handover.py
 
 ## 의도적 미완 (사람 행정·다음 코드)
 
-- PG 실결제·웹훅 · 통신판매중개 **행정 신고 번호** · Play 내부테스트
-- Railway **Hobby 결제 후 라이브 복구**
-- EN 잔여: `sell.html` / `buy.html` / `guide/*` · `keywords_en` · 앱 딥 카피 PH 톤 2차 · 모바일 드로어
-- 약관·가이드 문서 PG 표현 잔여 점검
+- **PG 실결제·웹훅** — PortOne 가입 완료·통신판매업 신고 진행 중(2026-08-11). API 키·PG 가맹 심사 상태 확인 후 착수. `PLATFORM.md` §B, PG사 선정 근거도 거기 기록됨
+- 통신판매중개 **행정 신고 번호** (게시 대기) · Play 내부테스트
+- 백엔드 하드코딩 한국어 문자열 (`db.py`/`api.py` 약 595개 — 신용등급 라벨 등 일부 UI 요소가 언어와 무관하게 항상 한국어)
+- `/app` SPA 46개 키 KO 누락 (쿠폰·선물·정산계좌·프로필 — 지금은 한국 사용자가 봐도 영어)
+- `delete-account.html` 영문판 없음
+- 모바일 드로어 EN 잔여
 
 ## 트리거 말
 
 | 말 | 동작 |
 |----|------|
-| WakeAgain 이어서 / 웨이크어게인 불러와 | PLATFORM + GLOBAL + 이 파일 + 열린 일 요약 |
+| WakeAgain 이어서 / 웨이크어게인 불러와 | PLATFORM + GLOBAL + 이 파일 + 열린 일 요약 (특히 위 "미검증/후속 필요" 목록부터) |
 | WakeAgain EN 카피 이어서 | `docs/GROK_TO_CLAUDE_HANDOFF_2026-08-10.md` 부터 |
-| sell/buy/guide EN 폴백 | 랜딩 수준 data-i18n + EN 폴백 |
-| 매물 keywords_en | 태그 영문 정규화 |
+| 백엔드 한국어 문자열 정리 | `db.py`/`api.py` 하드코딩 약 595개 감사부터 (2026-08-11 발견, 미착수) |
+| 앱 SPA 한국어 복구 | `i18n-messages.js` EN-only 46개 키에 KO 대응 추가 |
+| PortOne 연동 | 사용자에게 API 키·PG 가맹 심사 상태 먼저 확인 → 결제 링크·웹훅→`paid`만, pre-PG 우회 금지 (`PLATFORM.md` §B) |
 | SNS 로그인 연결 | `docs/OAUTH_*` |
 | PG | 결제 링크·웹훅→`paid` 만 · pre-PG 우회 금지 |
 
