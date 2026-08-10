@@ -1833,7 +1833,9 @@ def get_project(
                         "message": "차단된 사용자의 매물입니다.",
                     },
                 )
-        if listing_i18n.ensure_rows_en(conn, [row]):
+        changed_basic = listing_i18n.ensure_rows_en(conn, [row])
+        changed_long = listing_i18n.ensure_rows_i18n(conn, [row])
+        if changed_basic or changed_long:
             row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     private = bool(user and user["id"] == row["owner_id"])
     # Non-owners: live round (public board) or sold (deal transparency).
@@ -4059,9 +4061,16 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
     }
     title_ko = body.title.strip()
     one_ko = body.one_liner.strip()
-    en_fields = listing_i18n.fill_en_fields(
-        title_ko,
-        one_ko,
+    i18n_fields = listing_i18n.fill_listing_i18n(
+        {
+            "title": title_ko,
+            "one_liner": one_ko,
+            "story": story,
+            "audience": audience[:120],
+            "works_now": works_now[:500],
+            "limits_note": limits_note[:500],
+            "features": features,
+        },
         project_id="new",
         use_ai=True,
     )
@@ -4069,8 +4078,11 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
         cur = conn.execute(
             """
             INSERT INTO projects (
-              owner_id, title, one_liner, title_en, one_liner_en, status, product_type, story, demo, demo_images_json, assets_json,
-              keywords_json, features_json, audience, works_now, limits_note,
+              owner_id, title, one_liner, title_en, one_liner_en, title_ko, one_liner_ko,
+              status, product_type, story, story_en, story_ko, demo, demo_images_json, assets_json,
+              keywords_json, features_json, features_json_en, features_json_ko,
+              audience, audience_en, audience_ko, works_now, works_now_en, works_now_ko,
+              limits_note, limits_note_en, limits_note_ko,
               acquisition, acquisition_note,
               price_start, price_buy_now, contact, listing_status,
               price_current, bid_count, min_increment, auction_ends_at, auction_status,
@@ -4079,8 +4091,11 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
               license_note, seller_attest_json,
               created_at, updated_at
             ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?, ?, ?,
+              ?, ?, ?, ?,
+              ?, ?, ?, ?, ?, ?,
+              ?, ?, ?,
               ?, ?,
               ?, ?, ?, 'pending',
               ?, 0, ?, ?, 'pending',
@@ -4094,19 +4109,31 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
                 user["id"],
                 title_ko,
                 one_ko,
-                en_fields.get("title_en") or None,
-                en_fields.get("one_liner_en") or None,
+                i18n_fields.get("title_en") or None,
+                i18n_fields.get("one_liner_en") or None,
+                i18n_fields.get("title_ko") or None,
+                i18n_fields.get("one_liner_ko") or None,
                 status,
                 product_type,
                 story,
+                i18n_fields.get("story_en") or None,
+                i18n_fields.get("story_ko") or None,
                 demo,
                 json.dumps(demo_images, ensure_ascii=False),
                 json.dumps(assets, ensure_ascii=False),
                 json.dumps(keywords, ensure_ascii=False),
                 json.dumps(features, ensure_ascii=False),
+                i18n_fields.get("features_json_en") or None,
+                i18n_fields.get("features_json_ko") or None,
                 audience[:120],
+                i18n_fields.get("audience_en") or None,
+                i18n_fields.get("audience_ko") or None,
                 works_now[:500],
+                i18n_fields.get("works_now_en") or None,
+                i18n_fields.get("works_now_ko") or None,
                 limits_note[:500],
+                i18n_fields.get("limits_note_en") or None,
+                i18n_fields.get("limits_note_ko") or None,
                 acquisition,
                 acquisition_note[:200] if acquisition_note else "",
                 start,

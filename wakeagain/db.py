@@ -392,6 +392,18 @@ def init_db() -> None:
                 "title_en": "TEXT",
                 "one_liner_en": "TEXT",
                 "story_en": "TEXT",
+                "features_json_en": "TEXT",
+                "audience_en": "TEXT",
+                "works_now_en": "TEXT",
+                "limits_note_en": "TEXT",
+                # Korean marketplace copy (for EN-authored listings viewed with UI lang=ko)
+                "title_ko": "TEXT",
+                "one_liner_ko": "TEXT",
+                "story_ko": "TEXT",
+                "features_json_ko": "TEXT",
+                "audience_ko": "TEXT",
+                "works_now_ko": "TEXT",
+                "limits_note_ko": "TEXT",
             },
         )
         conn.execute(
@@ -1602,13 +1614,58 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         ol = row["one_liner"] or ""
         if ol and not re.search(r"[\uac00-\ud7a3]", ol):
             one_liner_en = ol
+
+    def _localized(base_val: str, en_col: str, ko_col: str) -> tuple[str, str]:
+        """Return (en_value, ko_value) for a free-text field.
+
+        en/ko columns hold AI translations filled at create time; when the
+        base text is already in the target language (Latin-only \u2192 en,
+        Hangul-free-of-latin isn't checked the same way) it's reused as-is.
+        """
+        base_val = base_val or ""
+        en_v = (_row_get(row, en_col) or "") or ""
+        ko_v = (_row_get(row, ko_col) or "") or ""
+        has_ko = bool(re.search(r"[\uac00-\ud7a3]", base_val))
+        if not en_v:
+            en_v = base_val if base_val and not has_ko else ""
+        if not ko_v:
+            ko_v = base_val if base_val and has_ko else ""
+        return en_v, ko_v
+
+    story_ko_val = (_row_get(row, "story_ko") or "") or ""
+    if not story_ko_val and row["story"] and re.search(r"[\uac00-\ud7a3]", row["story"] or ""):
+        story_ko_val = row["story"] or ""
+    audience_en, audience_ko = _localized(
+        (_row_get(row, "audience") or "") or "", "audience_en", "audience_ko"
+    )
+    works_now_en, works_now_ko = _localized(
+        (_row_get(row, "works_now") or "") or "", "works_now_en", "works_now_ko"
+    )
+    limits_en, limits_ko = _localized(
+        (_row_get(row, "limits_note") or "") or "", "limits_note_en", "limits_note_ko"
+    )
+    try:
+        features_en = json.loads(_row_get(row, "features_json_en") or "[]")
+        if not isinstance(features_en, list):
+            features_en = []
+    except Exception:
+        features_en = []
+    try:
+        features_ko = json.loads(_row_get(row, "features_json_ko") or "[]")
+        if not isinstance(features_ko, list):
+            features_ko = []
+    except Exception:
+        features_ko = []
     data = {
         "id": row["id"],
         "owner_id": row["owner_id"],
         "title": title,
         "title_en": title_en,
+        "title_ko": (_row_get(row, "title_ko") or "") or (title if title and re.search(r"[가-힣]", title) else ""),
         "one_liner": row["one_liner"],
         "one_liner_en": one_liner_en,
+        "one_liner_ko": (_row_get(row, "one_liner_ko") or "")
+        or ((row["one_liner"] or "") if (row["one_liner"] or "") and re.search(r"[가-힣]", row["one_liner"] or "") else ""),
         "status": row["status"],
         "status_label": price_policy.status_label(status_raw, lang="ko"),
         "status_label_en": price_policy.status_label(status_raw, lang="en"),
@@ -1617,14 +1674,23 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "product_type_label_en": ptype["label_en"],
         "story": row["story"],
         "story_en": story_en,
+        "story_ko": story_ko_val,
         "demo": row["demo"],
         "demo_images": _parse_demo_images(row),
         "assets": assets,
         "keywords": keywords,
         "features": features,
+        "features_en": features_en,
+        "features_ko": features_ko,
         "audience": (_row_get(row, "audience") or "") or "",
+        "audience_en": audience_en,
+        "audience_ko": audience_ko,
         "works_now": (_row_get(row, "works_now") or "") or "",
+        "works_now_en": works_now_en,
+        "works_now_ko": works_now_ko,
         "limits": (_row_get(row, "limits_note") or "") or "",
+        "limits_en": limits_en,
+        "limits_ko": limits_ko,
         "acquisition": acquisition,
         "acquisition_note": (_row_get(row, "acquisition_note") or "") or "",
         "price_start": price_start,

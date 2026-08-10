@@ -2004,8 +2004,9 @@
             kwHost.innerHTML = "";
           }
         }
-        document.getElementById("pStory").textContent =
-          (isEn() && p.story_en) ? p.story_en : (p.story || "");
+        document.getElementById("pStory").textContent = isEn()
+          ? (p.story_en || p.story || "")
+          : (p.story_ko || p.story || "");
         // Public offer line (always if set)
         var qPub = document.getElementById("qCreditPublicLine");
         if (!qPub) {
@@ -2020,16 +2021,25 @@
         var qOff = p.q_credits_offered != null ? Number(p.q_credits_offered) : 1;
         var qUp = p.q_credit_unit_price != null ? Number(p.q_credit_unit_price) : 0;
         qPub.textContent =
-          "헬프티켓 " +
+          t("헬프티켓 ", "Help tickets: ") +
           qOff +
-          "회 포함" +
+          t("회 포함", " included") +
           (qUp > 0
-            ? " · 추가 헬프티켓 ₩" + qUp.toLocaleString("ko-KR") + "/회 (판매자 설정 · 답변 후 판매자 정산)"
-            : " · 추가 판매 없음") +
-          " · 성사·이전 후 사용 · 상담용";
+            ? t(
+                " · 추가 헬프티켓 ₩" + qUp.toLocaleString("ko-KR") + "/회 (판매자 설정 · 답변 후 판매자 정산)",
+                " · extra ticket ₩" + qUp.toLocaleString("ko-KR") + "/ea (seller-set · settled after reply)"
+              )
+            : t(" · 추가 판매 없음", " · no add-on sales")) +
+          t(" · 성사·이전 후 사용 · 상담용", " · usable after close/transfer · for questions only");
         var featBox = document.getElementById("featuresBox");
         var featList = document.getElementById("pFeatures");
-        var feats = Array.isArray(p.features) ? p.features.filter(Boolean) : [];
+        var featsLocalized = isEn()
+          ? (Array.isArray(p.features_en) && p.features_en.length ? p.features_en : p.features)
+          : (Array.isArray(p.features_ko) && p.features_ko.length ? p.features_ko : p.features);
+        var feats = Array.isArray(featsLocalized) ? featsLocalized.filter(Boolean) : [];
+        var localizedAudience = isEn() ? (p.audience_en || p.audience) : (p.audience_ko || p.audience);
+        var localizedWorks = isEn() ? (p.works_now_en || p.works_now) : (p.works_now_ko || p.works_now);
+        var localizedLimits = isEn() ? (p.limits_en || p.limits) : (p.limits_ko || p.limits);
         var hasClarity =
           feats.length ||
           p.audience ||
@@ -2058,9 +2068,9 @@
               span.textContent = "";
             }
           }
-          fillMeta("pAudienceBlock", "pAudience", p.audience || "");
-          fillMeta("pWorksBlock", "pWorksNow", p.works_now || "");
-          fillMeta("pLimitsBlock", "pLimits", p.limits || "");
+          fillMeta("pAudienceBlock", "pAudience", localizedAudience || "");
+          fillMeta("pWorksBlock", "pWorksNow", localizedWorks || "");
+          fillMeta("pLimitsBlock", "pLimits", localizedLimits || "");
           var acqMap = {
             made: t("직접 제작", "Original maker"),
             resale: t("재판매 (양수 후 판매)", "Resale (acquired then selling)"),

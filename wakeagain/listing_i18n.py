@@ -278,6 +278,168 @@ def fill_en_fields(
     return {"title_en": te, "one_liner_en": oe}
 
 
+# Free-text listing fields translated bidirectionally (title/one_liner keep
+# their own dedicated path above with heuristic fallback; these lean on AI
+# only — no good offline heuristic exists for paragraph-length text).
+_LONG_FIELD_SPECS: list[tuple[str, str, str, int]] = [
+    ("story", "story_en", "story_ko", 4000),
+    ("audience", "audience_en", "audience_ko", 200),
+    ("works_now", "works_now_en", "works_now_ko", 800),
+    ("limits_note", "limits_note_en", "limits_note_ko", 800),
+]
+
+
+def _ai_translate_long_fields(
+    payload: dict[str, Any],
+    *,
+    to_lang: str,
+    timeout: float = 20.0,
+) -> dict[str, Any]:
+    """
+    payload: {field_name: text_or_list, ...} — only fields that need translating.
+    to_lang: "en" or "ko".
+    returns: {field_name: translated_text_or_list, ...}
+    """
+    key = _xai_key()
+    if not key or not payload:
+        return {}
+    target = "natural English" if to_lang == "en" else "natural Korean"
+    prompt = (
+        f"Translate these digital-product marketplace listing fields into {target}.\n"
+        "Return ONLY a JSON object with the same keys as the input.\n"
+        "Rules:\n"
+        "- Preserve meaning and tone; do not add or invent facts/features\n"
+        "- Keep product/brand names and code-like tokens (file paths, .exe, API names) as-is\n"
+        "- 'features' is a JSON array of short bullet strings — translate each item, same array length and order\n"
+        "- Other fields are plain paragraphs/sentences — translate naturally, keep line breaks\n\n"
+        f"INPUT:\n{json.dumps(payload, ensure_ascii=False)}"
+    )
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            r = client.post(
+                "https://api.x.ai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": os.environ.get("XAI_MODEL", "grok-4-1-fast-non-reasoning"),
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You output only a valid JSON object for marketplace listing field translations.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 2200,
+                },
+            )
+            if r.status_code >= 400:
+                return {}
+            data = r.json()
+            text = (
+                ((data.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+            ).strip()
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+            parsed = json.loads(text)
+            if not isinstance(parsed, dict):
+                return {}
+            return parsed
+    except Exception:
+        return {}
+
+
+def fill_listing_i18n(
+    listing: dict[str, Any],
+    *,
+    project_id: Any = None,
+    use_ai: bool = True,
+) -> dict[str, Any]:
+    """
+    Given base-language listing fields (title/one_liner/story/audience/
+    works_now/limits_note/features), return a dict of the *_en / *_ko
+    columns to store — translating whichever direction the source text
+    isn't already in. Call once at listing create/update time.
+
+    listing keys read: title, one_liner, story, audience, works_now,
+    limits_note, features (list[str])
+    """
+    out: dict[str, Any] = {}
+
+    title = listing.get("title") or ""
+    one_liner = listing.get("one_liner") or ""
+    en_base = fill_en_fields(
+        title, one_liner, project_id=project_id, use_ai=use_ai
+    )
+    out["title_en"] = en_base.get("title_en") or ""
+    out["one_liner_en"] = en_base.get("one_liner_en") or ""
+    # Reverse (KO) for Latin-authored title/one_liner — heuristic-free, AI only
+    need_title_ko = bool(title) and not has_hangul(title)
+    need_one_ko = bool(one_liner) and not has_hangul(one_liner)
+
+    features = listing.get("features") or []
+    if not isinstance(features, list):
+        features = []
+    features = [str(f) for f in features if f]
+
+    long_fields = {
+        "story": listing.get("story") or "",
+        "audience": listing.get("audience") or "",
+        "works_now": listing.get("works_now") or "",
+        "limits_note": listing.get("limits_note") or "",
+    }
+
+    need_en: dict[str, Any] = {}
+    need_ko: dict[str, Any] = {}
+    if need_title_ko:
+        need_ko["title"] = title
+    if need_one_ko:
+        need_ko["one_liner"] = one_liner
+    for field, val in long_fields.items():
+        if not val:
+            continue
+        if has_hangul(val):
+            need_en[field] = val
+        else:
+            need_ko[field] = val
+    if features:
+        joined = " ".join(features)
+        if has_hangul(joined):
+            need_en["features"] = features
+        elif joined.strip():
+            need_ko["features"] = features
+
+    max_len = {f: length for f, _e, _k, length in _LONG_FIELD_SPECS}
+
+    if use_ai and need_en:
+        got = _ai_translate_long_fields(need_en, to_lang="en")
+        for field in long_fields:
+            if field in need_en and got.get(field):
+                out[f"{field}_en"] = str(got[field]).strip()[: max_len.get(field, 2000)]
+        if "features" in need_en and isinstance(got.get("features"), list):
+            out["features_json_en"] = json.dumps(
+                [str(x).strip() for x in got["features"] if x], ensure_ascii=False
+            )
+
+    if use_ai and need_ko:
+        got = _ai_translate_long_fields(need_ko, to_lang="ko")
+        if "title" in need_ko and got.get("title"):
+            out["title_ko"] = str(got["title"]).strip()[:80]
+        if "one_liner" in need_ko and got.get("one_liner"):
+            out["one_liner_ko"] = str(got["one_liner"]).strip()[:160]
+        for field in long_fields:
+            if field in need_ko and got.get(field):
+                out[f"{field}_ko"] = str(got[field]).strip()[: max_len.get(field, 2000)]
+        if "features" in need_ko and isinstance(got.get("features"), list):
+            out["features_json_ko"] = json.dumps(
+                [str(x).strip() for x in got["features"] if x], ensure_ascii=False
+            )
+
+    return out
+
+
 def ensure_rows_en(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> int:
     """
     For project sqlite rows missing EN fields, fill + UPDATE.
@@ -368,6 +530,106 @@ def ensure_rows_en(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> in
         conn.execute(
             "UPDATE projects SET title_en = ?, one_liner_en = ? WHERE id = ?",
             (te or None, oe or None, pid),
+        )
+        updated += 1
+    return updated
+
+
+_I18N_LONG_COLUMNS = {
+    "story_en", "story_ko",
+    "audience_en", "audience_ko",
+    "works_now_en", "works_now_ko",
+    "limits_note_en", "limits_note_ko",
+    "features_json_en", "features_json_ko",
+}
+
+
+def _row_needs_i18n(row: Any, keys: Any) -> bool:
+    def missing(base_col: str, en_col: str, ko_col: str) -> bool:
+        base = (row[base_col] if base_col in keys else "") or ""
+        if not base.strip():
+            return False
+        en_v = (row[en_col] if en_col in keys else "") or ""
+        ko_v = (row[ko_col] if ko_col in keys else "") or ""
+        if has_hangul(base):
+            return not en_v.strip()
+        return not ko_v.strip()
+
+    if missing("story", "story_en", "story_ko"):
+        return True
+    if missing("audience", "audience_en", "audience_ko"):
+        return True
+    if missing("works_now", "works_now_en", "works_now_ko"):
+        return True
+    if missing("limits_note", "limits_note_en", "limits_note_ko"):
+        return True
+    feats_raw = (row["features_json"] if "features_json" in keys else "") or ""
+    if feats_raw.strip() and feats_raw.strip() != "[]":
+        joined = feats_raw
+        en_v = (row["features_json_en"] if "features_json_en" in keys else "") or ""
+        ko_v = (row["features_json_ko"] if "features_json_ko" in keys else "") or ""
+        if has_hangul(joined):
+            if not en_v.strip():
+                return True
+        elif not ko_v.strip():
+            return True
+    return False
+
+
+def ensure_rows_i18n(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> int:
+    """
+    Backfill story / features / audience / works_now / limits_note EN+KO
+    translations for rows missing them (lazy, on-read — mirrors ensure_rows_en).
+    """
+    row_list = list(rows)
+    if not row_list:
+        return 0
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()}
+    except Exception:
+        cols = set()
+    if not _I18N_LONG_COLUMNS.issubset(cols):
+        return 0
+
+    updated = 0
+    for row in row_list:
+        try:
+            keys = row.keys()
+        except Exception:
+            continue
+        if "id" not in keys or not _row_needs_i18n(row, keys):
+            continue
+        try:
+            features = json.loads(row["features_json"] or "[]") if "features_json" in keys else []
+            if not isinstance(features, list):
+                features = []
+        except Exception:
+            features = []
+        fields = {
+            "title": "",
+            "one_liner": "",
+            "story": (row["story"] if "story" in keys else "") or "",
+            "audience": (row["audience"] if "audience" in keys else "") or "",
+            "works_now": (row["works_now"] if "works_now" in keys else "") or "",
+            "limits_note": (row["limits_note"] if "limits_note" in keys else "") or "",
+            "features": features,
+        }
+        out = fill_listing_i18n(fields, project_id=row["id"], use_ai=use_ai)
+        set_cols = []
+        set_vals: list[Any] = []
+        for col in (
+            "story_en", "story_ko", "audience_en", "audience_ko",
+            "works_now_en", "works_now_ko", "limits_note_en", "limits_note_ko",
+            "features_json_en", "features_json_ko",
+        ):
+            if out.get(col):
+                set_cols.append(col)
+                set_vals.append(out[col])
+        if not set_cols:
+            continue
+        conn.execute(
+            f"UPDATE projects SET {', '.join(c + ' = ?' for c in set_cols)} WHERE id = ?",
+            (*set_vals, row["id"]),
         )
         updated += 1
     return updated
