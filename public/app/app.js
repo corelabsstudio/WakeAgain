@@ -247,31 +247,18 @@
         if (c.score != null) {
           text += t("app.credit_suffix", " · credit {n}", { n: c.score });
           if (c.label) {
-            var cl = String(c.label);
-            var enUi =
-              (window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en") ||
-              String(document.documentElement.getAttribute("data-wa-lang") || "").indexOf("en") === 0;
-            if (enUi) {
-              var creditLabelEn = {
-                신규: "New",
-                일반: "Standard",
-                우수: "Good",
-                최우수: "Excellent",
-                주의: "Caution",
-                위험: "Risk",
-              };
-              cl = creditLabelEn[cl] || cl;
-            }
-            text += " " + cl;
+            text += " " + creditLabelUi(c.label);
           }
         }
         badge.textContent = text;
-        badge.title = t("app.trust_tip", "Trust level (eligibility) Lv{n}", { n: level }) +
-          (trust.label ? " · " + trust.label : "") +
+        badge.title =
+          t("app.trust_tip", "Trust level (eligibility) Lv{n}", { n: level }) +
+          " · " +
+          trustBadgeCopy(level) +
           (c.score != null
             ? t("app.credit_tip", " / on-site credit score {n}{label} · see credit guide", {
                 n: c.score,
-                label: c.label ? " " + c.label : "",
+                label: c.label ? " " + creditLabelUi(c.label) : "",
               })
             : "");
       }
@@ -390,20 +377,21 @@
         $("creditScoreNum").textContent = t("app.credit_points", "{n} pts", {
           n: c.score != null ? c.score : "—",
         });
-      if ($("creditGradeLabel")) $("creditGradeLabel").textContent = c.label ? "· " + c.label : "";
+      if ($("creditGradeLabel"))
+        $("creditGradeLabel").textContent = c.label ? "· " + creditLabelUi(c.label) : "";
       const br = c.buyer_rank || null;
       const rankLine = $("buyerRankLine");
       if (rankLine && $("buyerRankBadge")) {
         if (br && br.label) {
           rankLine.hidden = false;
-          $("buyerRankBadge").textContent = br.label;
+          $("buyerRankBadge").textContent = creditLabelUi(br.label);
           $("buyerRankBadge").setAttribute("data-rank", br.key || "");
           $("buyerRankBadge").classList.toggle("is-caution", !!br.caution);
           if ($("buyerRankMeta")) {
             const next =
               br.next_min != null
                 ? t("app.buyer_next", " · {n} more closes to “{label}”", {
-                    label: br.next_label || "",
+                    label: creditLabelUi(br.next_label || ""),
                     n: Math.max(0, br.next_min - (br.bought_complete || 0)),
                   })
                 : t("app.buyer_top", " · top buyer badge");
@@ -1134,14 +1122,136 @@
     btn.addEventListener("click", () => switchAuthTab(btn.getAttribute("data-tab") || "login"));
   });
 
-  // 가입: 생년월일 max = 오늘, 힌트용 min 나이 경계는 서버가 최종 판단
-  if ($("regBirth")) {
+  function isEnUi() {
+    try {
+      return (
+        window.WakeAgainI18n &&
+        window.WakeAgainI18n.getLang &&
+        window.WakeAgainI18n.getLang() === "en"
+      );
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /** Server credit / buyer-rank labels are KO — map for EN UI (no hangul under EN). */
+  var CREDIT_LABEL_EN = {
+    최고: "Elite",
+    우수: "Good",
+    신뢰: "Trusted",
+    보통: "Average",
+    신규: "New",
+    주의: "Caution",
+    위험: "Risk",
+    일반: "Standard",
+    최우수: "Excellent",
+    // buyer rank
+    "파워 바이어": "Power buyer",
+    "헤비 구매자": "Heavy buyer",
+    "단골 구매자": "Regular buyer",
+    "첫 구매 완료": "First purchase",
+    "구매 준비 중": "Getting ready",
+  };
+
+  function creditLabelUi(label) {
+    if (label == null || label === "") return "";
+    var cl = String(label);
+    if (!isEnUi()) return cl;
+    return CREDIT_LABEL_EN[cl] || cl;
+  }
+
+  /** Override browser chrome validation (KO Chrome balloons) with app language. */
+  function wireEmailField(el) {
+    if (!el || el.dataset.waEmailWired === "1") return;
+    el.dataset.waEmailWired = "1";
+    const refresh = function () {
+      el.setCustomValidity("");
+      if (!el.value.trim()) {
+        el.setCustomValidity(t("app.err_email_required", "Please enter your email."));
+        return;
+      }
+      if (el.validity.typeMismatch || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())) {
+        const v = el.value.trim();
+        if (v.indexOf("@") < 0) {
+          el.setCustomValidity(
+            t("app.err_email_at", "Please include an '@' in the email address. '{v}' is missing an '@'.", {
+              v: v,
+            })
+          );
+        } else {
+          el.setCustomValidity(t("app.err_email_invalid", "Please enter a valid email address."));
+        }
+      }
+    };
+    el.addEventListener("invalid", refresh);
+    el.addEventListener("input", function () {
+      el.setCustomValidity("");
+    });
+    el.addEventListener("blur", function () {
+      if (el.value.trim()) refresh();
+    });
+  }
+
+  /**
+   * EN UI: use text date fields so Korean Chrome does not show "연도-월-일".
+   * KO UI: keep native type=date.
+   */
+  function syncBirthDateInputs() {
+    const en = isEnUi();
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
-    $("regBirth").setAttribute("max", yyyy + "-" + mm + "-" + dd);
+    const maxDay = yyyy + "-" + mm + "-" + dd;
+    ["regBirth", "ageBirth"].forEach(function (id) {
+      const el = $(id);
+      if (!el) return;
+      const val = el.value;
+      if (en) {
+        if (el.type !== "text") el.type = "text";
+        el.placeholder = t("app.birth_ph", "YYYY-MM-DD");
+        el.setAttribute("inputmode", "numeric");
+        el.setAttribute("pattern", "\\d{4}-\\d{2}-\\d{2}");
+        el.setAttribute("maxlength", "10");
+        el.setAttribute("autocomplete", "bday");
+        el.removeAttribute("max");
+        el.dataset.waDateText = "1";
+        el.setCustomValidity("");
+        const onInvalid = function () {
+          el.setCustomValidity("");
+          if (!el.value.trim()) {
+            el.setCustomValidity(t("app.reg_birth_err", "Enter your date of birth."));
+          } else if (!/^\d{4}-\d{2}-\d{2}$/.test(el.value.trim())) {
+            el.setCustomValidity(t("app.err_birth_format", "Enter your date of birth as YYYY-MM-DD."));
+          }
+        };
+        if (el.dataset.waDateWired !== "1") {
+          el.dataset.waDateWired = "1";
+          el.addEventListener("invalid", onInvalid);
+          el.addEventListener("input", function () {
+            el.setCustomValidity("");
+          });
+        }
+      } else {
+        if (el.type !== "date") el.type = "date";
+        el.removeAttribute("placeholder");
+        el.removeAttribute("pattern");
+        el.removeAttribute("maxlength");
+        el.removeAttribute("inputmode");
+        el.setAttribute("max", maxDay);
+        el.setCustomValidity("");
+        el.dataset.waDateText = "0";
+      }
+      if (val) el.value = val;
+      else if (en) el.placeholder = t("app.birth_ph", "YYYY-MM-DD");
+    });
   }
+
+  // Birth fields + email validity (browser chrome often stays KO on Korean Windows)
+  ["loginEmail", "regEmail", "resetEmail"].forEach(function (id) {
+    wireEmailField($(id));
+  });
+  syncBirthDateInputs();
 
   /** Password show/hide (eye) on login / register / reset */
   document.querySelectorAll(".pw-toggle[data-pw-target]").forEach((btn) => {
@@ -1161,6 +1271,31 @@
   $("formLogin")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     showErr($("loginErr"));
+    const emailEl = $("loginEmail");
+    if (emailEl) {
+      emailEl.setCustomValidity("");
+      const emailVal = emailEl.value.trim();
+      if (!emailVal) {
+        showErr($("loginErr"), t("app.err_email_required", "Please enter your email."));
+        emailEl.focus();
+        return;
+      }
+      if (emailVal.indexOf("@") < 0) {
+        showErr(
+          $("loginErr"),
+          t("app.err_email_at", "Please include an '@' in the email address. '{v}' is missing an '@'.", {
+            v: emailVal,
+          })
+        );
+        emailEl.focus();
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        showErr($("loginErr"), t("app.err_email_invalid", "Please enter a valid email address."));
+        emailEl.focus();
+        return;
+      }
+    }
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
     const email = $("loginEmail").value.trim();
@@ -1174,7 +1309,14 @@
       } catch (e2) {}
       await afterAuthSuccess();
     } catch (err) {
-      showErr($("loginErr"), err.message || t("app.login_fail", "Sign-in failed."));
+      var msg = (err && err.message) || t("app.login_fail", "Sign-in failed.");
+      if (/failed to fetch|networkerror|load failed|network request failed/i.test(String(msg))) {
+        msg = t(
+          "app.login_server_down",
+          "Can’t reach the server. Start WakeAgain Local (desktop shortcut) and try again."
+        );
+      }
+      showErr($("loginErr"), msg);
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -1390,6 +1532,27 @@
     }
     const pass = $("regPass") ? $("regPass").value : "";
     const pass2 = $("regPass2") ? $("regPass2").value : "";
+    const emailReg = $("regEmail") ? $("regEmail").value.trim() : "";
+    if (!emailReg) {
+      showErr($("regErr"), t("app.err_email_required", "Please enter your email."));
+      if ($("regEmail")) $("regEmail").focus();
+      return;
+    }
+    if (emailReg.indexOf("@") < 0) {
+      showErr(
+        $("regErr"),
+        t("app.err_email_at", "Please include an '@' in the email address. '{v}' is missing an '@'.", {
+          v: emailReg,
+        })
+      );
+      if ($("regEmail")) $("regEmail").focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailReg)) {
+      showErr($("regErr"), t("app.err_email_invalid", "Please enter a valid email address."));
+      if ($("regEmail")) $("regEmail").focus();
+      return;
+    }
     const birth = $("regBirth") ? $("regBirth").value.trim() : "";
     const ageOk = $("regAge14") ? $("regAge14").checked : false;
     if (!birth) {
@@ -1397,7 +1560,12 @@
       if ($("regBirth")) $("regBirth").focus();
       return;
     }
-    // Client-side 만 나이 (서버가 최종 판단)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
+      showErr($("regErr"), t("app.err_birth_format", "Enter your date of birth as YYYY-MM-DD."));
+      if ($("regBirth")) $("regBirth").focus();
+      return;
+    }
+    // Client-side age check (server is authoritative)
     try {
       const parts = birth.split("-").map(Number);
       const by = parts[0];
@@ -2956,6 +3124,9 @@
     } catch (e) {}
     try {
       syncChrome();
+    } catch (e) {}
+    try {
+      syncBirthDateInputs();
     } catch (e) {}
     try {
       applyPriceGuide(false);

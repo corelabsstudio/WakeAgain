@@ -178,9 +178,9 @@
           <!-- Viral event: only shown while GET /api/v1/promo/event active -->
           <div id="homeEventBanner" class="home-event-banner" hidden>
             <a class="home-event-banner-link" href="/promo/event.html" id="homeEventLink">
-              <span class="home-event-pill">Event</span>
-              <span class="home-event-text" id="homeEventText">이벤트 진행 중 · 소문 내고 성사 수수료 8% 쿠폰 받기</span>
-              <span class="home-event-cta" id="homeEventCta">참여하기 →</span>
+              <span class="home-event-pill">EVENT</span>
+              <span class="home-event-text" id="homeEventText" data-i18n="home.event_banner">Live event · Share WakeAgain, earn an 8% seller-fee coupon (once per account)</span>
+              <span class="home-event-cta" id="homeEventCta" data-i18n="home.event_cta">Join event →</span>
             </a>
           </div>
           <h1 class="hero-title hero-title--sparkle">
@@ -191,8 +191,8 @@
           <div class="hero-cta">
             <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
             <a class="btn btn-white btn-lg" href="/app/#new" data-i18n="nav.list">프로젝트 올리기</a>
-            <a class="btn btn-ghost btn-lg" href="/promo/event.html" id="homeEventBtn" hidden>
-              소문내고 8% 쿠폰
+            <a class="btn btn-ghost btn-lg" href="/promo/event.html" id="homeEventBtn" hidden data-i18n="home.event_btn">
+              Share · 8% coupon
             </a>
           </div>
           <p class="hero-side-link">
@@ -613,31 +613,54 @@
         } catch (e) {}
       })();
 
-      /* Viral event banner/button — only while event is open */
+      /* Viral event banner/button — only while event is open (EN/KO by UI lang) */
       (function loadHomeEvent() {
         var banner = document.getElementById("homeEventBanner");
         var btn = document.getElementById("homeEventBtn");
         var textEl = document.getElementById("homeEventText");
         var ctaEl = document.getElementById("homeEventCta");
+        function isEn() {
+          try {
+            if (window.WakeAgainI18n && window.WakeAgainI18n.getLang)
+              return window.WakeAgainI18n.getLang() === "en";
+          } catch (e) {}
+          var lang = (document.documentElement.getAttribute("data-wa-lang") || document.documentElement.lang || "").toLowerCase();
+          return lang.indexOf("en") === 0 || lang === "";
+        }
+        function applyEventCopy(data) {
+          if (!data || !data.active) {
+            if (banner) banner.hidden = true;
+            if (btn) btn.hidden = true;
+            return;
+          }
+          var en = isEn();
+          var bannerText = en
+            ? data.banner_en || data.banner_ko
+            : data.banner_ko || data.banner_en;
+          var ctaText = en ? data.cta_en || data.cta_ko : data.cta_ko || data.cta_en;
+          var btnText = en ? data.btn_en || data.btn_ko : data.btn_ko || data.btn_en;
+          if (textEl && bannerText) textEl.textContent = bannerText;
+          if (ctaEl && ctaText) ctaEl.textContent = /→\s*$/.test(ctaText) ? ctaText : ctaText + " →";
+          if (btn && btnText) btn.textContent = btnText;
+          if (banner) banner.hidden = false;
+          if (btn) btn.hidden = false;
+        }
+        var lastEventData = null;
         fetch("/api/v1/promo/event", { credentials: "same-origin" })
           .then(function (r) {
             return r.json();
           })
           .then(function (data) {
-            if (!data || !data.active) {
-              if (banner) banner.hidden = true;
-              if (btn) btn.hidden = true;
-              return;
-            }
-            if (textEl && data.banner_ko) textEl.textContent = data.banner_ko;
-            if (ctaEl && data.cta_ko) ctaEl.textContent = data.cta_ko + " →";
-            if (banner) banner.hidden = false;
-            if (btn) btn.hidden = false;
+            lastEventData = data;
+            applyEventCopy(data);
           })
           .catch(function () {
             if (banner) banner.hidden = true;
             if (btn) btn.hidden = true;
           });
+        document.addEventListener("wa:langchange", function () {
+          if (lastEventData) applyEventCopy(lastEventData);
+        });
       })();
 
       /* Demo countdown only while data-seconds remains.

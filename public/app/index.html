@@ -247,7 +247,7 @@
         <div class="auth-divider" aria-hidden="true"><span><span data-i18n="common.or_email">Or email</span></span></div>
       </div>
 
-      <form id="formLogin" class="form-card app-form">
+      <form id="formLogin" class="form-card app-form" novalidate>
         <label for="loginEmail" data-i18n="app.email">Email</label>
         <input id="loginEmail" type="email" required autocomplete="email" placeholder="you@email.com" />
         <label for="loginPass" data-i18n="app.password">Password</label>
@@ -290,7 +290,7 @@
         </div>
       </form>
 
-      <form id="formReset" class="form-card app-form" hidden>
+      <form id="formReset" class="form-card app-form" hidden novalidate>
         <p class="note muted fine" data-i18n="app.reset_hint">
           We’ll send a reset code to your sign-up email. Check spam. In production the code is not shown on screen.
         </p>
@@ -318,13 +318,13 @@
         <p class="form-error" id="resetErr" hidden></p>
       </form>
 
-      <form id="formRegister" class="form-card app-form" hidden>
+      <form id="formRegister" class="form-card app-form" hidden novalidate>
         <label for="regName" data-i18n="app.reg_name">Display name (optional)</label>
         <input id="regName" maxlength="80" autocomplete="nickname" placeholder="Public nickname" />
         <label for="regEmail" data-i18n="app.email">Email</label>
         <input id="regEmail" type="email" required autocomplete="email" placeholder="you@email.com" />
         <label for="regBirth" data-i18n="app.reg_birth">Date of birth</label>
-        <input id="regBirth" type="date" required autocomplete="bday" />
+        <input id="regBirth" type="date" required autocomplete="bday" placeholder="YYYY-MM-DD" data-i18n-placeholder="app.birth_ph" />
         <p class="note fine muted" data-i18n="app.reg_birth_note">You must be 14+. Date of birth is only for age check and is never public.</p>
         <label for="regPass" data-i18n="app.reg_pass">Password (8+ chars)</label>
         <div class="pw-field">
@@ -374,7 +374,7 @@
       <p class="lede" data-i18n-html data-i18n="app.age_lede">Even with social login, <strong>users under 14 cannot use WakeAgain.</strong> Date of birth is only used for age check and is never public.</p>
       <form id="formAge" class="form-card app-form">
         <label for="ageBirth" data-i18n="app.age_birth">Date of birth *</label>
-        <input id="ageBirth" type="date" required autocomplete="bday" />
+        <input id="ageBirth" type="date" required autocomplete="bday" placeholder="YYYY-MM-DD" data-i18n-placeholder="app.birth_ph" />
         <label class="checks check-single">
           <input type="checkbox" id="ageConfirm14" required />
           <span data-i18n="app.reg_age14">I am 14 or older *</span>

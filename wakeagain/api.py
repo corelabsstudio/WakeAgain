@@ -2688,8 +2688,13 @@ def _promo_public_payload() -> dict:
                 "active": True,
                 "event_open": True,
                 "title_ko": "소문내고 수수료 8% 쿠폰 받기",
+                "title_en": "Share WakeAgain · get 8% seller fee coupon",
                 "banner_ko": "이벤트 진행 중 · 소문 내고 성사 수수료 8% 쿠폰 받기 (계정당 1회)",
+                "banner_en": "Live event · Share WakeAgain, earn an 8% seller-fee coupon (once per account)",
                 "cta_ko": "이벤트 참여",
+                "cta_en": "Join event",
+                "btn_ko": "소문내고 8% 쿠폰",
+                "btn_en": "Share · 8% coupon",
                 "cta_href": "/promo/event.html",
                 "campaign": {
                     "id": c["id"],
@@ -2709,6 +2714,12 @@ def _promo_public_payload() -> dict:
                     "운영 확인 후 승인되면, 앱 → 쿠폰에서 「쿠폰 받기」가 나타납니다.",
                     "받기 버튼을 누르면 계정에 성사 수수료 8% 쿠폰이 등록됩니다.",
                 ],
+                "steps_en": [
+                    "Pick one channel below and post a short intro or review of WakeAgain.",
+                    "Copy the post URL and submit it. (Same reward for every channel.)",
+                    "After ops approves, open App → Coupons and tap Claim coupon.",
+                    "Claiming registers an 8% seller-fee coupon on your account.",
+                ],
                 "rules_ko": [
                     "보상: 성사 수수료 8% 쿠폰 1장 (기본 10% → 8%, 판매 성사 시에만)",
                     "계정당 이벤트 전체 1회 · 채널을 여러 개 올려도 보상은 1장",
@@ -2717,31 +2728,52 @@ def _promo_public_payload() -> dict:
                     "이벤트 종료·수량 소진 시 홈 배너·제출 버튼이 사라집니다",
                     "쿠폰 코드는 공개하지 않습니다 · 유효기간 없음 · 매매 중개 없음",
                 ],
+                "rules_en": [
+                    "Reward: one 8% seller-fee coupon (default 10% → 8%, only when a sale closes)",
+                    "Once per account for the whole event · multiple channels still = one coupon",
+                    "Instagram, X, blogs, and communities all get the same reward",
+                    "Submitting a URL does not issue the coupon instantly · claim in the app after approval",
+                    "When the event ends or stock runs out, the home banner and submit button hide",
+                    "Coupon codes stay private · no expiry · we don’t broker resale",
+                ],
                 "message_ko": "",
+                "message_en": "",
             }
         closed = database.get_url_claim_campaign_for_display(conn)
         msg = "진행 중인 소문내기 이벤트가 없습니다."
+        msg_en = "No share event is running right now."
         if closed:
             c = database.campaign_to_dict(closed, include_code=False)
             if c.get("remaining", 1) <= 0:
                 msg = "이번 이벤트 수량이 모두 소진되었습니다."
+                msg_en = "This event is sold out."
             elif c.get("ends_at"):
                 msg = "이 이벤트는 종료되었습니다."
+                msg_en = "This event has ended."
             elif not c.get("active"):
                 msg = "이 이벤트는 종료되었습니다."
+                msg_en = "This event has ended."
         return {
             "ok": True,
             "active": False,
             "event_open": False,
             "title_ko": "소문내고 수수료 8% 쿠폰 받기",
+            "title_en": "Share WakeAgain · get 8% seller fee coupon",
             "banner_ko": "",
+            "banner_en": "",
             "cta_ko": "",
+            "cta_en": "",
+            "btn_ko": "소문내고 8% 쿠폰",
+            "btn_en": "Share · 8% coupon",
             "cta_href": "/promo/event.html",
             "campaign": None,
             "channels": database.promo_channel_list(),
             "steps_ko": [],
+            "steps_en": [],
             "rules_ko": [],
+            "rules_en": [],
             "message_ko": msg,
+            "message_en": msg_en,
         }
 
 

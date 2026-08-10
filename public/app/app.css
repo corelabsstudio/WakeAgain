@@ -308,6 +308,35 @@ body.is-native-app .app-top-hide-native {
   margin: 0 auto;
   padding: 1.25rem 0 2rem;
 }
+
+/* Login / register / age / verify — card not stretched to full app width */
+#viewAuth,
+#viewAge,
+#viewVerify {
+  max-width: 26.5rem; /* ~424px — phone-like form column */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+#viewAuth .form-card.app-form,
+#viewAge .form-card.app-form,
+#viewVerify .form-card.app-form {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#viewAuth .auth-tabs,
+#viewAuth .social-login,
+#viewAuth .auth-browse-row,
+#viewAuth .auth-foot {
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  #viewAuth,
+  #viewAge,
+  #viewVerify {
+    max-width: 100%;
+  }
+}
 .app-panel .eyebrow {
   color: var(--accent);
   font-size: var(--text-sm, 0.875rem);
