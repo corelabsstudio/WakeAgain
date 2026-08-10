@@ -310,7 +310,7 @@ def _ai_translate_long_fields(
         "Rules:\n"
         "- Preserve meaning and tone; do not add or invent facts/features\n"
         "- Keep product/brand names and code-like tokens (file paths, .exe, API names) as-is\n"
-        "- 'features' is a JSON array of short bullet strings — translate each item, same array length and order\n"
+        "- 'features' and 'keywords' are JSON arrays of short strings — translate each item, same array length and order; 'keywords' items are short tags (1-3 words each), not sentences\n"
         "- Other fields are plain paragraphs/sentences — translate naturally, keep line breaks\n\n"
         f"INPUT:\n{json.dumps(payload, ensure_ascii=False)}"
     )
@@ -379,10 +379,15 @@ def fill_listing_i18n(
     need_title_ko = bool(title) and not has_hangul(title)
     need_one_ko = bool(one_liner) and not has_hangul(one_liner)
 
-    features = listing.get("features") or []
-    if not isinstance(features, list):
-        features = []
-    features = [str(f) for f in features if f]
+    def _clean_list(v: Any) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [str(x) for x in v if x]
+
+    array_fields = {
+        "features": _clean_list(listing.get("features")),
+        "keywords": _clean_list(listing.get("keywords")),
+    }
 
     long_fields = {
         "story": listing.get("story") or "",
@@ -404,12 +409,14 @@ def fill_listing_i18n(
             need_en[field] = val
         else:
             need_ko[field] = val
-    if features:
-        joined = " ".join(features)
+    for field, items in array_fields.items():
+        if not items:
+            continue
+        joined = " ".join(items)
         if has_hangul(joined):
-            need_en["features"] = features
+            need_en[field] = items
         elif joined.strip():
-            need_ko["features"] = features
+            need_ko[field] = items
 
     max_len = {f: length for f, _e, _k, length in _LONG_FIELD_SPECS}
 
@@ -418,10 +425,11 @@ def fill_listing_i18n(
         for field in long_fields:
             if field in need_en and got.get(field):
                 out[f"{field}_en"] = str(got[field]).strip()[: max_len.get(field, 2000)]
-        if "features" in need_en and isinstance(got.get("features"), list):
-            out["features_json_en"] = json.dumps(
-                [str(x).strip() for x in got["features"] if x], ensure_ascii=False
-            )
+        for field in array_fields:
+            if field in need_en and isinstance(got.get(field), list):
+                out[f"{field}_json_en"] = json.dumps(
+                    [str(x).strip() for x in got[field] if x], ensure_ascii=False
+                )
 
     if use_ai and need_ko:
         got = _ai_translate_long_fields(need_ko, to_lang="ko")
@@ -432,10 +440,11 @@ def fill_listing_i18n(
         for field in long_fields:
             if field in need_ko and got.get(field):
                 out[f"{field}_ko"] = str(got[field]).strip()[: max_len.get(field, 2000)]
-        if "features" in need_ko and isinstance(got.get("features"), list):
-            out["features_json_ko"] = json.dumps(
-                [str(x).strip() for x in got["features"] if x], ensure_ascii=False
-            )
+        for field in array_fields:
+            if field in need_ko and isinstance(got.get(field), list):
+                out[f"{field}_json_ko"] = json.dumps(
+                    [str(x).strip() for x in got[field] if x], ensure_ascii=False
+                )
 
     return out
 
@@ -541,6 +550,7 @@ _I18N_LONG_COLUMNS = {
     "works_now_en", "works_now_ko",
     "limits_note_en", "limits_note_ko",
     "features_json_en", "features_json_ko",
+    "keywords_json_en", "keywords_json_ko",
 }
 
 
@@ -555,6 +565,23 @@ def _row_needs_i18n(row: Any, keys: Any) -> bool:
             return not en_v.strip()
         return not ko_v.strip()
 
+    def missing_array(base_col: str, en_col: str, ko_col: str) -> bool:
+        raw = (row[base_col] if base_col in keys else "") or ""
+        if not raw.strip() or raw.strip() == "[]":
+            return False
+        try:
+            items = json.loads(raw)
+        except Exception:
+            return False
+        joined = " ".join(str(x) for x in items) if isinstance(items, list) else ""
+        if not joined.strip():
+            return False
+        en_v = (row[en_col] if en_col in keys else "") or ""
+        ko_v = (row[ko_col] if ko_col in keys else "") or ""
+        if has_hangul(joined):
+            return not en_v.strip()
+        return not ko_v.strip()
+
     if missing("story", "story_en", "story_ko"):
         return True
     if missing("audience", "audience_en", "audience_ko"):
@@ -563,16 +590,10 @@ def _row_needs_i18n(row: Any, keys: Any) -> bool:
         return True
     if missing("limits_note", "limits_note_en", "limits_note_ko"):
         return True
-    feats_raw = (row["features_json"] if "features_json" in keys else "") or ""
-    if feats_raw.strip() and feats_raw.strip() != "[]":
-        joined = feats_raw
-        en_v = (row["features_json_en"] if "features_json_en" in keys else "") or ""
-        ko_v = (row["features_json_ko"] if "features_json_ko" in keys else "") or ""
-        if has_hangul(joined):
-            if not en_v.strip():
-                return True
-        elif not ko_v.strip():
-            return True
+    if missing_array("features_json", "features_json_en", "features_json_ko"):
+        return True
+    if missing_array("keywords_json", "keywords_json_en", "keywords_json_ko"):
+        return True
     return False
 
 
@@ -599,12 +620,13 @@ def ensure_rows_i18n(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> 
             continue
         if "id" not in keys or not _row_needs_i18n(row, keys):
             continue
-        try:
-            features = json.loads(row["features_json"] or "[]") if "features_json" in keys else []
-            if not isinstance(features, list):
-                features = []
-        except Exception:
-            features = []
+        def _load_list(col: str) -> list[str]:
+            try:
+                v = json.loads(row[col] or "[]") if col in keys else []
+                return v if isinstance(v, list) else []
+            except Exception:
+                return []
+
         fields = {
             "title": "",
             "one_liner": "",
@@ -612,7 +634,8 @@ def ensure_rows_i18n(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> 
             "audience": (row["audience"] if "audience" in keys else "") or "",
             "works_now": (row["works_now"] if "works_now" in keys else "") or "",
             "limits_note": (row["limits_note"] if "limits_note" in keys else "") or "",
-            "features": features,
+            "features": _load_list("features_json"),
+            "keywords": _load_list("keywords_json"),
         }
         out = fill_listing_i18n(fields, project_id=row["id"], use_ai=use_ai)
         set_cols = []
@@ -621,6 +644,7 @@ def ensure_rows_i18n(conn: Any, rows: Iterable[Any], *, use_ai: bool = True) -> 
             "story_en", "story_ko", "audience_en", "audience_ko",
             "works_now_en", "works_now_ko", "limits_note_en", "limits_note_ko",
             "features_json_en", "features_json_ko",
+            "keywords_json_en", "keywords_json_ko",
         ):
             if out.get(col):
                 set_cols.append(col)

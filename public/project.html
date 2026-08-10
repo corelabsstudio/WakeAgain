@@ -1991,7 +1991,10 @@
         document.getElementById("pOne").textContent = oneShow;
         var kwHost = document.getElementById("pKeywords");
         if (kwHost) {
-          var kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];
+          var kwsLocalized = isEn()
+            ? (Array.isArray(p.keywords_en) && p.keywords_en.length ? p.keywords_en : p.keywords)
+            : (Array.isArray(p.keywords_ko) && p.keywords_ko.length ? p.keywords_ko : p.keywords);
+          var kws = Array.isArray(kwsLocalized) ? kwsLocalized.filter(Boolean).slice(0, 5) : [];
           if (kws.length) {
             kwHost.hidden = false;
             kwHost.innerHTML = kws

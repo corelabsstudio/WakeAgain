@@ -236,13 +236,15 @@
   }
 
   function keywordsOf(p) {
-    const raw = p && p.keywords;
-    if (!raw || !raw.length) return [];
-    var list = raw.map(function (k) {
+    var localized = isEn()
+      ? (p && Array.isArray(p.keywords_en) && p.keywords_en.length ? p.keywords_en : p && p.keywords)
+      : (p && Array.isArray(p.keywords_ko) && p.keywords_ko.length ? p.keywords_ko : p && p.keywords);
+    if (!localized || !localized.length) return [];
+    var list = localized.map(function (k) {
       return String(k).trim();
     }).filter(Boolean);
     if (isEn()) {
-      // Prefer Latin tags for overseas UI; drop pure Hangul tags
+      // Translated tags win; if none were available, fall back to dropping pure Hangul tags
       var enOnly = list.filter(function (k) {
         return !hasHangul(k);
       });

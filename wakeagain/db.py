@@ -396,6 +396,7 @@ def init_db() -> None:
                 "audience_en": "TEXT",
                 "works_now_en": "TEXT",
                 "limits_note_en": "TEXT",
+                "keywords_json_en": "TEXT",
                 # Korean marketplace copy (for EN-authored listings viewed with UI lang=ko)
                 "title_ko": "TEXT",
                 "one_liner_ko": "TEXT",
@@ -404,6 +405,7 @@ def init_db() -> None:
                 "audience_ko": "TEXT",
                 "works_now_ko": "TEXT",
                 "limits_note_ko": "TEXT",
+                "keywords_json_ko": "TEXT",
             },
         )
         conn.execute(
@@ -1656,6 +1658,18 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
             features_ko = []
     except Exception:
         features_ko = []
+    try:
+        keywords_en = json.loads(_row_get(row, "keywords_json_en") or "[]")
+        if not isinstance(keywords_en, list):
+            keywords_en = []
+    except Exception:
+        keywords_en = []
+    try:
+        keywords_ko = json.loads(_row_get(row, "keywords_json_ko") or "[]")
+        if not isinstance(keywords_ko, list):
+            keywords_ko = []
+    except Exception:
+        keywords_ko = []
     data = {
         "id": row["id"],
         "owner_id": row["owner_id"],
@@ -1679,6 +1693,8 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "demo_images": _parse_demo_images(row),
         "assets": assets,
         "keywords": keywords,
+        "keywords_en": keywords_en,
+        "keywords_ko": keywords_ko,
         "features": features,
         "features_en": features_en,
         "features_ko": features_ko,
