@@ -59,6 +59,12 @@ git log --oneline -5
   - 리치킷 → `ReachKit — promo copy & channel recommender`
   - 맵: `LISTING_DEMO_I18N` in `wakeagain/db.py` (KO 제목 exact key)
 
+### D4. App shell full EN pass (login/profile/settle/fees/coupons)
+
+- public/app/index.html: auth foot, age, verify, seller id, profile, settle, notif, fees, coupons EN defaults + data-i18n
+- public/app/app.js: create_ok alert, oauth errors EN; price labels Starting bid
+- keys in i18n-messages.js
+
 ### D3. App list EN chrome (/app/#list)
 
 - Toolbar, buy-how panel, feed tabs, empty/more: data-i18n (app.buyhow_*, app.feed_*, app.refresh, ...)

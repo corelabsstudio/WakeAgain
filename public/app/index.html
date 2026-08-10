@@ -190,7 +190,7 @@
 </head>
 <body class="app-body theme-yard">
   <header class="app-top">
-    <a class="brand" href="/app/#list" title="마켓">
+    <a class="brand" href="/app/#list" title="Marketplace" data-i18n-title="nav.market">
       <span class="brand-mark" aria-hidden="true"></span>
       <span class="brand-name">Wake<span class="brand-again">Again</span></span>
     </a>
@@ -199,7 +199,7 @@
         <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
         <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
       </div>
-      <button type="button" class="user-chip" id="userChip" hidden title="내 정보">
+      <button type="button" class="user-chip" id="userChip" hidden title="Profile" data-i18n-title="nav.profile">
         <span class="user-avatar" id="userAvatar" aria-hidden="true">?</span>
         <span class="user-chip-text">
           <span class="user-chip-name" id="userLabel"></span>
@@ -270,31 +270,29 @@
       </form>
 
       <form id="formFindId" class="form-card app-form" hidden>
-        <p class="note muted fine" data-i18n="app.find_id_hint">
-          프로필에 등록한 <strong>실명</strong>과 <strong>휴대폰 번호</strong>로 가입 이메일
-          <strong>힌트(일부 마스킹)</strong>를 찾습니다. 보안상 전체 주소는 표시하지 않습니다.
-          실명·휴대폰을 아직 넣지 않았다면 이 기능으로 찾을 수 없습니다.
+        <p class="note muted fine" data-i18n-html data-i18n="app.find_id_hint">
+          Find a <strong>masked email hint</strong> using the legal name and phone on your profile.
+          Full addresses are never shown. If you never added name/phone, this won’t work.
         </p>
-        <label for="findIdName" data-i18n="app.find_id_name">실명</label>
+        <label for="findIdName" data-i18n="app.find_id_name">Legal name</label>
         <input id="findIdName" type="text" required minlength="2" maxlength="40" autocomplete="name" placeholder="Jane Doe" />
-        <label for="findIdPhone" data-i18n="app.find_id_phone">휴대폰 번호</label>
-        <input id="findIdPhone" type="tel" required minlength="10" maxlength="20" autocomplete="tel" placeholder="01012345678" inputmode="tel" />
+        <label for="findIdPhone" data-i18n="app.find_id_phone">Phone</label>
+        <input id="findIdPhone" type="tel" required minlength="10" maxlength="20" autocomplete="tel" placeholder="+1 555 0100" inputmode="tel" />
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit" data-i18n="app.find_id_submit">이메일 찾기</button>
+          <button class="btn btn-primary" type="submit" data-i18n="app.find_id_submit">Find email</button>
           <button class="btn btn-ghost" type="button" id="btnFindIdBack" data-i18n="app.reset_back">Back to login</button>
         </div>
         <p class="form-error" id="findIdErr" hidden></p>
         <div class="dev-code-box" id="findIdResult" hidden>
-          <p class="fine"><strong data-i18n="app.find_id_result_label">찾은 이메일 힌트</strong></p>
+          <p class="fine"><strong data-i18n="app.find_id_result_label">Email hint</strong></p>
           <p class="dev-code" id="findIdEmail"></p>
-          <button class="btn btn-ghost btn-sm" type="button" id="btnFindIdUse" data-i18n="app.find_id_use">로그인 화면으로</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="btnFindIdUse" data-i18n="app.find_id_use">Back to log in</button>
         </div>
       </form>
 
       <form id="formReset" class="form-card app-form" hidden>
         <p class="note muted fine" data-i18n="app.reset_hint">
-          가입 이메일로 재설정 코드를 보냅니다. 메일이 오지 않으면 스팸함을 확인하세요.
-          운영 환경에서는 보안상 화면에 코드를 표시하지 않습니다.
+          We’ll send a reset code to your sign-up email. Check spam. In production the code is not shown on screen.
         </p>
         <label for="resetEmail" data-i18n="app.email">Email</label>
         <input id="resetEmail" type="email" required autocomplete="email" />
@@ -308,7 +306,7 @@
         </div>
         <label for="resetCode" data-i18n="app.verify_code">Code</label>
         <input id="resetCode" inputmode="numeric" maxlength="8" autocomplete="one-time-code" />
-        <label for="resetPass">새 비밀번호 (8자+)</label>
+        <label for="resetPass" data-i18n="app.reg_pass">New password (8+)</label>
         <div class="pw-field">
           <input id="resetPass" type="password" minlength="8" autocomplete="new-password" />
           <button type="button" class="pw-toggle" data-pw-target="resetPass" aria-label="Show password" data-i18n-aria="app.pw_show" aria-pressed="false" title="Show password"></button>
@@ -355,34 +353,34 @@
 
       <div class="auth-browse-row form-actions" style="margin:0.75rem 0 0.5rem">
         <button type="button" class="btn btn-primary" id="btnAuthBrowse" data-i18n="app.browse_market">Browse marketplace</button>
-        <button type="button" class="btn btn-ghost" id="btnAuthHome" data-i18n="nav.home">홈(메인)</button>
+        <button type="button" class="btn btn-ghost" id="btnAuthHome" data-i18n="nav.home">Home</button>
       </div>
-      <p class="auth-foot muted fine">
-        로그인 없이도 홈·공개 매물을 볼 수 있습니다.
-        경량 관심 등록은 <a class="text-link" href="/buy.html">buy 폼</a>.<br />
-        운영 <strong>코어랩스(CoreLabs)</strong> ·
+      <p class="auth-foot muted fine" data-i18n-html data-i18n="app.auth_foot">
+        Browse public listings without signing in.
+        Deal alerts: <a class="text-link" href="/buy.html">interest form</a>.<br />
+        Operated by <strong>CoreLabs</strong> ·
         <a class="text-link" href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>
-        (영업일 24시간 이내 1차 답변) ·
-        <a class="text-link" href="/guide/contact.html">문의 안내</a> ·
-        <a class="text-link" href="/legal/terms.html">이용약관</a> ·
-        <a class="text-link" href="/legal/privacy.html">개인정보</a>
+        (reply within 1 business day) ·
+        <a class="text-link" href="/guide/contact.html">Contact</a> ·
+        <a class="text-link" href="/legal/terms.en.html">Terms</a> ·
+        <a class="text-link" href="/legal/privacy.html">Privacy</a>
       </p>
     </section>
 
     <!-- Age gate after SNS login -->
     <section id="viewAge" class="app-panel" hidden>
-      <p class="eyebrow">나이 확인</p>
-      <h1>만 14세 이상인가요?</h1>
-      <p class="lede">SNS로 들어오셨어도 <strong>만 14세 미만은 이용할 수 없습니다.</strong> 생년월일은 나이 확인에만 쓰이며 공개되지 않습니다.</p>
+      <p class="eyebrow" data-i18n="app.age_eyebrow">Age check</p>
+      <h1 data-i18n="app.age_title">Are you 14 or older?</h1>
+      <p class="lede" data-i18n-html data-i18n="app.age_lede">Even with social login, <strong>users under 14 cannot use WakeAgain.</strong> Date of birth is only used for age check and is never public.</p>
       <form id="formAge" class="form-card app-form">
-        <label for="ageBirth">생년월일 *</label>
+        <label for="ageBirth" data-i18n="app.age_birth">Date of birth *</label>
         <input id="ageBirth" type="date" required autocomplete="bday" />
         <label class="checks check-single">
           <input type="checkbox" id="ageConfirm14" required />
-          <span>만 14세 이상입니다. *</span>
+          <span data-i18n="app.reg_age14">I am 14 or older *</span>
         </label>
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">확인 후 계속</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.age_confirm">Confirm &amp; continue</button>
         </div>
         <p class="form-error" id="ageErr" hidden></p>
       </form>
@@ -390,11 +388,11 @@
 
     <!-- Email verify -->
     <section id="viewVerify" class="app-panel" hidden>
-      <p class="eyebrow">신뢰 Lv1</p>
+      <p class="eyebrow" data-i18n="app.verify_eyebrow">Trust Lv1</p>
       <h1 data-i18n="app.verify_title">Verify email</h1>
-      <p class="lede">6자리 인증 코드를 입력하세요. 메일이 오면 받은편지함·스팸함을 확인하고, 안 오면 「코드 다시 받기」를 누르세요.</p>
+      <p class="lede" data-i18n="app.verify_lede">Enter the 6-digit code. Check inbox/spam, then resend if needed.</p>
       <div class="dev-code-box" id="devCodeBox" hidden>
-        <p class="fine"><strong>인증 코드</strong> <span id="devCodeNote">(메일 미도착 시 화면에 표시)</span></p>
+        <p class="fine"><strong data-i18n="app.verify_code">Verification code</strong> <span id="devCodeNote" data-i18n="app.verify_dev_note">(shown on screen if email is unavailable)</span></p>
         <p class="dev-code" id="devCodeText"></p>
       </div>
       <form id="formVerify" class="form-card app-form">
@@ -408,61 +406,54 @@
       </form>
       <p class="muted fine" data-i18n="app.verify_ttl">Codes are valid for 30 minutes.</p>
       <div class="form-actions" style="margin-top:1rem">
-        <button type="button" class="btn btn-primary" id="btnVerifySkip" data-i18n="app.browse_market">나중에 · 마켓 둘러보기</button>
-        <button type="button" class="btn btn-ghost" id="btnVerifyHome" data-i18n="nav.home">홈(메인)으로</button>
+        <button type="button" class="btn btn-primary" id="btnVerifySkip" data-i18n="app.browse_market">Browse marketplace</button>
+        <button type="button" class="btn btn-ghost" id="btnVerifyHome" data-i18n="nav.home">Home</button>
       </div>
-      <p class="muted fine" data-i18n="app.verify_skip_hint">인증은 입찰·올리기 전에 하면 됩니다. 지금은 매물 구경부터 할 수 있어요.</p>
+      <p class="muted fine" data-i18n="app.verify_skip_hint">Verify before bidding or listing. You can browse the market now.</p>
     </section>
 
     <!-- Seller public identity (required to list) -->
     <section id="viewSellerId" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackFromSellerId">← 뒤로</button>
-      <p class="eyebrow">판매자 공개 정보</p>
-      <h1>구매자가 판매자를 확인합니다</h1>
+      <button type="button" class="text-link back" id="btnBackFromSellerId" data-i18n="app.back">← Back</button>
+      <p class="eyebrow" data-i18n="app.sid_eyebrow">Public seller info</p>
+      <h1 data-i18n="app.sid_title">Buyers need to know who you are</h1>
       <p class="lede">
-        WakeAgain은 <strong>통신판매중개자</strong>입니다. 법적으로 구매자가
-        <strong>판매자가 누구인지</strong> 알 수 있어야 합니다.
-        아래 정보는 <strong>매물 상세에 공개</strong>됩니다. (운영자는 거래 당사자가 아닙니다.)
+        <span data-i18n-html data-i18n="app.sid_lede">WakeAgain is a marketplace. Buyers need to know <strong>who the seller is</strong>.
+        Info below is <strong>shown on your listings</strong>. (We are not a party to the deal.)</span>
       </p>
-      <div class="safety-notice" role="note">
-        <span class="safety-notice-title">왜 필요한가요?</span>
-        이 정보가 없으면 중개 플랫폼이 판매자로 간주될 위험이 있습니다.
-        개인은 성명·연락처, 사업자는 상호·대표·사업자번호·(가능하면) 통신판매업 신고번호를 적습니다.
+      <div class="safety-notice" role="note" data-i18n-html data-i18n="app.sid_why_body">
+        <span class="safety-notice-title">Why we ask</span>
+        Marketplaces need a real seller identity. Individuals: name + contact. Businesses: legal name, rep, registration no. (and license if you have one).
         <br /><br />
-        <strong>자기 신고:</strong> 아래 항목은 <strong>판매자가 직접 입력</strong>한 정보입니다.
-        현재 단계에서는 본인인증(PASS/SMS)·사업자번호 자동 진위 조회가 없습니다. 허위 기재 시 이용 제한됩니다.
+        <strong>Self-reported:</strong> You enter this yourself. We don’t run automatic ID/biz verification yet. False info can get you suspended.
         <br /><br />
-        <strong>개인정보 보호:</strong> 전화·이메일은 매물 페이지에
-        <strong>전체가 공개되지 않습니다</strong>
-        (예: 010-1234-****).
-        <strong>낙찰·성사된 구매자</strong>와 본인에게만 전체가 보입니다.
-        무단 수집·스팸에 쓰지 마세요.
+        <strong>Privacy:</strong> Phone/email are <strong>not fully public</strong> on the listing page (e.g. masked). Full contact is only for the winning buyer and you. Don’t use it for spam.
       </div>
       <form id="formSellerId" class="form-card app-form">
-        <label for="sidType">판매 유형 *</label>
+        <label for="sidType" data-i18n="app.sid_type">Seller type *</label>
         <select id="sidType" required>
-          <option value="individual">개인판매자</option>
-          <option value="business">사업자</option>
+          <option value="individual" data-i18n="app.sid_type_ind">Individual</option>
+          <option value="business" data-i18n="app.sid_type_biz">Business</option>
         </select>
-        <label for="sidName" id="sidNameLabel">공개 성명 (또는 상호) *</label>
-        <input id="sidName" required minlength="2" maxlength="80" placeholder="홍길동 또는 상호" />
+        <label for="sidName" id="sidNameLabel" data-i18n="app.sid_name">Public name (or business) *</label>
+        <input id="sidName" required minlength="2" maxlength="80" placeholder="Legal name or business name" />
         <div id="sidBizFields" hidden>
-          <label for="sidCeo">대표자 성명 *</label>
-          <input id="sidCeo" maxlength="40" placeholder="대표자" />
-          <label for="sidBizNo">사업자등록번호 *</label>
+          <label for="sidCeo" data-i18n="app.sid_ceo">Representative name *</label>
+          <input id="sidCeo" maxlength="40" placeholder="Legal representative" />
+          <label for="sidBizNo" data-i18n="app.sid_bizno">Business registration no. *</label>
           <input id="sidBizNo" maxlength="20" inputmode="numeric" placeholder="000-00-00000" />
         </div>
-        <label for="sidMailOrder">통신판매업 신고번호 (있으면)</label>
-        <input id="sidMailOrder" maxlength="40" placeholder="예: 제2026-서울강남-0000호 · 없으면 비움" />
-        <p class="price-guide muted fine">없으면 「미등록」으로 표시됩니다. 신고 후 반드시 업데이트하세요.</p>
-        <label for="sidEmail">공개 연락 이메일 *</label>
+        <label for="sidMailOrder" data-i18n="app.sid_mailorder">Commerce license no. (if any)</label>
+        <input id="sidMailOrder" maxlength="40" placeholder="License / registration no. if any" />
+        <p class="price-guide muted fine">If empty, we show “Not registered”. Update after you get a license.</p>
+        <label for="sidEmail" data-i18n="app.sid_email">Public contact email *</label>
         <input id="sidEmail" type="email" required autocomplete="email" placeholder="seller@email.com" />
-        <label for="sidPhone">공개 연락 전화 *</label>
-        <input id="sidPhone" required inputmode="tel" autocomplete="tel" placeholder="01012345678" />
-        <label for="sidAddr">주소 (사업자는 필수, 개인은 권장)</label>
-        <input id="sidAddr" maxlength="200" placeholder="사업장 또는 연락 가능 주소" />
+        <label for="sidPhone" data-i18n="app.sid_phone">Public contact phone *</label>
+        <input id="sidPhone" required inputmode="tel" autocomplete="tel" placeholder="+1 555 0100" />
+        <label for="sidAddr" data-i18n="app.sid_addr">Address (required for businesses)</label>
+        <input id="sidAddr" maxlength="200" placeholder="Business or contact address" />
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">저장 (매물에 공개)</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.sid_save">Save (shown on listings)</button>
         </div>
         <p class="form-error" id="sidErr" hidden></p>
       </form>
@@ -470,9 +461,9 @@
 
     <!-- Profile (L2) -->
     <section id="viewProfile" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackFromProfile">← 뒤로</button>
-      <p class="eyebrow">신뢰 Lv2 · 신원 확인</p>
-      <h1>실명 · 연락처</h1>
+      <button type="button" class="text-link back" id="btnBackFromProfile" data-i18n="app.back">← Back</button>
+      <p class="eyebrow" data-i18n="app.prof_eyebrow">Trust Lv2 · Identity</p>
+      <h1 data-i18n="app.prof_title_h">Legal name &amp; contact</h1>
       <div class="credit-card" id="creditCard" hidden>
         <p class="credit-score-line"><strong id="creditScoreNum">—</strong><span id="creditGradeLabel"></span></p>
         <p class="buyer-rank-line" id="buyerRankLine" hidden>
@@ -481,20 +472,20 @@
         </p>
         <p class="muted fine" id="creditCounts"></p>
         <p class="muted fine" id="creditBreak"></p>
-        <a class="text-link fine" href="/guide/credit.html" target="_blank" rel="noopener">점수·구매 배지는 어떻게 매겨지나요?</a>
+        <a class="text-link fine" href="/guide/credit.html" target="_blank" rel="noopener" data-i18n="app.credit_how">How scores &amp; buyer badges work</a>
       </div>
-      <p class="lede">큰 거래 대비 분쟁·연락용입니다. 프로필 실명·전화는 피드에 안 나가지만, <strong>판매자 공개 정보</strong>는 매물 페이지에 나갑니다.</p>
+      <p class="lede" data-i18n-html data-i18n="app.prof_lede">Used for disputes and contact on larger deals. Profile name/phone stay off the public feed, but <strong>seller public info</strong> appears on listings.</p>
       <form id="formProfile" class="form-card app-form">
-        <label for="profReal">실명 *</label>
+        <label for="profReal" data-i18n="app.prof_real">Legal name *</label>
         <input id="profReal" required minlength="2" maxlength="40" autocomplete="name" placeholder="Jane Doe" />
-        <label for="profPhone">휴대폰 *</label>
-        <input id="profPhone" required inputmode="tel" autocomplete="tel" placeholder="01012345678" />
-        <label for="profDisplay">표시 이름 (선택)</label>
-        <input id="profDisplay" maxlength="80" placeholder="목록에 보일 닉네임" />
+        <label for="profPhone" data-i18n="app.prof_phone">Phone *</label>
+        <input id="profPhone" required inputmode="tel" autocomplete="tel" placeholder="+1 555 0100" />
+        <label for="profDisplay" data-i18n="app.prof_display">Display name (optional)</label>
+        <input id="profDisplay" maxlength="80" placeholder="Nickname on listings" data-i18n-placeholder="app.prof_display_ph" />
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">저장하고 계속</button>
-          <button class="btn btn-ghost" type="button" id="btnGoSellerId">판매자 공개 정보</button>
-          <button class="btn btn-ghost" type="button" id="btnGoSettle">정산 계좌 (Lv3)</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.prof_save">Save &amp; continue</button>
+          <button class="btn btn-ghost" type="button" id="btnGoSellerId" data-i18n="app.sid_title">Public seller info</button>
+          <button class="btn btn-ghost" type="button" id="btnGoSettle" data-i18n="app.settle_title">Settlement account (Lv3)</button>
           <button class="btn btn-ghost" type="button" id="btnFeesFromProfile" data-i18n="nav.fees">Fees</button>
           <button class="btn btn-ghost" type="button" id="btnLogoutFromProfile" data-i18n="nav.logout">Log out</button>
         </div>
@@ -502,31 +493,32 @@
       </form>
 
       <div class="form-card" id="couponGiftCard" style="margin-top:1.25rem">
-        <h2 style="font-size:1.05rem;margin:0 0 0.35rem">쿠폰 선물하기</h2>
-        <p class="muted fine" style="margin:0 0 0.75rem;line-height:1.5">
-          사용 가능한 수수료 쿠폰을 다른 가입 계정에 보냅니다.
-          선물하면 <strong>받는 사람 계정에 바로 등록</strong>됩니다. (되돌릴 수 없음 · 매매 중개 없음)
+        <h2 style="font-size:1.05rem;margin:0 0 0.35rem" data-i18n="app.gift_title">Gift a coupon</h2>
+        <p class="muted fine" style="margin:0 0 0.75rem;line-height:1.5" data-i18n-html data-i18n="app.gift_help">
+          Send an available fee coupon to another account.
+          It is <strong>registered on their account immediately</strong> (cannot undo · we don’t broker coupon sales).
         </p>
         <p class="muted fine" id="myAccountIdLine" style="margin:0 0 0.75rem" hidden>
-          내 계정 아이디: <strong id="myAccountId">—</strong>
-          <span class="muted">· 상대에게 아이디 또는 이메일을 알려 주세요</span>
+          <span data-i18n="app.gift_my_id">Your account ID:</span> <strong id="myAccountId">—</strong>
+          <span class="muted" data-i18n="app.gift_my_id_hint">· share your ID or email with them</span>
         </p>
         <form id="formCouponGift" class="app-form">
-          <label for="giftCouponSelect">보낼 쿠폰</label>
+          <label for="giftCouponSelect" data-i18n="app.gift_pick">Coupon to send</label>
           <select id="giftCouponSelect" required>
-            <option value="">불러오는 중…</option>
+            <option value="" data-i18n="common.loading">Loading…</option>
           </select>
-          <label for="giftToRecipient">받는 사람 (계정 아이디 또는 이메일)</label>
+          <label for="giftToRecipient" data-i18n="app.gift_to">Recipient (account ID or email)</label>
           <input
             id="giftToRecipient"
             required
             maxlength="120"
             autocomplete="off"
-            placeholder="예: 12 또는 friend@email.com"
+            placeholder="e.g. 12 or friend@email.com"
+            data-i18n-placeholder="app.gift_to_ph"
           />
           <div class="form-actions" style="margin-top:0.75rem">
-            <button type="submit" class="btn btn-primary" id="btnGiftCoupon">선물하기</button>
-            <button type="button" class="btn btn-ghost" id="btnGoCouponsFromProfile">내 쿠폰 보기</button>
+            <button type="submit" class="btn btn-primary" id="btnGiftCoupon" data-i18n="app.coupon_gift">Gift</button>
+            <button type="button" class="btn btn-ghost" id="btnGoCouponsFromProfile" data-i18n="app.my_coupons">My coupons</button>
           </div>
           <p class="form-error" id="giftCouponErr" hidden></p>
           <p class="muted fine" id="giftCouponOk" hidden style="color:#86efac"></p>
@@ -534,35 +526,35 @@
       </div>
 
       <div class="form-card" id="blockListCard" style="margin-top:1.25rem">
-        <h2 style="font-size:1.05rem;margin:0 0 0.35rem" data-i18n="app.blocks_title">차단 목록</h2>
+        <h2 style="font-size:1.05rem;margin:0 0 0.35rem" data-i18n="app.blocks_title">Blocked users</h2>
         <p class="muted fine" style="margin:0 0 0.75rem" data-i18n="app.blocks_help">
-          차단한 사용자의 매물은 숨겨지고, 입찰·쪽지가 거부됩니다. 신고와 별개입니다.
+          Their listings are hidden and bids/messages are blocked. Separate from reports.
         </p>
         <div id="blockList" class="project-list project-list--stack"></div>
-        <p id="blockListEmpty" class="empty" hidden data-i18n="app.blocks_empty">차단한 사용자가 없습니다.</p>
+        <p id="blockListEmpty" class="empty" hidden data-i18n="app.blocks_empty">No blocked users.</p>
         <p class="form-error" id="blockListErr" hidden></p>
       </div>
     </section>
 
     <!-- Settlement (L3) -->
     <section id="viewSettle" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackFromSettle">← 뒤로</button>
-      <p class="eyebrow">신뢰 Lv3 · 거래 준비</p>
-      <h1>정산 계좌</h1>
-      <p class="lede">성사·수수료·이전 시 쓰는 계좌입니다. 본인 입력 · 자동 은행 인증은 아닙니다. 계좌는 마스킹 표시되며 공개 피드에 나가지 않습니다.</p>
+      <button type="button" class="text-link back" id="btnBackFromSettle" data-i18n="app.back">← Back</button>
+      <p class="eyebrow" data-i18n="app.settle_eyebrow">Trust Lv3 · Ready to trade</p>
+      <h1 data-i18n="app.settle_title">Settlement account</h1>
+      <p class="lede" data-i18n="app.settle_lede">Used for payouts after a deal. Self-reported (no automatic bank verification). Account numbers are masked and never shown on the public feed.</p>
       <form id="formSettle" class="form-card app-form">
-        <label for="setHolder">예금주 *</label>
+        <label for="setHolder" data-i18n="app.settle_holder">Account holder *</label>
         <input id="setHolder" required minlength="2" maxlength="40" autocomplete="name" />
-        <label for="setBank">은행명 *</label>
-        <input id="setBank" required minlength="2" maxlength="40" placeholder="예: 카카오뱅크" />
-        <label for="setAccount">계좌번호 *</label>
+        <label for="setBank" data-i18n="app.settle_bank">Bank / institution *</label>
+        <input id="setBank" required minlength="2" maxlength="40" placeholder="e.g. Chase, Wise" data-i18n-placeholder="app.settle_bank_ph" />
+        <label for="setAccount" data-i18n="app.settle_account">Account number *</label>
         <input id="setAccount" required minlength="8" maxlength="40" inputmode="numeric" autocomplete="off" />
         <label class="checks check-single">
           <input type="checkbox" id="setBiz" />
-          <span>사업자(세금계산서 등)로 정산합니다</span>
+          <span data-i18n="app.settle_biz">Settle as a business (invoices, etc.)</span>
         </label>
         <div class="form-actions">
-          <button class="btn btn-primary btn-lg" type="submit">정산 계좌 저장</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="app.settle_save">Save settlement account</button>
         </div>
         <p class="form-error" id="setErr" hidden></p>
       </form>
@@ -570,12 +562,12 @@
 
     <!-- Notifications -->
     <section id="viewNotif" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackNotif">← 목록으로</button>
-      <h1>알림</h1>
-      <p class="lede muted fine">입찰·게시·성사 알림 (앱 내). 메일은 배포 후 연동 가능.</p>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnMarkRead">모두 읽음</button>
+      <button type="button" class="text-link back" id="btnBackNotif" data-i18n="app.back_list">← Back to list</button>
+      <h1 data-i18n="nav.notif">Alerts</h1>
+      <p class="lede muted fine" data-i18n="app.notif_lede">Bids, listings, and deal alerts in-app. Email delivery may be enabled later.</p>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnMarkRead" data-i18n="app.notif_mark">Mark all read</button>
       <div id="notifList" class="project-list project-list--stack" style="margin-top:0.75rem"></div>
-      <p id="notifEmpty" class="empty" hidden>알림이 없습니다.</p>
+      <p id="notifEmpty" class="empty" hidden data-i18n="app.notif_empty">No alerts.</p>
     </section>
 
     <!-- App home -->
@@ -664,54 +656,52 @@
     </section>
 
     <section id="viewFees" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackFees">← 목록으로</button>
-      <h1>수수료 장부</h1>
-      <p class="lede">
-        성사 시 <strong>판매자 10%</strong> (구매자는 합의가만).
-        송금 확인 후 운영자가 「입금 확인」으로 처리합니다.
+      <button type="button" class="text-link back" id="btnBackFees" data-i18n="app.back_list">← Back to list</button>
+      <h1 data-i18n="app.fees_title">Fee ledger</h1>
+      <p class="lede" data-i18n-html data-i18n="app.fees_lede">
+        On close: <strong>10% seller fee</strong> (buyers pay the agreed price only).
+        Ops marks items paid after transfer is confirmed.
       </p>
-      <p class="muted fine" style="margin:-0.35rem 0 0.5rem;line-height:1.5">
-        정책 요약은
-        <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">이용약관 제13조</a>,
-        매물 상세의 수수료 안내에서도 볼 수 있습니다.
-        여기 장부는 <strong>내 매물이 성사된 뒤</strong> 청구 건이 쌓입니다.
+      <p class="muted fine" style="margin:-0.35rem 0 0.5rem;line-height:1.5" data-i18n-html data-i18n="app.fees_policy">
+        Policy details are in the
+        <a class="text-link" href="/legal/terms.en.html" target="_blank" rel="noopener">Terms</a>
+        and on each listing. This ledger fills <strong>after your listings close</strong>.
       </p>
-      <p class="muted fine fee-purpose" style="margin:0 0 1rem;line-height:1.5">
-        거래 수수료는 모든 유저분들의 공정하고 투명한 거래를 위하여, 사이트 발전에 사용하겠습니다.
+      <p class="muted fine fee-purpose" style="margin:0 0 1rem;line-height:1.5" data-i18n="app.fees_purpose">
+        Fees fund a fair marketplace and ongoing product development.
       </p>
       <div id="feeList" class="project-list project-list--stack"></div>
-      <p id="feeEmpty" class="empty" hidden>아직 수수료 청구 내역이 없습니다. 매물이 성사되면 여기에 표시됩니다.</p>
+      <p id="feeEmpty" class="empty" hidden data-i18n="app.fees_empty">No fee invoices yet. Closed deals show up here.</p>
       <p class="muted fine" style="margin-top:1rem">
-        <button type="button" class="text-link" id="btnCouponsFromFees">쿠폰 등록 · 보유 보기 →</button>
+        <button type="button" class="text-link" id="btnCouponsFromFees" data-i18n="app.fees_to_coupons">Coupons →</button>
       </p>
     </section>
 
     <section id="viewCoupons" class="app-panel" hidden>
-      <button type="button" class="text-link back" id="btnBackCoupons">← 목록으로</button>
-      <h1>쿠폰</h1>
-      <p class="lede">
-        마케팅·이벤트 코드로 <strong>성사 수수료 8% 쿠폰</strong>을 받을 수 있습니다.
-        기본 수수료는 10% · 쿠폰이 있으면 해당 성사 건에 8%가 적용됩니다. <strong>유효기간 없음</strong>.
+      <button type="button" class="text-link back" id="btnBackCoupons" data-i18n="app.back_list">← Back to list</button>
+      <h1 data-i18n="app.nav_coupons">Coupons</h1>
+      <p class="lede" data-i18n-html data-i18n="app.coupons_lede">
+        Redeem marketing codes for an <strong>8% success-fee coupon</strong>.
+        Default fee is 10%; with a coupon that deal is 8%. <strong>No expiry</strong>.
       </p>
-      <p class="muted fine" style="margin:-0.35rem 0 1rem;line-height:1.5">
-        코드 등록은 <strong>계정당 1회</strong>입니다. 선물로 받은 쿠폰은 등록 한도와 별개이며,
-        <strong>계정에 바로 등록</strong>됩니다. (마이페이지에서도 선물 가능 · 받는 사람: 계정 아이디 또는 이메일)
-        소문내기 이벤트는 <a class="text-link" href="/promo/event.html">이벤트 페이지</a>에서 채널을 하나 골라 URL 제출 후,
-        승인되면 아래에 <strong>쿠폰 받기</strong>가 나타납니다. <strong>계정당 이벤트 1회 · 보상은 전부 수수료 8% 쿠폰</strong>.
-        사이트는 쿠폰 매매를 중개·권장하지 않으며, <strong>선물하기</strong>만 제공합니다.
+      <p class="muted fine" style="margin:-0.35rem 0 1rem;line-height:1.5" data-i18n-html data-i18n="app.coupons_help">
+        Code redeem is <strong>once per account</strong>. Gifted coupons are separate and
+        <strong>land on the account immediately</strong>. Promo events live on the
+        <a class="text-link" href="/promo/event.html">event page</a>.
+        We don’t broker coupon resale—<strong>gifting only</strong>.
       </p>
       <form id="formCouponRedeem" class="form-card app-form" style="margin-bottom:1.25rem">
-        <label for="couponCode">쿠폰 코드</label>
+        <label for="couponCode" data-i18n="app.coupon_code">Coupon code</label>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
-          <input id="couponCode" maxlength="40" placeholder="예: WAKEAGAIN-IG" autocomplete="off" style="flex:1;min-width:12rem" />
-          <button type="submit" class="btn btn-primary">등록</button>
+          <input id="couponCode" maxlength="40" placeholder="e.g. WAKEAGAIN-IG" autocomplete="off" style="flex:1;min-width:12rem" data-i18n-placeholder="app.coupon_code_ph" />
+          <button type="submit" class="btn btn-primary" data-i18n="app.coupon_redeem">Redeem</button>
         </div>
         <p class="form-error" id="couponRedeemErr" hidden></p>
         <p class="muted fine" id="couponRedeemOk" hidden style="color:#86efac"></p>
       </form>
-      <h2 style="font-size:1.05rem;margin:0 0 0.65rem">내 쿠폰</h2>
+      <h2 style="font-size:1.05rem;margin:0 0 0.65rem" data-i18n="app.my_coupons">My coupons</h2>
       <div id="couponList" class="project-list project-list--stack"></div>
-      <p id="couponEmpty" class="empty" hidden>보유 쿠폰이 없습니다. 코드를 등록하거나 선물을 받아 보세요.</p>
+      <p id="couponEmpty" class="empty" hidden data-i18n="app.coupons_empty">No coupons yet. Redeem a code or accept a gift.</p>
     </section>
 
     <!-- Create -->
@@ -1172,12 +1162,12 @@
   </footer>
 
   <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260810-app-list-en"></script>
-  <script src="/js/i18n.js?v=20260810-app-list-en"></script>
+  <script src="/js/i18n-messages.js?v=20260810-app-full-en"></script>
+  <script src="/js/i18n.js?v=20260810-app-full-en"></script>
   <script src="/js/pwa-install.js?v=20260723-topbar"></script>
   <script src="/js/api.js?v=20260725-shots"></script>
   <script src="/js/demo-help.js?v=20260725-demoalign"></script>
-  <script src="/app/app.js?v=20260810-app-list-en"></script>
+  <script src="/app/app.js?v=20260810-app-full-en"></script>
   <script>
     (function () {
       try {

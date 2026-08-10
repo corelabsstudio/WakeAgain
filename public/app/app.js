@@ -2236,7 +2236,12 @@
       }
     }
     if (files.length > room) {
-      setDemoShotErr("최대 " + DEMO_MAX + "장까지 · 앞 " + room + "장만 올렸습니다.");
+      setDemoShotErr(
+        t("app.shots_partial", "Max {max} · only first {n} uploaded.", {
+          max: DEMO_MAX,
+          n: room,
+        })
+      );
     }
   }
 
@@ -2689,10 +2694,10 @@
         x.classList.toggle("is-on", x.getAttribute("data-feed") === "mine");
       });
       alert(
-        "올리기 요청이 접수되었어요.\n\n" +
-          "운영자가 확인한 뒤에 모두가 볼 수 있게 올라갑니다.\n" +
-          "보통 1~2일 안에 결과가 나와요.\n" +
-          "「내가 올린 것」에서 상태를 확인할 수 있어요."
+        t(
+          "app.create_ok",
+          "Listing submitted.\n\nIt goes public after ops review (usually 1–2 days).\nCheck status under My listings."
+        )
       );
       await loadProjects();
     } catch (err) {
@@ -2875,12 +2880,12 @@
         switchAuthTab("login");
         const msg =
           oauthErr === "denied"
-            ? "소셜 로그인이 취소되었습니다."
+            ? t("app.oauth_cancel", "Social sign-in was cancelled.")
             : oauthErr === "not_configured"
-              ? "해당 SNS 로그인이 아직 설정되지 않았습니다."
+              ? t("app.oauth_off", "That social login isn’t configured yet.")
               : oauthErr === "suspended"
-                ? "정지된 계정입니다."
-                : "소셜 로그인에 실패했습니다. 다시 시도해 주세요.";
+                ? t("app.oauth_suspended", "This account is suspended.")
+                : t("app.oauth_fail", "Social sign-in failed. Please try again.");
         showErr($("loginErr"), msg);
         history.replaceState(null, "", location.pathname + (location.hash || "#login"));
       } else if (tok) {
