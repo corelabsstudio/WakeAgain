@@ -81,6 +81,13 @@
           var nav = String(navigator.language || "").toLowerCase();
           lang = nav.indexOf("ko") === 0 ? "ko" : "en";
         }
+        if (lang === "ko") {
+          var target = location.pathname.replace(/\/(terms|privacy|business)\.en\.html$/, "/$1.html");
+          if (target !== location.pathname) {
+            location.replace(target + location.search + location.hash);
+            return;
+          }
+        }
         document.documentElement.lang = lang;
         document.documentElement.setAttribute("data-wa-lang", lang);
       } catch (e) {}
