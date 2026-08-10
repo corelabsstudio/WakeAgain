@@ -59,6 +59,11 @@ git log --oneline -5
   - 리치킷 → `ReachKit — promo copy & channel recommender`
   - 맵: `LISTING_DEMO_I18N` in `wakeagain/db.py` (KO 제목 exact key)
 
+### D2. Cold-start 진입 모달 i18n
+
+- public/index.html showCollectionModeNotice() — EN/KO 로케일 분기 + collect.* 키
+- 세션 dismiss: sessionStorage.wa_collection_notice_dismissed
+
 ### D. EN UX Writer 패스 (PH / Indie Hackers 톤) — 이번 배포
 
 - `public/js/i18n.js` EN 팩 전면 폴리시

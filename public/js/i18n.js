@@ -265,7 +265,12 @@
       "nav.blog": "블로그",
       "hero.stat_went_live": "다시 세상으로 나간 프로젝트",
       "hero.stat_went_live_later": "추후 공개",
-    },
+      "collect.title": "지금은 매물부터 모으고 있어요",
+      "collect.body1": "오픈 초기라 방치된 프로젝트를 먼저 모으는 중입니다. 경매 타이머가 바로 흐르지 않아요 — 매물이 어느 정도 쌓이면 운영자가 직접 구매자를 찾아다니며 그때 경매를 시작합니다.",
+      "collect.body2": "지금은 부담 없이 매물만 올려 주세요. 시작되면 알림으로 알려드릴게요.",
+      "collect.cta_list": "매물 올리기",
+      "collect.cta_later": "나중에",
+},
     en: {
       "nav.market": "Listings",
       "nav.home": "Home",
@@ -523,7 +528,12 @@
       "404.market": "Listings",
       "common.free": "Free",
       "common.loading": "Loading…",
-    },
+      "collect.title": "We're collecting listings first",
+      "collect.body1": "Early days: we're filling the board with abandoned side projects. Auction timers don't start yet on what you list — once inventory builds up, we bring buyers in and start auctions.",
+      "collect.body2": "List now with low pressure. We'll notify you when auctions go live.",
+      "collect.cta_list": "List a project",
+      "collect.cta_later": "Not now",
+},
   };
 
   // Merge supplemental dictionaries (i18n-messages.js)
