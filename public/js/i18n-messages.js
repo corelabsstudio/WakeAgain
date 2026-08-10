@@ -908,6 +908,7 @@
     "app.list_aria": "프로젝트 카드 목록",
     "app.load_more": "더 보기",
     "app.nav_coupons": "쿠폰",
+    "app.auth_foot": "로그인 없이도 홈·공개 매물을 볼 수 있습니다. 경매·관심 등록은 <a class=\"text-link\" href=\"/buy.html\">buy 폼</a>.<br />운영 <strong>코어랩스(CoreLabs)</strong> · <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a> (영업일 24시간 이내 1차 답변) · <a class=\"text-link\" href=\"/guide/contact.html\">문의 안내</a> · <a class=\"text-link\" href=\"/legal/terms.html\">이용약관</a> · <a class=\"text-link\" href=\"/legal/privacy.html\">개인정보</a>",
 },
   "en": {
     "app.tab_projects": "Projects",
@@ -1618,7 +1619,7 @@
     "app.fill_example_confirm": "Replace your draft with example copy?",
     "app.shots_count": "{n} shots · min {min}",
     "app.shots_n": "{n} shots",
-    "app.delete": "Delete",
+    "app.delete": "Remove",
     "app.img_type": "Images only.",
     "app.img_read_fail": "Couldn’t read image.",
     "app.img_convert_fail": "Image convert failed",
@@ -1817,7 +1818,7 @@
     "app.list_aria": "Project listings",
     "app.load_more": "Show more",
     "app.nav_coupons": "Coupons",
-    "app.auth_foot": "Browse public listings without signing in. Deal alerts: <a class=\"text-link\" href=\"/buy.html\">interest form</a>.<br />Operated by <strong>CoreLabs</strong> · <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a> (reply within 1 business day) · <a class=\"text-link\" href=\"/guide/contact.html\">Contact</a> · <a class=\"text-link\" href=\"/legal/terms.en.html\">Terms</a> · <a class=\"text-link\" href=\"/legal/privacy.html\">Privacy</a>",
+    "app.auth_foot": "You can browse public listings without signing in. For deal alerts, use the <a class=\"text-link\" href=\"/buy.html\">buyer interest form</a>.<br />Operated by <strong>CoreLabs</strong> · <a class=\"text-link\" href=\"mailto:corelabs.studio@gmail.com\">corelabs.studio@gmail.com</a> (first reply within 1 business day) · <a class=\"text-link\" href=\"/guide/contact.html\">Contact</a> · <a class=\"text-link\" href=\"/legal/terms.en.html\">Terms</a> · <a class=\"text-link\" href=\"/legal/privacy.html\">Privacy</a>",
     "app.back": "← Back",
     "app.back_list": "← Back to list",
     "app.settle_eyebrow": "Trust Lv3 · Ready to trade",
@@ -1864,10 +1865,7 @@
     "app.sid_phone": "Public contact phone *",
     "app.sid_addr": "Address (required for businesses)",
     "app.sid_save": "Save (shown on listings)",
-    "app.create_ok": "Listing submitted.
-
-It goes public after ops review (usually 1–2 days).
-Check status under My listings.",
+    "app.create_ok": "Listing submitted.\n\nIt goes public after ops review (usually 1-2 days).\nCheck status under My listings.",
     "app.oauth_cancel": "Social sign-in was cancelled.",
     "app.oauth_off": "That social login is not configured yet.",
     "app.oauth_suspended": "This account is suspended.",

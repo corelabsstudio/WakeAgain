@@ -2142,7 +2142,9 @@
           (i + 1) +
           '" loading="lazy" /><button type="button" class="rm" data-rm="' +
           i +
-          '" aria-label="삭제">×</button></div>'
+          '" aria-label="' +
+          t("app.delete", "Remove") +
+          '">×</button></div>'
         );
       })
       .join("");
