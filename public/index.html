@@ -492,21 +492,20 @@
         };
         var title = t(
           "collect.title",
-          "We’re collecting listings first",
+          "We're collecting listings first",
           "지금은 매물부터 모으고 있어요"
         );
-        var body1 = t(
-          "collect.body1",
-          "Early days: we’re filling the board with abandoned side projects. " +
-            "<b style=\"color:#f0e0b0\">Auction timers don’t start yet</b> on what you list — " +
-            "once inventory builds up, we bring buyers in and start auctions.",
-          "오픈 초기라 방치된 프로젝트를 먼저 모으는 중입니다. " +
-            "지금 올려두신 매물은 <b style=\"color:#f0e0b0\">경매 타이머가 바로 흐르지 않아요</b> — " +
-            "매물이 어느 정도 쌓이면 운영자가 직접 구매자를 찾아다니며 그때 경매를 시작합니다."
-        );
+        // Keep highlight markup in HTML (i18n strings are plain text)
+        var body1 = en
+          ? "Early days: we're filling the board with abandoned side projects. " +
+            '<b style="color:#f0e0b0">Auction timers don\'t start yet</b> on what you list — ' +
+            "once inventory builds up, we bring buyers in and start auctions."
+          : "오픈 초기라 방치된 프로젝트를 먼저 모으는 중입니다. " +
+            '지금 올려두신 매물은 <b style="color:#f0e0b0">경매 타이머가 바로 흐르지 않아요</b> — ' +
+            "매물이 어느 정도 쌓이면 운영자가 직접 구매자를 찾아다니며 그때 경매를 시작합니다.";
         var body2 = t(
           "collect.body2",
-          "List now with low pressure. We’ll notify you when auctions go live.",
+          "List now with low pressure. We'll notify you when auctions go live.",
           "지금은 부담 없이 매물만 올려 주세요. 시작되면 알림으로 알려드릴게요."
         );
         var ctaList = t("collect.cta_list", "List a project", "매물 올리기");
