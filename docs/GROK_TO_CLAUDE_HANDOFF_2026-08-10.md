@@ -12,18 +12,27 @@
 | 항목 | 값 |
 |------|-----|
 | 경로 | `C:\Users\hysoo\projects\WakeAgain` |
-| 라이브 | https://wakeagain.com |
+| 라이브 | https://wakeagain.com (**⚠️ 아래 인프라 주의**) |
 | 원격 | `origin` → `https://github.com/corelabsstudio/WakeAgain.git` |
 | 기본 브랜치 | `master` |
 | 배포 | `master` push → Railway auto-deploy (`steadfast-dream / production`) |
 | 헬스 | `https://wakeagain.com/health` |
+| 제품 CLAUDE | `WakeAgain/CLAUDE.md` (2026-08-10 동기화 완료) |
+
+### ⚠️ Railway Trial 만료 (2026-08-10 후반 확정)
+
+- 라이브가 `Application not found` / offline이면 **코드 문제가 아니라 Trial 만료**.
+- 배포 이력 REMOVED · `serviceInstanceDeployV2`도 trial 만료로 실패 확인.
+- **복구:** Hobby(또는 유료) 업그레이드 → Redeploy → `/health`.
+- Free(~$1/월)로는 24/7 + `/data` 비현실적. 장기 offline 시 볼륨 삭제 가능 → 백업 확인.
+- **당분간:** 로컬 개발·커밋·푸시 OK. 라이브 반영은 결제 후.
 
 ### 배포 확인 루틴
 
 ```text
 git status
 git log --oneline -5
-# push 후
+# push 후 (플랜 유효 시)
 # GET /health → ok:true
 # GET /?lang=en → EN 카피
 # GET /api/v1/projects?limit=5 → title_en 필드
@@ -64,19 +73,6 @@ git log --oneline -5
 - public/app/index.html: auth foot, age, verify, seller id, profile, settle, notif, fees, coupons EN defaults + data-i18n
 - public/app/app.js: create_ok alert, oauth errors EN; price labels Starting bid
 - keys in i18n-messages.js
-
-### D5. Login foot Korean under EN (screenshot 2026-08-10 100725) — **fixed in code**
-
-- **Root cause:** `app.create_ok` had raw multiline string → `i18n-messages.js` **SyntaxError** → entire `WA_I18N_EXTRA` never loaded → EN overrides missing; cached/old Korean foot could stick.
-- **Fix commit:** `dc9d05b` — escape `\n` in create_ok, naturalize `app.auth_foot` EN, add KO `app.auth_foot`, `app.delete`→Remove, SW `v42-en-auth-foot-fix`
-- **Verify when live is up:** `/app/#login` EN → footer must be English (“You can browse public listings… buyer interest form…”)
-
-### ⚠ LIVE OUTAGE (as of 2026-08-10 ~01:20 UTC)
-
-- `https://wakeagain.com/*` → Railway JSON **404 Application not found** (`x-railway-fallback: true`)
-- GitHub Deployments last registered: **`58d46de`** (inactive). Later pushes (`27018d1`, `047db35`, `dc9d05b`) **no Railway deployment record**.
-- Local `.launch/railway.token` is a **placeholder comment**, not a real Account Token → `deploy_railway.py` / CLI cannot redeploy.
-- **Action for operator:** Railway dashboard `steadfast-dream / production` — restart service, re-enable GitHub auto-deploy, fix custom domain, replace Account Token.
 
 ### D3. App list EN chrome (/app/#list)
 
