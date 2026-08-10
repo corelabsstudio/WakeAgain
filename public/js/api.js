@@ -261,7 +261,7 @@
     async config() {
       return request("/api/v1/config");
     },
-    async register(email, password, display_name, birth_date, confirm_age_14) {
+    async register(email, password, display_name, birth_date, confirm_age_14, country) {
       const data = await request("/api/v1/auth/register", {
         method: "POST",
         body: JSON.stringify({
@@ -270,6 +270,7 @@
           display_name: display_name || "",
           birth_date: birth_date || "",
           confirm_age_14: !!confirm_age_14,
+          country: country || "",
         }),
       });
       return rememberAuth(data);
@@ -342,6 +343,19 @@
         "/api/v1/projects/" + encodeURIComponent(projectId) + "/deal/accept",
         { method: "POST", body: JSON.stringify({ note: note || "" }) }
       );
+    },
+    async paymentRequest(projectId, payMethod) {
+      var qs = payMethod ? "?method=" + encodeURIComponent(payMethod) : "";
+      return request(
+        "/api/v1/projects/" + encodeURIComponent(projectId) + "/payment/request" + qs,
+        { method: "POST" }
+      );
+    },
+    async paymentVerify(paymentId) {
+      return request("/api/v1/payments/verify", {
+        method: "POST",
+        body: JSON.stringify({ payment_id: paymentId }),
+      });
     },
     /** Buyer: { itemId: true/false } receipt checklist */
     async updateHandoverChecklist(projectId, checks) {

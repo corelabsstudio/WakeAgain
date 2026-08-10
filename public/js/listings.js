@@ -280,7 +280,15 @@
     const top = p.top_bidder || null;
     const bidNote = `<span class="listing-bid-note">${escapeHtml(bidNoteText(bids, top))}</span>`;
     const ptype = escapeHtml(typeLabel(p));
+    const flag =
+      window.WakeAgainCountries && p.seller_country
+        ? window.WakeAgainCountries.flagEmoji(p.seller_country)
+        : "";
+    const flagBit = flag
+      ? `<span class="listing-type-tag" title="${escapeAttr(window.WakeAgainCountries.countryName(p.seller_country))}">${flag}</span>`
+      : "";
     const typeBit =
+      flagBit +
       (ptype ? `<span class="listing-type-tag">${ptype}</span>` : "") +
       (st ? `<span class="listing-type-tag">${st}</span>` : "");
     const cta =

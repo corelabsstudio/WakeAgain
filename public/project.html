@@ -875,6 +875,7 @@
           <p class="eyebrow" id="statusEyebrow" style="margin:0" data-i18n="proj.auction_eyebrow">경매</p>
           <span class="badge live" id="liveBadgeSpot" data-i18n="proj.live_badge">진행 중</span>
         </div>
+        <span id="pCountryFlag" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
         <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
         <p class="spotlight-one" id="pOne"></p>
         <div class="listing-kw" id="pKeywords" hidden></div>
@@ -1233,6 +1234,23 @@
           <button type="button" class="btn btn-primary" id="closeDealBtn" data-i18n="proj.close_deal">최고가에 팔기 확정</button>
           <p class="form-error" id="closeErr" hidden></p>
           <ul class="price-meta" id="transferList" style="margin-top:0.75rem;padding-left:1.1rem" hidden></ul>
+
+          <!-- Share & Promote — always English (global-first launch surface) -->
+          <div class="wa-share-promote" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border,#e5e5e5)">
+            <h4 style="margin:0 0 0.5rem;font-size:0.92rem">Share &amp; Promote</h4>
+            <p class="price-meta" style="margin:0 0 0.6rem">Get more eyes on your listing — share it with builder communities.</p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+              <button type="button" class="btn btn-primary btn-sm" id="shareXBtn">Share on X</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="shareCopyBtn">Copy link</button>
+              <span class="price-meta" id="shareToast" hidden style="margin:0">URL copied to clipboard!</span>
+            </div>
+            <details style="margin-top:0.75rem">
+              <summary style="cursor:pointer;font-size:0.88rem;color:var(--muted,#666)">Tips for Promoting Your Listing</summary>
+              <p class="price-meta" style="margin:0.5rem 0 0.35rem">Copy this into a Reddit "Show &amp; Tell" post (r/SideProject, r/indiehackers, r/buildinpublic):</p>
+              <textarea id="shareTemplate" readonly rows="4" style="width:100%;font-family:inherit;font-size:0.85rem;padding:0.5rem;border-radius:8px;border:1px solid var(--border,#e5e5e5);resize:vertical"></textarea>
+              <button type="button" class="btn btn-ghost btn-sm" id="shareTemplateCopyBtn" style="margin-top:0.4rem">Copy template</button>
+            </details>
+          </div>
         </div>
 
         <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem" data-i18n="proj.bids_title">입찰 순위 (공개 · 높은 가격 순)</h3>
@@ -1263,6 +1281,8 @@
   <script src="/js/i18n-messages.js?v=20260811-i18n3"></script>
   <script src="/js/i18n.js?v=20260811-legal"></script>
   <script src="/js/api.js"></script>
+  <script src="/js/countries.js?v=20260811a"></script>
+  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
   <script src="/js/footer-visitors.js?v=20260810-global"></script>
   <script src="/js/deal-certificate.js?v=20260725a"></script>
   <script>
@@ -1949,6 +1969,85 @@
           actions.appendChild(contactTip);
         }
         if (st === "awaiting_payment" && isBuyer) {
+          addBtn(t("카드로 결제하기", "Pay by card"), "btn-primary", async function () {
+            document.getElementById("dealErr").hidden = true;
+            document.getElementById("dealOk").hidden = true;
+            try {
+              if (!window.PortOne) {
+                throw new Error(
+                  t("결제 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+                    "Payment module failed to load. Please refresh and try again.")
+                );
+              }
+              var reqRes = await api.paymentRequest(p.id, "card");
+              var params = reqRes.payment_request;
+              var payRes = await window.PortOne.requestPayment(params);
+              if (payRes && payRes.code) {
+                throw new Error(payRes.message || t("결제가 취소되었거나 실패했습니다.", "Payment was cancelled or failed."));
+              }
+              await api.paymentVerify(params.paymentId);
+              document.getElementById("dealOk").hidden = false;
+              document.getElementById("dealOk").textContent = t("결제가 확인되었습니다.", "Payment confirmed.");
+              await refresh();
+            } catch (ex) {
+              document.getElementById("dealErr").hidden = false;
+              document.getElementById("dealErr").textContent = ex.message || t("결제 실패", "Payment failed");
+            }
+          });
+          var paypalWrap = document.createElement("div");
+          paypalWrap.style.marginTop = "0.5rem";
+          paypalWrap.innerHTML =
+            '<button type="button" class="btn btn-ghost btn-sm" id="paypalPayBtn">' +
+            t("PayPal로 결제 (해외 카드)", "Pay with PayPal (overseas cards)") +
+            '</button><div id="paypalPayBox" style="margin-top:0.5rem;max-width:320px"></div>';
+          actions.appendChild(paypalWrap);
+          // PortOne SPB renders into a .portone-ui-container element it auto-detects
+          // in the DOM — not fully live-tested yet (PayPal PG 계약 심사 pending as of
+          // 2026-08-11). Verify container-detection + callback shape once a real
+          // channel is approved and re-check against PortOne's docs if it doesn't render.
+          document.getElementById("paypalPayBtn").addEventListener("click", async function () {
+            var btn = this;
+            btn.disabled = true;
+            document.getElementById("dealErr").hidden = true;
+            document.getElementById("dealOk").hidden = true;
+            try {
+              if (!window.PortOne || !window.PortOne.loadPaymentUI) {
+                throw new Error(
+                  t("결제 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+                    "Payment module failed to load. Please refresh and try again.")
+                );
+              }
+              var reqRes = await api.paymentRequest(p.id, "paypal");
+              var params = reqRes.payment_request;
+              var box = document.getElementById("paypalPayBox");
+              box.innerHTML = '<div class="portone-ui-container"></div>';
+              btn.hidden = true;
+              window.PortOne.loadPaymentUI(params, {
+                onPaymentSuccess: async function () {
+                  try {
+                    await api.paymentVerify(params.paymentId);
+                    document.getElementById("dealOk").hidden = false;
+                    document.getElementById("dealOk").textContent = t("결제가 확인되었습니다.", "Payment confirmed.");
+                    await refresh();
+                  } catch (ex2) {
+                    document.getElementById("dealErr").hidden = false;
+                    document.getElementById("dealErr").textContent = ex2.message || t("결제 확인 실패", "Payment confirmation failed");
+                  }
+                },
+                onPaymentFail: function (err) {
+                  document.getElementById("dealErr").hidden = false;
+                  document.getElementById("dealErr").textContent = (err && err.message) || t("결제 실패", "Payment failed");
+                  btn.hidden = false;
+                  btn.disabled = false;
+                  box.innerHTML = "";
+                },
+              });
+            } catch (ex) {
+              document.getElementById("dealErr").hidden = false;
+              document.getElementById("dealErr").textContent = ex.message || t("결제 실패", "Payment failed");
+              btn.disabled = false;
+            }
+          });
           var tip = document.createElement("p");
           tip.className = "price-meta";
           tip.style.margin = "0.35rem 0 0";
@@ -1988,6 +2087,18 @@
         }
         document.title = (titleShow || t("매물", "Listing")) + " — WakeAgain";
         document.getElementById("pTitle").textContent = titleShow || "";
+        var flagEl = document.getElementById("pCountryFlag");
+        if (flagEl) {
+          var flagChar = (window.WakeAgainCountries && p.seller_country)
+            ? window.WakeAgainCountries.flagEmoji(p.seller_country)
+            : "";
+          if (flagChar) {
+            flagEl.textContent = flagChar + " " + window.WakeAgainCountries.countryName(p.seller_country);
+            flagEl.hidden = false;
+          } else {
+            flagEl.hidden = true;
+          }
+        }
         document.getElementById("pOne").textContent = oneShow;
         var kwHost = document.getElementById("pKeywords");
         if (kwHost) {
@@ -2390,6 +2501,7 @@
         var ownerBox = document.getElementById("ownerActions");
         var isOwner = meIsOwner(p);
         ownerBox.hidden = !(isOwner && p.listing_status === "approved" && (p.auction_status || "live") !== "sold");
+        if (isOwner) setupSharePromote(p);
         document.getElementById("bidForm").style.display = isOwner || (p.auction_status || "") === "sold" ? "none" : "";
         var reportBox = document.getElementById("reportBox");
         if (reportBox) reportBox.hidden = !!isOwner;
@@ -2397,6 +2509,66 @@
           ? p.seller.owner_id
           : (p.owner_id != null ? p.owner_id : null);
         renderDealProtect(p);
+      }
+
+      function setupSharePromote(p) {
+        var xBtn = document.getElementById("shareXBtn");
+        var copyBtn = document.getElementById("shareCopyBtn");
+        var toast = document.getElementById("shareToast");
+        var templateBox = document.getElementById("shareTemplate");
+        var templateCopyBtn = document.getElementById("shareTemplateCopyBtn");
+        if (!xBtn || !copyBtn) return;
+
+        var titleEn = p.title_en || p.title || "my project";
+        var oneLinerEn = p.one_liner_en || p.one_liner || "a side project I built";
+        var url = location.origin + "/project.html?id=" + p.id;
+
+        var tweetText =
+          "I just listed my project " + titleEn + " on @WakeAgain! " +
+          "Revive this abandoned side project or grab the source code. " +
+          "Check it out and bid: " + url + " #buildinpublic #indiehackers #saas";
+        var redditTemplate =
+          "[Show & Tell] I’ve decided to auction off my abandoned side project, " +
+          titleEn + ", on WakeAgain. It’s " + oneLinerEn +
+          ", but I don’t have time to grow it. Bid now to revive it or get the full source code: " +
+          url;
+
+        if (templateBox) templateBox.value = redditTemplate;
+
+        function flashToast(msg) {
+          if (!toast) return;
+          toast.textContent = msg;
+          toast.hidden = false;
+          clearTimeout(toast._t);
+          toast._t = setTimeout(function () {
+            toast.hidden = true;
+          }, 2500);
+        }
+
+        xBtn.onclick = function () {
+          var intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(tweetText);
+          window.open(intent, "_blank", "noopener,noreferrer");
+        };
+
+        copyBtn.onclick = async function () {
+          try {
+            await navigator.clipboard.writeText(url);
+            flashToast("URL copied to clipboard!");
+          } catch (e) {
+            flashToast("Copy failed — please select and copy manually.");
+          }
+        };
+
+        if (templateCopyBtn) {
+          templateCopyBtn.onclick = async function () {
+            try {
+              await navigator.clipboard.writeText(redditTemplate);
+              flashToast("Template copied to clipboard!");
+            } catch (e) {
+              flashToast("Copy failed — please select and copy manually.");
+            }
+          };
+        }
       }
 
       function buyerBadgeHtml(br) {

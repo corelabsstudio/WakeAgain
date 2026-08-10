@@ -270,6 +270,8 @@ def init_db() -> None:
                 "real_name": "TEXT",
                 "phone": "TEXT",
                 "role": "TEXT DEFAULT 'both'",
+                # ISO 3166-1 alpha-2 (e.g. "KR", "US") — shown as a flag badge on listings
+                "country": "TEXT",
                 "email_verified": "INTEGER NOT NULL DEFAULT 0",
                 "phone_verified": "INTEGER NOT NULL DEFAULT 0",
                 "email_code_hash": "TEXT",
@@ -406,7 +408,13 @@ def init_db() -> None:
                 "works_now_ko": "TEXT",
                 "limits_note_ko": "TEXT",
                 "keywords_json_ko": "TEXT",
+                # PortOne payment tracking for the current awaiting_payment deal
+                "pg_payment_id": "TEXT",
+                "pg_payment_requested_at": "TEXT",
             },
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_projects_pg_payment_id ON projects(pg_payment_id)"
         )
         conn.execute(
             """
@@ -1317,6 +1325,7 @@ def user_to_dict(row: sqlite3.Row, *, public: bool = False) -> dict:
     if public:
         # never expose PII on public surfaces
         base["display_name"] = (row["display_name"] or "").strip() or "Member"
+        base["country"] = (row["country"] if "country" in row.keys() else None) or ""
         base.pop("email", None)
         return base
 
@@ -1356,6 +1365,7 @@ def user_to_dict(row: sqlite3.Row, *, public: bool = False) -> dict:
         "suspended_at": (row["suspended_at"] if "suspended_at" in row.keys() else None) or "",
         "suspend_reason": (row["suspend_reason"] if "suspend_reason" in row.keys() else None) or "",
         "real_name": (row["real_name"] if "real_name" in row.keys() else None) or "",
+        "country": (row["country"] if "country" in row.keys() else None) or "",
         "phone": phone_raw,
         "phone_display": format_phone_display(phone_raw) if phone_raw else "",
         "role": role or "both",
@@ -1789,7 +1799,17 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
 
 # Seller success fee — flat 10% of deal price (buyer pays only deal price)
 FEE_RATE = 0.10
+# Seller rate when the buyer pays via an overseas/PayPal channel (deal decided
+# 2026-08-11: buyer always pays $0 extra — "$0 buyer fees" stays true — so the
+# PG passthrough cost for PayPal is folded into a higher seller rate instead).
+# Placeholder until PayPal's contracted fee % comes back from PG 계약 심사 (pending,
+# ~3 business days as of 2026-08-11) — retune to 0.10 + actual PayPal cost then.
+FEE_RATE_CROSSBORDER = 0.19
 FEE_PAYER = "seller"
+# Floor so a coupon-reduced rate (or a future lower price tier) can't let PG fixed
+# costs eat the platform's margin on a low-priced deal. rate% still shown as the
+# headline; the floor only ever raises the fee, never lowers it.
+FEE_MIN_KRW = 5000
 
 
 def premium_boost_feature_enabled() -> bool:
@@ -2443,15 +2463,19 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
             "amount": None,
             "fee": None,
             "seller_net": None,
+            "fee_min_krw": FEE_MIN_KRW,
+            "min_fee_applied": None,
             "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
             "note": (
-                f"성사 시 판매자 수수료 {rate_pct}%. 구매자는 합의가만 부담."
+                f"성사 시 판매자 수수료 {rate_pct}% (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
                 if rate is not None
-                else "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의가만 부담."
+                else f"성사 시 판매자에게 거래 대금의 10% 수수료 (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
             ),
         }
     amt = int(amount)
     fee = int(round(amt * r))
+    min_applied = fee < FEE_MIN_KRW < amt
+    fee = min(max(fee, FEE_MIN_KRW), amt)
     return {
         "rate": r,
         "rate_pct": rate_pct,
@@ -2459,10 +2483,12 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
         "payer_ko": "판매자",
         "amount": amt,
         "fee": fee,
+        "fee_min_krw": FEE_MIN_KRW,
+        "min_fee_applied": min_applied,
         "seller_net": amt - fee,
         "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
         "note": (
-            f"판매자 수수료 {rate_pct}% 적용"
+            (f"최소 수수료 {FEE_MIN_KRW:,}원 적용" if min_applied else f"판매자 수수료 {rate_pct}% 적용")
             + (" (쿠폰)" if rate is not None and abs(r - FEE_RATE) > 1e-9 else "")
             + ". 구매자는 합의가만 부담."
         ),
@@ -3683,6 +3709,39 @@ def create_fee_invoice(
     return out
 
 
+def adjust_fee_invoice_for_crossborder(conn: sqlite3.Connection, project_id: int) -> dict | None:
+    """Bump the deal's pending fee invoice to FEE_RATE_CROSSBORDER.
+
+    Call once payment is confirmed and the PG channel used turns out to be
+    PayPal/overseas (see wakeagain.payments.is_paypal_payment). Idempotent —
+    a second call is a no-op once the rate is already at/above the target.
+    """
+    inv = conn.execute(
+        "SELECT * FROM fee_invoices WHERE project_id = ? AND status = 'pending'",
+        (project_id,),
+    ).fetchone()
+    if not inv:
+        return None
+    raw_rate = inv["fee_rate"] if "fee_rate" in inv.keys() else None
+    current_rate = float(raw_rate) if raw_rate is not None else FEE_RATE
+    if current_rate >= FEE_RATE_CROSSBORDER:
+        return fee_invoice_to_dict(inv)
+    fee = fee_breakdown(int(inv["deal_amount"]), rate=FEE_RATE_CROSSBORDER)
+    note = ("해외결제(PayPal) 수수료 반영 · " + (inv["note"] or "")).strip(" ·")[:500]
+    try:
+        conn.execute(
+            "UPDATE fee_invoices SET fee_amount = ?, fee_rate = ?, note = ? WHERE id = ?",
+            (fee["fee"], FEE_RATE_CROSSBORDER, note, inv["id"]),
+        )
+    except sqlite3.OperationalError:
+        conn.execute(
+            "UPDATE fee_invoices SET fee_amount = ?, note = ? WHERE id = ?",
+            (fee["fee"], note, inv["id"]),
+        )
+    updated = conn.execute("SELECT * FROM fee_invoices WHERE id = ?", (inv["id"],)).fetchone()
+    return fee_invoice_to_dict(updated)
+
+
 def deal_payment_hours() -> int:
     try:
         return max(1, min(int(os.environ.get("DEAL_PAYMENT_HOURS") or "1"), 48))
@@ -3809,6 +3868,28 @@ def finalize_sale(
         )
     # Credit for sale/purchase applied at settle_complete (not at award)
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def set_pending_payment(
+    conn: sqlite3.Connection, row: sqlite3.Row, *, payment_id: str
+) -> sqlite3.Row:
+    """Buyer initiated a PortOne payment attempt; record paymentId for later verification."""
+    now = _now()
+    pid = int(row["id"])
+    conn.execute(
+        "UPDATE projects SET pg_payment_id = ?, pg_payment_requested_at = ?, updated_at = ? "
+        "WHERE id = ?",
+        (payment_id, now, now, pid),
+    )
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def find_project_by_payment_id(
+    conn: sqlite3.Connection, payment_id: str
+) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM projects WHERE pg_payment_id = ?", (payment_id,)
+    ).fetchone()
 
 
 def mark_deal_paid(
@@ -5073,6 +5154,7 @@ def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
         "updated_at": p["updated_at"],
         "status": p["status"],
         "top_bidder": None,
+        "seller_country": (row["seller_country"] if "seller_country" in row.keys() else None) or "",
     }
     if top_bid:
         out["top_bidder"] = {

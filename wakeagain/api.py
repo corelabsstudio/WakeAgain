@@ -16,6 +16,7 @@ from wakeagain import __version__, db as database
 from wakeagain import keywords as kw_mod
 from wakeagain import listing_i18n
 from wakeagain import oauth as oauth_mod
+from wakeagain import payments as payments_mod
 from wakeagain import pricing as price_policy
 from wakeagain.admin_auth import require_admin
 from wakeagain.auth import (
@@ -65,6 +66,12 @@ def _parse_birth_date(raw: str) -> date:
         raise HTTPException(
             status_code=400, detail="생년월일 형식이 올바르지 않습니다. (예: 2000-01-15)"
         ) from e
+
+
+def _normalize_country(raw: str) -> str:
+    """ISO 3166-1 alpha-2, uppercased. Invalid/empty input is silently dropped."""
+    s = (raw or "").strip().upper()
+    return s if len(s) == 2 and s.isalpha() else ""
 
 
 def _age_years(birth: date, today: date | None = None) -> int:
@@ -314,6 +321,8 @@ class RegisterIn(BaseModel):
     birth_date: str = Field(min_length=8, max_length=12)
     # UI 체크박스 동의 (서버에서도 강제)
     confirm_age_14: bool = False
+    # ISO 3166-1 alpha-2 (e.g. "KR", "US") — 매물 국기 배지·해외거래 판정용
+    country: str = Field(default="", max_length=2)
 
 
 class LoginIn(BaseModel):
@@ -353,6 +362,7 @@ class ProfileIn(BaseModel):
     phone: str = Field(min_length=10, max_length=20)
     role: Literal["seller", "buyer", "both"] = "both"
     display_name: str = Field(default="", max_length=80)
+    country: str = Field(default="", max_length=2)
 
 
 class SettlementIn(BaseModel):
@@ -559,8 +569,12 @@ def client_config():
             "payer_ko": "판매자",
             "rate_pct": 10,
             "model": "flat",
+            "min_fee_krw": database.FEE_MIN_KRW,
             "terms_article": "제13조",
-            "message_ko": "성사 시 판매자에게 거래 대금의 10% 수수료. 구매자는 합의(낙찰)가만 부담. 등록·관심·입찰 무료. (이용약관 제13조)",
+            "message_ko": (
+                f"성사 시 판매자에게 거래 대금의 10% 수수료(최소 {database.FEE_MIN_KRW:,}원). "
+                "구매자는 합의(낙찰)가만 부담. 등록·관심·입찰 무료. (이용약관 제13조)"
+            ),
         },
         "payment_policy": {
             "stage": "pg_required_for_ops",
@@ -579,6 +593,7 @@ def client_config():
             ),
             "target_after_pg_ko": "PG: 결제 링크 · 웹훅→paid · 1시간 만료 · 인수/자동확정 후 정산.",
             "terms_article": "제12조 · 제14조",
+            "portone": payments_mod.portone_public_config(),
         },
         "product_types": [
             {
@@ -938,16 +953,17 @@ def register(body: RegisterIn):
         cur = conn.execute(
             """
             INSERT INTO users (
-              email, password_hash, display_name, birth_date,
+              email, password_hash, display_name, birth_date, country,
               created_at, email_verified, role
             )
-            VALUES (?, ?, ?, ?, ?, 0, 'both')
+            VALUES (?, ?, ?, ?, ?, ?, 0, 'both')
             """,
             (
                 email,
                 hash_password(body.password),
                 body.display_name.strip(),
                 birth_iso,
+                _normalize_country(body.country),
                 database._now(),
             ),
         )
@@ -1421,15 +1437,17 @@ def update_profile(body: ProfileIn, user: dict = Depends(get_current_user)):
     if len(real_name) < 2:
         raise HTTPException(status_code=400, detail="real_name required")
     display = (body.display_name or "").strip() or real_name
+    country = _normalize_country(body.country)
     now = database._now()
     with database.db() as conn:
         conn.execute(
             """
             UPDATE users
-            SET real_name = ?, phone = ?, role = ?, display_name = ?, profile_updated_at = ?
+            SET real_name = ?, phone = ?, role = ?, display_name = ?,
+                country = COALESCE(NULLIF(?, ''), country), profile_updated_at = ?
             WHERE id = ?
             """,
-            (real_name, phone, body.role, display, now, user["id"]),
+            (real_name, phone, body.role, display, country, now, user["id"]),
         )
         database.recompute_user_credit(conn, int(user["id"]))
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
@@ -1595,7 +1613,7 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
         score_sql = database.listing_trust_score_sql("p", "u")
         rows = conn.execute(
             f"""
-            SELECT p.*, ({score_sql}) AS exposure_score
+            SELECT p.*, u.country AS seller_country, ({score_sql}) AS exposure_score
             FROM projects p
             LEFT JOIN users u ON u.id = p.owner_id
             WHERE {live_where}
@@ -1607,6 +1625,7 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
         ).fetchall()
         snaps = []
         for r in rows:
+            seller_country = (r["seller_country"] if "seller_country" in r.keys() else None) or ""
             r = _refresh_auction_ended(conn, r)
             # Expiry may have archived this row mid-poll
             if (r["listing_status"] or "") != "approved" or (
@@ -1619,7 +1638,9 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
                     top = database.top_bid_public(conn, int(r["id"]))
             except Exception:
                 top = None
-            snaps.append(database.auction_snapshot(r, top_bid=top))
+            snap = database.auction_snapshot(r, top_bid=top)
+            snap["seller_country"] = seller_country
+            snaps.append(snap)
         # recent public bid ticker (last 20 across board) — live rounds only
         recent_sql = """
             SELECT b.*, u.display_name,
@@ -1745,7 +1766,7 @@ def list_projects(
         score_sql = database.listing_trust_score_sql("p", "u")
         rows = conn.execute(
             f"""
-            SELECT p.*, ({score_sql}) AS exposure_score
+            SELECT p.*, u.country AS seller_country, ({score_sql}) AS exposure_score
             FROM projects p
             LEFT JOIN users u ON u.id = p.owner_id
             WHERE {where}
@@ -1757,7 +1778,7 @@ def list_projects(
         if listing_i18n.ensure_rows_en(conn, rows):
             rows = conn.execute(
                 f"""
-                SELECT p.*, ({score_sql}) AS exposure_score
+                SELECT p.*, u.country AS seller_country, ({score_sql}) AS exposure_score
                 FROM projects p
                 LEFT JOIN users u ON u.id = p.owner_id
                 WHERE {where}
@@ -1767,6 +1788,8 @@ def list_projects(
                 (*params, now, lim, off),
             ).fetchall()
         projects = [database.project_to_dict(r, include_private=False) for r in rows]
+        for proj, r in zip(projects, rows):
+            proj["seller_country"] = (r["seller_country"] if "seller_country" in r.keys() else None) or ""
     return {
         "ok": True,
         "projects": projects,
@@ -1905,6 +1928,7 @@ def get_project(
     identity = (
         database.public_seller_identity(u, reveal_contact=reveal_contact) if u else None
     )
+    project["seller_country"] = (u["country"] if u and "country" in u.keys() else "") or ""
     project["seller"] = {
         "owner_id": row["owner_id"],
         "display_name": (u["display_name"] if u else "") or "판매자",
@@ -3104,6 +3128,147 @@ def deal_dispute(
         "project": database.project_to_dict(row, include_private=False),
         "message_ko": "이의가 접수되었습니다. 자동 확정이 중지되며 운영이 검토합니다.",
     }
+
+
+@router.post("/projects/{project_id}/payment/request")
+def payment_request(
+    project_id: int, method: str = "card", user: dict = Depends(get_current_user)
+):
+    """Buyer: get PortOne payment params for the current awaiting_payment deal.
+
+    method="card" -> requestPayment() popup (domestic channel).
+    method="paypal" -> loadPaymentUI() embedded SPB button (overseas channel).
+    """
+    method = (method or "card").strip().lower()
+    if method not in ("card", "paypal"):
+        raise HTTPException(status_code=400, detail="method must be 'card' or 'paypal'")
+    enabled = payments_mod.paypal_enabled() if method == "paypal" else payments_mod.portone_enabled()
+    if not enabled:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "pg_not_configured",
+                "message": "결제 연동이 아직 설정되지 않았습니다."
+                if method == "card"
+                else "PayPal 채널이 아직 설정되지 않았습니다 (PG 계약 심사 대기 중일 수 있습니다).",
+            },
+        )
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    _require_trust(user, "fulfill")
+
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+        if not buyer_id or int(buyer_id) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="buyer only")
+        status = (row["deal_status"] if "deal_status" in row.keys() else None) or ""
+        if status != "awaiting_payment":
+            raise HTTPException(
+                status_code=400,
+                detail="입금 대기 단계에서만 결제를 시작할 수 있습니다.",
+            )
+        payment_id = payments_mod.new_payment_id(project_id)
+        row = database.set_pending_payment(conn, row, payment_id=payment_id)
+
+    total_amount = int(row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"])
+    try:
+        if method == "paypal":
+            params = payments_mod.build_paypal_payment_request(
+                payment_id=payment_id,
+                order_name=str(row["title"]),
+                total_amount=total_amount,
+                buyer_name=user.get("real_name") or user.get("email") or "buyer",
+                buyer_email=user.get("email"),
+            )
+        else:
+            params = payments_mod.build_payment_request(
+                payment_id=payment_id,
+                order_name=str(row["title"]),
+                total_amount=total_amount,
+                buyer_name=user.get("real_name") or user.get("email") or "buyer",
+                buyer_email=user.get("email"),
+                buyer_phone=user.get("phone"),
+            )
+    except payments_mod.PortOnePaymentError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    return {"ok": True, "method": method, "payment_request": params}
+
+
+class PaymentVerifyIn(BaseModel):
+    payment_id: str = Field(min_length=1, max_length=200)
+
+
+@router.post("/payments/verify")
+def payment_verify(body: PaymentVerifyIn, user: dict = Depends(get_current_user)):
+    """Frontend calls this right after PortOne.requestPayment() resolves.
+
+    Re-verifies against PortOne's server API (never trusts the client) before
+    marking the deal paid. The webhook is a backup path for the same effect.
+    """
+    with database.db() as conn:
+        row = database.find_project_by_payment_id(conn, body.payment_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="payment not found for this deal")
+        buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
+        if not buyer_id or int(buyer_id) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="buyer only")
+        expected_amount = int(
+            row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]
+        )
+        try:
+            payment = payments_mod.fetch_payment(body.payment_id)
+            payments_mod.assert_payment_paid(payment, expected_amount=expected_amount)
+        except payments_mod.PortOnePaymentError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        if payments_mod.is_paypal_payment(payment):
+            database.adjust_fee_invoice_for_crossborder(conn, int(row["id"]))
+        try:
+            row = database.mark_deal_paid(conn, row, note="PortOne 결제 확인")
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=False),
+        "deal_policy": database.deal_policy_public(),
+    }
+
+
+@router.post("/payments/webhook")
+async def payment_webhook(request: Request):
+    """PortOne webhook (Standard Webhooks signed). Backup path — idempotent."""
+    raw_body = await request.body()
+    try:
+        payload = payments_mod.verify_webhook(raw_body=raw_body, headers=dict(request.headers))
+    except payments_mod.PortOnePaymentError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    payment_id = ((payload.get("data") or {}).get("paymentId")) or ""
+    if not payment_id:
+        return {"ok": True, "skipped": "no paymentId in payload"}
+
+    with database.db() as conn:
+        row = database.find_project_by_payment_id(conn, payment_id)
+        if not row:
+            return {"ok": True, "skipped": "no matching deal"}
+        expected_amount = int(
+            row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]
+        )
+        try:
+            payment = payments_mod.fetch_payment(payment_id)
+            payments_mod.assert_payment_paid(payment, expected_amount=expected_amount)
+        except payments_mod.PortOnePaymentError:
+            return {"ok": True, "skipped": "not paid or amount mismatch"}
+        if payments_mod.is_paypal_payment(payment):
+            database.adjust_fee_invoice_for_crossborder(conn, int(row["id"]))
+        try:
+            database.mark_deal_paid(conn, row, note="PortOne 웹훅 확인")
+        except ValueError:
+            pass
+    return {"ok": True}
 
 
 class MessageIn(BaseModel):

@@ -666,7 +666,7 @@ body.is-native-app .app-top-hide-native {
   bottom: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.15rem;
   padding: 0.4rem 0.45rem calc(0.4rem + env(safe-area-inset-bottom));
   background: rgba(8, 8, 14, 0.88);

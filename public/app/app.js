@@ -112,6 +112,13 @@
       // "home" is a site navigation action — never sticky-selected as SPA view
       b.classList.toggle("is-on", go === "home" ? false : on);
     });
+    if (name === "auth" && window.WakeAgainCountries && $("regCountry") && !$("regCountry").options.length) {
+      window.WakeAgainCountries.populateSelect($("regCountry"));
+    }
+    if (name === "profile" && window.WakeAgainCountries && $("profCountry")) {
+      const u = api.getUser();
+      window.WakeAgainCountries.populateSelect($("profCountry"), (u && u.country) || "");
+    }
     const hashMap = {
       auth: "#login",
       verify: "#verify",
@@ -1604,7 +1611,8 @@
         pass,
         $("regName").value.trim(),
         birth,
-        true
+        true,
+        $("regCountry") ? $("regCountry").value : ""
       );
       pendingAfterAuth = pendingAfterAuth || "create";
       await afterAuthSuccess();
@@ -1664,6 +1672,7 @@
         // Always both — no purpose picker (was confusing empty UI after t("app.role_both", "Seller+buyer"))
         role: "both",
         display_name: $("profDisplay").value.trim(),
+        country: $("profCountry") ? $("profCountry").value : "",
       });
       const u = api.getUser();
       const trust = trustOf(u);

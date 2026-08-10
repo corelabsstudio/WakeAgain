@@ -15,7 +15,7 @@ load_dotenv(override=False)
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -23,6 +23,7 @@ from wakeagain import __version__
 from wakeagain.api import router as api_router
 from wakeagain.db import DATA, init_db
 from wakeagain import backup as db_backup
+from wakeagain import og as og_mod
 from wakeagain import scheduler as auction_scheduler
 
 # Web + Capacitor/Android/iOS WebView. Production: set ALLOWED_ORIGINS explicitly.
@@ -212,6 +213,24 @@ async def legacy_leads(request: Request):
     from wakeagain.api import create_lead_v1
 
     return await create_lead_v1(request)
+
+
+@app.get("/project.html")
+async def listing_page(request: Request):
+    """Serve project.html, injecting per-listing OG/Twitter card tags (EN) for
+    social unfurls (X, Reddit, Slack). Falls through to the static file when
+    there's no ?id or the listing isn't found."""
+    project_html = PUBLIC / "project.html"
+    raw = project_html.read_text(encoding="utf-8")
+    raw_id = (request.query_params.get("id") or "").strip()
+    if raw_id.isdigit():
+        try:
+            tags = og_mod.listing_og_tags(int(raw_id))
+        except Exception:
+            tags = None
+        if tags:
+            raw = og_mod.inject_og_tags(raw, tags)
+    return HTMLResponse(raw)
 
 
 # Static last (API routes take priority)
