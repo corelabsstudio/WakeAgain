@@ -1406,6 +1406,7 @@ PRODUCT_TYPES_EN: dict[str, str] = {
 }
 
 # Demo / seed listings — EN copy for marketplace UI when lang=en (seller-authored KO kept)
+# Keys are exact KO titles (or Latin product names) as stored in projects.title
 LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
     "ShopPulse": {
         "title_en": "ShopPulse",
@@ -1447,6 +1448,28 @@ LISTING_DEMO_I18N: dict[str, dict[str, str]] = {
             "Answer 5–7 questions and get a blog post draft. "
             "Prompting and edit UI included; two real posts shipped from it. "
             "Day job got busy — not scaling further."
+        ),
+    },
+    # Live marketplace listings (exact titles as of 2026-08)
+    "Trace — AI 인터뷰 경험글 작성 도구": {
+        "title_en": "Trace — AI interview experience writer",
+        "one_liner_en": (
+            "Answer a few prompts and get an E-E-A-T style experience post draft — "
+            "Windows desktop writing tool."
+        ),
+        "story_en": (
+            "Desktop helper that turns short interview-style answers into a polished "
+            "experience blog draft. Built for creators who want structure, not a blank page."
+        ),
+    },
+    "리치킷(ReachKit) — 홍보 문구·채널 추천 도구": {
+        "title_en": "ReachKit — promo copy & channel recommender",
+        "one_liner_en": (
+            "Site analysis → promo copy and channel suggestions, plus a drip outreach desktop tool."
+        ),
+        "story_en": (
+            "Marketing helper for indie products: recommend channels and draft promo lines "
+            "from a site scan, with a desktop drip workflow."
         ),
     },
 }
@@ -1564,12 +1587,14 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     title_en = (_row_get(row, "title_en") or "") or ""
     one_liner_en = (_row_get(row, "one_liner_en") or "") or ""
     story_en = (_row_get(row, "story_en") or "") or ""
-    if not title_en:
-        title_en = demo_i18n.get("title_en") or ""
-    if not one_liner_en:
-        one_liner_en = demo_i18n.get("one_liner_en") or ""
-    if not story_en:
-        story_en = demo_i18n.get("story_en") or ""
+
+    # Curated EN for known titles always wins (exact KO title keys)
+    if demo_i18n.get("title_en"):
+        title_en = demo_i18n["title_en"]
+    if demo_i18n.get("one_liner_en"):
+        one_liner_en = demo_i18n["one_liner_en"]
+    if demo_i18n.get("story_en"):
+        story_en = demo_i18n["story_en"]
     # Latin-only seller titles can be reused as EN without translation
     if not title_en and title and not re.search(r"[\uac00-\ud7a3]", title):
         title_en = title

@@ -43,7 +43,48 @@
   }
 
   function isEn() {
-    return !!(window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en");
+    try {
+      if (window.WakeAgainI18n && window.WakeAgainI18n.getLang) {
+        var L = window.WakeAgainI18n.getLang();
+        if (L === "en" || L === "ko") return L === "en";
+      }
+    } catch (e0) {}
+    try {
+      var htmlLang = String(document.documentElement.getAttribute("data-wa-lang") || document.documentElement.lang || "").toLowerCase();
+      if (htmlLang.indexOf("en") === 0) return true;
+      if (htmlLang.indexOf("ko") === 0) return false;
+    } catch (e1) {}
+    try {
+      var q = new URLSearchParams(location.search || "").get("lang");
+      if (q === "en") return true;
+      if (q === "ko") return false;
+    } catch (e2) {}
+    try {
+      var saved = localStorage.getItem("wa_lang");
+      if (saved === "en") return true;
+      if (saved === "ko") return false;
+    } catch (e3) {}
+    // Global-first default when nothing says Korean
+    return true;
+  }
+
+  function hasHangul(s) {
+    return /[\uac00-\ud7a3]/.test(String(s || ""));
+  }
+
+  function latinBits(s) {
+    var m = String(s || "").match(/[A-Za-z][A-Za-z0-9+.#\-]*/g);
+    if (!m || !m.length) return "";
+    // de-dupe keep order
+    var out = [];
+    var seen = {};
+    m.forEach(function (w) {
+      var k = w.toLowerCase();
+      if (seen[k]) return;
+      seen[k] = 1;
+      out.push(w);
+    });
+    return out.join(" ").trim();
   }
 
   function tt(key, fallback) {
@@ -96,13 +137,29 @@
   }
 
   function listingTitle(p) {
-    if (isEn() && p.title_en) return p.title_en;
-    return p.title || "";
+    var raw = (p && p.title) || "";
+    if (!isEn()) return raw;
+    var en = (p && p.title_en) || "";
+    if (en && String(en).trim()) return String(en).trim();
+    // Client fallback: keep brand tokens (Trace, ReachKit) if KO title lacks title_en yet
+    var bits = latinBits(raw);
+    if (bits) return bits;
+    return raw;
   }
 
   function oneLiner(p) {
-    if (isEn() && p.one_liner_en) return p.one_liner_en;
-    return p.one_liner || "";
+    var raw = (p && p.one_liner) || "";
+    if (!isEn()) return raw;
+    var en = (p && p.one_liner_en) || "";
+    if (en && String(en).trim() && !/paused project marketplace listing|demo-ready side project/i.test(en)) {
+      return String(en).trim();
+    }
+    if (en && String(en).trim() && !hasHangul(en)) return String(en).trim();
+    // Prefer non-Hangul fragments from KO one-liner when EN copy still weak
+    var bits = latinBits(raw);
+    if (bits && bits.length >= 4) return bits;
+    if (en && String(en).trim()) return String(en).trim();
+    return raw;
   }
 
   function storyText(p) {
@@ -181,9 +238,17 @@
   function keywordsOf(p) {
     const raw = p && p.keywords;
     if (!raw || !raw.length) return [];
-    return raw.map(function (k) {
+    var list = raw.map(function (k) {
       return String(k).trim();
-    }).filter(Boolean).slice(0, 5);
+    }).filter(Boolean);
+    if (isEn()) {
+      // Prefer Latin tags for overseas UI; drop pure Hangul tags
+      var enOnly = list.filter(function (k) {
+        return !hasHangul(k);
+      });
+      if (enOnly.length) list = enOnly;
+    }
+    return list.slice(0, 5);
   }
 
   function keywordsHtml(p) {
@@ -806,9 +871,18 @@
   }
 
   load(true).then(function () {
+    // Re-paint after async load so EN titles win even if i18n lang settled mid-fetch
+    rerenderForLocale();
     setInterval(pollLive, 4000);
     pollLive();
   });
+  // Late lang switches (URL ?lang= / pill) always re-paint cards
+  setTimeout(function () {
+    rerenderForLocale();
+  }, 0);
+  setTimeout(function () {
+    rerenderForLocale();
+  }, 400);
   var moreEl = document.getElementById("listingsMore");
   if (moreEl) {
     moreEl.addEventListener("click", function () {

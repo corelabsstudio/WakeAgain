@@ -1976,11 +1976,19 @@
 
       function renderProject(p) {
         projectCache = p;
-        var titleShow = (isEn() && p.title_en) ? p.title_en : (p.title || "");
+        var titleShow = p.title || "";
+        var oneShow = p.one_liner || "";
+        if (isEn()) {
+          if (p.title_en) titleShow = p.title_en;
+          else {
+            var tbits = String(p.title || "").match(/[A-Za-z][A-Za-z0-9+.#\-]*/g);
+            if (tbits && tbits.length) titleShow = tbits.join(" ");
+          }
+          if (p.one_liner_en) oneShow = p.one_liner_en;
+        }
         document.title = (titleShow || t("매물", "Listing")) + " — WakeAgain";
         document.getElementById("pTitle").textContent = titleShow || "";
-        document.getElementById("pOne").textContent =
-          (isEn() && p.one_liner_en) ? p.one_liner_en : (p.one_liner || "");
+        document.getElementById("pOne").textContent = oneShow;
         var kwHost = document.getElementById("pKeywords");
         if (kwHost) {
           var kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean).slice(0, 5) : [];

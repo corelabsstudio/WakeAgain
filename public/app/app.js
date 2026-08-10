@@ -671,8 +671,21 @@
         (enLang && p.product_type_label_en) || p.product_type_label || "";
       const statusBit =
         (enLang && p.status_label_en) || p.status_label || p.status || "";
-      const oneLine = (enLang && p.one_liner_en) || p.one_liner || "";
-      const titleShow = (enLang && p.title_en) || p.title || "—";
+      const enUi =
+        enLang ||
+        (document.documentElement.getAttribute("data-wa-lang") || document.documentElement.lang || "")
+          .toLowerCase()
+          .indexOf("en") === 0;
+      let oneLine = p.one_liner || "";
+      let titleShow = p.title || "—";
+      if (enUi) {
+        if (p.title_en) titleShow = p.title_en;
+        else {
+          var tm = String(p.title || "").match(/[A-Za-z][A-Za-z0-9+.#\-]*/g);
+          if (tm && tm.length) titleShow = tm.join(" ");
+        }
+        if (p.one_liner_en) oneLine = p.one_liner_en;
+      }
       const ls = p.listing_status || "";
       const aStatus = p.auction_status || "live";
       el.querySelector("h3").textContent = titleShow;
