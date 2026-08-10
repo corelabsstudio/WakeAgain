@@ -292,7 +292,7 @@
     );
     const thumbSrc = Array.isArray(p.demo_images) && p.demo_images.length ? p.demo_images[0] : null;
     const mediaInner = thumbSrc
-      ? `<img class="lot-card-thumb" src="${escapeAttr(thumbSrc)}" alt="${title}" loading="lazy" decoding="async" />`
+      ? `<img class="lot-card-thumb" src="${escapeAttr(thumbSrc)}" alt="${title}" decoding="async" />`
       : `<div class="listing-icon ${tone}">${ICONS[tone] || ICONS.violet}</div>`;
     return (
       `<article class="listing-card lot-card" data-cats="${escapeAttr(cats)}" data-product-type="${escapeAttr(p.product_type || "")}" data-id="${escapeAttr(String(p.id))}" data-search="${searchBlob}">` +
