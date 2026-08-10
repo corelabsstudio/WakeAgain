@@ -244,6 +244,9 @@
       "footer.terms": "이용약관",
       "footer.privacy": "개인정보처리방침",
       "footer.why": "왜 WakeAgain인가요",
+      "footer.visitors_label": "방문자",
+      "footer.visitors_today": "오늘",
+      "footer.visitors_total": "전체",
       "diag.cta": "무료진단",
       "diag.page_title": "내 프로젝트는 얼마일까?",
       "app.auth_title": "쉽게 시작. 거래는 확실하게.",
@@ -259,6 +262,7 @@
       "common.loading": "불러오는 중…",
       "nav.trade": "거래 안내",
       "nav.safety": "사기 예방법",
+      "nav.blog": "블로그",
       "hero.stat_went_live": "다시 세상으로 나간 프로젝트",
       "hero.stat_went_live_later": "추후 공개",
     },
@@ -269,6 +273,7 @@
       "nav.showcase": "Showcase",
       "nav.guide": "Guide",
       "nav.metrics": "By the numbers",
+      "nav.blog": "Blog",
       "nav.login": "Log in",
       "nav.app": "Get the app",
       "nav.list": "List a project",
@@ -281,6 +286,8 @@
       "nav.interest": "Register interest",
       "nav.more_market": "Browse marketplace",
       "nav.account": "My account",
+      "nav.trade": "How trading works",
+      "nav.safety": "Avoid scams",
       "skip": "Skip to content",
       "doc.title": "WakeAgain — Give projects a second chance.",
       "hero.badge": "Marketplace for paused projects",
@@ -294,6 +301,8 @@
       "hero.stat_interest": "Interests",
       "hero.stat_free": "Listing fee",
       "hero.stat_free_val": "Free",
+      "hero.stat_went_live": "Projects back in the world",
+      "hero.stat_went_live_later": "Coming later",
       "hero.stats_note": "",
       "live.price": "Current bid",
       "live.time": "Time left",
@@ -416,7 +425,7 @@
       "metrics.title": "By the numbers",
       "metrics.lead": "Fees, review, and bid units at a glance. The 1–2 day review isn’t delay for its own sake—a person checks listings so trading stays safer.",
       "metrics.inc": "Minimum bid step",
-      "metrics.inc_v": "+₩10,000",
+      "metrics.inc_v": "+$10",
       "metrics.interest": "Interest",
       "metrics.interest_v": "Once",
       "showcase.title": "Project showcase",
@@ -498,6 +507,9 @@
       "footer.terms": "Terms",
       "footer.privacy": "Privacy",
       "footer.why": "Why WakeAgain",
+      "footer.visitors_label": "Visitors",
+      "footer.visitors_today": "Today",
+      "footer.visitors_total": "Total",
       "diag.cta": "Free diagnose",
       "diag.page_title": "What’s my project worth?",
       "app.auth_title": "Easy to start. Serious when it sells.",
@@ -535,6 +547,7 @@
   };
 
   function detectLang() {
+    // Priority: manual save (localStorage) > ?lang= query > browser language > English default
     var saved = localStorage.getItem(STORAGE_LANG);
     if (saved === "ko" || saved === "en") return saved;
     try {
@@ -542,25 +555,34 @@
       var L = (q.get("lang") || "").toLowerCase();
       if (L === "en" || L === "ko") return L;
     } catch (e) {}
-    var nav = (navigator.language || "ko").toLowerCase();
+    // Browser: ko / ko-KR → Korean; everything else → English (global-first)
+    var nav = "";
+    try {
+      nav = String(navigator.language || (navigator.languages && navigator.languages[0]) || "").toLowerCase();
+    } catch (e2) {
+      nav = "";
+    }
     if (nav.indexOf("ko") === 0) return "ko";
     return "en";
   }
 
-  function detectCurrency(lang) {
+  function detectCurrency(langHint) {
+    // Priority: manual save > language-aware default (global-first: USD unless KO)
     var saved = localStorage.getItem(STORAGE_CUR);
     if (saved && curMeta[saved]) return saved;
-    return lang === "en" ? "USD" : "KRW";
+    var lang = langHint || detectLang();
+    return lang === "ko" ? "KRW" : "USD";
   }
 
-  var state = { lang: detectLang(), currency: "KRW" };
+  var state = { lang: detectLang(), currency: "USD" };
   state.currency = detectCurrency(state.lang);
 
   function t(key, vars) {
-    var pack = STR[state.lang] || STR.ko;
+    // Never fall back into Korean while the UI is English — that reads as a KR-only product.
+    var pack = STR[state.lang] || STR.en;
     var val = pack[key];
-    if (val == null && STR.en[key] != null) val = STR.en[key];
-    if (val == null && STR.ko[key] != null) val = STR.ko[key];
+    if (val == null && state.lang !== "en" && STR.en[key] != null) val = STR.en[key];
+    if (val == null && state.lang === "ko" && STR.ko[key] != null) val = STR.ko[key];
     if (val == null) val = key;
     if (vars && typeof vars === "object") {
       Object.keys(vars).forEach(function (k) {
@@ -573,9 +595,9 @@
   function formatMoney(amountKrw) {
     var n = Number(amountKrw);
     if (!isFinite(n)) return "—";
-    var code = state.currency || "KRW";
+    var code = state.currency || "USD";
     var rate = fx[code] || 1;
-    var meta = curMeta[code] || curMeta.KRW;
+    var meta = curMeta[code] || curMeta.USD;
     var shown = code === "KRW" ? n : Math.round(n / rate);
     try {
       return (
@@ -669,10 +691,11 @@
     if (lang !== "ko" && lang !== "en") return;
     opts = opts || {};
     state.lang = lang;
+    // Manual language choice always wins and persists
     localStorage.setItem(STORAGE_LANG, lang);
-    if (!localStorage.getItem(STORAGE_CUR) || opts.resetCurrency) {
-      state.currency = detectCurrency(lang);
-      if (opts.resetCurrency) localStorage.setItem(STORAGE_CUR, state.currency);
+    // Seed display currency only when the user has never chosen one
+    if (!localStorage.getItem(STORAGE_CUR)) {
+      state.currency = lang === "ko" ? "KRW" : "USD";
     }
     apply(document);
     try {
@@ -712,12 +735,12 @@
       el.__waLangBound = true;
       if (el.tagName === "SELECT") {
         el.addEventListener("change", function () {
-          setLang(el.value, { resetCurrency: true });
+          setLang(el.value);
         });
       } else {
         el.addEventListener("click", function (e) {
           e.preventDefault();
-          setLang(el.getAttribute("data-lang-switch"), { resetCurrency: true });
+          setLang(el.getAttribute("data-lang-switch"));
         });
       }
     });
@@ -758,10 +781,5 @@
       return state.currency;
     },
     STR: STR,
-      "nav.trade": "How trading works",
-      "nav.safety": "Avoid scams",
-      "hero.stat_went_live": "Projects back in the world",
-      "hero.stat_went_live_later": "Coming later",
-
   };
 })(typeof window !== "undefined" ? window : globalThis);

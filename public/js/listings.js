@@ -60,7 +60,8 @@
     if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) {
       return window.WakeAgainI18n.formatMoney(n);
     }
-    return "₩" + Number(n).toLocaleString(isEn() ? "en-US" : "ko-KR");
+    // Global-first fallback when i18n not loaded yet
+    return "$" + Math.round(Number(n) / 1350).toLocaleString("en-US");
   }
 
   var TYPE_LABEL = {

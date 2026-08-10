@@ -1,7 +1,7 @@
 /* WakeAgain — yard brown + amber (auction warehouse)
-   Typography (ui-ux-pro-max): Korean Modern = Noto Sans KR + Pretendard Variable
+   Typography: global-first = Inter + system UI; Korean locale swaps to Pretendard/Noto.
    - body ≥ 16px · small text ≥ 13px · no fake weights (650/750)
-   - line-height 1.55–1.75 for Hangul readability
+   - line-height 1.55–1.75 for body readability
 */
 :root {
   --bg: #1a1814;
@@ -28,9 +28,9 @@
   --radius: 10px;
   --radius-sm: 8px;
   --nav-h: 64px;
-  /* Hangul-first stack: Pretendard Variable (UI) → Noto Sans KR (coverage) → system */
-  --font: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
+  /* Global-first stack (EN default): Inter → system. Hangul stack only when lang=ko. */
+  --font: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
   /* Type scale — never go below 13px for UI labels */
   --text-xs: 0.8125rem;   /* 13px */
@@ -55,6 +55,27 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+/* Korean locale: Hangul-optimized stack + tracking */
+html[data-wa-lang="ko"],
+html[lang="ko"] {
+  --font: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, sans-serif;
+}
+/* Hide Korea-facing legal/contact chrome for global UI (kept for KO locale + /legal/*) */
+html[data-wa-lang="en"] .wa-kr-only,
+html[lang="en"] .wa-kr-only {
+  display: none !important;
+}
+html[data-wa-lang="ko"] .wa-en-only,
+html[lang="ko"] .wa-en-only {
+  display: none !important;
+}
+/* Kakao is a KR-market signal — de-emphasize for English UI */
+html[data-wa-lang="en"] .btn-kakao,
+html[lang="en"] .btn-kakao {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: var(--font);
@@ -64,13 +85,19 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: var(--lh-body);
-  letter-spacing: -0.01em; /* Hangul: avoid tight tracking */
-  /* Windows: antialiased often makes small Hangul look broken */
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
   overflow-x: hidden;
+}
+html[data-wa-lang="ko"] body,
+html[lang="ko"] body {
+  letter-spacing: -0.01em;
+  /* Windows: antialiased often makes small Hangul look broken */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 }
 /* macOS only: slight smoothing for retina */
 @supports (-webkit-touch-callout: none) {
@@ -3576,4 +3603,30 @@ p, li, label, .lede, .center-lead, .manifesto p {
   --purple-soft: var(--accent-soft);
   --purple-glow: var(--accent-glow, var(--accent-soft));
   --purple-bright: var(--accent-bright, var(--accent));
+}
+
+
+/* Footer visitor counter (bottom) */
+.footer-visitors {
+  margin: 0.85rem 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--muted, #9a958c);
+}
+.footer-visitors-label {
+  margin-right: 0.35rem;
+  opacity: 0.9;
+}
+.footer-visitors-nums strong {
+  font-weight: 600;
+  color: var(--text, #f5ecd8);
+  font-variant-numeric: tabular-nums;
+}
+.footer-visitors-sep {
+  opacity: 0.55;
+}
+footer.app-legal-foot .footer-visitors,
+.compact-footer .footer-visitors {
+  margin-top: 0.75rem;
+  text-align: center;
 }

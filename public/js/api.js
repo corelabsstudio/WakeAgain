@@ -614,6 +614,12 @@
     async stats() {
       return request("/api/v1/stats");
     },
+    async recordVisit(visitor_key) {
+      return request("/api/v1/visit", {
+        method: "POST",
+        body: JSON.stringify({ visitor_key: visitor_key || "" }),
+      });
+    },
     async pricing() {
       return request("/api/v1/pricing");
     },

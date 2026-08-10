@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -60,6 +60,24 @@
         url("/assets/play-store/screenshots/phone-02-detail.png?v=cream") center top / cover;
     }
   </style>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("wa_lang");
+        var lang = saved === "ko" || saved === "en" ? saved : null;
+        if (!lang) {
+          var q = new URLSearchParams(location.search || "").get("lang");
+          if (q === "ko" || q === "en") lang = q;
+        }
+        if (!lang) {
+          var nav = String(navigator.language || "").toLowerCase();
+          lang = nav.indexOf("ko") === 0 ? "ko" : "en";
+        }
+        document.documentElement.lang = lang;
+        document.documentElement.setAttribute("data-wa-lang", lang);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="wa-blog theme-yard">
   <header class="wa-blog-nav">

@@ -25,7 +25,8 @@
   const $ = (id) => document.getElementById(id);
   function money(n) {
     if (window.WakeAgainI18n && window.WakeAgainI18n.formatMoney) return window.WakeAgainI18n.formatMoney(n);
-    return "₩" + Number(n).toLocaleString("ko-KR");
+    // Global-first fallback when i18n not loaded yet (display FX only)
+    return "$" + Math.round(Number(n) / 1350).toLocaleString("en-US");
   }
 
   /** Navigate to any site page (landing, project detail, legal…) from app shell. */
@@ -189,10 +190,10 @@
     // Positive “done” language — avoid “확인” sounding like pending/risk
     // Display as Lv0…Lv3 (not L0…L3)
     const map = {
-      0: t("app.lv0", "Lv0 · 가입"),
-      1: t("app.lv1", "Lv1 · 이메일 완료"),
-      2: t("app.lv2", "Lv2 · 인증 완료"),
-      3: t("app.lv3", "Lv3 · 거래 준비 완료"),
+      0: t("app.lv0", "Lv0 · Joined"),
+      1: t("app.lv1", "Lv1 · Email verified"),
+      2: t("app.lv2", "Lv2 · Identity done"),
+      3: t("app.lv3", "Lv3 · Ready to trade"),
     };
     return map[level] != null ? map[level] : "Lv" + level;
   }
@@ -220,7 +221,7 @@
     const fees = $("btnFees");
     const coupons = $("btnCoupons");
     if (loggedIn && u) {
-      const name = u.display_name || u.real_name || (u.email && u.email.split("@")[0]) || "회원";
+      const name = u.display_name || u.real_name || (u.email && u.email.split("@")[0]) || t("app.member", "Member");
       if (label) label.textContent = name;
       if (avatar) avatar.textContent = initialOf(name);
       if (meta) {
@@ -244,16 +245,18 @@
         // Keep credit separate in wording so L2 doesn't look like a score warning
         let text = trustBadgeCopy(level);
         if (c.score != null) {
-          text += " · 신용 " + c.score;
+          text += t("app.credit_suffix", " · credit {n}", { n: c.score });
           if (c.label) text += " " + c.label;
         }
         badge.textContent = text;
-        badge.title =
-          "신뢰 레벨(자격) Lv" +
-          level +
+        badge.title = t("app.trust_tip", "Trust level (eligibility) Lv{n}", { n: level }) +
           (trust.label ? " · " + trust.label : "") +
-          (c.score != null ? " / 사이트 내 신용 점수 " + c.score + (c.label ? " " + c.label : "") : "") +
-          " · 자세한 산식은 사이트 내 신용 점수 안내";
+          (c.score != null
+            ? t("app.credit_tip", " / on-site credit score {n}{label} · see credit guide", {
+                n: c.score,
+                label: c.label ? " " + c.label : "",
+              })
+            : "");
       }
       refreshNotifBadge();
     } else {
@@ -326,7 +329,7 @@
       });
     } catch (e) {
       empty.hidden = false;
-      empty.textContent = e.message || t("app.notif_fail", "알림을 불러오지 못했습니다.");
+      empty.textContent = e.message || t("app.notif_fail", "Couldn’t load notifications.");
     }
   }
 
@@ -342,7 +345,7 @@
       if (note) {
         note.textContent =
           extraMsg ||
-          "메일 서버 미연결·개발 모드에서는 코드가 여기에 표시됩니다. 받은편지함에도 없을 수 있어요.";
+          t("app.dev_code_hint", "In dev / without mail, the code appears here. It may not hit your inbox.");
       }
     } else if (box) {
       box.hidden = true;
@@ -366,7 +369,10 @@
     if (card && u.credit) {
       card.hidden = false;
       const c = u.credit;
-      if ($("creditScoreNum")) $("creditScoreNum").textContent = (c.score != null ? c.score : "—") + "점";
+      if ($("creditScoreNum"))
+        $("creditScoreNum").textContent = t("app.credit_points", "{n} pts", {
+          n: c.score != null ? c.score : "—",
+        });
       if ($("creditGradeLabel")) $("creditGradeLabel").textContent = c.label ? "· " + c.label : "";
       const br = c.buyer_rank || null;
       const rankLine = $("buyerRankLine");
@@ -379,10 +385,14 @@
           if ($("buyerRankMeta")) {
             const next =
               br.next_min != null
-                ? " · 다음 「" + (br.next_label || "") + "」까지 성사 " + Math.max(0, br.next_min - (br.bought_complete || 0)) + "건"
-                : " · 최고 구매 배지";
+                ? t("app.buyer_next", " · {n} more closes to “{label}”", {
+                    label: br.next_label || "",
+                    n: Math.max(0, br.next_min - (br.bought_complete || 0)),
+                  })
+                : t("app.buyer_top", " · top buyer badge");
             $("buyerRankMeta").textContent =
-              "구매 성사 " + (br.bought_complete || 0) + "건" + (br.key === "scout" ? " · 첫 성사부터 배지" : next);
+              t("app.buyer_closes", "Buyer closes: {n}", { n: br.bought_complete || 0 }) +
+              (br.key === "scout" ? t("app.buyer_first", " · badge from first close") : next);
           }
         } else {
           rankLine.hidden = true;
@@ -390,29 +400,28 @@
       }
       const cnt = c.counts || {};
       if ($("creditCounts")) {
-        $("creditCounts").textContent =
-          "성사(판매) " +
-          (cnt.sold_as_seller || 0) +
-          " · 성사(구매) " +
-          (cnt.bought_complete || 0) +
-          " · 미입금 " +
-          (cnt.defaults || 0);
+        $("creditCounts").textContent = t("app.stats_line", "Sold {s} · Bought {b} · Missed pay {m}", {
+          s: cnt.sold_as_seller || 0,
+          b: cnt.bought_complete || 0,
+          m: cnt.defaults || 0,
+        });
       }
       const b = c.breakdown;
       if ($("creditBreak") && b) {
-        $("creditBreak").textContent =
-          "가감 합: 기본 " +
-          (b.base || 30) +
+        $("creditBreak").textContent = t(
+          "app.credit_breakdown",
+          "Adjustments: base {base} · closes +{close} · on-time +{ontime} · missed {miss}",
+          {
+            base: b.base || 30,
+            close: (b.sold_as_seller || 0) + (b.bought_complete || 0),
+            ontime: b.on_time_payment || 0,
+            miss: b.defaults || 0,
+          }
+        ) +
           " · Lv2 +" +
           (b.l2_identity || 0) +
           " · Lv3 +" +
-          (b.l3_settlement || 0) +
-          " · 성사 +" +
-          ((b.sold_as_seller || 0) + (b.bought_complete || 0)) +
-          " · 정시 +" +
-          (b.on_time_payment || 0) +
-          " · 미입금 " +
-          (b.defaults || 0);
+          (b.l3_settlement || 0);
       }
     } else if (card) {
       card.hidden = true;
@@ -427,7 +436,7 @@
       if (gate) {
         gate.hidden = false;
         gate.textContent =
-          t("app.need_login_list", "로그인하면 매물 등록·내 매물이 가능합니다. 등록 전 이메일 인증과 실명·휴대폰 확인이 필요합니다.");
+          t("app.need_login_list", "Sign in to list or manage projects. Email verification and name/phone are required before listing.");
       }
       if (banner) banner.hidden = true;
       return;
@@ -438,12 +447,12 @@
     if (trust.can_list && trust.deal_ready) {
       banner.hidden = false;
       banner.className = "trust-banner is-ok";
-      banner.innerHTML = t("app.banner_l3", "신뢰 Lv3 · 거래 준비 완료. 성사 단계에서 정산 계좌를 사용합니다.");
+      banner.innerHTML = t("app.banner_l3", "Trust Lv3 · ready to trade. Settlement account is used when a deal closes.");
     } else if (trust.can_list) {
       banner.hidden = false;
       banner.className = "trust-banner";
       banner.innerHTML =
-        "신원·판매자 공개 정보 완료. 성사 전 <button type='button' class='text-link' id='bannerSettle'>정산 계좌(Lv3)</button>를 등록해 주세요.";
+        t("app.banner_need_settle", "Identity & seller info done. Before closing, register a <button type='button' class='text-link' id='bannerSettle'>settlement account (Lv3)</button>.");
       setTimeout(() => {
         $("bannerSettle")?.addEventListener("click", () => setView("settle"));
       }, 0);
@@ -451,7 +460,7 @@
       banner.hidden = false;
       banner.className = "trust-banner is-warn";
       banner.innerHTML =
-        "이메일 미인증 · 매물 등록 불가. <button type='button' class='text-link' id='bannerVerify'>지금 인증</button>";
+        t("app.banner_need_verify", "Email not verified · listing blocked. <button type='button' class='text-link' id='bannerVerify'>Verify now</button>");
       setTimeout(() => {
         $("bannerVerify")?.addEventListener("click", () => {
           showDevCode();
@@ -462,7 +471,7 @@
       banner.hidden = false;
       banner.className = "trust-banner is-warn";
       banner.innerHTML =
-        "실명·휴대폰 미입력 · 매물 등록 불가. <button type='button' class='text-link' id='bannerProf'>프로필 완성</button>";
+        t("app.banner_need_prof", "Name/phone missing · listing blocked. <button type='button' class='text-link' id='bannerProf'>Complete profile</button>");
       setTimeout(() => {
         $("bannerProf")?.addEventListener("click", () => {
           fillProfileForm(api.getUser());
@@ -473,7 +482,7 @@
       banner.hidden = false;
       banner.className = "trust-banner is-warn";
       banner.innerHTML =
-        "판매자 공개 정보 미등록 · 매물 등록 불가. <button type='button' class='text-link' id='bannerSeller'>판매자 정보 등록</button>";
+        t("app.banner_need_seller", "Public seller info missing · listing blocked. <button type='button' class='text-link' id='bannerSeller'>Add seller info</button>");
       setTimeout(() => {
         $("bannerSeller")?.addEventListener("click", () => {
           fillSellerIdForm(api.getUser());
@@ -519,7 +528,7 @@
     const biz = $("sidType") && $("sidType").value === "business";
     if ($("sidBizFields")) $("sidBizFields").hidden = !biz;
     if ($("sidNameLabel"))
-      $("sidNameLabel").textContent = biz ? "상호 *" : "공개 성명 *";
+      $("sidNameLabel").textContent = biz ? t("app.sid_name_biz", "Business name *") : t("app.sid_name_ind", "Public name *");
     if ($("sidCeo")) $("sidCeo").required = !!biz;
     if ($("sidBizNo")) $("sidBizNo").required = !!biz;
     if ($("sidAddr")) $("sidAddr").required = !!biz;
@@ -537,7 +546,7 @@
       if (note) {
         note.hidden = false;
         note.textContent =
-          t("app.need_gates", "매물 등록에는 로그인 · 이메일 인증 · 실명·휴대폰 · 판매자 공개 정보가 필요합니다.");
+          t("app.need_gates", "Listing requires sign-in, email verification, name/phone, and public seller info.");
       }
       return false;
     }
@@ -684,24 +693,24 @@
       let badgeText = "LIVE";
       let badgeCls = "";
       if (ls === "pending") {
-        badgeText = t("app.badge_pending", "검토중");
+        badgeText = t("app.badge_pending", "In review");
         badgeCls = "is-wait";
       } else if (ls === "hold") {
-        badgeText = t("app.badge_hold", "보류");
+        badgeText = t("app.badge_hold", "On hold");
         badgeCls = "is-wait";
       } else if (ls === "rejected") {
-        badgeText = t("app.badge_rejected", "반려");
+        badgeText = t("app.badge_rejected", "Rejected");
         badgeCls = "is-bad";
       } else if (ls === "archived" || aStatus === "ended") {
-        badgeText = t("app.badge_archived", "라운드 종료");
+        badgeText = t("app.badge_archived", "Round ended");
         badgeCls = "is-wait";
       } else if (aStatus === "sold") {
-        badgeText = t("app.badge_sold", "성사");
+        badgeText = t("app.badge_sold", "Sold");
         badgeCls = "is-sold";
       } else if (bids > 0) {
-        badgeText = t("app.badge_live", "입찰 중");
+        badgeText = t("app.badge_live", "Bidding");
       } else if (ls === "approved" && aStatus === "live") {
-        badgeText = t("app.badge_open", "이번 라운드");
+        badgeText = t("app.badge_open", "This round");
       }
       badge.textContent = badgeText;
       if (badgeCls) badge.classList.add(badgeCls);
@@ -709,15 +718,15 @@
       const priceLabel = el.querySelector(".p-card-price span");
       const priceVal = el.querySelector(".p-card-price strong");
       if (aStatus === "sold") {
-        priceLabel.textContent = t("app.price_sold", "팔린 가격");
+        priceLabel.textContent = t("app.price_sold", "Sold for");
         priceVal.textContent =
           cur != null || p.sold_price != null
-            ? "₩" + Number(p.sold_price != null ? p.sold_price : cur).toLocaleString("ko-KR")
+            ? money(p.sold_price != null ? p.sold_price : cur)
             : "—";
       } else {
-        priceLabel.textContent = bids > 0 ? t("app.price_now", "지금 가격") : t("app.price_start", "시작 가격");
+        priceLabel.textContent = bids > 0 ? t("app.price_now", "Current") : t("app.price_start", "Start");
         priceVal.textContent =
-          cur != null ? "₩" + Number(cur).toLocaleString("ko-KR") : "—";
+          cur != null ? money(cur) : "—";
       }
 
       const qOff = p.q_credits_offered != null ? Number(p.q_credits_offered) : null;
@@ -725,14 +734,14 @@
       let qBit = "";
       if (qOff != null) {
         qBit =
-          t("app.q_included", "헬프티켓 {n}회", { n: qOff }) +
+          t("app.q_included", "Help tickets ×{n}", { n: qOff }) +
           (qPrice > 0
-            ? t("app.q_addon", " · 추가 ₩{p}/회", { p: qPrice.toLocaleString("ko-KR") })
+            ? t("app.q_addon", " · +{p}/session", { p: money(qPrice) })
             : "");
       }
       const exp =
         p.exposure_score != null
-          ? t("app.exposure", "가산 {n}", { n: p.exposure_score })
+          ? t("app.exposure", "Boost {n}", { n: p.exposure_score })
           : "";
       el.querySelector(".p-meta").textContent = [
         typeBit,
@@ -740,24 +749,22 @@
         qBit,
         exp,
         bids > 0
-          ? t("app.bids_n", "입찰자 {n}명", { n: bids })
-          : t("app.bids_none", "아직 입찰자 없음"),
+          ? t("app.bids_n", "{n} bidders", { n: bids })
+          : t("app.bids_none", "No bids yet"),
       ]
         .filter(Boolean)
         .join(" · ");
 
-      let liveText = t("app.live_wait", "첫 입찰 대기");
-      if (ls === "pending") liveText = t("app.live_pending", "검토 중 · 아직 비공개");
-      else if (ls === "hold") liveText = t("app.live_hold", "잠깐 보류");
-      else if (ls === "rejected") liveText = t("app.live_reject", "다시 고쳐 주세요");
+      let liveText = t("app.live_wait", "Waiting for first bid");
+      if (ls === "pending") liveText = t("app.live_pending", "In review · not public yet");
+      else if (ls === "hold") liveText = t("app.live_hold", "On hold");
+      else if (ls === "rejected") liveText = t("app.live_reject", "Please revise");
       else if (ls === "archived" || aStatus === "ended")
-        liveText = t(
-          "app.live_archived",
-          "이번 라운드 종료 · 목록에서 내려감 · 재등록 시 재검수·후순위"
+        liveText = t("app.live_archived", "Round ended · delisted · re-list needs re-review (lower priority)"
         );
-      else if (aStatus === "sold") liveText = t("app.live_sold", "팔렸어요");
+      else if (aStatus === "sold") liveText = t("app.live_sold", "Sold");
       else if (ls === "approved" && aStatus === "live")
-        liveText = bids > 0 ? t("app.badge_live", "입찰 중") : t("app.live_wait", "첫 입찰 대기");
+        liveText = bids > 0 ? t("app.badge_live", "Bidding") : t("app.live_wait", "Waiting for first bid");
       el.querySelector(".p-live").textContent = liveText;
 
       // Mine feed: re-list after round ends (re-review, back of queue)
@@ -768,7 +775,7 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "btn btn-sm btn-primary";
-        btn.textContent = t("app.btn_relist", "다시 올리기 (재검수)");
+        btn.textContent = t("app.btn_relist", "Re-list (re-review)");
         btn.addEventListener("click", function (ev) {
           ev.preventDefault();
           ev.stopPropagation();
@@ -788,16 +795,14 @@
   async function relistListing(p) {
     if (!p || !p.id) return;
     const ok = window.confirm(
-      t(
-        "app.relist_confirm",
-        "「{title}」을(를) 다시 올릴까요?\n\n· 운영 재검수가 필요합니다\n· 승인되면 이번 라운드 공개 목록 후순위(줄 맨 뒤)부터 시작합니다\n· 끌올·도배로 상위 고정되지 않습니다",
+      t("app.relist_confirm", "Re-list “{title}”?\n\n· Ops re-review required\n· After approval it starts at the end of this round’s public list\n· Not a paid pin or bump",
         { title: p.title || "" }
       )
     );
     if (!ok) return;
     try {
       const daysRaw = window.prompt(
-        t("app.relist_days_prompt", "경매 일수 (1–30, 기본 7)"),
+        t("app.relist_days_prompt", "Auction days (1–30, default 7)"),
         "7"
       );
       let days = parseInt(daysRaw == null || daysRaw === "" ? "7" : daysRaw, 10);
@@ -814,7 +819,7 @@
       });
       window.alert(
         (res && res.note) ||
-          t("app.relist_ok", "재등록 접수되었습니다. 재검수 후 공개됩니다.")
+          t("app.relist_ok", "Re-list submitted. It goes public after re-review.")
       );
       feed = "mine";
       loadProjects(true);
@@ -823,7 +828,7 @@
         (err && err.detail && (err.detail.message || err.detail)) ||
         (err && err.message) ||
         String(err);
-      window.alert(t("app.relist_fail", "재등록 실패") + "\n" + msg);
+      window.alert(t("app.relist_fail", "Re-list failed") + "\n" + msg);
     }
   }
 
@@ -853,12 +858,12 @@
       if (listOffset === 0) {
         empty.hidden = projects.length > 0;
         if (marketSearchQ && !projects.length) {
-          empty.textContent = t("app.search_empty", "검색 결과가 없습니다.");
+          empty.textContent = t("app.search_empty", "No search results.");
         } else {
           empty.textContent =
             feed === "mine"
-              ? t("app.empty_mine", "아직 올린 프로젝트가 없습니다.")
-              : t("app.empty_all", "아직 공개 매물이 없습니다. 첫 프로젝트를 올려 보세요.");
+              ? t("app.empty_mine", "You haven’t listed a project yet.")
+              : t("app.empty_all", "No public listings yet. Be the first to list.");
         }
       }
       appendProjectCards(projects);
@@ -866,7 +871,7 @@
       if (more) more.hidden = !data.has_more;
     } catch (e) {
       empty.hidden = false;
-      empty.textContent = e.message || t("app.load_fail", "불러오기에 실패했습니다.");
+      empty.textContent = e.message || t("app.load_fail", "Failed to load.");
       if (more) more.hidden = true;
     }
   }
@@ -887,7 +892,7 @@
       empty.hidden = inv.length > 0;
       if (!inv.length) {
         empty.textContent =
-          t("app.fees_empty", "아직 수수료 청구 내역이 없습니다. 매물이 성사되면 여기에 표시됩니다.");
+          t("app.fees_empty", "No fee invoices yet. Closed deals show up here.");
       }
       inv.forEach((f) => {
         const el = document.createElement("article");
@@ -903,25 +908,25 @@
           "<div class='p-card-top'><h3></h3><span class='p-card-badge'></span></div>" +
           "<div class='p-card-foot'><p class='p-card-price'><span></span><strong></strong></p>" +
           "<p class='p-meta'></p><p class='p-live'></p></div>";
-        el.querySelector("h3").textContent = f.project_title || "매물 #" + f.project_id;
+        el.querySelector("h3").textContent = f.project_title || t("app.listing_num", "Listing #{id}", { id: f.project_id });
         el.querySelector(".p-card-badge").textContent =
-          f.status === "paid" ? t("app.fee_paid", "확인됨") : t("app.fee_wait", "대기");
+          f.status === "paid" ? t("app.fee_paid", "Confirmed") : t("app.fee_wait", "Pending");
         if (f.status === "paid") el.querySelector(".p-card-badge").classList.add("is-sold");
         else el.querySelector(".p-card-badge").classList.add("is-wait");
-        el.querySelector(".p-card-price span").textContent = "수수료 " + pct + "%";
+        el.querySelector(".p-card-price span").textContent = t("app.fee_pct", "Fee {p}%", { p: pct });
         el.querySelector(".p-card-price strong").textContent =
-          "₩" + Number(f.fee_amount).toLocaleString("ko-KR");
+          money(f.fee_amount);
         el.querySelector(".p-meta").textContent =
-          "거래 ₩" + Number(f.deal_amount).toLocaleString("ko-KR");
+          t("app.deal_amount", "Deal {p}", { p: money(f.deal_amount) });
         el.querySelector(".p-live").textContent =
           f.status === "paid"
-            ? t("app.fee_paid_note", "입금 확인됨 (운영자)")
-            : t("app.fee_wait_note", "입금 대기 · 운영자 확인") + " · corelabs.studio@gmail.com";
+            ? t("app.fee_paid_note", "Payment confirmed (ops)")
+            : t("app.fee_wait_note", "Awaiting payment · ops review") + " · corelabs.studio@gmail.com";
         list.appendChild(el);
       });
     } catch (e) {
       empty.hidden = false;
-      empty.textContent = e.message || "불러오기 실패";
+      empty.textContent = e.message || t("app.load_fail_short", "Load failed");
     }
   }
 
@@ -948,23 +953,27 @@
         el.className = "p-card";
         el.style.minHeight = "auto";
         el.style.borderColor = "rgba(52,211,153,0.4)";
-        const ch = s.channel_label_ko || s.channel || "이벤트";
+        const ch = s.channel_label_en || s.channel_label_ko || s.channel || t("app.event", "Event");
         el.innerHTML =
-          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-live'>받기 가능</span></div>" +
+          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-live'>" +
+          t("app.coupon_ready", "Ready to claim") +
+          "</span></div>" +
           "<div class='p-card-foot'><p class='p-meta'></p>" +
           "<div class='form-actions' style='margin-top:0.5rem'>" +
-          "<button type='button' class='btn btn-primary btn-sm btn-claim'>쿠폰 받기</button></div></div>";
-        el.querySelector("h3").textContent = "이벤트 승인 · " + ch;
+          "<button type='button' class='btn btn-primary btn-sm btn-claim'>" +
+          t("app.coupon_claim", "Claim coupon") +
+          "</button></div></div>";
+        el.querySelector("h3").textContent = t("app.event_approved", "Event approved · {ch}", { ch: ch });
         el.querySelector(".p-meta").textContent =
-          "승인됨 · 버튼을 눌러 성사 수수료 8% 쿠폰을 등록하세요 (계정당 1회)";
+          t("app.coupon_claim_hint", "Approved · tap to register an 8% fee coupon (once per account)");
         el.querySelector(".btn-claim").addEventListener("click", async () => {
           try {
             if (api.claimPromoEvent) await api.claimPromoEvent(s.id);
             else await api.claimPromoInstagram(s.id);
-            alert("쿠폰이 등록되었습니다. 성사 시 수수료 8%가 적용됩니다.");
+            alert(t("app.coupon_claimed", "Coupon registered. 8% fee applies when a deal closes."));
             loadCoupons();
           } catch (ex) {
-            alert(ex.message || "받기 실패");
+            alert(ex.message || t("app.coupon_claim_fail", "Claim failed"));
           }
         });
         if (host) host.appendChild(el);
@@ -974,11 +983,13 @@
         const el = document.createElement("article");
         el.className = "p-card";
         el.style.minHeight = "auto";
-        const ch = s.channel_label_ko || s.channel || "이벤트";
+        const ch = s.channel_label_en || s.channel_label_ko || s.channel || t("app.event", "Event");
         el.innerHTML =
-          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-wait'>검토 중</span></div>" +
+          "<div class='p-card-top'><h3></h3><span class='p-card-badge is-wait'>" +
+          t("app.badge_pending", "In review") +
+          "</span></div>" +
           "<div class='p-card-foot'><p class='p-meta'></p></div>";
-        el.querySelector("h3").textContent = "이벤트 제출 대기 · " + ch;
+        el.querySelector("h3").textContent = t("app.event_pending", "Event pending · {ch}", { ch: ch });
         el.querySelector(".p-meta").textContent = s.post_url || "";
         if (host) host.appendChild(el);
       });
@@ -989,12 +1000,18 @@
         el.style.minHeight = "auto";
         el.style.borderColor = "rgba(212,160,23,0.35)";
         el.innerHTML =
-          "<div class='p-card-top'><h3>소문내고 8% 쿠폰</h3><span class='p-card-badge is-live'>이벤트</span></div>" +
+          "<div class='p-card-top'><h3>" +
+          t("app.event_promo_title", "Spread the word · 8% coupon") +
+          "</h3><span class='p-card-badge is-live'>" +
+          t("app.event", "Event") +
+          "</span></div>" +
           "<div class='p-card-foot'><p class='p-meta'></p>" +
           "<div class='form-actions' style='margin-top:0.5rem'>" +
-          "<a class='btn btn-ghost btn-sm' href='/promo/event.html'>이벤트 참여</a></div></div>";
+          "<a class='btn btn-ghost btn-sm' href='/promo/event.html'>" +
+          t("app.event_join", "Join event") +
+          "</a></div></div>";
         el.querySelector(".p-meta").textContent =
-          "X·인스타·블로그·커뮤니티 중 하나 · 계정당 1회 · 보상 동일";
+          t("app.event_promo_hint", "X, Instagram, blog, or community · once per account · same reward");
         if (host) host.appendChild(el);
       }
     } catch {
@@ -1011,44 +1028,53 @@
         const el = document.createElement("article");
         el.className = "p-card";
         el.style.minHeight = "auto";
-        const st = c.status === "available" ? "사용 가능" : "사용됨";
+        const st =
+          c.status === "available"
+            ? t("app.coupon_available", "Available")
+            : t("app.coupon_used", "Used");
         const origin =
-          c.origin === "gift" ? "선물 받음" : c.origin === "redeem" ? "코드 등록" : c.origin || "";
+          c.origin === "gift" ? t("app.coupon_gifted_in", "Gift received") : c.origin === "redeem" ? t("app.coupon_code_reg", "Code added") : c.origin || "";
         el.innerHTML =
           "<div class='p-card-top'><h3></h3><span class='p-card-badge'></span></div>" +
           "<div class='p-card-foot'><p class='p-meta'></p>" +
           (c.status === "available"
-            ? "<div class='form-actions' style='margin-top:0.5rem'><button type='button' class='btn btn-ghost btn-sm btn-gift'>선물하기</button></div>"
+            ? "<div class='form-actions' style='margin-top:0.5rem'><button type='button' class='btn btn-ghost btn-sm btn-gift'>" +
+              t("app.coupon_gift", "Gift") +
+              "</button></div>"
             : "") +
           "</div>";
-        el.querySelector("h3").textContent = c.label_ko || "수수료 쿠폰";
+        el.querySelector("h3").textContent =
+          c.label_en || c.label_ko || t("app.fee_coupon", "Fee coupon");
         const badge = el.querySelector(".p-card-badge");
         badge.textContent = st;
         if (c.status === "available") badge.classList.add("is-live");
         else badge.classList.add("is-sold");
         el.querySelector(".p-meta").textContent =
           origin +
-          (c.used_project_id ? " · 매물 #" + c.used_project_id : "") +
-          " · 유효기간 없음";
+          (c.used_project_id ? t("app.listing_ref", " · listing #{id}", { id: c.used_project_id }) : "") +
+          t("app.no_expiry", " · no expiry");
         const giftBtn = el.querySelector(".btn-gift");
         if (giftBtn) {
           giftBtn.addEventListener("click", async () => {
             const to = prompt(
-              "받는 사람 계정 아이디 또는 가입 이메일을 입력하세요.\n(예: 12 또는 friend@email.com)"
+              t(
+                "app.gift_prompt_to",
+                "Enter recipient account ID or email.\n(e.g. 12 or friend@email.com)"
+              )
             );
             if (!to || !to.trim()) return;
             if (
               !confirm(
-                "이 쿠폰을 선물할까요? 받는 사람 계정에 바로 등록되며 되돌릴 수 없습니다. (사이트는 쿠폰 매매를 중개하지 않습니다.)"
+                t("app.gift_confirm", "Gift this coupon? It moves to their account immediately and can’t be undone. (We don’t broker coupon sales.)")
               )
             )
               return;
             try {
               await api.giftCoupon(c.id, to.trim());
-              alert("선물했습니다. 받는 사람 계정에 자동 등록되었습니다.");
+              alert(t("app.gift_ok", "Gifted. It’s on their account now."));
               loadCoupons();
             } catch (ex) {
-              alert(ex.message || "선물 실패");
+              alert(ex.message || t("app.gift_fail", "Gift failed"));
             }
           });
         }
@@ -1057,7 +1083,7 @@
     } catch (e) {
       if (empty) {
         empty.hidden = false;
-        empty.textContent = e.message || "불러오기 실패";
+        empty.textContent = e.message || t("app.load_fail_short", "Load failed");
       }
     }
   }
@@ -1086,8 +1112,8 @@
       input.type = show ? "text" : "password";
       btn.classList.toggle("is-on", show);
       btn.setAttribute("aria-pressed", show ? "true" : "false");
-      btn.setAttribute("aria-label", show ? t("app.pw_hide", "비밀번호 숨기기") : t("app.pw_show", "비밀번호 보기"));
-      btn.title = show ? t("app.pw_hide", "비밀번호 숨기기") : t("app.pw_show", "비밀번호 보기");
+      btn.setAttribute("aria-label", show ? t("app.pw_hide", "Hide password") : t("app.pw_show", "Show password"));
+      btn.title = show ? t("app.pw_hide", "Hide password") : t("app.pw_show", "Show password");
     });
   });
 
@@ -1107,7 +1133,7 @@
       } catch (e2) {}
       await afterAuthSuccess();
     } catch (err) {
-      showErr($("loginErr"), err.message || t("app.login_fail", "로그인에 실패했습니다."));
+      showErr($("loginErr"), err.message || t("app.login_fail", "Sign-in failed."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -1159,7 +1185,7 @@
         if (!list.length) {
           showErr(
             $("findIdErr"),
-            data.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다.")
+            data.message || t("app.find_id_not_found", "No matching account found.")
           );
         } else {
           $("findIdEmail").textContent = list.join("\n");
@@ -1169,20 +1195,18 @@
           showErr(
             $("findIdErr"),
             data.message ||
-              t(
-                "app.find_id_ok",
-                "가입 이메일 힌트를 찾았습니다. 일부만 표시됩니다."
+              t("app.find_id_ok", "Found an email hint for this account. Only part of it is shown."
               )
           );
         }
       } else {
         showErr(
           $("findIdErr"),
-          data.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다.")
+          data.message || t("app.find_id_not_found", "No matching account found.")
         );
       }
     } catch (err) {
-      showErr($("findIdErr"), err.message || t("app.find_id_not_found", "일치하는 계정을 찾지 못했습니다."));
+      showErr($("findIdErr"), err.message || t("app.find_id_not_found", "No matching account found."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -1196,7 +1220,7 @@
       $("loginEmail").value = "";
       $("loginEmail").focus();
       $("loginEmail").placeholder =
-        t("app.find_id_login_hint", "힌트를 보고 전체 이메일을 입력");
+        t("app.find_id_login_hint", "Use the hint to enter your full email");
     }
   });
   $("btnResetBack")?.addEventListener("click", () => {
@@ -1221,8 +1245,8 @@
         $("resetCode").value = data.dev_email_code;
         if ($("resetDevLabel")) {
           $("resetDevLabel").textContent = data.email_sent
-            ? t("app.reset_code_also", "화면에 표시된 코드 (메일에도 발송)")
-            : t("app.reset_code_screen", "재설정 코드 (이 화면에서 입력)");
+            ? t("app.reset_code_also", "On-screen code (also emailed)")
+            : t("app.reset_code_screen", "Reset code (enter here)");
         }
         if ($("resetDevNote") && (data.warning || data.dev_note)) {
           $("resetDevNote").hidden = false;
@@ -1231,22 +1255,20 @@
       }
       let msg = "";
       if (data.email_sent) {
-        msg = t("app.reset_sent_mail", "메일을 보냈습니다. 받은편지함·스팸함을 확인해 주세요.");
+        msg = t("app.reset_sent_mail", "Email sent. Check inbox and spam.");
       } else if (data.dev_email_code) {
         msg =
           data.warning ||
-          t("app.reset_sent_screen", "메일 대신 화면에 코드를 표시했습니다. 아래 코드를 입력하세요.");
+          t("app.reset_sent_screen", "Code shown on screen instead of email. Enter it below.");
       } else if (data.warning) {
         msg = data.warning;
       } else {
-        msg = t(
-          "app.reset_sent",
-          "등록된 이메일이면 재설정 코드를 발급했습니다. 메일이 오지 않으면 스팸함을 확인하거나, 가입 이메일을 다시 확인해 주세요."
+        msg = t("app.reset_sent", "If that email is registered, a reset code was issued. Check spam or confirm the address."
         );
       }
       showErr($("resetErr"), msg);
     } catch (err) {
-      showErr($("resetErr"), err.message || "실패");
+      showErr($("resetErr"), err.message || t("app.fail", "Failed"));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -1260,11 +1282,11 @@
         $("resetCode").value.trim(),
         $("resetPass").value
       );
-      showErr($("resetErr"), t("app.reset_ok", "변경 완료. 로그인해 주세요."));
+      showErr($("resetErr"), t("app.reset_ok", "Password updated. Please sign in."));
       $("formReset").hidden = true;
       $("formLogin").hidden = false;
     } catch (err) {
-      showErr($("resetErr"), err.message || "실패");
+      showErr($("resetErr"), err.message || t("app.fail", "Failed"));
     }
   });
   $("btnNotif")?.addEventListener("click", () => loadNotifications());
@@ -1287,7 +1309,7 @@
     }
     const code = $("couponCode") ? $("couponCode").value.trim() : "";
     if (!code) {
-      showErr(err, "코드를 입력해 주세요.");
+      showErr(err, t("app.code_required", "Enter the code."));
       return;
     }
     try {
@@ -1295,12 +1317,14 @@
       if (ok) {
         ok.hidden = false;
         ok.textContent =
-          "등록 완료: " + ((res.coupon && res.coupon.label_ko) || "쿠폰");
+          t("app.coupon_reg_ok", "Registered: {code}", {
+            code: (res.coupon && (res.coupon.label_en || res.coupon.label_ko)) || t("app.coupon", "Coupon"),
+          });
       }
       if ($("couponCode")) $("couponCode").value = "";
       loadCoupons();
     } catch (ex) {
-      showErr(err, ex.message || "등록 실패");
+      showErr(err, ex.message || t("app.save_fail", "Save failed"));
     }
   });
   $("btnBackFees")?.addEventListener("click", () => loadProjects(true));
@@ -1320,7 +1344,7 @@
     showErr($("regErr"));
     const terms = $("regTerms");
     if (terms && !terms.checked) {
-      showErr($("regErr"), t("app.reg_terms_err", "이용약관 및 개인정보처리방침에 동의해 주세요."));
+      showErr($("regErr"), t("app.reg_terms_err", "Please accept the Terms and Privacy Policy."));
       return;
     }
     const pass = $("regPass") ? $("regPass").value : "";
@@ -1328,7 +1352,7 @@
     const birth = $("regBirth") ? $("regBirth").value.trim() : "";
     const ageOk = $("regAge14") ? $("regAge14").checked : false;
     if (!birth) {
-      showErr($("regErr"), t("app.reg_birth_err", "생년월일을 입력해 주세요."));
+      showErr($("regErr"), t("app.reg_birth_err", "Enter your date of birth."));
       if ($("regBirth")) $("regBirth").focus();
       return;
     }
@@ -1343,23 +1367,23 @@
       const m = today.getMonth() + 1 - bm;
       if (m < 0 || (m === 0 && today.getDate() < bd)) age -= 1;
       if (age < 14) {
-        showErr($("regErr"), t("app.reg_under14", "만 14세 미만은 WakeAgain에 가입할 수 없습니다."));
+        showErr($("regErr"), t("app.reg_under14", "You must be 14+ to join WakeAgain."));
         return;
       }
     } catch (_) {
-      showErr($("regErr"), t("app.reg_birth_bad", "생년월일을 다시 확인해 주세요."));
+      showErr($("regErr"), t("app.reg_birth_bad", "Please check your date of birth."));
       return;
     }
     if (!ageOk) {
-      showErr($("regErr"), t("app.reg_age_check", "만 14세 이상임을 확인해 주세요."));
+      showErr($("regErr"), t("app.reg_age_check", "Please confirm you are 14 or older."));
       return;
     }
     if (pass.length < 8) {
-      showErr($("regErr"), t("app.reg_pass_len", "비밀번호는 8자 이상이어야 합니다."));
+      showErr($("regErr"), t("app.reg_pass_len", "Password must be at least 8 characters."));
       return;
     }
     if (pass !== pass2) {
-      showErr($("regErr"), t("app.reg_pass_match", "비밀번호가 서로 다릅니다. 다시 입력해 주세요."));
+      showErr($("regErr"), t("app.reg_pass_match", "Passwords don’t match. Try again."));
       if ($("regPass2")) $("regPass2").focus();
       return;
     }
@@ -1376,7 +1400,7 @@
       pendingAfterAuth = pendingAfterAuth || "create";
       await afterAuthSuccess();
     } catch (err) {
-      showErr($("regErr"), err.message || t("app.reg_fail", "가입에 실패했습니다."));
+      showErr($("regErr"), err.message || t("app.reg_fail", "Sign-up failed."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -1399,7 +1423,7 @@
         await afterAuthSuccess();
       }
     } catch (err) {
-      showErr($("verifyErr"), err.message || t("app.verify_fail", "인증 실패"));
+      showErr($("verifyErr"), err.message || t("app.verify_fail", "Verification failed"));
     }
   });
 
@@ -1410,14 +1434,14 @@
       showDevCode(data && data.warning);
       let msg =
         (data && data.message) ||
-        t("app.verify_resent", "새 코드를 발급했습니다.");
-      if (data && data.email_sent) msg += " · 메일 발송됨 (스팸함 확인)";
-      else if (api.getDevCode()) msg += " · 화면에 코드 표시";
+        t("app.verify_resent", "A new code was issued.");
+      if (data && data.email_sent) msg += t("app.reg_ok_mail", " · email sent (check spam)");
+      else if (api.getDevCode()) msg += t("app.reg_ok_screen", " · code shown on screen");
       else if (data && data.warning) msg += " · " + data.warning;
       // use non-error tone: clear then set as status on verifyErr with soft style
       showErr($("verifyErr"), msg);
     } catch (err) {
-      showErr($("verifyErr"), err.message || "재발송 실패");
+      showErr($("verifyErr"), err.message || t("app.resend_fail", "Resend failed"));
     }
   });
 
@@ -1428,7 +1452,7 @@
       await api.updateProfile({
         real_name: $("profReal").value.trim(),
         phone: $("profPhone").value.trim(),
-        // Always both — no purpose picker (was confusing empty UI after "판매+구매")
+        // Always both — no purpose picker (was confusing empty UI after t("app.role_both", "Seller+buyer"))
         role: "both",
         display_name: $("profDisplay").value.trim(),
       });
@@ -1452,7 +1476,7 @@
         showDevCode();
         setView("verify");
       }
-      showErr($("profErr"), err.message || t("app.save_fail", "저장 실패"));
+      showErr($("profErr"), err.message || t("app.save_fail", "Save failed"));
     }
   });
 
@@ -1489,7 +1513,7 @@
         await loadProjects();
       }
     } catch (err) {
-      showErr($("sidErr"), err.message || t("app.save_fail", "저장 실패"));
+      showErr($("sidErr"), err.message || t("app.save_fail", "Save failed"));
     }
   });
 
@@ -1505,7 +1529,7 @@
       });
       await loadProjects();
     } catch (err) {
-      showErr($("setErr"), err.message || t("app.save_fail", "저장 실패"));
+      showErr($("setErr"), err.message || t("app.save_fail", "Save failed"));
     }
   });
 
@@ -1554,7 +1578,7 @@
         const row = document.createElement("div");
         row.className = "project-card";
         row.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem 0.9rem";
-        const name = (b.display_name || "사용자").replace(/</g, "&lt;");
+        const name = (b.display_name || t("app.user", "User")).replace(/</g, "&lt;");
         const meta = (b.email_masked || "").replace(/</g, "&lt;");
         row.innerHTML =
           "<div><strong>" +
@@ -1567,7 +1591,7 @@
           '">' +
           (window.WakeAgainI18n && window.WakeAgainI18n.t
             ? window.WakeAgainI18n.t("app.blocks_unblock")
-            : "해제") +
+            : t("app.unblock", "Unblock")) +
           "</button>";
         list.appendChild(row);
       });
@@ -1582,7 +1606,7 @@
           } catch (ex) {
             if (errEl) {
               errEl.hidden = false;
-              errEl.textContent = ex.message || "해제 실패";
+              errEl.textContent = ex.message || t("app.unblock_fail", "Unblock failed");
             }
             btn.disabled = false;
           }
@@ -1591,7 +1615,7 @@
     } catch (ex) {
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = ex.message || "차단 목록을 불러오지 못했습니다.";
+        errEl.textContent = ex.message || t("app.block_load_fail", "Couldn’t load block list.");
       }
       if (empty) empty.hidden = false;
     }
@@ -1603,7 +1627,7 @@
     sel.innerHTML = "";
     const emptyOpt = document.createElement("option");
     emptyOpt.value = "";
-    emptyOpt.textContent = "사용 가능한 쿠폰 불러오는 중…";
+    emptyOpt.textContent = t("app.coupon_loading", "Loading available coupons…");
     sel.appendChild(emptyOpt);
     try {
       const data = await api.myCoupons();
@@ -1612,7 +1636,7 @@
       if (!items.length) {
         const o = document.createElement("option");
         o.value = "";
-        o.textContent = "선물할 수 있는 쿠폰이 없습니다";
+        o.textContent = t("app.coupon_none_gift", "No coupons to gift");
         sel.appendChild(o);
         sel.disabled = true;
         return;
@@ -1620,22 +1644,26 @@
       sel.disabled = false;
       const ph = document.createElement("option");
       ph.value = "";
-      ph.textContent = "쿠폰 선택…";
+      ph.textContent = t("app.coupon_pick", "Choose a coupon…");
       sel.appendChild(ph);
       items.forEach((c) => {
         const o = document.createElement("option");
         o.value = String(c.id);
         const origin =
-          c.origin === "gift" ? "선물 받음" : c.origin === "redeem" ? "코드 등록" : c.origin || "";
+          c.origin === "gift" ? t("app.coupon_gifted_in", "Gift received") : c.origin === "redeem" ? t("app.coupon_code_reg", "Code added") : c.origin || "";
         o.textContent =
-          (c.label_ko || "수수료 쿠폰") + (origin ? " · " + origin : "") + " (#" + c.id + ")";
+          (c.label_en || c.label_ko || t("app.fee_coupon", "Fee coupon")) +
+          (origin ? " · " + origin : "") +
+          " (#" +
+          c.id +
+          ")";
         sel.appendChild(o);
       });
     } catch (e) {
       sel.innerHTML = "";
       const o = document.createElement("option");
       o.value = "";
-      o.textContent = e.message || "쿠폰 목록 실패";
+      o.textContent = e.message || t("app.coupon_list_fail", "Couldn’t load coupons");
       sel.appendChild(o);
       sel.disabled = true;
     }
@@ -1679,20 +1707,20 @@
     if (!couponId) {
       if (err) {
         err.hidden = false;
-        err.textContent = "보낼 쿠폰을 선택해 주세요.";
+        err.textContent = t("app.coupon_pick_need", "Select a coupon to send.");
       }
       return;
     }
     if (!to) {
       if (err) {
         err.hidden = false;
-        err.textContent = "받는 사람 계정 아이디 또는 이메일을 입력해 주세요.";
+        err.textContent = t("app.gift_to_need", "Enter recipient account ID or email.");
       }
       return;
     }
     if (
       !confirm(
-        "이 쿠폰을 선물할까요? 받는 사람 계정에 바로 등록되며 되돌릴 수 없습니다. (사이트는 쿠폰 매매를 중개하지 않습니다.)"
+        t("app.gift_confirm", "Gift this coupon? It moves to their account immediately and can’t be undone. (We don’t broker coupon sales.)")
       )
     ) {
       return;
@@ -1705,14 +1733,14 @@
         ok.hidden = false;
         ok.textContent =
           (res && res.message_ko) ||
-          "선물 완료. 받는 사람 계정에 자동 등록되었습니다.";
+          t("app.gift_done", "Gifted. Auto-registered on their account.");
       }
       if ($("giftToRecipient")) $("giftToRecipient").value = "";
       await loadGiftCouponSelect();
     } catch (ex) {
       if (err) {
         err.hidden = false;
-        err.textContent = ex.message || "선물 실패";
+        err.textContent = ex.message || t("app.gift_fail", "Gift failed");
       }
     } finally {
       if (btn) btn.disabled = false;
@@ -1836,10 +1864,24 @@
       "<p class='sc-when'>" +
       (band.when || band.blurb || "") +
       "</p>" +
-      (yes ? "<div class='sc-label'>이럴 때 선택</div><ul>" + yes + "</ul>" : "") +
-      (no ? "<div class='sc-label'>아닐 때</div><ul>" + no + "</ul>" : "") +
+      (yes
+        ? "<div class='sc-label'>" +
+          t("app.status_pick_when", "Choose when") +
+          "</div><ul>" +
+          yes +
+          "</ul>"
+        : "") +
+      (no
+        ? "<div class='sc-label'>" +
+          t("app.status_not_when", "Not when") +
+          "</div><ul>" +
+          no +
+          "</ul>"
+        : "") +
       (band.demo_expect
-        ? "<div class='sc-label'>데모</div><p class='sc-when' style='margin:0'>" +
+        ? "<div class='sc-label'>" +
+          t("app.status_demo", "Demo") +
+          "</div><p class='sc-when' style='margin:0'>" +
           band.demo_expect +
           "</p>"
         : "");
@@ -1924,8 +1966,7 @@
     if (!band) {
       if (guide)
         guide.textContent = en
-          ? "Start bid range depends on product status."
-          : "상태에 따라 시작 입찰가 구간이 달라집니다.";
+          t("app.status_price_note", "Start-price band depends on status.");
       if (criteria) criteria.hidden = true;
       return;
     }
@@ -1934,33 +1975,33 @@
       const moneyFn =
         window.WakeAgainI18n && window.WakeAgainI18n.formatMoney
           ? (n) => window.WakeAgainI18n.formatMoney(n)
-          : (n) => "₩" + Number(n).toLocaleString(en ? "en-US" : "ko-KR");
+          : (n) => "$" + Math.round(Number(n) / 1350).toLocaleString("en-US");
       guide.innerHTML =
         "<strong>" +
         bandLabel(band) +
         "</strong> — " +
         bandBlurb(band) +
         "<br/>" +
-        (en ? "Suggested " : "권장 ") +
+        t("app.price_rec", "Suggested ") +
         "<strong>" +
         moneyFn(band.suggest) +
         "</strong> · " +
-        (en ? "min " : "최저 ") +
+        t("app.price_min", "Min ") +
         moneyFn(band.min) +
         " · " +
-        (en ? "step " : "호가 단위 ") +
+        t("app.price_step", "Bid step ") +
         moneyFn(band.min_increment);
     }
     if (hint) {
       const moneyFn =
         window.WakeAgainI18n && window.WakeAgainI18n.formatMoney
           ? (n) => window.WakeAgainI18n.formatMoney(n)
-          : (n) => "₩" + Number(n).toLocaleString(en ? "en-US" : "ko-KR");
+          : (n) => "$" + Math.round(Number(n) / 1350).toLocaleString("en-US");
       hint.textContent =
         (band.examples || "") +
-        (en ? " · soft cap ~ " : " · 권장 상단 약 ") +
-        moneyFn(band.max_soft) +
-        (en ? " (warn only if over)" : " (초과 시 경고만)");
+        t("app.price_cap_warn", " · soft cap ~{p} (warn only if higher)", {
+          p: moneyFn(band.max_soft),
+        });
     }
     if (price) {
       price.min = band.min;
@@ -2003,7 +2044,7 @@
     if (!text) return;
     if (
       ta.value.trim() &&
-      !confirm("지금 적어 둔 설명을 예시 문구로 바꿀까요?")
+      !confirm(t("app.fill_example_confirm", "Replace your draft with example copy?"))
     ) {
       return;
     }
@@ -2037,13 +2078,10 @@
     const grid = $("demoShotGrid");
     const hint = $("demoShotHint");
     if (hint) {
-      hint.textContent =
-        demoImageUrls.length +
-        " / " +
-        DEMO_MAX +
-        "장 · 최소 " +
-        DEMO_MIN +
-        "장";
+      hint.textContent = t("app.shots_count", "{n} shots · min {min}", {
+        n: demoImageUrls.length + " / " + DEMO_MAX,
+        min: DEMO_MIN,
+      });
     }
     if (!grid) return;
     if (!demoImageUrls.length) {
@@ -2059,7 +2097,7 @@
           i +
           '"><img src="' +
           src.replace(/"/g, "") +
-          '" alt="스크린샷 ' +
+          '" alt="Screenshot ' +
           (i + 1) +
           '" loading="lazy" /><button type="button" class="rm" data-rm="' +
           i +
@@ -2082,7 +2120,7 @@
   function resizeImageFile(file) {
     return new Promise(function (resolve, reject) {
       if (!file || !file.type || file.type.indexOf("image/") !== 0) {
-        reject(new Error("이미지 파일만 올릴 수 있습니다."));
+        reject(new Error(t("app.img_type", "Images only.")));
         return;
       }
       const url = URL.createObjectURL(file);
@@ -2093,7 +2131,7 @@
           let h = img.naturalHeight || img.height;
           if (!w || !h) {
             URL.revokeObjectURL(url);
-            reject(new Error("이미지를 읽을 수 없습니다."));
+            reject(new Error(t("app.img_read_fail", "Couldn’t read image.")));
             return;
           }
           const scale = Math.min(1, DEMO_MAX_EDGE / Math.max(w, h));
@@ -2108,7 +2146,7 @@
           canvas.toBlob(
             function (blob) {
               if (!blob) {
-                reject(new Error("이미지 변환 실패"));
+                reject(new Error(t("app.img_convert_fail", "Image convert failed")));
                 return;
               }
               resolve(blob);
@@ -2123,7 +2161,7 @@
       };
       img.onerror = function () {
         URL.revokeObjectURL(url);
-        reject(new Error("이미지를 열 수 없습니다."));
+        reject(new Error(t("app.img_open_fail", "Couldn’t open image.")));
       };
       img.src = url;
     });
@@ -2135,7 +2173,7 @@
     if (!files.length) return;
     const room = DEMO_MAX - demoImageUrls.length;
     if (room <= 0) {
-      setDemoShotErr("스크린샷은 최대 " + DEMO_MAX + "장까지입니다.");
+      setDemoShotErr(t("app.shots_max", "Up to {n} screenshots.", { n: DEMO_MAX }));
       return;
     }
     const slice = files.slice(0, room);
@@ -2153,7 +2191,7 @@
           renderDemoShots();
         }
       } catch (err) {
-        setDemoShotErr(err.message || "업로드 실패");
+        setDemoShotErr(err.message || t("app.upload_fail", "Upload failed"));
       }
     }
     if (files.length > room) {
@@ -2163,7 +2201,7 @@
 
   $("btnDemoPick")?.addEventListener("click", function () {
     if (!api.getUser()) {
-      setDemoShotErr("로그인 후 스크린샷을 올릴 수 있습니다.");
+      setDemoShotErr(t("app.shots_need_login", "Sign in to upload screenshots."));
       setView("login");
       return;
     }
@@ -2217,7 +2255,7 @@
       return false;
     }
     if (listingKeywords.length >= KW_MAX) {
-      showErr($("projErr"), t("app.kw_full", "키워드는 최대 5개입니다."));
+      showErr($("projErr"), t("app.kw_full", "Up to 5 keywords."));
       return false;
     }
     listingKeywords.push(k);
@@ -2266,7 +2304,7 @@
     const title = $("pTitle") ? $("pTitle").value.trim() : "";
     const one = $("pOne") ? $("pOne").value.trim() : "";
     if (!title && !one) {
-      showErr($("projErr"), t("app.kw_need_title", "제목 또는 한 줄 소개를 먼저 적어 주세요."));
+      showErr($("projErr"), t("app.kw_need_title", "Add a title or one-liner first."));
       if ($("pTitle")) $("pTitle").focus();
       return;
     }
@@ -2291,11 +2329,11 @@
         note.hidden = false;
         note.textContent =
           data.source === "ai"
-            ? t("app.kw_source_ai", "AI 추천 · 수정·삭제 가능")
-            : t("app.kw_source_auto", "자동 추천 · 수정·삭제 가능");
+            ? t("app.kw_source_ai", "AI suggestions · edit anytime")
+            : t("app.kw_source_auto", "Auto suggestions · edit anytime");
       }
     } catch (err) {
-      showErr($("projErr"), err.message || t("app.load_fail", "불러오기에 실패했습니다."));
+      showErr($("projErr"), err.message || t("app.load_fail", "Failed to load."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -2368,40 +2406,37 @@
     const licenseNote = $("pLicense") ? $("pLicense").value.trim() : "";
     const one = $("pOne") ? $("pOne").value.trim() : "";
     if (one.length < 10) {
-      showErr($("projErr"), "한 줄 소개를 짧게라도 적어 주세요. (최소 10자 · 뭐 하는 제품인지)");
+      showErr($("projErr"), t("app.err_oneliner", "Add a short one-liner (min 10 chars · what it does)."));
       if ($("pOne")) $("pOne").focus();
       return;
     }
     const features = parseFeatureLines($("pFeatures") ? $("pFeatures").value : "");
     if (features.length < 2) {
-      showErr(
-        $("projErr"),
-        "「하는 일」을 최소 2줄, 각 8자 이상 적어 주세요. (더 쓰면 목록 가산 ↑)"
-      );
+      showErr($("projErr"), t("app.err_features", "List at least 2 “what it does” lines (8+ chars each). More lines boost ranking."));
       if ($("pFeatures")) $("pFeatures").focus();
       return;
     }
     const audience = $("pAudience") ? $("pAudience").value.trim() : "";
     if (audience.length < 4) {
-      showErr($("projErr"), "「누구를 위한 제품」을 짧게라도 적어 주세요. (예: 사장님)");
+      showErr($("projErr"), t("app.err_audience", "Who is this for? (e.g. founders)"));
       if ($("pAudience")) $("pAudience").focus();
       return;
     }
     const worksNow = $("pWorksNow") ? $("pWorksNow").value.trim() : "";
     if (worksNow.length < 10) {
-      showErr($("projErr"), "「지금 되는 것」을 10자 이상 적어 주세요.");
+      showErr($("projErr"), t("app.err_works", "Describe what works now (10+ chars)."));
       if ($("pWorksNow")) $("pWorksNow").focus();
       return;
     }
     const limits = $("pLimits") ? $("pLimits").value.trim() : "";
     if (limits.length < 5) {
-      showErr($("projErr"), "「한계」를 짧게라도 적어 주세요. (예: 결제 없음)");
+      showErr($("projErr"), t("app.err_limits", "Describe limits (e.g. no payments yet)."));
       if ($("pLimits")) $("pLimits").focus();
       return;
     }
     const story = $("pStory") ? $("pStory").value.trim() : "";
     if (story.length < 10) {
-      showErr($("projErr"), "「왜 팔나요?」를 10자 이상 적어 주세요.");
+      showErr($("projErr"), t("app.err_story", "Why are you selling? (10+ chars)"));
       if ($("pStory")) $("pStory").focus();
       return;
     }
@@ -2409,9 +2444,11 @@
     if (demoImageUrls.length < DEMO_MIN) {
       showErr(
         $("projErr"),
-        "실행 화면 스크린샷을 최소 " +
-          DEMO_MIN +
-          "장 이상 올려 주세요. (서로 다른 화면이면 더 좋습니다)"
+        t(
+          "app.err_shots_min",
+          "Upload at least {n} live screenshots (different screens preferred).",
+          { n: DEMO_MIN }
+        )
       );
       const box = document.querySelector(".demo-shot-box");
       if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2419,10 +2456,7 @@
     }
     const shotAck = $("pAttestShots");
     if (demoImageUrls.length && shotAck && !shotAck.checked) {
-      showErr(
-        $("projErr"),
-        "스크린샷이 실제 실행 화면과 같다는 확인에 체크해 주세요. 허위·과장 화면은 이용 제한 대상입니다."
-      );
+      showErr($("projErr"), t("app.err_shots_attest", "Confirm screenshots match the real product. Fake/mocked UI can lead to suspension."));
       if (shotAck) {
         shotAck.focus();
         shotAck.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2431,53 +2465,53 @@
     }
     const acquisition = selectedAcquisition();
     if (!acquisition) {
-      showErr($("projErr"), "매물 취득 경로(직접 제작 / 재판매 / 기타)를 선택해 주세요.");
+      showErr($("projErr"), t("app.err_acquisition", "Choose how you got the asset (built / resale / other)."));
       return;
     }
     const acqNote = $("pAcqNote") ? $("pAcqNote").value.trim() : "";
     if ((acquisition === "resale" || acquisition === "other") && acqNote.length < 10) {
-      showErr($("projErr"), "재판매·기타인 경우 어떻게 취득했는지 10자 이상 적어 주세요.");
+      showErr($("projErr"), t("app.err_acquisition_note", "For resale/other, explain how you obtained it (10+ chars)."));
       if ($("pAcqNote")) $("pAcqNote").focus();
       return;
     }
     const assets = selectedAssets();
     if (!assets.length) {
-      showErr($("projErr"), "포함 자산(코드·디자인·도메인 등)을 하나 이상 선택해 주세요.");
+      showErr($("projErr"), t("app.err_assets", "Select at least one included asset (code, design, domain…)."));
       return;
     }
     if (works && !works.checked) {
-      showErr($("projErr"), "「지금 되는 것을 직접 확인」에 체크해 주세요.");
+      showErr($("projErr"), t("app.err_attest_works", "Confirm you verified what works today."));
       works.focus();
       return;
     }
     if (featAck && !featAck.checked) {
-      showErr($("projErr"), "「하는 일·되는 것·안 되는 것이 사실」에 체크해 주세요.");
+      showErr($("projErr"), t("app.err_attest_features", "Confirm features / works / limits are accurate."));
       featAck.focus();
       return;
     }
     if (!licenseNote || licenseNote.length < 2) {
-      showErr($("projErr"), "라이선스 또는 양도 조건을 적어 주세요. (예: MIT)");
+      showErr($("projErr"), t("app.err_license", "Add license or transfer terms (e.g. MIT)."));
       if ($("pLicense")) $("pLicense").focus();
       return;
     }
     if (licAck && !licAck.checked) {
-      showErr($("projErr"), "「라이선스·양도 조건을 기재했다」에 체크해 주세요.");
+      showErr($("projErr"), t("app.err_attest_license", "Confirm you stated license/transfer terms."));
       licAck.focus();
       return;
     }
     if (rights && !rights.checked) {
-      showErr($("projErr"), "「팔 권한이 있는 자산」에 체크해 주세요.");
+      showErr($("projErr"), t("app.err_attest_rights", "Confirm you have rights to sell."));
       rights.focus();
       return;
     }
     if (transfer && !transfer.checked) {
-      showErr($("projErr"), "「이전 절차를 끝까지 진행할 수 있다」에 체크해 주세요.");
+      showErr($("projErr"), t("app.err_attest_transfer", "Confirm you can complete the handoff."));
       transfer.focus();
       return;
     }
     const feeAck = $("pFeeAck");
     if (feeAck && !feeAck.checked) {
-      showErr($("projErr"), "등록 전 판매자 수수료 10% 고지에 동의해 주세요.");
+      showErr($("projErr"), t("app.err_fee_ack", "Accept the 10% seller fee notice before listing."));
       feeAck.focus();
       return;
     }
@@ -2487,50 +2521,56 @@
     if (band && (start == null || start < band.min)) {
       showErr(
         $("projErr"),
-        (band.label || st) +
-          " 최저 시작가는 ₩" +
-          Number(band.min).toLocaleString("ko-KR") +
-          " 입니다."
+        t("app.err_start_min", "{label}: minimum start is {p}.", {
+          label: band.label || st,
+          p: money(band.min),
+        })
       );
       return;
     }
     const ptype = fieldValue("pProductType");
     if (!ptype) {
-      showErr($("projErr"), "제품 형태(웹사이트·앱·데스크톱 등)를 눌러 선택해 주세요.");
+      showErr($("projErr"), t("app.err_product_type", "Pick a product type (website, app, desktop…)."));
       const chips = document.getElementById("pProductTypeChips");
       if (chips) chips.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     if (!st) {
-      showErr($("projErr"), "「지금 얼마나 만들었나요?」상태를 눌러 선택해 주세요.");
+      showErr($("projErr"), t("app.err_status", "Pick build status (“how far is it?”)."));
       const chips = document.getElementById("pStatusChips");
       if (chips) chips.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const PRICE_MAX = 100000000;
     if (start != null && start > PRICE_MAX) {
-      showErr($("projErr"), "시작가는 최대 ₩100,000,000 까지입니다.");
+      showErr(
+        $("projErr"),
+        t("app.err_start_max", "Start price max is {p}.", { p: money(PRICE_MAX) })
+      );
       $("pPrice").focus();
       return;
     }
     const buyNowRaw = $("pBuyNow") && $("pBuyNow").value ? Number($("pBuyNow").value) : null;
     if (buyNowRaw != null) {
       if (buyNowRaw > PRICE_MAX) {
-        showErr($("projErr"), "즉시구매가는 최대 ₩100,000,000 까지입니다. 쓰지 않으려면 비워 두세요.");
+        showErr(
+          $("projErr"),
+          t("app.err_buy_max", "Buy-now max is {p}. Leave blank to skip.", { p: money(PRICE_MAX) })
+        );
         if ($("pBuyNow")) $("pBuyNow").focus();
         return;
       }
       if (start != null && buyNowRaw < start) {
         showErr(
           $("projErr"),
-          "즉시구매가는 시작가(₩" + Number(start).toLocaleString("ko-KR") + ") 이상이어야 합니다. 쓰지 않으려면 비워 두세요."
+          t("app.err_buy_vs_start", "Buy-now must be ≥ start ({p}). Leave blank to skip.", { p: money(start) })
         );
         if ($("pBuyNow")) $("pBuyNow").focus();
         return;
       }
     }
     if (!listingKeywords.length) {
-      showErr($("projErr"), t("app.kw_need", "검색 키워드를 1~5개 넣어 주세요."));
+      showErr($("projErr"), t("app.kw_need", "Add 1–5 search keywords."));
       if ($("pKeywordInput")) $("pKeywordInput").focus();
       return;
     }
@@ -2546,7 +2586,7 @@
       acquisition,
       acquisition_note: acqNote,
       story,
-      demo: demo || (demoImageUrls.length ? "스크린샷 " + demoImageUrls.length + "장" : ""),
+      demo: demo || (demoImageUrls.length ? t("app.demo_shots", "Screenshots ×{n}", { n: demoImageUrls.length }) : ""),
       demo_images: demoImageUrls.slice(0, DEMO_MAX),
       assets,
       keywords: listingKeywords.slice(0, KW_MAX),
@@ -2573,9 +2613,14 @@
     if (buyNowRaw != null && buyNowRaw > 0) {
       payload.price_buy_now = buyNowRaw;
     }
-    // 추가 판매 시 하한 5,000 (서버도 clamp)
+    // Extra help tickets: 0 = not sold, else min 5,000 KRW ledger units (server clamps)
     if (payload.q_credit_unit_price > 0 && payload.q_credit_unit_price < 5000) {
-      showErr($("projErr"), "추가 헬프티켓 1회 가격은 0(판매 안 함) 또는 5,000원 이상으로 적어 주세요.");
+      showErr(
+        $("projErr"),
+        t("app.err_q_price", "Extra help-ticket price must be 0 (not sold) or at least {p}.",
+          { p: money(5000) }
+        )
+      );
       if ($("pQUnitPrice")) $("pQUnitPrice").focus();
       return;
     }
@@ -2617,7 +2662,7 @@
         fillProfileForm(api.getUser());
         setView("profile");
       }
-      showErr($("projErr"), err.message || "등록에 실패했습니다.");
+      showErr($("projErr"), err.message || t("app.create_fail", "Listing failed."));
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -2762,18 +2807,18 @@
       const birth = $("ageBirth") ? $("ageBirth").value.trim() : "";
       const ok14 = $("ageConfirm14") && $("ageConfirm14").checked;
       if (!birth) {
-        showErr($("ageErr"), t("app.reg_birth_err", "생년월일을 입력해 주세요."));
+        showErr($("ageErr"), t("app.reg_birth_err", "Enter your date of birth."));
         return;
       }
       if (!ok14) {
-        showErr($("ageErr"), t("app.reg_age_check", "만 14세 이상임을 확인해 주세요."));
+        showErr($("ageErr"), t("app.reg_age_check", "Please confirm you are 14 or older."));
         return;
       }
       try {
         await api.setBirthDate(birth, true);
         await afterAuthSuccess();
       } catch (err) {
-        showErr($("ageErr"), err.message || t("app.save_fail", "저장 실패"));
+        showErr($("ageErr"), err.message || t("app.save_fail", "Save failed"));
       }
     });
   }
@@ -2806,7 +2851,7 @@
           localStorage.removeItem("wa_token");
           localStorage.removeItem("wa_user");
           setView("auth");
-          showErr($("loginErr"), (e && e.message) || "소셜 로그인 세션 실패");
+          showErr($("loginErr"), (e && e.message) || t("app.oauth_fail", "Social sign-in session failed"));
           await loadSocialButtons();
           return;
         }

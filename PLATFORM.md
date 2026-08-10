@@ -10,7 +10,7 @@
 
 ## 글로벌 (기반만 · 확장 보류)
 
-- UI **KO / EN** · 표시 통화 KRW/USD/EUR (정산은 KRW)
+- UI **EN default / KO opt-in** · 표시 통화 USD default (KO 브라우저→KRW seed) · KRW/EUR 선택 가능 (정산 ledger는 KRW)
 - 설정: `GET /api/v1/config` → `global` · [`docs/GLOBAL.md`](./docs/GLOBAL.md)
 - 다국가 PG·현지 약관·별도 해외 사이트 = **KR 성사 이후**
 

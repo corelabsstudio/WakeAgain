@@ -541,6 +541,25 @@ def init_db() -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id);
             CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id);
+
+            -- Public site visitor counters (footer display)
+            CREATE TABLE IF NOT EXISTS site_counters (
+              key TEXT PRIMARY KEY,
+              value INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS site_daily (
+              day TEXT NOT NULL PRIMARY KEY,
+              page_views INTEGER NOT NULL DEFAULT 0,
+              visitors INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS site_visitor_seen (
+              visitor_key TEXT PRIMARY KEY,
+              first_seen TEXT NOT NULL,
+              last_seen TEXT NOT NULL,
+              last_day TEXT
+            );
+            INSERT OR IGNORE INTO site_counters(key, value) VALUES ('page_views', 0);
+            INSERT OR IGNORE INTO site_counters(key, value) VALUES ('visitors', 0);
             """
         )
         # Backfill current price from start for existing rows
@@ -578,6 +597,103 @@ def init_db() -> None:
             )
             """
         )
+
+
+def _kst_today() -> str:
+    """YYYY-MM-DD in Asia/Seoul (UTC+9, no DST)."""
+    from datetime import datetime, timedelta, timezone
+
+    kst = timezone(timedelta(hours=9))
+    return datetime.now(kst).strftime("%Y-%m-%d")
+
+
+def get_site_visit_stats(conn: sqlite3.Connection) -> dict:
+    """Return cumulative + today visitor/pageview counters."""
+    def _c(key: str) -> int:
+        row = conn.execute(
+            "SELECT value FROM site_counters WHERE key = ?", (key,)
+        ).fetchone()
+        return int(row["value"] if row else 0)
+
+    day = _kst_today()
+    daily = conn.execute(
+        "SELECT page_views, visitors FROM site_daily WHERE day = ?", (day,)
+    ).fetchone()
+    return {
+        "page_views": _c("page_views"),
+        "visitors": _c("visitors"),
+        "today_page_views": int(daily["page_views"] if daily else 0),
+        "today_visitors": int(daily["visitors"] if daily else 0),
+        "day": day,
+    }
+
+
+def record_site_visit(
+    conn: sqlite3.Connection,
+    visitor_key: str,
+    *,
+    count_page_view: bool = True,
+) -> dict:
+    """Record a visit. Unique visitor once per key; today unique once per key per KST day.
+
+    count_page_view: when False, only returns stats (read path).
+    """
+    from datetime import datetime, timezone
+
+    key = (visitor_key or "").strip()[:64]
+    if not key:
+        raise ValueError("visitor_key required")
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    day = _kst_today()
+
+    if count_page_view:
+        conn.execute(
+            "INSERT INTO site_counters(key, value) VALUES ('page_views', 1) "
+            "ON CONFLICT(key) DO UPDATE SET value = value + 1"
+        )
+        conn.execute(
+            "INSERT INTO site_daily(day, page_views, visitors) VALUES (?, 1, 0) "
+            "ON CONFLICT(day) DO UPDATE SET page_views = page_views + 1",
+            (day,),
+        )
+
+        seen = conn.execute(
+            "SELECT visitor_key, last_day FROM site_visitor_seen WHERE visitor_key = ?",
+            (key,),
+        ).fetchone()
+        if not seen:
+            conn.execute(
+                "INSERT INTO site_visitor_seen(visitor_key, first_seen, last_seen, last_day) "
+                "VALUES (?, ?, ?, ?)",
+                (key, now, now, day),
+            )
+            conn.execute(
+                "INSERT INTO site_counters(key, value) VALUES ('visitors', 1) "
+                "ON CONFLICT(key) DO UPDATE SET value = value + 1"
+            )
+            conn.execute(
+                "INSERT INTO site_daily(day, page_views, visitors) VALUES (?, 0, 1) "
+                "ON CONFLICT(day) DO UPDATE SET visitors = visitors + 1",
+                (day,),
+            )
+        else:
+            conn.execute(
+                "UPDATE site_visitor_seen SET last_seen = ? WHERE visitor_key = ?",
+                (now, key),
+            )
+            if (seen["last_day"] or "") != day:
+                conn.execute(
+                    "UPDATE site_visitor_seen SET last_day = ? WHERE visitor_key = ?",
+                    (day, key),
+                )
+                conn.execute(
+                    "INSERT INTO site_daily(day, page_views, visitors) VALUES (?, 0, 1) "
+                    "ON CONFLICT(day) DO UPDATE SET visitors = visitors + 1",
+                    (day,),
+                )
+
+    return get_site_visit_stats(conn)
 
 
 def normalize_phone(raw: str) -> str:

@@ -845,6 +845,13 @@ def public_stats():
         went_live["count"] = went_live_raw
     # Before reveal: do not leak the real count in public stats
 
+    visits = {"page_views": 0, "visitors": 0, "today_page_views": 0, "today_visitors": 0, "day": ""}
+    try:
+        with database.db() as conn:
+            visits = database.get_site_visit_stats(conn)
+    except Exception:
+        pass
+
     return {
         "ok": True,
         "mode": "live_counts",
@@ -857,13 +864,55 @@ def public_stats():
         "users_email_verified": int(verified),
         "listing_fee_krw": 0,
         "went_live": went_live,
+        "visitors": int(visits.get("visitors") or 0),
+        "page_views": int(visits.get("page_views") or 0),
+        "today_visitors": int(visits.get("today_visitors") or 0),
+        "today_page_views": int(visits.get("today_page_views") or 0),
+        "visit_day": visits.get("day") or "",
         "labels": {
             "projects": "등록 매물",
             "interests": "관심 등록",
             "went_live": "다시 세상으로 나간 프로젝트",
             "listing_fee": "등록 비용",
+            "visitors": "방문자",
+            "page_views": "페이지뷰",
         },
     }
+
+
+class VisitIn(BaseModel):
+    visitor_key: str = Field(min_length=8, max_length=64)
+
+
+_BOT_UA = re.compile(
+    r"bot|crawl|spider|slurp|facebookexternalhit|preview|headless|wget|curl|python-requests|httpclient",
+    re.I,
+)
+
+
+@router.post("/visit")
+def record_visit(body: VisitIn, request: Request):
+    """Increment public visitor counters (footer). Dedupes unique visitors by key."""
+    ua = (request.headers.get("user-agent") or "").strip()
+    if ua and _BOT_UA.search(ua):
+        with database.db() as conn:
+            stats = database.get_site_visit_stats(conn)
+        return {"ok": True, "bot": True, **stats}
+
+    key = re.sub(r"[^A-Za-z0-9._-]", "", body.visitor_key.strip())[:64]
+    if len(key) < 8:
+        raise HTTPException(status_code=400, detail="invalid visitor_key")
+
+    with database.db() as conn:
+        stats = database.record_site_visit(conn, key, count_page_view=True)
+    return {"ok": True, "bot": False, **stats}
+
+
+@router.get("/visit")
+def get_visit_stats():
+    with database.db() as conn:
+        stats = database.get_site_visit_stats(conn)
+    return {"ok": True, **stats}
 
 
 # --- auth ---
