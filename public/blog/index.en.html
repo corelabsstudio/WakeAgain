@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>블로그 · 사이드 프로젝트 두 번째 기회 | WakeAgain</title>
-  <meta name="description" content="방치된 사이드 프로젝트·MVP 출구 이야기. 카드로 고르고 읽기." />
+  <title>Blog · A Second Chance for Side Projects | WakeAgain</title>
+  <meta name="description" content="Stories on abandoned side projects, MVP exits, and giving paused code a second life. Pick a card and read." />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://wakeagain.com/blog/" />
+  <link rel="canonical" href="https://wakeagain.com/blog/index.en.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://wakeagain.com/blog/" />
-  <meta property="og:title" content="WakeAgain 블로그" />
-  <meta property="og:description" content="잠든 프로젝트에 두 번째 기회." />
+  <meta property="og:url" content="https://wakeagain.com/blog/index.en.html" />
+  <meta property="og:title" content="WakeAgain Blog" />
+  <meta property="og:description" content="A second chance for paused projects." />
   <meta property="og:image" content="https://wakeagain.com/assets/og-image.jpg" />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -73,8 +73,8 @@
           var nav = String(navigator.language || "").toLowerCase();
           lang = nav.indexOf("ko") === 0 ? "ko" : "en";
         }
-        if (lang === "en") {
-          location.replace("/blog/index.en.html" + location.search + location.hash);
+        if (lang === "ko") {
+          location.replace("/blog/" + location.search + location.hash);
           return;
         }
         document.documentElement.lang = lang;
@@ -88,79 +88,79 @@
     <div class="wa-blog-nav-inner" style="max-width:980px">
       <a class="wa-blog-brand" href="/">Wake<span class="brand-again">Again</span></a>
       <nav class="wa-blog-links">
-        <a href="/blog/">블로그</a>
-        <a href="/guide/">이용안내</a>
-        <a href="/app/">마켓</a>
+        <a href="/blog/index.en.html">Blog</a>
+        <a href="/guide/">Guide</a>
+        <a href="/app/">Marketplace</a>
       </nav>
     </div>
   </header>
 
   <main class="wa-blog-wrap">
-    <h1>블로그</h1>
-    <p class="wa-meta">잠든 프로젝트 · 출구 · 두 번째 기회</p>
+    <h1>Blog</h1>
+    <p class="wa-meta">Paused projects · exits · second chances</p>
 
-    <section class="blog-visual-grid" aria-label="글 목록">
-      <a class="blog-visual-card" href="/blog/zero-revenue-side-project-exit.html">
+    <section class="blog-visual-grid" aria-label="Post list">
+      <a class="blog-visual-card" href="/blog/zero-revenue-side-project-exit.en.html">
         <div class="thumb t1" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">수익 0 · 출구</span>
-          <h2>수익 $0 사이드 프로젝트, 방치 전 처분</h2>
-          <p>삭제 전 한 번 시장에 물어보기</p>
+          <span class="tag">$0 revenue · exit</span>
+          <h2>A $0-revenue side project — sell it before you delete it</h2>
+          <p>Test the market once before hitting delete</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/side-project-built-before-users.html">
+      <a class="blog-visual-card" href="/blog/side-project-built-before-users.en.html">
         <div class="thumb t2" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">검증 공백</span>
-          <h2>유저 검증 전에 만든 프로젝트</h2>
-          <p>빌드만 빠르고 유저 없을 때</p>
+          <span class="tag">Validation gap</span>
+          <h2>A project built before you validated users</h2>
+          <p>When the build was fast but nobody's using it</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/mvp-sell-before-delete.html">
+      <a class="blog-visual-card" href="/blog/mvp-sell-before-delete.en.html">
         <div class="thumb t3" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">수익화 출구</span>
-          <h2>닫기 전에 넘기는 법</h2>
-          <p>유저 없는 MVP 출구</p>
+          <span class="tag">Monetization exit</span>
+          <h2>How to hand it off before you close it</h2>
+          <p>An exit for an MVP with no users</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/side-project-second-chance.html">
+      <a class="blog-visual-card" href="/blog/side-project-second-chance.en.html">
         <div class="thumb t4" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">두 번째 기회</span>
-          <h2>유저 0·수익 0, 그냥 썩히기보다</h2>
-          <p>방치된 코드의 출구</p>
+          <span class="tag">Second chance</span>
+          <h2>Zero users, zero revenue — better than letting it rot</h2>
+          <p>An exit for abandoned code</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/vibe-coding-abandoned-mvp.html">
+      <a class="blog-visual-card" href="/blog/vibe-coding-abandoned-mvp.en.html">
         <div class="thumb t5" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">바이브 코딩</span>
-          <h2>주말에 뽑은 MVP, 방치 전에</h2>
-          <p>AI 프로토타입 출구</p>
+          <span class="tag">Vibe coding</span>
+          <h2>A weekend MVP — before it gets abandoned</h2>
+          <p>An exit for AI-built prototypes</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/failed-side-project-pricing.html">
+      <a class="blog-visual-card" href="/blog/failed-side-project-pricing.en.html">
         <div class="thumb t6" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">가격</span>
-          <h2>실패한 프로젝트, 얼마에 올릴까</h2>
-          <p>시작가 잡는 기준</p>
+          <span class="tag">Pricing</span>
+          <h2>A failed project — what should you list it for?</h2>
+          <p>How to set your starting price</p>
         </div>
       </a>
-      <a class="blog-visual-card" href="/blog/buy-mvp-not-build.html">
+      <a class="blog-visual-card" href="/blog/buy-mvp-not-build.en.html">
         <div class="thumb t7" aria-hidden="true"></div>
         <div class="body">
-          <span class="tag">구매</span>
-          <h2>처음부터 만들기 vs MVP 사기</h2>
-          <p>시간을 사는 선택</p>
+          <span class="tag">Buying</span>
+          <h2>Building from scratch vs. buying an MVP</h2>
+          <p>Choosing to buy time</p>
         </div>
       </a>
     </section>
 
     <div class="gv-cta" style="margin-top:1.75rem">
-      <a class="btn btn-primary" href="/app/#new">프로젝트 올리기</a>
-      <a class="btn btn-ghost" href="/app/#list">마켓</a>
+      <a class="btn btn-primary" href="/app/#new">List a project</a>
+      <a class="btn btn-ghost" href="/app/#list">Marketplace</a>
     </div>
 
     <footer class="wa-blog-foot" style="margin-top:2rem">

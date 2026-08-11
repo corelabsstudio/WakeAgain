@@ -45,6 +45,10 @@
           var nav = String(navigator.language || "").toLowerCase();
           lang = nav.indexOf("ko") === 0 ? "ko" : "en";
         }
+        if (lang === "en") {
+          location.replace("/blog/zero-revenue-side-project-exit.en.html" + location.search + location.hash);
+          return;
+        }
         document.documentElement.lang = lang;
         document.documentElement.setAttribute("data-wa-lang", lang);
       } catch (e) {}
