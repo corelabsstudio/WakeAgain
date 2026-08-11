@@ -3,7 +3,7 @@
 이 파일을 읽은 뒤 **현재 디스크·git·라이브**를 재검증하고 작업한다.  
 옛 트랜스크립트·Grok 메모리는 자동 동기화되지 않는다. 아래 문서가 정본이다.
 
-**마지막 문서 갱신:** 2026-08-11 (PortOne V2 결제 연동 착수 — 카드 실제 테스트 완료, PayPal PG 계약 심사 대기)
+**마지막 문서 갱신:** 2026-08-11 (EN/KO 양방향 잔여 누락 정리 + select 팝업 다크모드 버그 + SW 캐시 버전 규칙 + 구글 로그인 라이브 + 해외 홍보(레딧·X) 1차 실행)
 
 ## 필수 문서 (순서)
 
@@ -37,6 +37,38 @@
 - **환경변수 추가 후 주의:** Railway는 변수 추가만으로 자동 재시작되지 않을 수 있음 — Variables 탭에 "Apply N change / Deploy" 대기 패널이 뜨면 **Deploy 버튼을 직접 눌러야** 반영됨 (2026-08-11에 XAI_API_KEY 추가 때 실제로 이 단계를 놓쳐서 한동안 반영 안 됐던 적 있음).
 
 ## 최근 배포 이력 (요약 · 최신 우선)
+
+### 2026-08-11 · select 다크모드 팝업 버그 + SW 캐시버전 규칙 + data-i18n-html 페어링 버그 (`ac0a802`…`2d65b88`)
+
+**배경:** 사용자가 국가 선택 화면 스크린샷을 보내서 "국가 선택 화면 이상하게 나와" — 밝은 배경에 흐린 글씨로 거의 안 보이는 네이티브 `<select>` 드롭다운 버그. 고치는 과정에서 배포해도 반영이 안 되는 걸 보고 서비스워커 캐시 문제를 발견 → 고치고 나니 이번엔 반대로 "한글로 바꿨는데 영어로 보이는 부분이 있어"라는 리포트를 받아 `data-i18n-html` 속성 오용 버그를 발견.
+
+| 커밋 | 내용 |
+|------|------|
+| `ac0a802` | `styles.css`의 `:root`에 `color-scheme: dark` 선언 — 이걸로 될 줄 알았으나 `getComputedStyle`로 확인해보니 값은 제대로 적용되는데도 팝업이 여전히 안 보임 |
+| `98772bc` | **실제 수정**: `select, select option { background: var(--bg-elev); color: var(--text); }` 명시 규칙 추가. `color-scheme: dark`만으론 이 환경에서 네이티브 select 팝업 대비가 안 고쳐짐 — 옵션에 직접 배경·글자색을 줘야 함 |
+| `cd569e8` | **`public/sw.js`의 `CACHE` 상수 버전 범프** — 위 CSS 수정을 배포했는데도 라이브에서 계속 예전 화면이 보여서 원인 추적한 결과, 서비스워커가 `sw.js` 파일 자체의 바이트가 안 바뀌면 "업데이트 없음"으로 판단하고 예전 캐시를 계속 서빙하는 걸 발견. 서버 응답(`curl`)·`Cache-Control` 헤더는 전부 정상이었음 — **PWA 서비스워커가 원인일 때는 서버 쪽 확인만으론 못 잡는다**는 걸 실측으로 확인. 이후 "배포 전 최소 확인"에 상시 체크리스트 항목으로 등재(아래 참고) |
+| `077e64c` | **`data-i18n-html` 속성 오용 버그(61개 요소)**: `i18n.js`의 `apply()`를 다시 읽어보니 `data-i18n-html`은 `data-i18n="key"`와 **반드시 짝을 이루는 boolean modifier**(`hasAttribute()`로만 읽음)인데, 이번 세션에 새로 만든 가이드 페이지 9개 전부에서 `data-i18n-html="key"`처럼 **값 자체에 키를 넣는 잘못된 패턴**으로 작성했었음 → 셀렉터가 `[data-i18n]`이라 이 요소들은 언어 설정과 무관하게 항상 원본 영어 텍스트만 보임(한글 모드에서도 영어). sed로 `data-i18n-html="X"` → `data-i18n="X" data-i18n-html` 일괄 치환 |
+| `11f0415` | 위 일괄치환 후에도 남아있던 2개(`guide.dispute.ht_2`, `role_dont_v`) — 번역값엔 `<strong>` 태그가 있는데 `data-i18n-html` modifier 자체가 아예 안 붙어 있어서 태그가 문자 그대로 노출되던 것 수정 |
+| `92cb14b` | **사업자정보 자체가 번역 바인딩이 아예 없던 버그**: `guide/contact.html` 표에서 라벨(회사명/대표자/주소)은 `data-i18n`이 붙어 있었는데 **값 칸**(CoreLabs/Hyeonsu Ho/로마자 주소)은 정적 하드코딩이라 한국어로 바꿔도 로마자 표기 그대로 나왔음 → 원본 한글 값으로 신규 키 추가해서 바인딩 |
+| `2d65b88` | `92cb14b`이 `i18n-messages.js` 캐시버전을 `i18n5`로 올렸는데 `contact.html` 자기 자신만 그 버전을 참조하게 고치고 나머지 19개 참조 파일은 워킹트리에 미커밋 상태로 남아있던 걸 뒤늦게 발견 → 전부 커밋 (`project.html`은 세션 시작 전부터 있던 별개 미커밋 작업과 섞여 있어 의도적으로 계속 제외) |
+
+**교훈 (일반화):** ①네이티브 폼 컨트롤 다크모드는 `color-scheme` 선언만으로 안 끝날 수 있다 — 실제 렌더링을 봐야 함. ②PWA가 있는 사이트는 정적 자산을 고칠 때마다 `sw.js`의 `CACHE` 문자열도 반드시 같이 올려야 한다(서버 확인만으론 이 문제를 못 잡음). ③`data-i18n-html`은 `data-i18n`의 modifier이지 독립 키 홀더가 아니다 — 새 페이지 작성 시 반드시 짝으로 쓸 것.
+
+### 2026-08-11 · 구글 로그인 라이브 + 해외 홍보(레딧·X) 1차 실행 (코드 커밋 없음 — 설정·운영 작업)
+
+**구글 OAuth 로그인:** `wakeagain/oauth.py`에 Google/GitHub/Kakao OAuth 구현 자체는 이미 다 있었음(env var 존재 여부로만 켜지는 구조) — 이번 세션은 **새 코드가 아니라 순수 설정 작업**이었음.
+- Google Cloud Console에서 OAuth 동의화면(외부·지원이메일) + OAuth 클라이언트 ID(웹 앱, 승인된 자바스크립트 원본 `https://wakeagain.com`, 승인된 리디렉션 URI `https://wakeagain.com/api/v1/auth/oauth/google/callback`) 발급
+- Railway `wakeagain` 서비스에 `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`OAUTH_PUBLIC_BASE=https://wakeagain.com` 등록 → Deploy 버튼 눌러 반영
+- 라이브에서 실제로 "Continue with Google" 버튼 노출 확인 + 구글 동의화면까지 정상 도달하는 것 브라우저로 직접 검증함(자격정보 입력·동의 클릭 자체는 안전규칙상 사용자가 직접 진행)
+- **Client Secret은 Railway에만 존재 — 다시 화면에 안 뜸(구글 콘솔도 마스킹).** 분실 시 재발급 필요
+- Google Cloud Console 접근 시 IAM 권한 문제로 두 번 막혔음(기본 브라우저 계정 → `hhs12619@gmail.com`으로 전환 후 해결) — 프로젝트 소유 계정 헷갈리지 말 것
+
+**레딧/X 해외 홍보 1차 실행:** 사용자가 제공한 홍보 전략(r/SideProject·r/indiehackers·r/SaaS + X `#buildinpublic`)을 실행.
+- r/SideProject 1차 시도: `wakeagain.com` 링크 포함 게시 → **Reddit 스팸 필터에 의해 자동 삭제됨**("Sorry, this post was removed by Reddit's filters", 낮은 계정 활동+외부링크가 원인으로 추정)
+- r/SideProject 2차 시도: 링크 없이 "구글에 WakeAgain 검색하면 바로 나온다"는 문구로 재작성해서 게시 — **최종 생존 여부는 세션 종료 시점까지 미확인**(사용자가 직접 게시 버튼 누름, "아니 내가 게시했어")
+- X(Twitter) 포스트: 사용자 제공 템플릿 기반, PayPal 관련 문구는 **의도적으로 제외**(PG 계약 미승인 상태라 "PayPal 연동됨"을 광고하면 안 된다고 판단 — 사용자도 동의) — 사용자가 직접 게시 완료
+- r/indiehackers, r/SaaS, Hacker News(Show HN)는 **이번 세션에 미착수** — 전략만 확정, 실제 초안·게시는 다음 세션 과제
+- 게시 판단 기준: URL 직접 링크는 스팸필터에 걸리므로, 앞으로도 첫 문단에 링크를 넣지 말고 "검색하면 나온다" 유도 문구 권장(구글에 WakeAgain 검색 시 자사 사이트가 최상단인 것 확인됨)
 
 ### 2026-08-11 · 블로그 전체 영문판 신규 (`ce028cb`, `5503944`)
 
@@ -182,6 +214,7 @@
 
 `.env.example` 기반. 주요: `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `XAI_API_KEY`(매물 양방향 번역 — **2026-08-11부터 Railway에 실제 값 등록됨**, 그 전엔 문서에만 있고 비어있어서 번역 기능이 항상 조용히 실패했음), `WA_DEFAULT_LOCALE`, `WA_DEFAULT_DISPLAY_CURRENCY`, `ADMIN_SECRET`.
 - **PortOne 결제** (2026-08-11 추가, 로컬 `.env`에만 있음 — Railway 등록 여부 확인 필요): `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`(카드), `PORTONE_API_SECRET`, `PORTONE_CHANNEL_KEY_PAYPAL`(PG 계약 심사 대기), `PORTONE_PAYPAL_MERCHANT_ID`, `PORTONE_WEBHOOK_SECRET`(아직 미발급)
+- **구글 로그인** (2026-08-11 신규, **Railway에 실제 등록 완료·라이브 동작 확인됨**): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`(Railway에만 존재, 재확인 불가 — 분실 시 Google Cloud Console에서 재발급), `OAUTH_PUBLIC_BASE=https://wakeagain.com`. 코드(`wakeagain/oauth.py`)는 이전부터 있었고 이 세션은 설정만 함
 - 환경변수 값 확인은 Railway 대시보드 Variables 탭에서만 가능(CLI 미로그인) — **값 실화 여부를 절대 추측하지 말 것**, 문서에 이름이 있다고 실제로 설정돼있다는 뜻 아님(2026-08-11에 실제로 이 착각으로 반나절 헤맴).
 
 - ⚠️ 프로덕션 `ADMIN_SECRET` 기본값 금지.
@@ -234,7 +267,8 @@ python _verify_handover.py
 
 - **PayPal 실결제 검증** — 코드는 다 짜서 배포됨(`07fca5f`), **PG사 계약 심사 대기 중**(2026-08-11 신청, 영업일 3일). 승인 오면 실제 결제 한 번 끝까지 돌려서 `loadPaymentUI` 콜백·STC 필드 확인해야 함
 - **웹훅 시크릿** 미설정 (`PORTONE_WEBHOOK_SECRET`) — 서버 검증(`/payments/verify`)은 이미 동작하므로 급하지 않음, 콘솔에서 발급만 하면 됨
-- **홍보 실행** (Reddit r/SideProject·r/indiehackers, X #buildinpublic, HN Show HN) — 전략은 논의 완료, 카피 초안·실제 게시는 미착수
+- **홍보 실행** — r/SideProject 2회 시도(1차 링크 포함→스팸필터 삭제됨, 2차 링크 제거 버전→최종 생존 여부 미확인) + X 게시 완료(PayPal 문구 제외). **r/indiehackers·r/SaaS·HN Show HN은 미착수** — 다음 세션 과제
+- **SNS 로그인**: 구글은 라이브·검증 완료(env var는 위 "환경 설정" 참고). GitHub/Kakao는 `oauth.py`에 구현은 있으나 이번 세션엔 미설정·미검증
 - 통신판매중개 **행정 신고 번호** (게시 대기) · Play 내부테스트
 - 백엔드 하드코딩 한국어 문자열 — **2026-08-11 대부분 해소**(`70eddaa`): 매물 상태 픽커(`pricing.py` _en 필드) + 실제 UI에서 렌더되는 에러/안내 메시지 약 90개(`public/js/api.js`의 `translateBackendText` 딕셔너리, `parseErrorDetail`에서 자동 적용) + 신용등급·바이어랭크 배지(`listings.js`). **db.py/api.py 자체의 한글 리터럴은 그대로 남아있음** — 프론트 번역 딕셔너리로 커버했을 뿐, 문자열이 바뀌면 딕셔너리도 같이 고쳐야 함. `database.notify()`가 만드는 인앱 알림 문구(새 입찰·경매 시작 등)는 여전히 한국어 고정 — 미해결. 관리자(`/admin/*`) 화면은 의도적으로 한국어 유지(운영자 본인만 봄).
 - `/app` SPA 46개 키 KO 누락 (쿠폰·선물·정산계좌·프로필 — 지금은 한국 사용자가 봐도 영어)
@@ -250,9 +284,9 @@ python _verify_handover.py
 | 백엔드 한국어 문자열 정리 | `db.py`/`api.py` 하드코딩 약 595개 감사부터 (2026-08-11 발견, 미착수) |
 | 앱 SPA 한국어 복구 | `i18n-messages.js` EN-only 46개 키에 KO 대응 추가 |
 | PortOne 연동 / 페이팔 이어서 | 카드 결제는 완료·검증됨(`07fca5f`). 페이팔은 PG 계약 심사 상태부터 확인(`hhs1261@naver.com` 메일함) → 승인됐으면 `wakeagain/payments.py`의 `build_paypal_payment_request` 실결제 테스트부터. pre-PG 우회 금지 (`PLATFORM.md` §B) |
-| SNS 로그인 연결 | `docs/OAUTH_*` |
+| SNS 로그인 연결 | 구글은 라이브·완료(env var는 위 참고). GitHub/Kakao는 `oauth.py` 구현만 있고 콘솔·env 설정 안 함 — 그것부터 |
 | PG | 결제 링크·웹훅→`paid` 만 · pre-PG 우회 금지 |
-| 홍보 시작하자 / 매물 채우기 홍보 | Reddit(r/SideProject·r/indiehackers·r/buildinpublic)·X(#buildinpublic)·HN(Show HN) 전략은 확정됨(이번 세션 논의) — 카피 초안부터 시작 |
+| 홍보 시작하자 / 매물 채우기 홍보 | r/SideProject 2회 시도 완료(결과 미확인)·X 게시 완료. **r/indiehackers·r/SaaS·HN Show HN부터** 이어서 시작 |
 
 ## 배포 전 최소 확인
 
