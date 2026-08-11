@@ -265,6 +265,8 @@ git status   # docs/marketing/logs/* 등 untracked 제외
 `master` push 후 Railway 상태·`https://wakeagain.com/health` (플랜 유효 시).  
 EN 검수: `/?lang=en` 히어로·카드 Starting bid·`title_en` · `/?lang=ko` 한국어 유지.
 
+⚠️ **`public/*.html`·`public/js/*.js`·`public/styles.css` 등 정적 자산을 바꾼 배포라면 `public/sw.js`의 `CACHE` 상수도 매번 같이 올릴 것** (2026-08-11 발견). 서비스워커(PWA 오프라인 캐시)는 **`sw.js` 파일 자체의 바이트가 안 바뀌면 브라우저가 "업데이트 없음"으로 판단**하고 예전 캐시를 계속 씀 — 서버는 최신인데 이미 한 번 방문한 사용자 브라우저엔 예전 화면이 계속 보이는 원인이 됨(오늘 색상 스킴 수정이 이것 때문에 한동안 반영 안 된 것처럼 보였음). `pwa-install.js`의 자동 업데이트 로직(`reg.update()` + `SKIP_WAITING` + `controllerchange` 리로드)은 이미 잘 짜여 있어서 **`CACHE` 문자열만 바꾸면 나머지는 자동**임 — 그래서 이 한 줄만 잊지 않으면 됨.
+
 ## 언어
 
 사용자와 **한국어**로 소통한다.
