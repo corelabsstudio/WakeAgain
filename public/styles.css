@@ -428,6 +428,8 @@ header.nav-pill-wrap,
   padding: 0.35rem 0.5rem;
 }
 .nav-login:hover { color: var(--text); }
+.nav-ph-badge { display: inline-flex; align-items: center; line-height: 0; flex-shrink: 0; }
+.nav-ph-badge img { height: 32px; width: auto; display: block; border-radius: 6px; }
 /* ——— Hero ——— */
 .hero {
   position: relative;
@@ -2995,6 +2997,7 @@ select option {
   }
   .nav-login { display: none; }
   .nav-actions > .btn-ghost { display: none; }
+  .nav-ph-badge { display: none; }
   .nav-cta-list .label-full { display: none; }
   .nav-cta-list .label-short { display: inline; }
   body:has(.mobile-cta) .nav-actions > .btn {
