@@ -23,18 +23,31 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
         "max_soft": 5_000_000,
         "min_increment": 10_000,
         "examples": "예: 화면 몇 장 + 로컬/영상 데모",
+        "examples_en": "e.g. a few screens + local/video demo",
         "when": "아이디어를 코드로 확인한 단계. 완성 제품보다 ‘스케치가 돌아감’에 가깝습니다.",
+        "when_en": "The idea is proven in code. Closer to a running sketch than a finished product.",
         "criteria_yes": [
             "클릭·실행 가능한 화면이나 데모가 있다 (영상·사진·링크 중 하나)",
             "핵심 기능 일부만 동작해도 된다",
             "스토어·정식 공개 마케팅은 거의 안 했다",
             "유료 결제·실사용 지표는 없거나 아주 적다",
         ],
+        "criteria_yes_en": [
+            "There's a clickable/runnable screen or demo (video, screenshots, or a link)",
+            "It's fine if only some core features work",
+            "Little to no store listing or public marketing yet",
+            "Little or no paid usage / real usage data",
+        ],
         "criteria_no": [
             "불특정 다수가 쓰는 공개 서비스가 있다 → 「써 볼 수 있는 제품」 또는 「공개했다가 멈춤」",
             "아이디어·기획서·피그마만 있고 실행물이 없다 → 등록 불가",
         ],
+        "criteria_no_en": [
+            "It's a public service already used by strangers → pick “Usable product” or “Launched, then paused” instead",
+            "Only an idea, spec doc, or Figma file with nothing runnable → not eligible to list",
+        ],
         "demo_expect": "영상, 스테이징 링크, 스크린 몇 장이면 충분합니다.",
+        "demo_expect_en": "A video, a staging link, or a few screenshots is enough.",
     },
     "beta": {
         "key": "beta",
@@ -47,18 +60,31 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
         "max_soft": 15_000_000,
         "min_increment": 10_000,
         "examples": "예: 배포 URL, 가입 후 핵심 기능 동작",
+        "examples_en": "e.g. a live URL, core features working after sign-up",
         "when": "지인·테스터에게 링크를 줘 볼 수 있는 단계. 본격 런칭·마케팅은 약해도 됩니다.",
+        "when_en": "You can hand the link to friends or testers. Full launch/marketing can still be weak.",
         "criteria_yes": [
             "들어가 볼 수 있는 주소 또는 설치 파일이 있다",
             "핵심 기능 1개 이상이 처음부터 끝까지 동작한다",
             "가입·시작 흐름이 있다 (완벽하지 않아도 됨)",
             "소수만 써 봤고, 스토어 공식 런칭·대규모 홍보는 약하다",
         ],
+        "criteria_yes_en": [
+            "There's a live URL or an installable build",
+            "At least one core feature works start-to-finish",
+            "There's a sign-up/onboarding flow (doesn't need to be perfect)",
+            "Only a small number of people have used it; no official store launch or big marketing push",
+        ],
         "criteria_no": [
             "스토어에 정식 공개 후 오래 손 놓음 → 「공개했다가 멈춤」",
             "화면만 있고 실제 기능이 거의 없다 → 「돌아가는 초안」",
         ],
+        "criteria_no_en": [
+            "Officially launched on a store and then abandoned for a long time → pick “Launched, then paused” instead",
+            "Just screens with almost no real functionality → pick “Working prototype” instead",
+        ],
         "demo_expect": "실제로 들어가 볼 수 있는 링크 또는 설치 + 짧은 사용 설명",
+        "demo_expect_en": "A link or install you can actually try, plus a short usage note.",
     },
     "launched": {
         "key": "launched",
@@ -71,18 +97,31 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
         "max_soft": 50_000_000,
         "min_increment": 50_000,
         "examples": "예: 스토어 링크, 과거 사용자, 도메인·브랜드",
+        "examples_en": "e.g. a store listing, past users, domain/brand",
         "when": "정식 공개·운영 이력이 있거나, 출시 직후 방치된 ‘잠든 실서비스’.",
+        "when_en": "It has a real launch/operating history, or it's a live service abandoned right after launch.",
         "criteria_yes": [
             "스토어 등록, 공개 도메인, 결제 등 ‘공개’로 볼 수 있는 이력이 있다",
             "과거 사용자·방문·매출 기록이 있을 수 있다 (없어도 공개 이력만으로 가능)",
             "지금은 홍보·업데이트·운영이 거의 없다",
             "코드·도메인·계정 등 넘길 자산이 비교적 분명하다",
         ],
+        "criteria_yes_en": [
+            "There's a track record of being public — a store listing, a public domain, payments, etc.",
+            "There may be past users/visits/revenue on record (not required if the public history alone qualifies)",
+            "Little to no promotion, updates, or operation happening now",
+            "Transferable assets (code, domain, accounts) are fairly clear",
+        ],
         "criteria_no": [
             "외부에 한 번도 공개한 적 없다 → 「돌아가는 초안」 또는 「써 볼 수 있는 제품」",
             "공개 이력이 불명하고 데모만 있다 → 한 단계 낮게",
         ],
+        "criteria_no_en": [
+            "Never been made public → pick “Working prototype” or “Usable product” instead",
+            "Public history is unclear and only a demo exists → go one tier lower",
+        ],
         "demo_expect": "라이브/예전 주소, 스토어 링크, 과거 화면 캡처, 넘길 자산 목록",
+        "demo_expect_en": "A live/former URL, store link, past screenshots, or a list of transferable assets.",
     },
     "other": {
         "key": "other",
@@ -95,17 +134,29 @@ STATUS_PRICING: dict[str, dict[str, Any]] = {
         "max_soft": 20_000_000,
         "min_increment": 10_000,
         "examples": "예: 라이브러리, 템플릿, 데이터, 모델 가중치",
+        "examples_en": "e.g. a library, template, dataset, model weights",
         "when": "사용자가 쓰는 ‘서비스’보다 개발 부품·자산에 가깝다.",
+        "when_en": "Closer to a dev component or asset than a user-facing service.",
         "criteria_yes": [
             "라이브러리, 템플릿, 데이터, 모델, 스크립트 모음 등",
             "일반 앱/사이트 생애주기로 말하기 어렵다",
             "그래도 실행·재현 가능한 파일·코드·문서가 있다",
         ],
+        "criteria_yes_en": [
+            "A library, template, dataset, model, or script collection, etc.",
+            "Doesn't fit the usual app/site lifecycle",
+            "Still has runnable/reproducible files, code, or docs",
+        ],
         "criteria_no": [
             "명확한 웹/앱 제품이면 → 위 세 단계 중 하나",
             "순수 아이디어·문서 한 장만 → 등록 불가",
         ],
+        "criteria_no_en": [
+            "If it's clearly a web/app product → pick one of the three tiers above instead",
+            "Just an idea or a single doc page → not eligible to list",
+        ],
         "demo_expect": "README, 샘플 실행, 사용 예 설명",
+        "demo_expect_en": "A README, a sample run, and a usage example.",
     },
 }
 
@@ -137,10 +188,16 @@ _STATUS_ALIASES: dict[str, str] = {
 
 CLASSIFICATION_INTRO = {
     "title": "제품 상태 — 쉬운 고르는 법",
+    "title_en": "Product status — an easy way to pick",
     "summary": (
         "어려운 용어 대신, ‘지금 얼마나 만들어졌는지’를 고르면 됩니다. "
         "과장은 신뢰·심사에 불리합니다. "
         "실행물(데모·영상)이 없는 아이디어만 있는 매물은 받지 않습니다."
+    ),
+    "summary_en": (
+        "No jargon needed — just pick how far along it is right now. "
+        "Overstating it hurts your trust score and review. "
+        "Idea-only listings with no runnable demo/video aren't accepted."
     ),
     "how_to_choose": [
         "실행물(화면·영상·링크)이 없으면 → 등록하지 마세요.",
@@ -149,7 +206,15 @@ CLASSIFICATION_INTRO = {
         "부분만 돌아가면 → 「돌아가는 초안」.",
         "앱/사이트가 아니라 코드·자료·도구면 → 「그 외」.",
     ],
+    "how_to_choose_en": [
+        "No runnable screen/video/link → don't list it yet.",
+        "Officially launched, then abandoned → “Launched, then paused.”",
+        "You can hand someone a link to try → “Usable product.”",
+        "Only partly working → “Working prototype.”",
+        "Not an app/site, but code/data/tools → “Other.”",
+    ],
     "honesty": "애매하면 한 단계 낮게(초안 쪽) 잡는 것을 권장합니다. 솔직한 상태가 입찰에 유리할 때가 많습니다.",
+    "honesty_en": "When unsure, pick one tier lower (toward prototype). Honest status often helps with bids.",
 }
 
 
@@ -199,10 +264,15 @@ def _status_public(k: str, v: dict[str, Any]) -> dict[str, Any]:
         "blurb": v["blurb"],
         "blurb_en": v.get("blurb_en") or v["blurb"],
         "examples": v["examples"],
+        "examples_en": v.get("examples_en") or v["examples"],
         "when": v.get("when", ""),
+        "when_en": v.get("when_en") or v.get("when", ""),
         "criteria_yes": list(v.get("criteria_yes") or []),
+        "criteria_yes_en": list(v.get("criteria_yes_en") or v.get("criteria_yes") or []),
         "criteria_no": list(v.get("criteria_no") or []),
+        "criteria_no_en": list(v.get("criteria_no_en") or v.get("criteria_no") or []),
         "demo_expect": v.get("demo_expect", ""),
+        "demo_expect_en": v.get("demo_expect_en") or v.get("demo_expect", ""),
     }
 
 
@@ -210,23 +280,37 @@ def public_policy() -> dict[str, Any]:
     return {
         "currency": "KRW",
         "rule": "시작 입찰가는 제품이 얼마나 만들어졌는지(상태)에 따라 최저·권장가가 다릅니다.",
+        "rule_en": "The minimum and suggested starting bid depend on how far along (status) the product is.",
         "classification": CLASSIFICATION_INTRO,
         "statuses": [_status_public(k, v) for k, v in STATUS_PRICING.items()],
     }
 
 
-def validate_start_price(status: str, price_start: int | None) -> tuple[int, dict[str, Any]]:
+def validate_start_price(
+    status: str, price_start: int | None, *, lang: str = "ko"
+) -> tuple[int, dict[str, Any]]:
     band = pricing_for(status)
-    label = band["label"]
+    en = (lang or "ko").lower().startswith("en")
+    label = band["label_en"] if en else band["label"]
     if price_start is None:
+        if en:
+            raise ValueError(
+                f"“{label}” listings need a starting bid. "
+                f"Suggested ₩{band['suggest']:,} · minimum ₩{band['min']:,}"
+            )
         raise ValueError(
             f"「{label}」 매물은 시작 입찰가가 필요합니다. "
             f"권장 ₩{band['suggest']:,} · 최저 ₩{band['min']:,}"
         )
     price = int(price_start)
     if price < 0:
-        raise ValueError("시작가는 0 이상이어야 합니다.")
+        raise ValueError("Starting bid must be 0 or higher." if en else "시작가는 0 이상이어야 합니다.")
     if price < int(band["min"]):
+        if en:
+            raise ValueError(
+                f"The minimum starting bid for “{label}” is ₩{band['min']:,}. "
+                f"(Suggested ₩{band['suggest']:,})"
+            )
         raise ValueError(
             f"「{label}」 상태의 최저 시작가는 ₩{band['min']:,} 입니다. "
             f"(권장 ₩{band['suggest']:,})"
@@ -245,8 +329,14 @@ def validate_start_price(status: str, price_start: int | None) -> tuple[int, dic
         "soft_cap_warning": soft,
     }
     if soft:
-        meta["soft_high_message"] = (
-            f"「{label}」 권장 상단(약 ₩{band['max_soft']:,})을 넘겼습니다. "
-            "등록은 가능하지만 구매자 설득이 더 필요할 수 있습니다."
-        )
+        if en:
+            meta["soft_high_message"] = (
+                f"You've gone over the suggested ceiling for “{label}” (about ₩{band['max_soft']:,}). "
+                "You can still list, but it may take more to convince buyers."
+            )
+        else:
+            meta["soft_high_message"] = (
+                f"「{label}」 권장 상단(약 ₩{band['max_soft']:,})을 넘겼습니다. "
+                "등록은 가능하지만 구매자 설득이 더 필요할 수 있습니다."
+            )
     return price, meta

@@ -138,20 +138,34 @@ wire("buyForm");
     }
     return "₩" + Number(n).toLocaleString("ko-KR");
   }
+  function isEn() {
+    try {
+      if (window.WakeAgainI18n && window.WakeAgainI18n.getLang) {
+        return window.WakeAgainI18n.getLang() === "en";
+      }
+    } catch (e) {}
+    return true;
+  }
   function renderCriteria(band) {
     if (!criteria || !band) return;
     criteria.hidden = false;
-    const yes = (band.criteria_yes || [])
+    const en = isEn();
+    const yesList = (en ? band.criteria_yes_en : band.criteria_yes) || band.criteria_yes || [];
+    const noList = (en ? band.criteria_no_en : band.criteria_no) || band.criteria_no || [];
+    const yes = yesList
       .slice(0, 4)
       .map((line) => "<li>" + line + "</li>")
       .join("");
-    const no = (band.criteria_no || [])
+    const no = noList
       .slice(0, 3)
       .map((line) => "<li>" + line + "</li>")
       .join("");
+    const when = en ? band.when_en || band.when : band.when;
+    const blurb = en ? band.blurb_en || band.blurb : band.blurb;
+    const demoExpect = en ? band.demo_expect_en || band.demo_expect : band.demo_expect;
     criteria.innerHTML =
       "<p class='sc-when'>" +
-      (band.when || band.blurb || "") +
+      (when || blurb || "") +
       "</p>" +
       (yes
         ? "<div class='sc-label'>" + t("sell.criteria_yes") + "</div><ul>" + yes + "</ul>"
@@ -159,16 +173,17 @@ wire("buyForm");
       (no
         ? "<div class='sc-label'>" + t("sell.criteria_no") + "</div><ul>" + no + "</ul>"
         : "") +
-      (band.demo_expect
+      (demoExpect
         ? "<div class='sc-label'>" +
           t("sell.criteria_demo") +
           "</div><p class='sc-when' style='margin:0'>" +
-          band.demo_expect +
+          demoExpect +
           "</p>"
         : "");
   }
   function apply(force) {
     if (!bands) return;
+    const en = isEn();
     const st = statusEl.value;
     const band = (bands.statuses || []).find(
       (s) => s.status === st || s.key === st || s.label === st
@@ -182,9 +197,9 @@ wire("buyForm");
     if (guide) {
       guide.innerHTML =
         "<strong>" +
-        (band.label || band.status) +
+        ((en ? band.label_en : band.label) || band.label || band.status) +
         "</strong> — " +
-        band.blurb +
+        ((en ? band.blurb_en : band.blurb) || band.blurb) +
         " · " +
         t("sell.price_suggest") +
         " <strong>" +
@@ -196,7 +211,10 @@ wire("buyForm");
         ")";
     }
     if (hint) {
-      hint.textContent = (band.examples || "") + " · " + t("sell.price_server_check");
+      hint.textContent =
+        ((en ? band.examples_en : band.examples) || band.examples || "") +
+        " · " +
+        t("sell.price_server_check");
     }
     priceEl.min = band.min;
     priceEl.step = band.min_increment;

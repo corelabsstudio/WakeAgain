@@ -854,7 +854,7 @@
         attest_shots: true,
       });
       window.alert(
-        (res && res.note) ||
+        (res && res.note && api.translateBackendText(res.note)) ||
           t("app.relist_ok", "Re-list submitted. It goes public after re-review.")
       );
       feed = "mine";
@@ -1950,7 +1950,7 @@
       if (ok) {
         ok.hidden = false;
         ok.textContent =
-          (res && res.message_ko) ||
+          (res && res.message_ko && api.translateBackendText(res.message_ko)) ||
           t("app.gift_done", "Gifted. Auto-registered on their account.");
       }
       if ($("giftToRecipient")) $("giftToRecipient").value = "";

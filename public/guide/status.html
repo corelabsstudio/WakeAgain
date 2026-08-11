@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>지금 얼마나 만들었나요? — WakeAgain</title>
-  <meta name="description" content="돌아가는 초안·써 볼 수 있는 제품·공개했다가 멈춤 등 쉬운 상태 고르기와 시작 입찰가 안내." />
+  <title>How far along is it? — WakeAgain</title>
+  <meta name="description" content="An easy way to pick your product's status (prototype, usable, launched-and-paused) and how it sets your starting bid." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -97,10 +97,10 @@
 
   <main class="legal-page" style="max-width: 720px">
     <p class="eyebrow">Guide · Status</p>
-    <h1 id="pageTitle">지금 얼마나 만들었나요?</h1>
-    <p class="legal-meta">어려운 용어 대신, 지금 상태를 고르면 시작 입찰가·구매자 이해가 쉬워집니다.</p>
+    <h1 id="pageTitle">How far along is it?</h1>
+    <p class="legal-meta" id="pageSubtitle">Pick your product's current status — it sets your starting bid and helps buyers understand what they're getting.</p>
 
-    <div class="intro-box" id="introBox">불러오는 중…</div>
+    <div class="intro-box" id="introBox">Loading…</div>
     <div id="statusList"></div>
 
     <div class="legal-nav-links">
@@ -125,10 +125,17 @@
   <script src="/js/i18n.js?v=20260811-legal"></script>
 
 
-  <script src="/js/api.js"></script>
+  <script src="/js/api.js?v=20260811-i18n-en"></script>
   <script src="/js/footer-visitors.js?v=20260810-global"></script>
   <script>
     (function () {
+      function isEn() {
+        try {
+          return document.documentElement.getAttribute("data-wa-lang") !== "ko";
+        } catch (e) {
+          return true;
+        }
+      }
       function won(n) {
         return "₩" + Number(n).toLocaleString("ko-KR");
       }
@@ -147,62 +154,91 @@
         );
       }
       async function load() {
+        var en = isEn();
         var data;
         try {
           data = await window.WakeAgainAPI.pricing();
         } catch (e) {
-          document.getElementById("introBox").textContent = "가이드를 불러오지 못했습니다.";
+          document.getElementById("introBox").textContent = en
+            ? "Couldn't load the guide."
+            : "가이드를 불러오지 못했습니다.";
           return;
         }
         var c = data.classification || {};
-        document.getElementById("pageTitle").textContent = c.title || "제품 상태 분류 기준";
+        var title = en ? c.title_en || c.title : c.title;
+        var summary = en ? c.summary_en || c.summary : c.summary;
+        var howTo = en ? c.how_to_choose_en || c.how_to_choose : c.how_to_choose;
+        var honesty = en ? c.honesty_en || c.honesty : c.honesty;
+        document.getElementById("pageTitle").textContent =
+          title || (en ? "Product status classification" : "제품 상태 분류 기준");
         var intro = document.getElementById("introBox");
         intro.innerHTML =
           "<p><strong>" +
-          (c.summary || "") +
+          (summary || "") +
           "</strong></p>" +
-          (c.how_to_choose
-            ? "<p style='margin:0.65rem 0 0.25rem;font-weight:600'>고르는 순서</p><ol>" +
-              c.how_to_choose
+          (howTo
+            ? "<p style='margin:0.65rem 0 0.25rem;font-weight:600'>" +
+              (en ? "How to choose" : "고르는 순서") +
+              "</p><ol>" +
+              howTo
                 .map(function (x) {
                   return "<li>" + x + "</li>";
                 })
                 .join("") +
               "</ol>"
             : "") +
-          (c.honesty
-            ? "<p style='margin:0.75rem 0 0;font-size:0.9rem'>" + c.honesty + "</p>"
+          (honesty
+            ? "<p style='margin:0.75rem 0 0;font-size:0.9rem'>" + honesty + "</p>"
             : "");
 
         var root = document.getElementById("statusList");
         root.innerHTML = (data.statuses || [])
           .map(function (s) {
+            var label = en ? s.label_en || s.label : s.label;
+            var when = en ? s.when_en || s.when : s.when;
+            var blurb = en ? s.blurb_en || s.blurb : s.blurb;
+            var demoExpect = en ? s.demo_expect_en || s.demo_expect : s.demo_expect;
+            var examples = en ? s.examples_en || s.examples : s.examples;
+            var yesList = en ? s.criteria_yes_en || s.criteria_yes : s.criteria_yes;
+            var noList = en ? s.criteria_no_en || s.criteria_no : s.criteria_no;
             return (
               "<article class='status-card' id='s-" +
               (s.key || "") +
               "'>" +
               "<h2>" +
-              (s.label || s.status) +
+              (label || s.status) +
               "</h2>" +
               "<p class='when'>" +
-              (s.when || s.blurb || "") +
+              (when || blurb || "") +
               "</p>" +
-              "<h3>이 상태로 고를 때</h3>" +
-              listHtml(s.criteria_yes) +
-              "<h3>이 상태가 아닐 때</h3>" +
-              listHtml(s.criteria_no, "no") +
-              "<h3>데모·증빙</h3>" +
+              "<h3>" +
+              (en ? "Pick this when" : "이 상태로 고를 때") +
+              "</h3>" +
+              listHtml(yesList) +
+              "<h3>" +
+              (en ? "Not this when" : "이 상태가 아닐 때") +
+              "</h3>" +
+              listHtml(noList, "no") +
+              "<h3>" +
+              (en ? "Demo & proof" : "데모·증빙") +
+              "</h3>" +
               "<p class='when' style='margin:0'>" +
-              (s.demo_expect || s.examples || "") +
+              (demoExpect || examples || "") +
               "</p>" +
               "<div class='price-row'>" +
-              "<span>권장 시작가 <strong>" +
+              "<span>" +
+              (en ? "Suggested start" : "권장 시작가") +
+              " <strong>" +
               won(s.suggest) +
               "</strong></span>" +
-              "<span>최저 <strong>" +
+              "<span>" +
+              (en ? "Minimum" : "최저") +
+              " <strong>" +
               won(s.min) +
               "</strong></span>" +
-              "<span>호가 단위 <strong>" +
+              "<span>" +
+              (en ? "Bid increment" : "호가 단위") +
+              " <strong>" +
               won(s.min_increment) +
               "</strong></span>" +
               "</div></article>"

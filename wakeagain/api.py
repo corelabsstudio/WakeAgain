@@ -191,6 +191,12 @@ def _deliver_reset_code(email: str, code: str) -> dict[str, Any]:
     return _deliver_code_mail(email, code, kind="reset")
 
 
+def _lang_of(request: Request) -> str:
+    """en/ko from Accept-Language (frontend sends 'en,ko;q=0.8' or 'ko,en;q=0.8')."""
+    al = (request.headers.get("accept-language") or "").strip().lower()
+    return "en" if al.startswith("en") else "ko"
+
+
 def _require_trust(
     user: dict, need: Literal["list", "bid", "fulfill", "deal"]
 ) -> None:
@@ -3970,7 +3976,7 @@ async def upload_demo_image(
 
 
 @router.post("/projects")
-def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
+def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_current_user)):
     # refresh trust
     with database.db() as conn:
         row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
@@ -4154,7 +4160,9 @@ def create_project(body: ProjectIn, user: dict = Depends(get_current_user)):
     status = price_policy.normalize_status(body.status.strip())
     product_type = database.normalize_product_type(body.product_type)
     try:
-        start, price_meta = price_policy.validate_start_price(status, body.price_start)
+        start, price_meta = price_policy.validate_start_price(
+            status, body.price_start, lang=_lang_of(request)
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=400,
@@ -4379,6 +4387,7 @@ class RelistIn(BaseModel):
 def relist_project(
     project_id: int,
     body: RelistIn,
+    request: Request,
     user: dict = Depends(get_current_user),
 ):
     """
@@ -4496,7 +4505,9 @@ def relist_project(
         start = int(row["price_start"] or 0)
         if body.price_start is not None:
             try:
-                start, _meta = price_policy.validate_start_price(status, body.price_start)
+                start, _meta = price_policy.validate_start_price(
+                    status, body.price_start, lang=_lang_of(request)
+                )
             except ValueError as e:
                 raise HTTPException(status_code=400, detail={"code": "start_price_invalid", "message": str(e)}) from e
         buy_now = row["price_buy_now"] if "price_buy_now" in row.keys() else None

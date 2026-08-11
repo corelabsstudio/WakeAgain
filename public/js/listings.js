@@ -72,6 +72,31 @@
     return /[\uac00-\ud7a3]/.test(String(s || ""));
   }
 
+  var CREDIT_LABEL_EN = {
+    \ucd5c\uace0: "Elite",
+    \uc6b0\uc218: "Good",
+    \uc2e0\ub8b0: "Trusted",
+    \ubcf4\ud1b5: "Average",
+    \uc2e0\uaddc: "New",
+    \uc8fc\uc758: "Caution",
+    \uc704\ud5d8: "Risk",
+    \uc77c\ubc18: "Standard",
+    \ucd5c\uc6b0\uc218: "Excellent",
+    // buyer rank
+    "\ud30c\uc6cc \ubc14\uc774\uc5b4": "Power buyer",
+    "\ud5e4\ube44 \uad6c\ub9e4\uc790": "Heavy buyer",
+    "\ub2e8\uace8 \uad6c\ub9e4\uc790": "Regular buyer",
+    "\uccab \uad6c\ub9e4 \uc644\ub8cc": "First purchase",
+    "\uad6c\ub9e4 \uc900\ube44 \uc911": "Getting ready",
+  };
+
+  function creditLabelUi(label) {
+    if (label == null || label === "") return "";
+    var cl = String(label);
+    if (!isEn()) return cl;
+    return CREDIT_LABEL_EN[cl] || cl;
+  }
+
   function latinBits(s) {
     var m = String(s || "").match(/[A-Za-z][A-Za-z0-9+.#\-]*/g);
     if (!m || !m.length) return "";
@@ -225,9 +250,9 @@
         ? bidders + " bidders · public"
         : bidders + "명 입찰 · 모두 공개";
       if (top && top.label) {
-        const rank = top.buyer_rank && top.buyer_rank.label ? " · " + top.buyer_rank.label : "";
+        const rank = top.buyer_rank && top.buyer_rank.label ? " · " + creditLabelUi(top.buyer_rank.label) : "";
         return isEn()
-          ? "Lead " + top.label + rank + " · " + base
+          ? "Lead " + creditLabelUi(top.label) + rank + " · " + base
           : "최고 " + top.label + rank + " · " + base;
       }
       return base;
