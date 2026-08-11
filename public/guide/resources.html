@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>무료 자료실 — WakeAgain</title>
-  <meta name="description" content="1인 개발자를 위한 무료 자료. 첫 사용자 확보 전자책 + 30일 실행 노션 템플릿." />
+  <title data-i18n="guide.resources.doctitle">Free Resources — WakeAgain</title>
+  <meta name="description" content="Free resources for solo developers: a first-users ebook + a 30-day execution Notion template." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -69,48 +69,48 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓</a>
-        <a href="/guide/">이용안내</a>
-        <a href="/guide/resources.html" aria-current="page">자료실</a>
+      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="Menu">
+        <a href="/app/#list" data-i18n="nav.market">Marketplace</a>
+        <a href="/guide/" data-i18n="nav.guide">Guide</a>
+        <a href="/guide/resources.html" aria-current="page" data-i18n="guide.index.resources">Resources</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
         </div>
-        <a class="btn btn-primary btn-sm" href="/app/#list">마켓</a>
+        <a class="btn btn-primary btn-sm" href="/app/#list" data-i18n="nav.market">Marketplace</a>
       </div>
     </div>
   </header>
 
   <main class="gv-page">
-    <h1 class="gv-title">무료 자료실</h1>
-    <p class="gv-sub">1인 개발자가 만들고 나서 막히는 지점 — <strong style="color:var(--text)">첫 사용자 확보</strong> — 를 위한 자료 두 가지입니다. 가입 없이 바로 받아가세요.</p>
+    <h1 class="gv-title" data-i18n="guide.resources.title">Free Resources</h1>
+    <p class="gv-sub" data-i18n-html="guide.resources.sub">Two resources for the point where solo developers get stuck after shipping — <strong style="color:var(--text)">getting your first users</strong>. No sign-up needed.</p>
 
     <div class="res-grid">
       <div class="res-card">
-        <span class="res-kicker">전자책 · 42p</span>
-        <h2>바이브코딩으로 만들었는데, 왜 아무도 안 쓸까</h2>
-        <p>콜드메일 응답률, GitHub 아웃리치, 커뮤니티 홍보가 실패하는 이유까지 — 전부 실측 데이터. 복붙 템플릿 12종 포함.</p>
-        <a class="btn btn-primary btn-lg" href="/assets/downloads/첫사용자확보_전자책.pdf" download>PDF 다운로드</a>
+        <span class="res-kicker" data-i18n="guide.resources.ebook_kicker">Ebook · 42p (Korean)</span>
+        <h2 data-i18n="guide.resources.ebook_title">Why is no one using what I vibe-coded?</h2>
+        <p data-i18n="guide.resources.ebook_body">Cold-email reply rates, GitHub outreach, why community promotion fails — all from real data. Includes 12 copy-paste templates. (Korean-language PDF.)</p>
+        <a class="btn btn-primary btn-lg" href="/assets/downloads/첫사용자확보_전자책.pdf" download data-i18n="guide.resources.ebook_cta">Download PDF</a>
       </div>
       <div class="res-card">
-        <span class="res-kicker">노션 템플릿</span>
-        <h2>첫 사용자 확보 30일 실행판</h2>
-        <p>30일 캘린더 + 접촉 로그 + 주간 지표까지 미리 짜둔 실행 템플릿. 목표는 하나, "0건인 날을 만들지 않는 것."</p>
-        <a class="btn btn-primary btn-lg" href="https://uttermost-allosaurus-f72.notion.site" target="_blank" rel="noopener">노션에서 열기</a>
+        <span class="res-kicker" data-i18n="guide.resources.notion_kicker">Notion template</span>
+        <h2 data-i18n="guide.resources.notion_title">First-users 30-day action plan</h2>
+        <p data-i18n="guide.resources.notion_body">A ready-made execution template: 30-day calendar + outreach log + weekly metrics. One goal — "never have a zero-outreach day."</p>
+        <a class="btn btn-primary btn-lg" href="https://uttermost-allosaurus-f72.notion.site" target="_blank" rel="noopener" data-i18n="guide.resources.notion_cta">Open in Notion</a>
       </div>
     </div>
 
     <div class="gv-cta">
-      <a class="btn btn-primary btn-lg" href="/app/#new">방치된 프로젝트가 있다면 등록하기</a>
-      <a class="btn btn-ghost btn-lg" href="/guide/how-to-sell.html">판매 가이드</a>
+      <a class="btn btn-primary btn-lg" href="/app/#new" data-i18n="guide.resources.cta_list">Have a paused project? List it</a>
+      <a class="btn btn-ghost btn-lg" href="/guide/how-to-sell.html" data-i18n="guide.tabs.sell">Sell guide</a>
     </div>
-    <p class="gv-note">두 자료 다 CoreLabs 제작. <a href="/legal/terms.html">이용약관</a> · <a href="/guide/contact.html">문의</a>.</p>
+    <p class="gv-note" data-i18n-html="guide.resources.note">Both resources made by CoreLabs. <a href="/legal/terms.html">Terms</a> · <a href="/guide/contact.html">Contact</a>.</p>
   </main>
 
-  <script src="/js/i18n-messages.js?v=20260811-i18n3"></script>
+  <script src="/js/i18n-messages.js?v=20260811-i18n4"></script>
   <script src="/js/i18n.js?v=20260811-legal"></script>
 </body>
 </html>

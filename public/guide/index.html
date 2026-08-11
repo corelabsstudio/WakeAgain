@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>이용안내 — WakeAgain</title>
-  <meta name="description" content="WakeAgain 이용안내. 판매·구매·사기예방법·앱 화면을 한눈에." />
+  <title data-i18n="guide.index.doctitle">Guide — WakeAgain</title>
+  <meta name="description" content="WakeAgain guide: sell, buy, fraud prevention, and app screens at a glance." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -39,84 +39,84 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓</a>
-        <a href="/guide/safety.html">사기 예방법</a>
-        <a href="/guide/resources.html">자료실</a>
-        <a href="/blog/">블로그</a>
+      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="Menu">
+        <a href="/app/#list" data-i18n="nav.market">Marketplace</a>
+        <a href="/guide/safety.html" data-i18n="nav.safety">Safety tips</a>
+        <a href="/guide/resources.html" data-i18n="guide.index.resources">Resources</a>
+        <a href="/blog/" data-i18n="nav.blog">Blog</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
         </div>
-        <a class="btn btn-primary btn-sm" href="/">홈</a>
+        <a class="btn btn-primary btn-sm" href="/" data-i18n="common.home">Home</a>
       </div>
     </div>
   </header>
 
   <main class="gv-page">
-    <h1 class="gv-title">이용안내</h1>
-    <p class="gv-sub">필요한 페이지만 고르세요. 긴 설명 대신 화면과 단계로 안내합니다.</p>
+    <h1 class="gv-title" data-i18n="guide.index.title">Guide</h1>
+    <p class="gv-sub" data-i18n="guide.index.sub">Pick just the page you need. Screens and steps instead of long explanations.</p>
 
     <div class="gv-hub">
       <a href="/guide/how-to-sell.html">
-        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-sell.png?v=1" width="800" height="800" alt="판매: 로트 상자에 올리기" loading="lazy" decoding="async" />
+        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-sell.png?v=1" width="800" height="800" alt="Sell: listing a crate" loading="lazy" decoding="async" />
         <div class="gv-hub-body">
-          <strong>판매 가이드</strong>
-          <span>올리기 → 검수 → 성사 → 이전 → 정산</span>
+          <strong data-i18n="guide.tabs.sell">Sell guide</strong>
+          <span data-i18n="guide.index.hub_sell">List → review → deal → transfer → payout</span>
         </div>
       </a>
       <a href="/guide/how-to-buy.html">
-        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-buy.png?v=1" width="800" height="800" alt="구매: 매물 고르기" loading="lazy" decoding="async" />
+        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-buy.png?v=1" width="800" height="800" alt="Buy: picking a listing" loading="lazy" decoding="async" />
         <div class="gv-hub-body">
-          <strong>구매 가이드</strong>
-          <span>둘러보기 → 입찰 → 결제 → 인수</span>
+          <strong data-i18n="guide.tabs.buy">Buy guide</strong>
+          <span data-i18n="guide.index.hub_buy">Browse → bid → pay → take over</span>
         </div>
       </a>
       <a href="/guide/safety.html">
-        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-safety.png?v=1" width="800" height="800" alt="안전: 방패와 확인" loading="lazy" decoding="async" />
+        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-safety.png?v=1" width="800" height="800" alt="Safety: shield and check" loading="lazy" decoding="async" />
         <div class="gv-hub-body">
-          <strong>사기 예방법</strong>
-          <span>사이트 안 결제 · 하지 말 것 / 할 것</span>
+          <strong data-i18n="nav.safety">Safety tips</strong>
+          <span data-i18n="guide.index.hub_safety">On-site payment only · do's and don'ts</span>
         </div>
       </a>
       <a href="/app/#list">
-        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-market.png?v=1" width="800" height="800" alt="마켓: 매물 둘러보기" loading="lazy" decoding="async" />
+        <img class="gv-hub-thumb gv-hub-thumb--illust" src="/assets/illustrations/card-market.png?v=1" width="800" height="800" alt="Marketplace: browse listings" loading="lazy" decoding="async" />
         <div class="gv-hub-body">
-          <strong>마켓 바로 가기</strong>
-          <span>매물 목록 · 입찰 · 관심</span>
+          <strong data-i18n="guide.index.hub_market">Go to marketplace</strong>
+          <span data-i18n="guide.index.hub_market_d">Listings · bidding · interest</span>
         </div>
       </a>
     </div>
 
     <div class="gv-flow" role="list">
-      <div class="gv-flow-item" role="listitem"><strong>올리기</strong><span>데모 · 시작가 · 무료</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>입찰</strong><span>공개 가격 · 사이트 안</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>결제</strong><span>낙찰 후 PG</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>이전</strong><span>입금 확인 후</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.index.flow1_t">List it</strong><span data-i18n="guide.index.flow1_d">Demo · starting price · free</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.index.flow2_t">Bid</strong><span data-i18n="guide.index.flow2_d">Public price · on-site</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.index.flow3_t">Pay</strong><span data-i18n="guide.index.flow3_d">After winning, via payment</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.index.flow4_t">Transfer</strong><span data-i18n="guide.index.flow4_d">After payment confirmed</span></div>
     </div>
 
     <div class="gv-chips">
-      <span class="gv-chip">등록 <b>무료</b></span>
-      <span class="gv-chip">판매 수수료 <b>10%</b></span>
-      <span class="gv-chip">구매 수수료 <b>0</b></span>
-      <span class="gv-chip">검수 <b>1~2일</b></span>
+      <span class="gv-chip" data-i18n-html="guide.index.chip1">List <b>free</b></span>
+      <span class="gv-chip" data-i18n-html="guide.index.chip2">Seller fee <b>10%</b></span>
+      <span class="gv-chip" data-i18n-html="guide.index.chip3">Buyer fee <b>$0</b></span>
+      <span class="gv-chip" data-i18n-html="guide.index.chip4">Review <b>1–2 days</b></span>
     </div>
-    <p class="gv-note" style="margin-top:0.5rem">
-      <strong>WakeAgain 플랫폼 수수료는 항상 10%입니다.</strong> 등록·입찰·구매는 무료이며, 성사 시 판매자에게만 거래 대금의 10%(건당 최소 5,000원)를 청구합니다.
+    <p class="gv-note" style="margin-top:0.5rem" data-i18n-html="guide.index.fee_note">
+      <strong>WakeAgain's platform fee is always 10%.</strong> Listing, bidding, and buying are free — only the seller pays 10% of the deal amount when it sells (minimum ₩5,000 per deal).
     </p>
 
     <div class="gv-cta">
-      <a class="btn btn-primary btn-lg" href="/app/#list">마켓</a>
-      <a class="btn btn-ghost btn-lg" href="/app/#new">올리기</a>
-      <a class="btn btn-ghost btn-lg" href="/guide/resources.html">무료 자료실</a>
-      <a class="btn btn-ghost btn-lg" href="/blog/">블로그</a>
+      <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="nav.market">Marketplace</a>
+      <a class="btn btn-ghost btn-lg" href="/app/#new" data-i18n="nav.list_short">List</a>
+      <a class="btn btn-ghost btn-lg" href="/guide/resources.html" data-i18n="guide.index.free_resources">Free resources</a>
+      <a class="btn btn-ghost btn-lg" href="/blog/" data-i18n="nav.blog">Blog</a>
     </div>
-    <p class="gv-note">통신판매중개. <a href="/legal/terms.html">이용약관</a> · <a href="/guide/contact.html">문의</a>.</p>
+    <p class="gv-note" data-i18n-html="guide.index.note">Marketplace intermediary. <a href="/legal/terms.html">Terms</a> · <a href="/guide/contact.html">Contact</a>.</p>
   </main>
 
-  <script src="/js/i18n-messages.js?v=20260811-i18n3"></script>
+  <script src="/js/i18n-messages.js?v=20260811-i18n4"></script>
   <script src="/js/i18n.js?v=20260811-legal"></script>
 </body>
 </html>

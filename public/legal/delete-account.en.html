@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account Deletion Request — WakeAgain (CoreLabs)</title>
+  <meta name="description" content="How to request deletion of your WakeAgain account and related data. Operated by CoreLabs." />
+  <meta name="theme-color" content="#1a1814" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://wakeagain.com/legal/delete-account.en.html" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260811-thumb" />
+<link rel="stylesheet" href="/ux9.css?v=20260729-deep-qa" />
+  <link rel="stylesheet" href="/legal/legal.css?v=20260729-deep-qa" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    .delete-hero {
+      margin: 0 0 1.25rem;
+      padding: 1.1rem 1.15rem;
+      border-radius: 16px;
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      background: rgba(248, 113, 113, 0.08);
+    }
+    .delete-hero h2 {
+      margin: 0 0 0.4rem;
+      font-size: 1.1rem;
+    }
+    .delete-hero p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 0.95rem; }
+    .delete-steps {
+      margin: 0 0 1.25rem;
+      padding: 0;
+      list-style: none;
+      counter-reset: ds;
+    }
+    .delete-steps li {
+      position: relative;
+      margin: 0 0 0.7rem;
+      padding: 0.9rem 1rem 0.9rem 3.1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      line-height: 1.55;
+      font-size: 0.95rem;
+    }
+    .delete-steps li::before {
+      counter-increment: ds;
+      content: counter(ds);
+      position: absolute;
+      left: 0.85rem;
+      top: 0.9rem;
+      width: 1.55rem;
+      height: 1.55rem;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(248, 113, 113, 0.25);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fecaca;
+    }
+    .delete-mail {
+      display: inline-block;
+      margin: 0.35rem 0;
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+      background: rgba(212, 160, 23, 0.18);
+      border: 1px solid rgba(212, 160, 23, 0.4);
+      color: #f0e0b0;
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .delete-mail:hover { border-color: rgba(196, 181, 253, 0.7); }
+    .legal-body table { width: 100%; border-collapse: collapse; margin: 0.75rem 0 1rem; font-size: 0.9rem; }
+    .legal-body th, .legal-body td {
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .legal-body th { background: rgba(255,255,255,0.04); width: 32%; }
+  </style>
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-deep-qa" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("wa_lang");
+        var lang = saved === "ko" || saved === "en" ? saved : null;
+        if (!lang) {
+          var q = new URLSearchParams(location.search || "").get("lang");
+          if (q === "ko" || q === "en") lang = q;
+        }
+        if (!lang) {
+          var nav = String(navigator.language || "").toLowerCase();
+          lang = nav.indexOf("ko") === 0 ? "ko" : "en";
+        }
+        if (lang === "ko") {
+          location.replace("/legal/delete-account.html" + location.search + location.hash);
+          return;
+        }
+        document.documentElement.lang = lang;
+        document.documentElement.setAttribute("data-wa-lang", lang);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="form-body theme-yard">
+  <header class="nav-pill-wrap form-nav">
+    <div class="nav-pill">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Wake<span class="brand-again">Again</span></span>
+      </a>
+      <nav class="nav-links" aria-label="Menu">
+        <a href="/legal/privacy.en.html">Privacy Policy</a>
+        <a href="/legal/business.en.html">Business Info</a>
+        <a href="/legal/terms.en.html">Terms</a>
+        <a href="/app/">App</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/">Home</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="legal-page">
+    <p class="eyebrow">Account deletion · Google Play</p>
+    <h1>Account Deletion Request</h1>
+    <p class="legal-meta">
+      App / service name: <strong>WakeAgain</strong><br />
+      Developer / operator: <strong>CoreLabs</strong><br />
+      This page is the account-deletion notice shown in the Google Play Store listing.
+    </p>
+
+    <div class="delete-hero">
+      <h2>Want to delete your account?</h2>
+      <p>
+        You can request deletion of your WakeAgain account and related data.
+        Please follow the steps below. Once confirmed, we process the request within a
+        <strong>reasonable period (target: within 14 business days)</strong>.
+      </p>
+    </div>
+
+    <article class="legal-body">
+      <h2>1. How to request deletion</h2>
+      <ol class="delete-steps">
+        <li>
+          Send an email to the address below <strong>from the email you signed up with</strong>.<br />
+          <a class="delete-mail" href="mailto:corelabs.studio@gmail.com?subject=%5BWakeAgain%5D%20Account%20Deletion%20Request&amp;body=App%20name%3A%20WakeAgain%0ADeveloper%3A%20CoreLabs%0A%0ASign-up%20email%3A%20%0AI%20am%20requesting%20deletion%20of%20my%20account%20and%20related%20data.%0A">
+            corelabs.studio@gmail.com
+          </a>
+        </li>
+        <li>
+          Example email <strong>subject</strong>:<br />
+          <code>[WakeAgain] Account Deletion Request</code>
+        </li>
+        <li>
+          Please include the following in the email <strong>body</strong>.
+          <ul>
+            <li>App name: <strong>WakeAgain</strong></li>
+            <li>Developer: <strong>CoreLabs</strong></li>
+            <li>Account email to delete (same as your sign-up email)</li>
+            <li>(Optional) Display name on the account · approximate sign-up date</li>
+            <li>A line stating "I am requesting deletion of my account and related data"</li>
+          </ul>
+        </li>
+        <li>
+          For identity verification, we may ask you to confirm by replying from your sign-up email.
+          We proceed with deletion once confirmed.
+        </li>
+        <li>
+          Once processing is complete, we'll send a result notice to the email you requested from.
+        </li>
+      </ol>
+
+      <p>
+        <a class="btn btn-primary" href="mailto:corelabs.studio@gmail.com?subject=%5BWakeAgain%5D%20Account%20Deletion%20Request&amp;body=App%20name%3A%20WakeAgain%0ADeveloper%3A%20CoreLabs%0A%0ASign-up%20email%3A%20%0AI%20am%20requesting%20deletion%20of%20my%20account%20and%20related%20data.%0A">
+          Compose deletion request email
+        </a>
+      </p>
+
+      <h2>2. Data that gets deleted</h2>
+      <p>Once your request is confirmed, the following is <strong>deleted in principle</strong>.</p>
+      <table>
+        <tr><th>Category</th><th>Details</th></tr>
+        <tr><td>Account identity</td><td>Email, display name, password hash, birth date, and other sign-up info</td></tr>
+        <tr><td>Identity (Lv2)</td><td>Real name, phone, and other identity info saved on your profile</td></tr>
+        <tr><td>Settlement (Lv3)</td><td>Account holder name, bank, account number, and other settlement info</td></tr>
+        <tr><td>Login · sessions</td><td>App/web login sessions and tokens (invalidated immediately)</td></tr>
+        <tr><td>Notifications · settings</td><td>Notification and app settings tied to your account</td></tr>
+        <tr><td>Coupons held</td><td>Unused coupons registered to that account</td></tr>
+      </table>
+      <p>
+        <strong>Service data tied to your account</strong> — public listings, interest registrations, bids, etc. —
+        is deleted, de-identified, or separated depending on deal/dispute status.
+        (If a deal is in progress, deletion may follow after it's completed or resolved.)
+      </p>
+
+      <h2>3. Data that may be retained · retention period</h2>
+      <p>
+        Data required by law, or needed to prevent disputes or fraudulent use,
+        may be <strong>retained for a period after your deletion request</strong> before being destroyed.
+        In that case it is not used for any other purpose and is stored separately.
+      </p>
+      <table>
+        <tr><th>Category</th><th>Retention period (per applicable law/policy)</th></tr>
+        <tr>
+          <td>Contract, transaction, payment, and fee records</td>
+          <td>In principle, <strong>5 years</strong> (per Korea's Act on Consumer Protection in Electronic Commerce, etc.)</td>
+        </tr>
+        <tr>
+          <td>Payment and goods-supply records</td>
+          <td>In principle, <strong>5 years</strong></td>
+        </tr>
+        <tr>
+          <td>Consumer complaint / dispute-handling records</td>
+          <td>In principle, <strong>3 years</strong></td>
+        </tr>
+        <tr>
+          <td>Access logs, etc.</td>
+          <td>Per applicable law (e.g. Protection of Communications Secrets Act, where relevant)</td>
+        </tr>
+        <tr>
+          <td>Fraud/abuse and sanction history (minimal identifiers)</td>
+          <td>Scoped to preventing signup abuse and fraud; reviewed and destroyed within up to <strong>1 year</strong> if needed</td>
+        </tr>
+      </table>
+      <p>
+        Data is destroyed without delay once its legal retention period ends.
+        For details on processing purposes, see the
+        <a href="/legal/privacy.en.html">Privacy Policy</a>.
+      </p>
+
+      <h2>4. Processing time · outcome</h2>
+      <ul>
+        <li>We target processing within <strong>14 business days</strong> after your request is received and identity is confirmed.</li>
+        <li>If a large amount of data is subject to legal retention, some data may remain for the periods above instead of being deleted immediately.</li>
+        <li>We'll notify you by email whether deletion is complete or some data is being retained.</li>
+      </ul>
+
+      <h2>5. Contact</h2>
+      <table>
+        <tr><th>App</th><td>WakeAgain</td></tr>
+        <tr><th>Developer / operator</th><td>CoreLabs</td></tr>
+        <tr><th>Email</th><td><a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a></td></tr>
+        <tr><th>Privacy Policy</th><td><a href="/legal/privacy.en.html">https://wakeagain.com/legal/privacy.en.html</a></td></tr>
+      </table>
+    </article>
+
+    <div class="legal-nav-links">
+      <a class="btn btn-ghost" href="/legal/privacy.en.html">Privacy Policy</a>
+      <a class="btn btn-ghost" href="/legal/terms.en.html">Terms</a>
+      <a class="btn btn-primary" href="/">Home</a>
+    </div>
+  </main>
+
+  <footer class="site-footer compact-footer">
+    <div class="corelabs-brand-row">
+      <img class="corelabs-mark" src="/assets/corelabs-logo-mark-light.png" alt="CoreLabs" width="22" height="22" loading="lazy" decoding="async" />
+      <span>CoreLabs · WakeAgain</span>
+    </div>
+    <p class="muted fine">© CoreLabs · Account deletion guide</p>
+  </footer>
+</body>
+</html>

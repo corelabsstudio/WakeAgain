@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>구매 가이드 — WakeAgain</title>
-  <meta name="description" content="WakeAgain 구매 가이드. 둘러보기 → 입찰 → 결제 → 이전 → 인수를 화면으로 한눈에." />
+  <title data-i18n="guide.buy.doctitle">Buy Guide — WakeAgain</title>
+  <meta name="description" content="WakeAgain buy guide: browse → bid → pay → transfer → take over, at a glance." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -39,97 +39,97 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span class="brand-name">Wake<span class="brand-again">Again</span></span>
       </a>
-      <nav class="nav-links" aria-label="메뉴">
-        <a href="/app/#list">마켓</a>
-        <a href="/guide/how-to-sell.html">판매 가이드</a>
-        <a href="/guide/">이용안내</a>
+      <nav class="nav-links" data-i18n-aria="common.nav_menu" aria-label="Menu">
+        <a href="/app/#list" data-i18n="nav.market">Marketplace</a>
+        <a href="/guide/how-to-sell.html" data-i18n="guide.tabs.sell">Sell guide</a>
+        <a href="/guide/" data-i18n="nav.guide">Guide</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" role="group" aria-label="Language">
           <button type="button" class="lang-btn" data-lang-switch="en" title="English">EN</button>
           <button type="button" class="lang-btn" data-lang-switch="ko" title="한국어">KO</button>
         </div>
-        <a class="btn btn-primary btn-sm" href="/app/#list">둘러보기</a>
+        <a class="btn btn-primary btn-sm" href="/app/#list" data-i18n="guide.buy.browse_short">Browse</a>
       </div>
     </div>
   </header>
 
   <main class="gv-page">
-    <div class="gv-swap" role="navigation" aria-label="가이드 전환">
-      <a href="/guide/how-to-sell.html">판매</a>
-      <a class="is-on" href="/guide/how-to-buy.html" aria-current="page">구매</a>
-      <a href="/guide/safety.html">사기 예방</a>
-      <a href="/guide/">이용안내</a>
+    <div class="gv-swap" role="navigation" data-i18n-aria="guide.swap_label" aria-label="Switch guide">
+      <a href="/guide/how-to-sell.html" data-i18n="guide.tabs.sell_short">Sell</a>
+      <a class="is-on" href="/guide/how-to-buy.html" aria-current="page" data-i18n="guide.tabs.buy_short">Buy</a>
+      <a href="/guide/safety.html" data-i18n="guide.tabs.safety_short">Safety</a>
+      <a href="/guide/" data-i18n="nav.guide">Guide</a>
     </div>
 
-    <h1 class="gv-title">구매 가이드</h1>
-    <p class="gv-sub">데모 있는 중단 프로젝트를 인수합니다. 구매자 추가 수수료 없음.</p>
+    <h1 class="gv-title" data-i18n="guide.buy.title">Buy Guide</h1>
+    <p class="gv-sub" data-i18n="guide.buy.sub">Take over a paused project with a working demo. No extra fees for buyers.</p>
 
-    <div class="gv-chips" aria-label="핵심">
-      <span class="gv-chip">입찰 <b>이메일 인증</b></span>
-      <span class="gv-chip">구매 수수료 <b>0</b></span>
-      <span class="gv-chip">결제 <b>PG</b></span>
-      <span class="gv-chip">이전 <b>입금 확인 후</b></span>
+    <div class="gv-chips" data-i18n-aria="guide.chips_label" aria-label="Key facts">
+      <span class="gv-chip" data-i18n-html="guide.buy.chip1">Bid <b>email verification</b></span>
+      <span class="gv-chip" data-i18n-html="guide.buy.chip2">Buyer fee <b>$0</b></span>
+      <span class="gv-chip" data-i18n-html="guide.buy.chip3">Payment <b>on-site</b></span>
+      <span class="gv-chip" data-i18n-html="guide.buy.chip4">Transfer <b>after payment confirmed</b></span>
     </div>
 
     <div class="gv-flow" role="list">
-      <div class="gv-flow-item" role="listitem"><strong>둘러보기</strong><span>데모 · 가격 · 설명</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>입찰</strong><span>사이트 안 가격 쓰기</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>결제</strong><span>낙찰 후 PG</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>이전 받기</strong><span>확인 후 코드·계정</span></div>
-      <div class="gv-flow-item" role="listitem"><strong>인수</strong><span>체크 후 확정</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.buy.flow1_t">Browse</strong><span data-i18n="guide.buy.flow1_d">Demo · price · details</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.buy.flow2_t">Bid</strong><span data-i18n="guide.buy.flow2_d">Place a price on-site</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.buy.flow3_t">Pay</strong><span data-i18n="guide.buy.flow3_d">After winning, via payment</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.buy.flow4_t">Get transfer</strong><span data-i18n="guide.buy.flow4_d">Code & accounts after confirming</span></div>
+      <div class="gv-flow-item" role="listitem"><strong data-i18n="guide.buy.flow5_t">Take over</strong><span data-i18n="guide.buy.flow5_d">Check off, then confirm</span></div>
     </div>
 
     <div class="gv-shots">
       <figure class="gv-shot">
         <div class="gv-illust">
-          <img src="/assets/illustrations/step-browse.png?v=1" width="720" height="720" alt="마켓 목록" loading="lazy" decoding="async" />
+          <img src="/assets/illustrations/step-browse.png?v=1" width="720" height="720" alt="Marketplace listing" loading="lazy" decoding="async" />
         </div>
-        <figcaption>마켓 · 비교</figcaption>
+        <figcaption data-i18n="guide.buy.shot1">Marketplace · compare</figcaption>
       </figure>
       <figure class="gv-shot">
         <div class="gv-illust">
-          <img src="/assets/illustrations/step-deal.png?v=1" width="720" height="720" alt="매물 상세 · 가격 쓰기" loading="lazy" decoding="async" />
+          <img src="/assets/illustrations/step-deal.png?v=1" width="720" height="720" alt="Listing detail · bidding" loading="lazy" decoding="async" />
         </div>
-        <figcaption>상세 · 입찰</figcaption>
+        <figcaption data-i18n="guide.buy.shot2">Detail · bid</figcaption>
       </figure>
       <figure class="gv-shot">
         <div class="gv-illust">
-          <img src="/assets/illustrations/step-deal.png?v=1" width="720" height="720" alt="결제·관심" loading="lazy" decoding="async" />
+          <img src="/assets/illustrations/step-deal.png?v=1" width="720" height="720" alt="Payment & interest" loading="lazy" decoding="async" />
         </div>
-        <figcaption>결제 · 관심</figcaption>
+        <figcaption data-i18n="guide.buy.shot3">Payment · interest</figcaption>
       </figure>
     </div>
 
     <div class="gv-split">
       <div class="gv-panel gv-do">
-        <h2>입찰 전 확인</h2>
+        <h2 data-i18n="guide.buy.do_title">Check before bidding</h2>
         <ul>
-          <li>데모가 돌아가는지</li>
-          <li>하는 일 · 한계 설명</li>
-          <li>사이트 안 가격·시간</li>
-          <li>PG 결제만 사용</li>
+          <li data-i18n="guide.buy.do1">The demo actually works</li>
+          <li data-i18n="guide.buy.do2">What it does · its limits</li>
+          <li data-i18n="guide.buy.do3">On-site price & timing</li>
+          <li data-i18n="guide.buy.do4">Only pay through the platform</li>
         </ul>
       </div>
       <div class="gv-panel gv-dont">
-        <h2>하지 마세요</h2>
+        <h2 data-i18n="guide.buy.dont_title">Don't</h2>
         <ul>
-          <li>카톡·개인 계좌 직거래</li>
-          <li>결제 전 전체 소스 요구</li>
-          <li>데모 없이 바로 결제</li>
-          <li>사이트 밖 이체 유도</li>
+          <li data-i18n="guide.buy.dont1">Deal directly via chat/personal account</li>
+          <li data-i18n="guide.buy.dont2">Ask for full source before paying</li>
+          <li data-i18n="guide.buy.dont3">Pay without seeing a demo</li>
+          <li data-i18n="guide.buy.dont4">Send money outside the site</li>
         </ul>
       </div>
     </div>
 
     <div class="gv-cta">
-      <a class="btn btn-primary btn-lg" href="/app/#list">마켓 둘러보기</a>
-      <a class="btn btn-ghost btn-lg" href="/guide/safety.html">사기 예방법</a>
+      <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="guide.buy.cta_browse">Browse marketplace</a>
+      <a class="btn btn-ghost btn-lg" href="/guide/safety.html" data-i18n="nav.safety">Safety tips</a>
     </div>
-    <p class="gv-note">통신판매중개 · 품질 보증 아님. <a href="/legal/terms.html">이용약관</a>.</p>
+    <p class="gv-note" data-i18n-html="guide.buy.note">Marketplace intermediary · no quality guarantee. <a href="/legal/terms.html">Terms</a>.</p>
   </main>
 
-  <script src="/js/i18n-messages.js?v=20260811-i18n3"></script>
+  <script src="/js/i18n-messages.js?v=20260811-i18n4"></script>
   <script src="/js/i18n.js?v=20260811-legal"></script>
 </body>
 </html>
