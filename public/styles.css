@@ -4,6 +4,12 @@
    - line-height 1.55–1.75 for body readability
 */
 :root {
+  /* Always dark — tells the browser to render native form-control chrome
+     (select dropdown popups, scrollbars, etc.) in dark mode too. Without
+     this, browsers still assume light UA styling for that native chrome
+     even though every color below is dark, which made <select> popups
+     unreadable (pale text on the browser's default light popup). */
+  color-scheme: dark;
   --bg: #1a1814;
   --bg-elev: #221f1a;
   --card: #2a2620;
