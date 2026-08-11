@@ -2589,6 +2589,15 @@ p, li, label, .lede, .center-lead, .manifesto p {
   margin: 0.85rem 0 0.4rem;
 }
 .form-card label:first-of-type { margin-top: 0; }
+/* color-scheme: dark (see :root) doesn't reliably darken the native <select>
+   popup list in every browser/OS — style <option> directly as a fallback so
+   the dropdown itself never renders pale text on the browser's default
+   light popup background. */
+select,
+select option {
+  background: var(--bg-elev);
+  color: var(--text);
+}
 /* text/number/email/select only — never style checkbox/radio as full-width fields */
 .form-card input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="image"]),
 .form-card textarea,
