@@ -1,5 +1,5 @@
 ﻿/* WakeAgain PWA ??app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v48-navauth-fix";
+const CACHE = "wakeagain-shell-v49-navaccount-chip";
 const PRECACHE = [
   "/",
   "/index.html",

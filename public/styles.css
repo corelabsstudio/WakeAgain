@@ -428,6 +428,47 @@ header.nav-pill-wrap,
   padding: 0.35rem 0.5rem;
 }
 .nav-login:hover { color: var(--text); }
+/* Logged-in state: small account chip so it reads as "signed in", not stray text */
+.nav-login.is-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 9.5rem;
+  padding: 0.28rem 0.65rem 0.28rem 0.28rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+.nav-login.is-account:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.nav-login-avatar {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #2a1c02;
+  background: linear-gradient(135deg, var(--pink), var(--accent-3));
+}
+.nav-login-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-drawer-panel a.is-account {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
 .nav-ph-badge { display: inline-flex; align-items: center; line-height: 0; flex-shrink: 0; }
 .nav-ph-badge img { height: 32px; width: auto; display: block; border-radius: 6px; }
 /* ——— Hero ——— */
