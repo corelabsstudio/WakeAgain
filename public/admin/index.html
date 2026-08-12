@@ -187,6 +187,33 @@
       border-radius: inherit;
       background: linear-gradient(90deg, #a67c00, #e8b86d);
     }
+    table.src-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    table.src-table th,
+    table.src-table td {
+      text-align: left;
+      padding: 0.55rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    table.src-table th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+    }
+    .src-bar-track {
+      background: var(--border);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .src-bar-fill {
+      background: var(--accent);
+      height: 100%;
+    }
     .user-search {
       display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
       margin-bottom: 0.75rem;
@@ -298,6 +325,7 @@
       <button type="button" data-mode="coupons">쿠폰</button>
       <button type="button" data-mode="igpromo">바이럴 이벤트</button>
       <button type="button" data-mode="revenue">매출</button>
+      <button type="button" data-mode="visits">유입경로</button>
       <button type="button" data-mode="reports">신고</button>
     </div>
 
@@ -365,6 +393,7 @@
           state.status = state.mode === "users" ? "all" : "pending";
           if (state.mode === "users") state.userFilter = "all";
           if (state.mode === "revenue") state.revenuePeriod = "all"; // 매출 탭 기본 = 전체
+          if (state.mode === "visits") state.visitDay = ""; // 유입경로 탭 기본 = 오늘
           load();
         });
       });
@@ -1647,6 +1676,70 @@
         $("detail").hidden = true;
       }
 
+      function renderVisits() {
+        var data = state.visitData;
+        if (!data) {
+          $("list").innerHTML = '<p class="empty">유입경로 데이터 없음</p>';
+          $("detail").innerHTML = "";
+          return;
+        }
+        var stats = data.stats || {};
+        var src = data.sources || [];
+        var day = state.visitDay || data.day || "";
+        var total = src.reduce(function (sum, s) { return sum + (s.visits || 0); }, 0);
+        var rows = src.length
+          ? src
+              .map(function (s) {
+                var pct = total ? Math.round((s.visits / total) * 100) : 0;
+                return (
+                  "<tr><td>" +
+                  escapeHtml(s.source) +
+                  "</td><td>" +
+                  s.visits +
+                  '</td><td style="min-width:140px">' +
+                  pct +
+                  '%<div class="src-bar-track"><div class="src-bar-fill" style="width:' +
+                  pct +
+                  '%"></div></div></td></tr>'
+                );
+              })
+              .join("")
+          : '<tr><td colspan="3" class="empty">이 날짜엔 기록된 방문이 없습니다.</td></tr>';
+
+        $("list").innerHTML =
+          '<div class="panel" style="margin-bottom:0.85rem"><div class="rev-grid">' +
+          '<div class="rev-card"><p class="lab">오늘 방문자</p><p class="num">' +
+          Number(stats.today_visitors || 0).toLocaleString("ko-KR") +
+          '</p></div><div class="rev-card"><p class="lab">오늘 페이지뷰</p><p class="num">' +
+          Number(stats.today_page_views || 0).toLocaleString("ko-KR") +
+          '</p></div><div class="rev-card"><p class="lab">전체 누적 방문자</p><p class="num">' +
+          Number(stats.visitors || 0).toLocaleString("ko-KR") +
+          "</p></div></div></div>" +
+          '<div class="panel"><div class="user-search" style="margin-bottom:0.85rem">' +
+          '<input type="date" id="visitDayInput" value="' +
+          escapeHtml(day) +
+          '" />' +
+          '<button type="button" class="btn btn-primary btn-sm" id="btnVisitReload">조회</button>' +
+          '<span class="meta" style="margin-left:auto">' +
+          escapeHtml(day) +
+          ' (KST) · 그 날 처음 들어온 방문자 기준</span></div>' +
+          '<table class="src-table"><thead><tr><th>경로</th><th>방문</th><th>비율</th></tr></thead><tbody>' +
+          rows +
+          "</tbody></table></div>";
+
+        $("detail").innerHTML = "";
+        $("detail").hidden = true;
+
+        var dInput = document.getElementById("visitDayInput");
+        var btnReload = document.getElementById("btnVisitReload");
+        if (btnReload) {
+          btnReload.addEventListener("click", function () {
+            state.visitDay = (dInput && dInput.value) || "";
+            load();
+          });
+        }
+      }
+
       async function load() {
         showErr("");
         try {
@@ -2315,6 +2408,20 @@
             var rev = await api("/api/v1/admin/revenue");
             state.revenueData = rev;
             renderRevenue();
+          } else if (state.mode === "visits") {
+            document.querySelector(".admin-grid").style.gridTemplateColumns = "1fr";
+            $("pageTitle").textContent = "유입경로";
+            $("hintBox").innerHTML =
+              "<strong>오늘/특정 날짜(KST)에 처음 들어온 방문자</strong>가 어디서 왔는지 보여줍니다. " +
+              "같은 방문자의 그날 이후 페이지 이동(내부 링크)은 집계에 안 들어갑니다.";
+            $("counts").innerHTML = "";
+            var vday = state.visitDay || "";
+            var vstats = await api("/api/v1/visit");
+            var vsrc = await api(
+              "/api/v1/admin/visit-sources" + (vday ? "?day=" + encodeURIComponent(vday) : "")
+            );
+            state.visitData = { stats: vstats, sources: vsrc.sources || [], day: vsrc.day };
+            renderVisits();
           } else {
             document.querySelector(".admin-grid").style.gridTemplateColumns = "";
             $("pageTitle").textContent = "매물 검수";
