@@ -558,20 +558,31 @@
         var cta = root.querySelector('a[href="/app/#new"]');
         if (cta) cta.addEventListener("click", dismiss);
       }
-      /* nav: show account if session exists */
-      try {
-        var api = window.WakeAgainAPI;
-        var link = document.getElementById("navAuthLink");
-        if (api && link && api.isLoggedIn()) {
-          var u = api.getUser();
-          var acc =
-            (window.WakeAgainI18n && window.WakeAgainI18n.t && window.WakeAgainI18n.t("nav.account")) ||
-            "내 계정";
-          if (acc === "nav.account") acc = "내 계정";
-          link.textContent = (u && (u.display_name || u.email)) || acc;
-          link.href = "/app/#list";
-        }
-      } catch (e) {}
+      /* nav: show account if session exists.
+         Must run AFTER WakeAgainI18n's own DOMContentLoaded boot() — its apply()
+         rewrites every [data-i18n] element (including this login link) back to
+         the "로그인" translation, which stomped this personalization when it ran
+         inline before DOMContentLoaded. Re-run on DOMContentLoaded (registered
+         after i18n.js's listener, so it fires after apply()) and strip
+         data-i18n so later language switches (setLang -> apply()) don't reset it. */
+      function syncAuthNav() {
+        try {
+          var api = window.WakeAgainAPI;
+          var link = document.getElementById("navAuthLink");
+          if (api && link && api.isLoggedIn()) {
+            var u = api.getUser();
+            var acc =
+              (window.WakeAgainI18n && window.WakeAgainI18n.t && window.WakeAgainI18n.t("nav.account")) ||
+              "내 계정";
+            if (acc === "nav.account") acc = "내 계정";
+            link.textContent = (u && (u.display_name || u.email)) || acc;
+            link.href = "/app/#list";
+            link.removeAttribute("data-i18n");
+          }
+        } catch (e) {}
+      }
+      syncAuthNav();
+      document.addEventListener("DOMContentLoaded", syncAuthNav);
 
       /* Mobile nav drawer */
       (function navDrawer() {
@@ -606,15 +617,20 @@
         document.addEventListener("keydown", function (e) {
           if (e.key === "Escape" && drawer.classList.contains("is-open")) close();
         });
-        try {
-          var api = window.WakeAgainAPI;
-          var dAuth = document.getElementById("navDrawerAuth");
-          if (api && dAuth && api.isLoggedIn()) {
-            var u = api.getUser();
-            dAuth.textContent = (u && (u.display_name || u.email)) || "내 계정";
-            dAuth.href = "/app/#list";
-          }
-        } catch (e) {}
+        function syncDrawerAuth() {
+          try {
+            var api = window.WakeAgainAPI;
+            var dAuth = document.getElementById("navDrawerAuth");
+            if (api && dAuth && api.isLoggedIn()) {
+              var u = api.getUser();
+              dAuth.textContent = (u && (u.display_name || u.email)) || "내 계정";
+              dAuth.href = "/app/#list";
+              dAuth.removeAttribute("data-i18n");
+            }
+          } catch (e) {}
+        }
+        syncDrawerAuth();
+        document.addEventListener("DOMContentLoaded", syncDrawerAuth);
       })();
 
       /* Viral event banner/button — only while event is open (EN/KO by UI lang) */
