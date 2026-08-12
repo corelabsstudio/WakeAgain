@@ -7,6 +7,7 @@ import re
 import secrets
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
@@ -904,12 +905,48 @@ def public_stats():
 
 class VisitIn(BaseModel):
     visitor_key: str = Field(min_length=8, max_length=64)
+    referrer: str = Field(default="", max_length=500)
 
 
 _BOT_UA = re.compile(
     r"bot|crawl|spider|slurp|facebookexternalhit|preview|headless|wget|curl|python-requests|httpclient",
     re.I,
 )
+
+# Referrer hostname -> human channel label, for the footer "today visitors" source drilldown.
+_REFERRER_CHANNELS = [
+    (re.compile(r"reddit\.com$", re.I), "Reddit"),
+    (re.compile(r"(twitter\.com|x\.com|t\.co)$", re.I), "X"),
+    (re.compile(r"(google\.|googleusercontent\.com)", re.I), "Google"),
+    (re.compile(r"naver\.com$", re.I), "Naver"),
+    (re.compile(r"daum\.net$", re.I), "Daum"),
+    (re.compile(r"instagram\.com$", re.I), "Instagram"),
+    (re.compile(r"(facebook\.com|fb\.me)$", re.I), "Facebook"),
+    (re.compile(r"(indiehackers\.com)$", re.I), "IndieHackers"),
+    (re.compile(r"(news\.ycombinator\.com)$", re.I), "HackerNews"),
+    (re.compile(r"kakao(corp|talk)?\.com$|kakao\.com$", re.I), "Kakao"),
+    (re.compile(r"discord(app)?\.com$", re.I), "Discord"),
+    (re.compile(r"youtube\.com$|youtu\.be$", re.I), "YouTube"),
+]
+
+
+def _normalize_referrer(referrer: str, own_host: str) -> str:
+    referrer = (referrer or "").strip()
+    if not referrer:
+        return "Direct"
+    try:
+        host = urlparse(referrer).hostname or ""
+    except ValueError:
+        return "Other"
+    host = host.lower()
+    if not host:
+        return "Other"
+    if own_host and (host == own_host or host.endswith("." + own_host)):
+        return "Direct"
+    for pattern, label in _REFERRER_CHANNELS:
+        if pattern.search(host):
+            return label
+    return host[:80]
 
 
 @router.post("/visit")
@@ -925,8 +962,11 @@ def record_visit(body: VisitIn, request: Request):
     if len(key) < 8:
         raise HTTPException(status_code=400, detail="invalid visitor_key")
 
+    own_host = (request.headers.get("host") or "").split(":")[0].lower()
+    source = _normalize_referrer(body.referrer, own_host)
+
     with database.db() as conn:
-        stats = database.record_site_visit(conn, key, count_page_view=True)
+        stats = database.record_site_visit(conn, key, count_page_view=True, source=source)
     return {"ok": True, "bot": False, **stats}
 
 
@@ -935,6 +975,14 @@ def get_visit_stats():
     with database.db() as conn:
         stats = database.get_site_visit_stats(conn)
     return {"ok": True, **stats}
+
+
+@router.get("/admin/visit-sources")
+def admin_visit_sources(day: str | None = None, _: None = Depends(require_admin)):
+    """Referrer/channel breakdown for a given KST day (default today). Admin-only."""
+    with database.db() as conn:
+        result = database.get_site_visit_sources(conn, day)
+    return {"ok": True, **result}
 
 
 # --- auth ---

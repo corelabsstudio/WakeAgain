@@ -584,6 +584,13 @@ def init_db() -> None:
               last_seen TEXT NOT NULL,
               last_day TEXT
             );
+            -- Referrer/channel breakdown per day (footer "today visitors" drilldown, admin-only)
+            CREATE TABLE IF NOT EXISTS site_daily_sources (
+              day TEXT NOT NULL,
+              source TEXT NOT NULL,
+              visits INTEGER NOT NULL DEFAULT 0,
+              PRIMARY KEY(day, source)
+            );
             INSERT OR IGNORE INTO site_counters(key, value) VALUES ('page_views', 0);
             INSERT OR IGNORE INTO site_counters(key, value) VALUES ('visitors', 0);
             """
@@ -659,10 +666,14 @@ def record_site_visit(
     visitor_key: str,
     *,
     count_page_view: bool = True,
+    source: str = "direct",
 ) -> dict:
     """Record a visit. Unique visitor once per key; today unique once per key per KST day.
 
     count_page_view: when False, only returns stats (read path).
+    source: normalized referrer channel (e.g. "Reddit", "X", "Google", "Direct") —
+    only recorded on a visitor's first hit of the day, since later same-session
+    page loads carry the site itself as referrer and would just say "Direct".
     """
     from datetime import datetime, timezone
 
@@ -703,6 +714,11 @@ def record_site_visit(
                 "ON CONFLICT(day) DO UPDATE SET visitors = visitors + 1",
                 (day,),
             )
+            conn.execute(
+                "INSERT INTO site_daily_sources(day, source, visits) VALUES (?, ?, 1) "
+                "ON CONFLICT(day, source) DO UPDATE SET visits = visits + 1",
+                (day, source),
+            )
         else:
             conn.execute(
                 "UPDATE site_visitor_seen SET last_seen = ? WHERE visitor_key = ?",
@@ -718,8 +734,26 @@ def record_site_visit(
                     "ON CONFLICT(day) DO UPDATE SET visitors = visitors + 1",
                     (day,),
                 )
+                conn.execute(
+                    "INSERT INTO site_daily_sources(day, source, visits) VALUES (?, ?, 1) "
+                    "ON CONFLICT(day, source) DO UPDATE SET visits = visits + 1",
+                    (day, source),
+                )
 
     return get_site_visit_stats(conn)
+
+
+def get_site_visit_sources(conn: sqlite3.Connection, day: str | None = None) -> dict:
+    """Referrer/channel breakdown for a given KST day (default today), most visits first."""
+    day = day or _kst_today()
+    rows = conn.execute(
+        "SELECT source, visits FROM site_daily_sources WHERE day = ? ORDER BY visits DESC",
+        (day,),
+    ).fetchall()
+    return {
+        "day": day,
+        "sources": [{"source": r["source"], "visits": int(r["visits"])} for r in rows],
+    }
 
 
 def normalize_phone(raw: str) -> str:
