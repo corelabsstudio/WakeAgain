@@ -51,132 +51,30 @@
 
   function ensureEl() {
     var el = document.getElementById("footerVisitors");
+    if (el) return el;
 
-    if (!el) {
-      var host =
-        document.querySelector(".footer-bottom") ||
-        document.querySelector("footer.site-footer") ||
-        document.querySelector("footer.app-legal-foot") ||
-        document.querySelector("footer");
-      if (!host) return null;
+    var host =
+      document.querySelector(".footer-bottom") ||
+      document.querySelector("footer.site-footer") ||
+      document.querySelector("footer.app-legal-foot") ||
+      document.querySelector("footer");
+    if (!host) return null;
 
-      el = document.createElement("p");
-      el.id = "footerVisitors";
-      el.className = "footer-visitors muted fine";
-      el.setAttribute("aria-live", "polite");
-      el.innerHTML =
-        '<span class="footer-visitors-label" data-i18n="footer.visitors_label">방문자</span> ' +
-        '<span class="footer-visitors-nums">' +
-        '<span data-i18n="footer.visitors_today">오늘</span> ' +
-        '<strong id="footerVisitorsToday">—</strong>' +
-        '<span class="footer-visitors-sep" aria-hidden="true"> · </span>' +
-        '<span data-i18n="footer.visitors_total">전체</span> ' +
-        '<strong id="footerVisitorsTotal">—</strong>' +
-        "</span>";
-      host.appendChild(el);
-    }
-
-    // Static pages already ship a hardcoded #footerVisitors (see index.html etc.) —
-    // this block runs for both that case and the freshly-created one above, so the
-    // sources drilldown gets wired up everywhere exactly once.
-    if (!document.getElementById("footerVisitorsSources")) {
-      var sourcesEl = document.createElement("span");
-      sourcesEl.id = "footerVisitorsSources";
-      sourcesEl.className = "footer-visitors-sources fine";
-      sourcesEl.style.display = "none";
-      el.appendChild(sourcesEl);
-    }
-
-    var todayEl = document.getElementById("footerVisitorsToday");
-    if (todayEl && !todayEl.dataset.waSourcesBound) {
-      todayEl.dataset.waSourcesBound = "1";
-      todayEl.title = "관리자: 클릭하면 오늘 유입 경로";
-      todayEl.style.cursor = "pointer";
-      todayEl.style.textDecoration = "underline dotted";
-      todayEl.addEventListener("click", toggleSources);
-    }
+    el = document.createElement("p");
+    el.id = "footerVisitors";
+    el.className = "footer-visitors muted fine";
+    el.setAttribute("aria-live", "polite");
+    el.innerHTML =
+      '<span class="footer-visitors-label" data-i18n="footer.visitors_label">방문자</span> ' +
+      '<span class="footer-visitors-nums">' +
+      '<span data-i18n="footer.visitors_today">오늘</span> ' +
+      '<strong id="footerVisitorsToday">—</strong>' +
+      '<span class="footer-visitors-sep" aria-hidden="true"> · </span>' +
+      '<span data-i18n="footer.visitors_total">전체</span> ' +
+      '<strong id="footerVisitorsTotal">—</strong>' +
+      "</span>";
+    host.appendChild(el);
     return el;
-  }
-
-  // --- admin-only "today visitors" referrer drilldown ---
-  var ADMIN_KEY_STORAGE = "wa_admin_key";
-
-  function getAdminKey(forcePrompt) {
-    var k = "";
-    try {
-      k = localStorage.getItem(ADMIN_KEY_STORAGE) || "";
-    } catch (e) {}
-    if ((!k || forcePrompt) && typeof window.prompt === "function") {
-      var entered = window.prompt("관리자 키(X-Admin-Key)");
-      if (entered) {
-        k = entered.trim();
-        try {
-          localStorage.setItem(ADMIN_KEY_STORAGE, k);
-        } catch (e2) {}
-      }
-    }
-    return k;
-  }
-
-  function renderSources(box, data) {
-    var sources = (data && data.sources) || [];
-    if (!sources.length) {
-      box.textContent = "오늘 유입 기록 없음";
-      return;
-    }
-    var total = sources.reduce(function (sum, s) {
-      return sum + (s.visits || 0);
-    }, 0);
-    box.innerHTML = sources
-      .map(function (s) {
-        var pct = total ? Math.round((s.visits / total) * 100) : 0;
-        return (
-          '<span class="footer-visitors-source-row">' +
-          s.source +
-          " " +
-          s.visits +
-          " (" +
-          pct +
-          "%)</span>"
-        );
-      })
-      .join(" · ");
-  }
-
-  function toggleSources() {
-    var box = document.getElementById("footerVisitorsSources");
-    if (!box) return;
-
-    if (box.style.display !== "none") {
-      box.style.display = "none";
-      return;
-    }
-
-    var key = getAdminKey(false);
-    if (!key) return;
-
-    box.style.display = "";
-    box.textContent = "불러오는 중…";
-
-    fetch(apiBase() + "/api/v1/admin/visit-sources", {
-      headers: { "X-Admin-Key": key },
-      credentials: "same-origin",
-    })
-      .then(function (r) {
-        if (r.status === 401) {
-          try {
-            localStorage.removeItem(ADMIN_KEY_STORAGE);
-          } catch (e) {}
-          throw new Error("unauthorized");
-        }
-        return r.json();
-      })
-      .then(function (data) {
-        renderSources(box, data);
-      })
-      .catch(function () {
-        box.textContent = "관리자 키가 틀렸거나 불러오기 실패";
-      });
   }
 
   function apply(stats) {
