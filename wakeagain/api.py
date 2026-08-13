@@ -2017,6 +2017,42 @@ def get_project(
     return {"ok": True, "project": project}
 
 
+@router.delete("/projects/{project_id}")
+def delete_project(project_id: int, user: dict = Depends(get_current_user)):
+    """Seller self-service delete — fixes a mistaken listing. Blocked once a bid
+    has landed or a deal is in progress, so a winning bidder can't be yanked out
+    from under them; use admin review (반려) for those cases instead."""
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        if int(row["owner_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="not your listing")
+        if int(row["bid_count"] or 0) > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "has_bids",
+                    "message": "이미 입찰이 들어온 매물은 삭제할 수 없습니다. 문의로 처리해 주세요.",
+                },
+            )
+        deal_status = (row["deal_status"] if "deal_status" in row.keys() else None) or ""
+        if deal_status:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "deal_in_progress",
+                    "message": "진행 중인 거래가 있는 매물은 삭제할 수 없습니다.",
+                },
+            )
+        conn.execute("DELETE FROM bids WHERE project_id = ?", (project_id,))
+        conn.execute("DELETE FROM messages WHERE project_id = ?", (project_id,))
+        conn.execute("DELETE FROM reports WHERE project_id = ?", (project_id,))
+        conn.execute("DELETE FROM fee_invoices WHERE project_id = ?", (project_id,))
+        conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+    return {"ok": True}
+
+
 @router.get("/projects/{project_id}/certificate")
 def get_deal_certificate(
     project_id: int,

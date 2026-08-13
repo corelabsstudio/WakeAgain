@@ -700,6 +700,9 @@
         body: JSON.stringify(payload || {}),
       });
     },
+    async deleteProject(projectId) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId), { method: "DELETE" });
+    },
     async getQCredits(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits");
     },

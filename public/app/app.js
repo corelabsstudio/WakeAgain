@@ -821,6 +821,24 @@
         el.appendChild(actions);
       }
 
+      // Mine feed: self-delete a mistaken listing — only while no bid has landed
+      if (feed === "mine" && bids === 0 && aStatus !== "sold") {
+        const delActions = document.createElement("div");
+        delActions.className = "p-card-actions";
+        delActions.style.marginTop = "8px";
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn-sm btn-ghost";
+        delBtn.textContent = t("app.btn_delete_listing", "Delete listing");
+        delBtn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          deleteListing(p);
+        });
+        delActions.appendChild(delBtn);
+        el.appendChild(delActions);
+      }
+
       el.addEventListener("click", () => {
         goPage("/project.html?id=" + encodeURIComponent(p.id));
       });
@@ -865,6 +883,28 @@
         (err && err.message) ||
         String(err);
       window.alert(t("app.relist_fail", "Re-list failed") + "\n" + msg);
+    }
+  }
+
+  async function deleteListing(p) {
+    if (!p || !p.id) return;
+    const ok = window.confirm(
+      t("app.delete_confirm", "Delete “{title}”?\n\nThis can't be undone. Only works while no bid has landed.",
+        { title: p.title || "" }
+      )
+    );
+    if (!ok) return;
+    try {
+      await api.deleteProject(p.id);
+      window.alert(t("app.delete_ok", "Listing deleted."));
+      feed = "mine";
+      loadProjects(true);
+    } catch (err) {
+      const msg =
+        (err && err.detail && (err.detail.message || err.detail)) ||
+        (err && err.message) ||
+        String(err);
+      window.alert(t("app.delete_fail", "Delete failed") + "\n" + msg);
     }
   }
 
