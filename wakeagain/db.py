@@ -316,6 +316,8 @@ def init_db() -> None:
                 "seller_contact_phone": "TEXT",
                 "seller_address": "TEXT",
                 "seller_identity_at": "TEXT",
+                # First-signup welcome email (maker outreach + listing-coupon offer) — sent once
+                "welcome_mailed_at": "TEXT",
             },
         )
         conn.execute(

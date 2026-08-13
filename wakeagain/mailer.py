@@ -281,6 +281,51 @@ def send_verification_code(to: str, code: str) -> bool:
     )
 
 
+def _welcome_html(name: str) -> str:
+    greeting = f"Hi {name}," if name else "Hi,"
+    return (
+        "<div style='font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#334155'>"
+        f"<p>{greeting}</p>"
+        "<p>I'm the maker of WakeAgain. Thank you so much for joining us so early! "
+        "We just launched a couple of days ago, and you're one of our very first members.</p>"
+        "<p>I'd love to hear: what made you sign up, and what features are you hoping to see? "
+        "Any feedback — even brutal honesty — would mean the world to me.</p>"
+        "<p>One more thing: if you've got an old side project sitting around that you've stopped "
+        "working on, WakeAgain is built exactly for that — list it. Reply to this email once it's "
+        "up and I'll personally send you a coupon that lowers your success fee from 10% to 8%, "
+        "as a thank-you. <strong>This is limited to our first 50 sellers</strong>, so don't wait "
+        "too long.</p>"
+        "<p>Just hit reply — I read every email myself.</p>"
+        "<p style='color:#64748b;font-size:13px'>— Hyunsoo, WakeAgain</p>"
+        "</div>"
+    )
+
+
+def send_welcome_email(to: str, name: str = "") -> bool:
+    """One-time maker welcome email for a brand-new signup. See api.py _maybe_send_welcome_mail
+    for the once-only gate (users.welcome_mailed_at)."""
+    greeting = f"Hi {name}," if name else "Hi,"
+    text = (
+        f"{greeting}\n\n"
+        "I'm the maker of WakeAgain. Thank you so much for joining us so early! "
+        "We just launched a couple of days ago, and you're one of our very first members.\n\n"
+        "I'd love to hear: what made you sign up, and what features are you hoping to see? "
+        "Any feedback -- even brutal honesty -- would mean the world to me.\n\n"
+        "One more thing: if you've got an old side project sitting around that you've stopped "
+        "working on, WakeAgain is built exactly for that -- list it. Reply to this email once "
+        "it's up and I'll personally send you a coupon that lowers your success fee from 10% to "
+        "8%, as a thank-you. This is limited to our first 50 sellers, so don't wait too long.\n\n"
+        "Just hit reply -- I read every email myself.\n\n"
+        "-- Hyunsoo, WakeAgain\n"
+    )
+    return send_mail(
+        to,
+        "Thanks for joining WakeAgain early",
+        text,
+        html=_welcome_html(name),
+    )
+
+
 def send_password_reset_code(to: str, code: str) -> bool:
     text = (
         "WakeAgain 비밀번호 재설정 코드입니다.\n\n"

@@ -30,6 +30,7 @@ from wakeagain.auth import (
 from wakeagain.mailer import (
     send_password_reset_code,
     send_verification_code,
+    send_welcome_email,
     smtp_configured,
 )
 
@@ -190,6 +191,34 @@ def _deliver_verify_code(email: str, code: str) -> dict[str, Any]:
 
 def _deliver_reset_code(email: str, code: str) -> dict[str, Any]:
     return _deliver_code_mail(email, code, kind="reset")
+
+
+def _maybe_send_welcome_mail(user_id: int, email: str, name: str, *, force: bool = False) -> bool:
+    """Maker welcome email — once per account (users.welcome_mailed_at gate), unless force=True.
+
+    Best-effort: never raises. Called outside any open db() transaction since it does network I/O.
+    """
+    if not email:
+        return False
+    with database.db() as conn:
+        row = conn.execute(
+            "SELECT welcome_mailed_at FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if not row:
+            return False
+        if row["welcome_mailed_at"] and not force:
+            return False
+    try:
+        sent = send_welcome_email(email, name or "")
+    except Exception:
+        sent = False
+    if sent:
+        with database.db() as conn:
+            conn.execute(
+                "UPDATE users SET welcome_mailed_at = ? WHERE id = ?",
+                (database._now(), user_id),
+            )
+    return sent
 
 
 def _lang_of(request: Request) -> str:
@@ -1027,6 +1056,7 @@ def register(body: RegisterIn):
     user = database.user_to_dict(row)
     token = create_token(user["id"], user["email"])
     mail_meta = _deliver_verify_code(user["email"], code)
+    _maybe_send_welcome_mail(user["id"], user["email"], user.get("display_name") or "")
     return _auth_payload(user, token, mail_meta=mail_meta)
 
 
@@ -1094,7 +1124,8 @@ def set_birth_date(body: BirthDateIn, user: dict = Depends(get_current_user)):
     return {"ok": True, "user": database.user_to_dict(row)}
 
 
-def _oauth_upsert_user(conn, provider: str, profile: dict) -> Any:
+def _oauth_upsert_user(conn, provider: str, profile: dict) -> tuple[Any, bool]:
+    """Returns (user_row, is_new_signup)."""
     subject = (profile.get("subject") or "").strip()
     if not subject:
         raise HTTPException(status_code=400, detail="oauth subject missing")
@@ -1124,7 +1155,7 @@ def _oauth_upsert_user(conn, provider: str, profile: dict) -> Any:
                 (display, row["id"]),
             )
             row = conn.execute("SELECT * FROM users WHERE id = ?", (row["id"],)).fetchone()
-        return row
+        return row, False
 
     by_email = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     if by_email:
@@ -1143,7 +1174,7 @@ def _oauth_upsert_user(conn, provider: str, profile: dict) -> Any:
             """,
             (provider, subject, verified, display or None, by_email["id"]),
         )
-        return conn.execute("SELECT * FROM users WHERE id = ?", (by_email["id"],)).fetchone()
+        return conn.execute("SELECT * FROM users WHERE id = ?", (by_email["id"],)).fetchone(), False
 
     cur = conn.execute(
         """
@@ -1163,7 +1194,8 @@ def _oauth_upsert_user(conn, provider: str, profile: dict) -> Any:
         ),
     )
     uid = int(cur.lastrowid)
-    return conn.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+    return row, True
 
 
 @router.get("/auth/oauth/{provider}/start")
@@ -1207,12 +1239,14 @@ async def oauth_callback(provider: str, code: str | None = None, state: str | No
         return RedirectResponse(app_err + "token_failed", status_code=302)
     try:
         with database.db() as conn:
-            row = _oauth_upsert_user(conn, p, profile)
+            row, is_new = _oauth_upsert_user(conn, p, profile)
             user = database.user_to_dict(row)
             token = create_token(user["id"], user["email"])
     except HTTPException as e:
         code_s = "suspended" if getattr(e, "status_code", 0) == 403 else "failed"
         return RedirectResponse(app_err + code_s, status_code=302)
+    if is_new:
+        _maybe_send_welcome_mail(user["id"], user["email"], user.get("display_name") or "")
     # Hand token to app shell (query — cleaned by JS)
     from urllib.parse import quote
 
@@ -5213,6 +5247,8 @@ def _admin_user_row(conn: Any, row: Any, *, full: bool = False) -> dict[str, Any
         or "password",
         "profile_updated_at": (row["profile_updated_at"] if "profile_updated_at" in row.keys() else None)
         or "",
+        "welcome_mailed_at": (row["welcome_mailed_at"] if "welcome_mailed_at" in row.keys() else None)
+        or "",
     }
     if full:
         uid = int(row["id"])
@@ -6132,6 +6168,22 @@ def admin_set_password(
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         user = _admin_user_row(conn, row, full=True)
     return {"ok": True, "user": user, "message": "비밀번호가 변경되었습니다."}
+
+
+@router.post("/admin/users/{user_id}/send-welcome-mail")
+def admin_send_welcome_mail(user_id: int, force: bool = False, _: None = Depends(require_admin)):
+    """메이커 웰컴 메일(피드백 요청 + 매물등록 쿠폰 안내) 수동 발송. 이미 보냈으면 force=true로만 재발송."""
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        email = (row["email"] or "").strip()
+        name = (row["display_name"] or "").strip()
+        already = bool(row["welcome_mailed_at"]) if "welcome_mailed_at" in row.keys() else False
+    if already and not force:
+        return {"ok": True, "email_sent": False, "already_sent": True, "message": "이미 발송됨(재발송하려면 force=true)"}
+    sent = _maybe_send_welcome_mail(user_id, email, name, force=force)
+    return {"ok": True, "email_sent": sent, "already_sent": False}
 
 
 @router.post("/admin/users/{user_id}/issue-reset-code")

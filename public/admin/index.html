@@ -1090,6 +1090,9 @@
             ? '<button type="button" class="btn btn-primary btn-sm" id="btnUserVerify">이메일 인증 처리</button>'
             : "") +
           '<button type="button" class="btn btn-ghost btn-sm" id="btnUserResetCode">재설정 코드 발급</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" id="btnUserWelcomeMail">' +
+          (u.welcome_mailed_at ? "웰컴 메일 재발송" : "웰컴 메일 보내기") +
+          "</button>" +
           "</div>" +
           '<div class="field"><label for="newPass">새 비밀번호 (운영 직접 설정, 8자+)</label>' +
           '<input id="newPass" type="text" autocomplete="off" placeholder="고객에게 전달할 임시 비밀번호" minlength="8" /></div>' +
@@ -1190,6 +1193,30 @@
               detailErr(
                 (data.email_sent ? "메일 발송 시도 완료. " : "메일 미발송(SMTP 미설정). ") +
                   "아래 코드를 고객에게 전달하거나, 비밀번호를 직접 설정하세요."
+              );
+            } catch (e) {
+              detailErr(e.message || "실패");
+            }
+          });
+        }
+        var bw = $("btnUserWelcomeMail");
+        if (bw) {
+          bw.addEventListener("click", async function () {
+            detailErr("");
+            var force = !!u.welcome_mailed_at;
+            if (force && !confirm("이미 발송된 계정입니다. 다시 보낼까요?")) return;
+            try {
+              var data = await api(
+                "/api/v1/admin/users/" + u.id + "/send-welcome-mail" + (force ? "?force=true" : ""),
+                { method: "POST", body: "{}" }
+              );
+              await refreshUser();
+              detailErr(
+                data.email_sent
+                  ? "웰컴 메일 발송 완료."
+                  : data.already_sent
+                    ? "이미 발송된 메일입니다."
+                    : "발송 실패(SMTP 확인 필요)."
               );
             } catch (e) {
               detailErr(e.message || "실패");
