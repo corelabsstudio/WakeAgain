@@ -18,7 +18,7 @@ Env (all required for upload, except region/prefix defaults)::
   OFFSITE_S3_PREFIX=wakeagain/      # object key prefix
   OFFSITE_S3_FORCE_PATH_STYLE=1     # R2/MinIO usually 1; AWS virtual-host 0
   OFFSITE_KEEP_REMOTE=60            # max objects kept under prefix
-  OFFSITE_UPLOAD_REASONS=startup,scheduled,manual,pre-purge,pre-restore
+  OFFSITE_UPLOAD_REASONS=startup,scheduled,manual,pre-purge,pre-restore,post-listing
 
 Uses AWS Signature Version 4 over httpx (no boto3 dependency).
 """
@@ -77,7 +77,7 @@ def config() -> dict[str, Any]:
         keep = 60
     reasons_raw = _env(
         "OFFSITE_UPLOAD_REASONS",
-        "startup,scheduled,manual,pre-purge,pre-restore",
+        "startup,scheduled,manual,pre-purge,pre-restore,post-listing",
     )
     reasons = {r.strip() for r in reasons_raw.split(",") if r.strip()}
     creds_ok = bool(endpoint and bucket and access and secret)

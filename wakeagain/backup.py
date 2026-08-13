@@ -205,7 +205,7 @@ def _backup_filename(reason: str) -> str:
 
 def create_backup(reason: str = "manual") -> dict[str, Any]:
     """Online-safe SQLite snapshot into DATA_DIR/backups. Never touches primary except read."""
-    if not is_enabled() and reason not in ("manual", "pre-purge", "pre-restore", "startup"):
+    if not is_enabled() and reason not in ("manual", "pre-purge", "pre-restore", "startup", "post-listing"):
         return {"ok": False, "skipped": True, "reason": "disabled"}
 
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)

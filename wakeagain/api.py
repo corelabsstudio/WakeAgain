@@ -4486,6 +4486,12 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
         )
         pid = int(cur.lastrowid)
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+    try:
+        from wakeagain import backup as db_backup
+
+        db_backup.create_backup(reason="post-listing")
+    except Exception as e:
+        print(f"[create_project] post-listing backup failed: {e}", flush=True)
     out: dict[str, Any] = {
         "ok": True,
         "project": database.project_to_dict(row, include_private=True),
