@@ -118,7 +118,7 @@
 **미검증/후속 필요:**
 - PayPal 실제 결제 **한 번도 안 해봄** — PG 계약 승인 오면 `loadPaymentUI`의 콜백 시그니처(`onPaymentSuccess`/`onPaymentFail`)·컨테이너 자동감지(`.portone-ui-container` 클래스)가 문서 그대로 작동하는지 실제로 확인 필요
 - STC `bypass.paypal_v2` 필드 최소값만 채움 — PG 담당자 연락 오면 정확한 필드명 확인해서 보강
-- `FEE_RATE_CROSSBORDER = 0.19`는 페이팔 원가(국경간 4.4%+환전 4%≈8.4% 추정치) 기반 임시값 — 실제 계약 수수료율 확정되면 `wakeagain/db.py` 상수 하나만 고치면 됨
+- ~~`FEE_RATE_CROSSBORDER = 0.19`는 페이팔 원가 기반 임시값~~ — **2026-08-13 폐기**: 판매자 수수료 국내·해외 공통 10%로 재확정(`FEE_RATE_CROSSBORDER`도 0.10). 페이팔 자체의 국경간/환전 수수료는 WakeAgain 몫이 아니라 구매자·페이팔 사이 별개 — PH 런칭 페이지·영문 약관과도 이제 일치함
 - 웹훅 시크릿(`PORTONE_WEBHOOK_SECRET`) 미설정 — 콘솔 "결제알림(Webhook) 관리"에서 발급 필요(엔드포인트 등록 후 나옴, 도메인 붙은 뒤 진행 권장)
 - 홍보(Reddit/X/HN) 카피·실행은 이번 세션에 **논의만 하고 착수 안 함** — 결제 연동을 먼저 끝내기로 사용자가 결정
 

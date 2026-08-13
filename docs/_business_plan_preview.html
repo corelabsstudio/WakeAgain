@@ -771,16 +771,21 @@
 
 <section class="sec">
   <div class="sec-h">06 경쟁 우위 및 차별점</div>
-  <div class="cards">
-    <div class="card"><strong>특화</strong><span>사이드·MVP<br/>공개 호가 장터</span></div>
-    <div class="card"><strong>투명</strong><span>데모·가격<br/>입찰·배지 공개</span></div>
-    <div class="card"><strong>절차</strong><span>단계형 안전거래<br/>차단·신고·Lv</span></div>
-    <div class="card"><strong>채널</strong><span>웹·PWA·Play<br/>동일 API</span></div>
-  </div>
+  <p style="margin:2mm 0;color:var(--muted)">2026-08-13 실측 갱신 — "대형 M&amp;A 플랫폼과 다른, 사이드 프로젝트 규모 특화"라는 기존 차별점은
+  실제 검색 결과 이미 여러 동급 경쟁자가 선점한 포지션으로 확인되어 폐기. 아래는 직접 접속·확인한 실측 비교.</p>
+  <table>
+    <thead><tr><th style="width:16%">서비스</th><th style="width:14%">수수료</th><th style="width:22%">결제/에스크로</th><th style="width:16%">경매(입찰)</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td class="k">WakeAgain</td><td>구매자 0% · 판매자 10%(국내·해외 동일)</td><td>PortOne PG 네이티브 통합(카드·페이팔)</td><td><strong>지원</strong></td><td>KO+EN 이중언어 · 국내 사업자등록 · 3단계 신원인증</td></tr>
+      <tr><td class="k">AcquireBase</td><td>0%</td><td>Escrow.com 외부 연동 링크만</td><td>미지원</td><td>영문 전용 · 신원인증·경매 언급 없음</td></tr>
+      <tr><td class="k">Borderline</td><td>0%</td><td>없음("구매자·판매자가 직접 대화")</td><td>미지원</td><td>순수 리스팅 게시판 · 결제는 당사자 책임</td></tr>
+      <tr><td class="k">Flippa</td><td>~15%(브로커 시)</td><td>FlippaPay·Escrow.com 통합</td><td>LOI/협상 방식(실측상 입찰 문구 없음)</td><td>영어권만(KR 국가 목록 없음)</td></tr>
+    </tbody>
+  </table>
   <ul>
-    <li>대형 M&amp;A(인수합병) 플랫폼과 다른 문턱 — 사이드 프로젝트 규모에 맞춤</li>
-    <li>입찰 허들 최소화(이메일 Lv1) / 낙찰 후 신원·정산 강화 · 키워드 검색으로 매물 발견성 확보</li>
-    <li>구매자 수수료 0%로 수요 측 마찰 제거 · 판매자 성사 수수료 10%로 수익 정렬</li>
+    <li><strong>유효한 것으로 확인된 차별점</strong>: ①실시간 입찰 방식(동급 경쟁자 3곳 모두 미지원 확인) ②플랫폼 내장 PG 결제(경쟁자는 대부분 외부 에스크로 링크만 제공) ③한국어·한국 사업자 대상(경쟁자 전부 영문 전용·KR 미지원) ④3단계 신원인증
+    — 단, 이 차별점들이 실제 구매자·판매자에게 "결정적 이유"인지는 아직 인터뷰로 검증되지 않음(추정 단계)</li>
+    <li>구매자 수수료 0%로 수요 측 마찰 제거 · 판매자 성사 수수료 10%(국내·해외 동일, 2026-08-13 확정)로 수익 정렬 — 동급 경쟁자(0% 수수료)보다 높아 가격 민감 판매자에게는 불리할 수 있음, PG 결제·신원인증 등 부가가치로 상쇄되는지 검증 필요</li>
     <li>이미 동작하는 라이브 스택(Railway·도메인·검수·입찰·Play 패키지) — 아이디어 단계와 차별</li>
     <li>지표·카피 정직성: live_counts만 노출 · 보증·가짜 성과 수치 금지</li>
     <li>RoadLog: 현장 일지 특화 + 회사 서식 학습 + 실제 라이브 도메인 운영</li>

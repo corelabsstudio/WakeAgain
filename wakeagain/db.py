@@ -1831,14 +1831,12 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     return data
 
 
-# Seller success fee — flat 10% of deal price (buyer pays only deal price)
+# Seller success fee — flat 10% of deal price, domestic and cross-border alike
+# (deal decided 2026-08-13, reversing the 2026-08-11 0.19 placeholder). The
+# platform fee stays 10% either way; any PayPal cross-border/FX cost is
+# between the buyer and PayPal on their own payment, not a WakeAgain fee.
 FEE_RATE = 0.10
-# Seller rate when the buyer pays via an overseas/PayPal channel (deal decided
-# 2026-08-11: buyer always pays $0 extra — "$0 buyer fees" stays true — so the
-# PG passthrough cost for PayPal is folded into a higher seller rate instead).
-# Placeholder until PayPal's contracted fee % comes back from PG 계약 심사 (pending,
-# ~3 business days as of 2026-08-11) — retune to 0.10 + actual PayPal cost then.
-FEE_RATE_CROSSBORDER = 0.19
+FEE_RATE_CROSSBORDER = 0.10
 FEE_PAYER = "seller"
 # Floor so a coupon-reduced rate (or a future lower price tier) can't let PG fixed
 # costs eat the platform's margin on a low-priced deal. rate% still shown as the
