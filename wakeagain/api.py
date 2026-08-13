@@ -193,7 +193,26 @@ def _deliver_reset_code(email: str, code: str) -> dict[str, Any]:
     return _deliver_code_mail(email, code, kind="reset")
 
 
-def _maybe_send_welcome_mail(user_id: int, email: str, name: str, *, force: bool = False) -> bool:
+def _welcome_lang(country: str | None, request: Request | None) -> str:
+    """KR account country -> ko. Any other declared country -> en. No country yet (OAuth
+    signup, collected later) -> fall back to browser Accept-Language, same signal _lang_of()
+    uses elsewhere on the site."""
+    c = (country or "").strip().upper()
+    if c == "KR":
+        return "ko"
+    if c:
+        return "en"
+    return _lang_of(request) if request is not None else "en"
+
+
+def _maybe_send_welcome_mail(
+    user_id: int,
+    email: str,
+    name: str,
+    *,
+    lang: str = "en",
+    force: bool = False,
+) -> bool:
     """Maker welcome email — once per account (users.welcome_mailed_at gate), unless force=True.
 
     Best-effort: never raises. Called outside any open db() transaction since it does network I/O.
@@ -209,7 +228,7 @@ def _maybe_send_welcome_mail(user_id: int, email: str, name: str, *, force: bool
         if row["welcome_mailed_at"] and not force:
             return False
     try:
-        sent = send_welcome_email(email, name or "")
+        sent = send_welcome_email(email, name or "", lang=lang)
     except Exception:
         sent = False
     if sent:
@@ -1018,7 +1037,7 @@ def admin_visit_sources(day: str | None = None, _: None = Depends(require_admin)
 
 
 @router.post("/auth/register")
-def register(body: RegisterIn):
+def register(body: RegisterIn, request: Request):
     email = body.email.strip().lower()
     if len(body.password) < 8:
         raise HTTPException(status_code=400, detail="password min 8 chars")
@@ -1033,6 +1052,7 @@ def register(body: RegisterIn):
         exists = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
         if exists:
             raise HTTPException(status_code=409, detail="email already registered")
+        country_code = _normalize_country(body.country)
         cur = conn.execute(
             """
             INSERT INTO users (
@@ -1046,7 +1066,7 @@ def register(body: RegisterIn):
                 hash_password(body.password),
                 body.display_name.strip(),
                 birth_iso,
-                _normalize_country(body.country),
+                country_code,
                 database._now(),
             ),
         )
@@ -1056,7 +1076,12 @@ def register(body: RegisterIn):
     user = database.user_to_dict(row)
     token = create_token(user["id"], user["email"])
     mail_meta = _deliver_verify_code(user["email"], code)
-    _maybe_send_welcome_mail(user["id"], user["email"], user.get("display_name") or "")
+    _maybe_send_welcome_mail(
+        user["id"],
+        user["email"],
+        user.get("display_name") or "",
+        lang=_welcome_lang(country_code, request),
+    )
     return _auth_payload(user, token, mail_meta=mail_meta)
 
 
@@ -1220,7 +1245,13 @@ def oauth_start(provider: str):
 
 
 @router.get("/auth/oauth/{provider}/callback")
-async def oauth_callback(provider: str, code: str | None = None, state: str | None = None, error: str | None = None):
+async def oauth_callback(
+    request: Request,
+    provider: str,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+):
     p = (provider or "").lower().strip()
     app_err = f"{oauth_mod.public_base()}/app/?oauth_error="
     if error:
@@ -1246,7 +1277,12 @@ async def oauth_callback(provider: str, code: str | None = None, state: str | No
         code_s = "suspended" if getattr(e, "status_code", 0) == 403 else "failed"
         return RedirectResponse(app_err + code_s, status_code=302)
     if is_new:
-        _maybe_send_welcome_mail(user["id"], user["email"], user.get("display_name") or "")
+        _maybe_send_welcome_mail(
+            user["id"],
+            user["email"],
+            user.get("display_name") or "",
+            lang=_welcome_lang(user.get("country"), request),
+        )
     # Hand token to app shell (query — cleaned by JS)
     from urllib.parse import quote
 
@@ -6171,19 +6207,24 @@ def admin_set_password(
 
 
 @router.post("/admin/users/{user_id}/send-welcome-mail")
-def admin_send_welcome_mail(user_id: int, force: bool = False, _: None = Depends(require_admin)):
-    """메이커 웰컴 메일(피드백 요청 + 매물등록 쿠폰 안내) 수동 발송. 이미 보냈으면 force=true로만 재발송."""
+def admin_send_welcome_mail(
+    user_id: int, force: bool = False, lang: str | None = None, _: None = Depends(require_admin)
+):
+    """메이커 웰컴 메일(피드백 요청 + 매물등록 쿠폰 안내) 수동 발송. 이미 보냈으면 force=true로만 재발송.
+    lang 미지정 시 회원 국가(country=KR→ko, 그 외→en, 미입력→en 기본)로 자동 판별."""
     with database.db() as conn:
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
         email = (row["email"] or "").strip()
         name = (row["display_name"] or "").strip()
+        country = (row["country"] if "country" in row.keys() else None) or ""
         already = bool(row["welcome_mailed_at"]) if "welcome_mailed_at" in row.keys() else False
     if already and not force:
         return {"ok": True, "email_sent": False, "already_sent": True, "message": "이미 발송됨(재발송하려면 force=true)"}
-    sent = _maybe_send_welcome_mail(user_id, email, name, force=force)
-    return {"ok": True, "email_sent": sent, "already_sent": False}
+    use_lang = lang if lang in ("ko", "en") else _welcome_lang(country, None)
+    sent = _maybe_send_welcome_mail(user_id, email, name, lang=use_lang, force=force)
+    return {"ok": True, "email_sent": sent, "already_sent": False, "lang": use_lang}
 
 
 @router.post("/admin/users/{user_id}/issue-reset-code")

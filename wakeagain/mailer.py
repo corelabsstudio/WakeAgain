@@ -281,48 +281,84 @@ def send_verification_code(to: str, code: str) -> bool:
     )
 
 
-def _welcome_html(name: str) -> str:
-    greeting = f"Hi {name}," if name else "Hi,"
+def _welcome_html(name: str, lang: str) -> str:
+    if lang == "ko":
+        greeting = f"{name}님, 안녕하세요." if name else "안녕하세요,"
+        body = (
+            f"<p>{greeting}</p>"
+            "<p>WakeAgain을 만든 사람입니다. 이렇게 초기에 가입해 주셔서 정말 감사합니다! "
+            "저희가 서비스를 시작한 지 이제 이틀밖에 안 됐는데, 정말 초창기 회원이세요.</p>"
+            "<p>어떤 계기로 가입하셨는지, 어떤 기능이 있으면 좋을지 꼭 듣고 싶습니다. "
+            "냉정한 피드백이라도 정말 큰 도움이 됩니다.</p>"
+            "<p>참고로, 손 놓고 있던 사이드 프로젝트가 있으시면 WakeAgain이 딱 그런 걸 위해 만든 곳이에요 — "
+            "매물로 올려보세요. 등록 후 이 메일에 답장 주시면 제가 직접 성사 수수료를 10%에서 8%로 낮춰주는 "
+            "쿠폰을 보내드립니다. <strong>선착순 50분 한정</strong>이니 너무 늦지 않게 챙겨가세요.</p>"
+            "<p>그냥 답장만 주세요 — 제가 직접 다 읽습니다.</p>"
+            "<p style='color:#64748b;font-size:13px'>— 호현수, WakeAgain</p>"
+        )
+    else:
+        greeting = f"Hi {name}," if name else "Hi,"
+        body = (
+            f"<p>{greeting}</p>"
+            "<p>I'm the maker of WakeAgain. Thank you so much for joining us so early! "
+            "We just launched a couple of days ago, and you're one of our very first members.</p>"
+            "<p>I'd love to hear: what made you sign up, and what features are you hoping to see? "
+            "Any feedback — even brutal honesty — would mean the world to me.</p>"
+            "<p>One more thing: if you've got an old side project sitting around that you've stopped "
+            "working on, WakeAgain is built exactly for that — list it. Reply to this email once it's "
+            "up and I'll personally send you a coupon that lowers your success fee from 10% to 8%, "
+            "as a thank-you. <strong>This is limited to our first 50 sellers</strong>, so don't wait "
+            "too long.</p>"
+            "<p>Just hit reply — I read every email myself.</p>"
+            "<p style='color:#64748b;font-size:13px'>— Hyunsoo, WakeAgain</p>"
+        )
     return (
         "<div style='font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#334155'>"
-        f"<p>{greeting}</p>"
-        "<p>I'm the maker of WakeAgain. Thank you so much for joining us so early! "
-        "We just launched a couple of days ago, and you're one of our very first members.</p>"
-        "<p>I'd love to hear: what made you sign up, and what features are you hoping to see? "
-        "Any feedback — even brutal honesty — would mean the world to me.</p>"
-        "<p>One more thing: if you've got an old side project sitting around that you've stopped "
-        "working on, WakeAgain is built exactly for that — list it. Reply to this email once it's "
-        "up and I'll personally send you a coupon that lowers your success fee from 10% to 8%, "
-        "as a thank-you. <strong>This is limited to our first 50 sellers</strong>, so don't wait "
-        "too long.</p>"
-        "<p>Just hit reply — I read every email myself.</p>"
-        "<p style='color:#64748b;font-size:13px'>— Hyunsoo, WakeAgain</p>"
-        "</div>"
+        + body
+        + "</div>"
     )
 
 
-def send_welcome_email(to: str, name: str = "") -> bool:
+def send_welcome_email(to: str, name: str = "", lang: str = "en") -> bool:
     """One-time maker welcome email for a brand-new signup. See api.py _maybe_send_welcome_mail
-    for the once-only gate (users.welcome_mailed_at)."""
-    greeting = f"Hi {name}," if name else "Hi,"
-    text = (
-        f"{greeting}\n\n"
-        "I'm the maker of WakeAgain. Thank you so much for joining us so early! "
-        "We just launched a couple of days ago, and you're one of our very first members.\n\n"
-        "I'd love to hear: what made you sign up, and what features are you hoping to see? "
-        "Any feedback -- even brutal honesty -- would mean the world to me.\n\n"
-        "One more thing: if you've got an old side project sitting around that you've stopped "
-        "working on, WakeAgain is built exactly for that -- list it. Reply to this email once "
-        "it's up and I'll personally send you a coupon that lowers your success fee from 10% to "
-        "8%, as a thank-you. This is limited to our first 50 sellers, so don't wait too long.\n\n"
-        "Just hit reply -- I read every email myself.\n\n"
-        "-- Hyunsoo, WakeAgain\n"
-    )
+    for the once-only gate (users.welcome_mailed_at) and language detection."""
+    lang = "ko" if lang == "ko" else "en"
+    if lang == "ko":
+        greeting = f"{name}님, 안녕하세요." if name else "안녕하세요,"
+        text = (
+            f"{greeting}\n\n"
+            "WakeAgain을 만든 사람입니다. 이렇게 초기에 가입해 주셔서 정말 감사합니다! "
+            "저희가 서비스를 시작한 지 이제 이틀밖에 안 됐는데, 정말 초창기 회원이세요.\n\n"
+            "어떤 계기로 가입하셨는지, 어떤 기능이 있으면 좋을지 꼭 듣고 싶습니다. "
+            "냉정한 피드백이라도 정말 큰 도움이 됩니다.\n\n"
+            "참고로, 손 놓고 있던 사이드 프로젝트가 있으시면 WakeAgain이 딱 그런 걸 위해 만든 곳이에요 -- "
+            "매물로 올려보세요. 등록 후 이 메일에 답장 주시면 제가 직접 성사 수수료를 10%에서 8%로 낮춰주는 "
+            "쿠폰을 보내드립니다. 선착순 50분 한정이니 너무 늦지 않게 챙겨가세요.\n\n"
+            "그냥 답장만 주세요 -- 제가 직접 다 읽습니다.\n\n"
+            "-- 호현수, WakeAgain\n"
+        )
+        subject = "WakeAgain에 일찍 가입해 주셔서 감사합니다"
+    else:
+        greeting = f"Hi {name}," if name else "Hi,"
+        text = (
+            f"{greeting}\n\n"
+            "I'm the maker of WakeAgain. Thank you so much for joining us so early! "
+            "We just launched a couple of days ago, and you're one of our very first members.\n\n"
+            "I'd love to hear: what made you sign up, and what features are you hoping to see? "
+            "Any feedback -- even brutal honesty -- would mean the world to me.\n\n"
+            "One more thing: if you've got an old side project sitting around that you've stopped "
+            "working on, WakeAgain is built exactly for that -- list it. Reply to this email once "
+            "it's up and I'll personally send you a coupon that lowers your success fee from 10% to "
+            "8%, as a thank-you. This is limited to our first 50 sellers, so don't wait too long.\n\n"
+            "Just hit reply -- I read every email myself.\n\n"
+            "-- Hyunsoo, WakeAgain\n"
+        )
+        subject = "Thanks for joining WakeAgain early"
     return send_mail(
         to,
-        "Thanks for joining WakeAgain early",
+        subject,
         text,
-        html=_welcome_html(name),
+        html=_welcome_html(name, lang),
     )
 
 
