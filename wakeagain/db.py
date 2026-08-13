@@ -19,7 +19,14 @@ DATA = Path(os.environ.get("DATA_DIR", str(ROOT / "data")))
 DATA.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA / "wakeagain.db"
 
-PHONE_RE = re.compile(r"^01[016789]\d{7,8}$")
+PHONE_RE = re.compile(r"^01[016789]\d{7,8}$")  # Korean mobile (010/011/016-019)
+PHONE_RE_INTL = re.compile(r"^\+[1-9]\d{7,14}$")  # E.164-ish, self-reported (no OTP)
+
+
+def is_valid_phone(digits: str) -> bool:
+    return bool(digits and (PHONE_RE.match(digits) or PHONE_RE_INTL.match(digits)))
+
+
 _SETTLEMENT_ENC_PREFIX = "enc:v1:"
 
 
@@ -757,7 +764,12 @@ def get_site_visit_sources(conn: sqlite3.Connection, day: str | None = None) -> 
 
 
 def normalize_phone(raw: str) -> str:
-    digits = re.sub(r"\D", "", (raw or "").strip())
+    raw = (raw or "").strip()
+    if raw.startswith("+"):
+        # International: keep the leading + so it isn't mistaken for a Korean
+        # domestic number (e.g. +1 555... must not collapse into a 01x-style digit string).
+        return "+" + re.sub(r"\D", "", raw[1:])
+    digits = re.sub(r"\D", "", raw)
     if digits.startswith("82") and len(digits) >= 11:
         digits = "0" + digits[2:]
     return digits
@@ -765,8 +777,10 @@ def normalize_phone(raw: str) -> str:
 
 def validate_phone(raw: str) -> str:
     digits = normalize_phone(raw)
-    if not PHONE_RE.match(digits):
-        raise ValueError("invalid phone — use Korean mobile e.g. 01012345678")
+    if not is_valid_phone(digits):
+        raise ValueError(
+            "invalid phone — use a Korean mobile (01012345678) or international format (+15550100)"
+        )
     return digits
 
 
@@ -1057,7 +1071,7 @@ def compute_trust(row: sqlite3.Row | dict) -> dict:
     email_verified = bool(int(g("email_verified") or 0))
     real_name = (g("real_name") or "").strip()
     phone = (g("phone") or "").strip()
-    phone_ok = bool(phone and PHONE_RE.match(normalize_phone(phone)))
+    phone_ok = bool(phone and is_valid_phone(normalize_phone(phone)))
     profile_ok = bool(real_name and phone_ok and email_verified)
     bank = (g("settlement_bank") or "").strip()
     holder = (g("settlement_holder") or "").strip()
