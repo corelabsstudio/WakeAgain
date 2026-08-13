@@ -47,6 +47,10 @@ EMAIL_CODE_FALLBACK = os.environ.get("EMAIL_CODE_FALLBACK", "0").strip() not in 
 }
 EMAIL_CODE_MINUTES = int(os.environ.get("EMAIL_CODE_MINUTES", "30"))
 
+# Product Hunt launch claim: "0% seller fee for the first 50 listings" — coupon
+# campaign code, auto-redeemed for the seller on every new listing (best-effort).
+PH_FIRST50_CODE = os.environ.get("PH_FIRST50_COUPON_CODE", "PH-FIRST50")
+
 # 아이디 찾기: IP당 윈도우 내 요청 제한 (열거·브루트 완화)
 FIND_EMAIL_RATE_LIMIT = max(1, int(os.environ.get("FIND_EMAIL_RATE_LIMIT", "5")))
 FIND_EMAIL_RATE_WINDOW_SEC = max(60, int(os.environ.get("FIND_EMAIL_RATE_WINDOW_SEC", "900")))
@@ -2684,7 +2688,7 @@ class CouponCampaignCreateIn(BaseModel):
     code: str = Field(default="", max_length=40)
     name: str = Field(default="", max_length=80)
     max_redemptions: int = Field(default=100, ge=1, le=100)
-    fee_rate: float = Field(default=0.08, gt=0, lt=0.1)
+    fee_rate: float = Field(default=0.08, ge=0, lt=0.1)
     note: str = Field(default="", max_length=200)
     auto_code: bool = False  # True → server generates secure code
     allow_url_claim: bool = False  # Viral URL verify → claim button
@@ -4492,9 +4496,27 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
         db_backup.create_backup(reason="post-listing")
     except Exception as e:
         print(f"[create_project] post-listing backup failed: {e}", flush=True)
+    ph_first50 = False
+    try:
+        with database.db() as conn2:
+            database.redeem_coupon_code(conn2, int(user["id"]), PH_FIRST50_CODE)
+        ph_first50 = True
+        with database.db() as conn2:
+            database.notify(
+                conn2,
+                int(user["id"]),
+                "축하합니다 — 첫 50개 매물 수수료 0% 쿠폰 적용됨",
+                "Product Hunt 런칭 프로모션(첫 50개 매물) 안에 드셔서 이 매물이 팔리면 성사 수수료가 0%로 적용됩니다.",
+                f"/project.html?id={pid}",
+            )
+    except ValueError:
+        pass  # already redeemed on this account, or the 50 slots are gone
+    except Exception as e:
+        print(f"[create_project] PH first-50 grant failed: {e}", flush=True)
     out: dict[str, Any] = {
         "ok": True,
         "project": database.project_to_dict(row, include_private=True),
+        "ph_first50_applied": ph_first50,
         "pricing": {
             "status": status,
             "applied_start": start,

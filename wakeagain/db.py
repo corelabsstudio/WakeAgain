@@ -2497,12 +2497,21 @@ def handover_all_required_checked(row: sqlite3.Row | dict) -> bool:
 
 
 def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
-    """Seller success fee. Default 10%. Coupon may pass rate=0.08 (「수수료 8% 쿠폰」)."""
+    """Seller success fee. Default 10%. Coupon may pass rate=0.08 (「수수료 8% 쿠폰」)
+    or rate=0.0 (프로모션 — 첫 50개 매물 수수료 0%, 최소 수수료도 함께 면제)."""
     r = FEE_RATE if rate is None else float(rate)
-    if r <= 0 or r > 0.5:
+    if r < 0 or r > 0.5:
         r = FEE_RATE
     rate_pct = int(round(r * 100))
+    is_free = rate is not None and r <= 0
+    coupon_applied = rate is not None and abs(r - FEE_RATE) > 1e-9
     if amount is None:
+        if is_free:
+            note = "성사 시 판매자 수수료 0% (프로모션 — 최소 수수료도 면제). 구매자는 합의가만 부담."
+        elif rate is not None:
+            note = f"성사 시 판매자 수수료 {rate_pct}% (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
+        else:
+            note = f"성사 시 판매자에게 거래 대금의 10% 수수료 (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
         return {
             "rate": r,
             "rate_pct": rate_pct,
@@ -2513,17 +2522,22 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
             "seller_net": None,
             "fee_min_krw": FEE_MIN_KRW,
             "min_fee_applied": None,
-            "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
-            "note": (
-                f"성사 시 판매자 수수료 {rate_pct}% (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
-                if rate is not None
-                else f"성사 시 판매자에게 거래 대금의 10% 수수료 (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
-            ),
+            "coupon_applied": coupon_applied,
+            "note": note,
         }
     amt = int(amount)
-    fee = int(round(amt * r))
-    min_applied = fee < FEE_MIN_KRW < amt
-    fee = min(max(fee, FEE_MIN_KRW), amt)
+    if is_free:
+        fee = 0
+        min_applied = False
+        note = "판매자 수수료 0% 적용 (프로모션, 최소 수수료 면제). 구매자는 합의가만 부담."
+    else:
+        fee = int(round(amt * r))
+        min_applied = fee < FEE_MIN_KRW < amt
+        fee = min(max(fee, FEE_MIN_KRW), amt)
+        note = f"최소 수수료 {FEE_MIN_KRW:,}원 적용" if min_applied else f"판매자 수수료 {rate_pct}% 적용"
+        if coupon_applied:
+            note += " (쿠폰)"
+        note += ". 구매자는 합의가만 부담."
     return {
         "rate": r,
         "rate_pct": rate_pct,
@@ -2534,12 +2548,8 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
         "fee_min_krw": FEE_MIN_KRW,
         "min_fee_applied": min_applied,
         "seller_net": amt - fee,
-        "coupon_applied": rate is not None and abs(r - FEE_RATE) > 1e-9,
-        "note": (
-            (f"최소 수수료 {FEE_MIN_KRW:,}원 적용" if min_applied else f"판매자 수수료 {rate_pct}% 적용")
-            + (" (쿠폰)" if rate is not None and abs(r - FEE_RATE) > 1e-9 else "")
-            + ". 구매자는 합의가만 부담."
-        ),
+        "coupon_applied": coupon_applied,
+        "note": note,
     }
 
 
@@ -2788,7 +2798,7 @@ def create_coupon_campaign(
     if max_redemptions < 1 or max_redemptions > 100:
         raise ValueError("max_redemptions must be 1–100")
     fee_rate = float(fee_rate)
-    if fee_rate <= 0 or fee_rate >= FEE_RATE:
+    if fee_rate < 0 or fee_rate >= FEE_RATE:
         # must be better than default 10% for seller
         fee_rate = DEFAULT_COUPON_FEE_RATE
     name = (name or "").strip() or f"성사 수수료 {int(round(fee_rate * 100))}% 쿠폰"
@@ -3431,7 +3441,7 @@ def take_seller_coupon_for_fee(
     if not row:
         return FEE_RATE, None, {}
     rate = float(row["c_fee_rate"] or DEFAULT_COUPON_FEE_RATE)
-    if rate <= 0 or rate >= FEE_RATE:
+    if rate < 0 or rate >= FEE_RATE:
         rate = DEFAULT_COUPON_FEE_RATE
     now = _now()
     conn.execute(

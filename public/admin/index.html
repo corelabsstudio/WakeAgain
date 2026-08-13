@@ -2251,6 +2251,8 @@
               "</div>" +
               '<label class="meta" for="cpName">이름</label>' +
               '<input id="cpName" class="note" style="min-height:auto;width:100%;margin:0.35rem 0 0.65rem;padding:0.5rem" placeholder="성사 수수료 8% 쿠폰" value="성사 수수료 8% 쿠폰" />' +
+              '<label class="meta" for="cpFeeRate">수수료율 (%, 0~9 · 0=완전 면제 · 기본 8)</label>' +
+              '<input id="cpFeeRate" type="number" min="0" max="9" step="1" value="8" class="note" style="min-height:auto;width:100%;margin:0.35rem 0 0.65rem;padding:0.5rem" />' +
               '<label class="meta" for="cpMax">최대 등록 수 (1~100)</label>' +
               '<input id="cpMax" type="number" min="1" max="100" value="100" class="note" style="min-height:auto;width:100%;margin:0.35rem 0 0.65rem;padding:0.5rem" />' +
               '<label class="meta" for="cpNote">메모</label>' +
@@ -2291,6 +2293,9 @@
                 var maxN = Number((document.getElementById("cpMax") || {}).value || 100);
                 if (maxN > 100) maxN = 100;
                 if (maxN < 1) maxN = 1;
+                var feePct = Number((document.getElementById("cpFeeRate") || {}).value);
+                if (isNaN(feePct) || feePct < 0) feePct = 8;
+                if (feePct > 9) feePct = 9;
                 try {
                   function localToIso(val) {
                     if (!val) return "";
@@ -2304,7 +2309,7 @@
                       code: (document.getElementById("cpCode") || {}).value || "",
                       name: (document.getElementById("cpName") || {}).value || "",
                       max_redemptions: maxN,
-                      fee_rate: 0.08,
+                      fee_rate: feePct / 100,
                       note: (document.getElementById("cpNote") || {}).value || "",
                       auto_code: false,
                       allow_url_claim: !!(document.getElementById("cpUrlClaim") || {}).checked,
