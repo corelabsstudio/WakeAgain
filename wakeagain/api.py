@@ -4786,6 +4786,34 @@ def admin_list_projects(
     return {"ok": True, "counts": counts, "projects": projects, "checklist": REVIEW_CHECKLIST}
 
 
+class AdminImagesIn(BaseModel):
+    demo_images: list[str] = Field(default_factory=list, max_length=5)
+
+
+@router.put("/admin/projects/{project_id}/images")
+def admin_update_project_images(
+    project_id: int,
+    body: AdminImagesIn,
+    _: None = Depends(require_admin),
+):
+    """
+    Ops-only image fix for an already-live listing (e.g. replacing a wrong/duplicate
+    screenshot) without touching listing_status/auction_status/auction_ends_at —
+    unlike /relist, which forces the listing back into 'pending' review.
+    """
+    urls = [u for u in (body.demo_images or []) if isinstance(u, str) and u.startswith("/media/")][:5]
+    with database.db() as conn:
+        row = conn.execute("SELECT id FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        conn.execute(
+            "UPDATE projects SET demo_images_json = ?, updated_at = ? WHERE id = ?",
+            (json.dumps(urls, ensure_ascii=False), database._now(), project_id),
+        )
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
+
+
 @router.post("/admin/projects/{project_id}/review")
 def admin_review_project(
     project_id: int,
