@@ -87,7 +87,10 @@ def provider_config(provider: str) -> dict[str, Any] | None:
             "auth_url": "https://kauth.kakao.com/oauth/authorize",
             "token_url": "https://kauth.kakao.com/oauth/token",
             "userinfo_url": "https://kapi.kakao.com/v2/user/me",
-            "scope": "profile_nickname account_email",
+            # account_email requires Kakao 비즈 앱 approval (business registration) —
+            # not requested here so login doesn't fail for an ungranted scope.
+            # _oauth_upsert_user() already falls back to a synthetic email when absent.
+            "scope": "profile_nickname",
         }
     return None
 
