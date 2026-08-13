@@ -4814,6 +4814,36 @@ def admin_update_project_images(
     return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
 
 
+@router.post("/admin/projects/{project_id}/images/upload")
+async def admin_upload_project_image(
+    project_id: int,
+    file: UploadFile = File(...),
+    _: None = Depends(require_admin),
+):
+    """
+    Ops-only: upload one screenshot for a listing without needing the seller's own
+    login session. Saved under the listing's owner_id so it behaves like a normal
+    seller upload; does not touch demo_images_json — call PUT .../images after to
+    actually attach the returned url(s) to the listing.
+    """
+    from wakeagain import media as media_mod
+
+    with database.db() as conn:
+        row = conn.execute("SELECT owner_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="not found")
+    raw = await file.read()
+    try:
+        saved = media_mod.save_demo_image(
+            user_id=int(row["owner_id"]),
+            raw=raw,
+            filename_hint=file.filename or "",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail={"code": "upload_rejected", "message": str(e)}) from e
+    return {"ok": True, "url": saved["url"], "bytes": saved["bytes"], "ext": saved["ext"]}
+
+
 @router.post("/admin/projects/{project_id}/review")
 def admin_review_project(
     project_id: int,
