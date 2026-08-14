@@ -2278,7 +2278,11 @@
           }
         }
         var demoText = p.demo || "";
-        if (imgs.length && (!demoText || /^스크린샷\s+\d+장/.test(demoText))) {
+        if (isEn() && demoText && /[가-힣]/.test(demoText)) {
+          document.getElementById("pDemo").textContent = imgs.length
+            ? "Screenshots " + imgs.length + " (seller notes in Korean)"
+            : "Demo notes provided in Korean by the seller";
+        } else if (imgs.length && (!demoText || /^스크린샷\s+\d+장/.test(demoText))) {
           document.getElementById("pDemo").textContent =
             t("스크린샷 ", "Screenshots ") + imgs.length + t("장", "");
         } else {
@@ -2303,6 +2307,14 @@
             accounts: t("계정/스토어", "Accounts/store"),
             other: t("기타", "Other"),
             readme: "README",
+            // Legacy listings stored the raw Korean label instead of the slug —
+            // keep these mapped so old data still translates in EN mode.
+            "코드": t("코드", "Code"),
+            "디자인": t("디자인", "Design"),
+            "도메인": t("도메인", "Domain"),
+            "기획/문서": t("기획/문서", "Docs"),
+            "계정/스토어": t("계정/스토어", "Accounts/store"),
+            "기타": t("기타", "Other"),
           };
           var assetList = Array.isArray(p.assets) ? p.assets.filter(Boolean) : [];
           assetEl.textContent = assetList.length
@@ -2359,7 +2371,12 @@
           var soldN = Number(p.seller.sold_count) || 0;
           var listN = Number(p.seller.approved_listings) || 0;
           var score = cr && cr.score != null ? Number(cr.score) : null;
+          var gradeLabelEn = {
+            elite: "Elite", great: "Great", trusted: "Trusted",
+            normal: "Normal", new: "New", risk: "Caution",
+          };
           var label = (cr && cr.label) || "";
+          if (isEn() && cr && cr.grade && gradeLabelEn[cr.grade]) label = gradeLabelEn[cr.grade];
           var defaults = cr && cr.counts ? Number(cr.counts.defaults) || 0 : 0;
 
           var trustBar = document.getElementById("sellerTrustBar");
