@@ -327,6 +327,7 @@
       <button type="button" data-mode="revenue">매출</button>
       <button type="button" data-mode="visits">유입경로</button>
       <button type="button" data-mode="reports">신고</button>
+      <button type="button" data-mode="feedback">피드백</button>
     </div>
 
     <div class="hint" id="hintBox">
@@ -377,6 +378,8 @@
         revenueData: null,
         counts: {},
         reviewCounts: {},
+        feedback: [],
+        feedbackCounts: {},
       };
       var $ = function (id) { return document.getElementById(id); };
 
@@ -394,6 +397,7 @@
           if (state.mode === "users") state.userFilter = "all";
           if (state.mode === "revenue") state.revenuePeriod = "all"; // 매출 탭 기본 = 전체
           if (state.mode === "visits") state.visitDay = ""; // 유입경로 탭 기본 = 오늘
+          if (state.mode === "feedback") state.status = "open";
           load();
         });
       });
@@ -1949,6 +1953,98 @@
                         });
                         await load();
                       } catch (e) { detailErr(e.message || "실패"); }
+                    });
+                  }
+                });
+              });
+            }
+          } else if (state.mode === "feedback") {
+            $("pageTitle").textContent = "사이트 피드백";
+            $("hintBox").innerHTML =
+              "<strong>비공개 피드백</strong> 메인페이지 위젯으로 회원·비회원 누구나 남긴 글입니다. 공개되지 않으며, 제출 시 이메일로도 전달됩니다.";
+            if (["pending", "approved", "rejected", "hold"].indexOf(state.status) >= 0) {
+              state.status = "open";
+            }
+            var fdata = await api("/api/v1/admin/feedback?status=" + encodeURIComponent(state.status));
+            state.feedback = fdata.feedback || [];
+            state.feedbackCounts = fdata.counts || {};
+            $("counts").innerHTML =
+              '<button type="button" data-fs="open"' + (state.status === "open" ? ' class="is-on"' : "") + ">읽지 않음 " + (state.feedbackCounts.open || 0) + "</button>" +
+              '<button type="button" data-fs="read"' + (state.status === "read" ? ' class="is-on"' : "") + ">읽음 " + (state.feedbackCounts.read || 0) + "</button>" +
+              '<button type="button" data-fs="all"' + (state.status === "all" ? ' class="is-on"' : "") + ">전체</button>";
+            $("counts").querySelectorAll("button").forEach(function (b) {
+              b.addEventListener("click", function () {
+                state.status = b.getAttribute("data-fs");
+                load();
+              });
+            });
+            var flist = $("list");
+            if (!state.feedback.length) {
+              flist.innerHTML = '<p class="empty">피드백 없음</p>';
+              $("detail").innerHTML = '<p class="empty">피드백이 오면 여기에 표시됩니다.</p>';
+            } else {
+              flist.innerHTML = state.feedback
+                .map(function (f) {
+                  var preview = (f.message || "").slice(0, 40);
+                  return (
+                    '<button type="button" class="pitem" data-fid="' +
+                    f.id +
+                    '"><strong>#' +
+                    f.id +
+                    " · " +
+                    escapeHtml(f.status) +
+                    "</strong><span>" +
+                    escapeHtml(preview) +
+                    (f.message && f.message.length > 40 ? "…" : "") +
+                    "</span></button>"
+                  );
+                })
+                .join("");
+              flist.querySelectorAll(".pitem").forEach(function (b) {
+                b.addEventListener("click", function () {
+                  var fid = Number(b.getAttribute("data-fid"));
+                  var f = state.feedback.find(function (x) { return x.id === fid; });
+                  if (!f) return;
+                  $("detail").innerHTML =
+                    "<h2>피드백 #" +
+                    f.id +
+                    "</h2>" +
+                    '<p class="meta">' +
+                    escapeHtml(f.status) +
+                    " · " +
+                    escapeHtml(f.page || "") +
+                    " · " +
+                    escapeHtml(f.lang || "") +
+                    "</p>" +
+                    '<p class="meta">연락처 ' +
+                    escapeHtml(f.contact || "(없음)") +
+                    (f.user_id ? " · 회원 id " + f.user_id : "") +
+                    "</p>" +
+                    '<p class="meta" style="white-space:pre-wrap">' +
+                    escapeHtml(f.message || "") +
+                    "</p>" +
+                    '<p class="meta">' +
+                    escapeHtml(f.created_at || "") +
+                    "</p>" +
+                    '<div class="actions">' +
+                    (f.status === "open"
+                      ? '<button type="button" class="btn btn-primary btn-sm" id="btnFbRead">읽음 처리</button>'
+                      : "") +
+                    "</div>" +
+                    '<p class="err" id="detailErr" hidden></p>';
+                  var br = document.getElementById("btnFbRead");
+                  if (br) {
+                    br.addEventListener("click", async function () {
+                      try {
+                        await api("/api/v1/admin/feedback/" + f.id + "/read", {
+                          method: "POST",
+                          body: "{}",
+                        });
+                        await load();
+                      } catch (e) {
+                        var el = document.getElementById("detailErr");
+                        if (el) { el.hidden = false; el.textContent = e.message || "실패"; }
+                      }
                     });
                   }
                 });

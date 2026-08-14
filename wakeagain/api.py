@@ -28,6 +28,7 @@ from wakeagain.auth import (
     verify_password,
 )
 from wakeagain.mailer import (
+    send_mail,
     send_password_reset_code,
     send_verification_code,
     send_welcome_email,
@@ -1027,6 +1028,63 @@ def get_visit_stats():
     with database.db() as conn:
         stats = database.get_site_visit_stats(conn)
     return {"ok": True, **stats}
+
+
+class FeedbackIn(BaseModel):
+    message: str = Field(min_length=2, max_length=4000)
+    contact: str = Field(default="", max_length=200)
+    page: str = Field(default="", max_length=300)
+    lang: str = Field(default="", max_length=8)
+    hp: str = Field(default="", max_length=200)  # honeypot — bots fill hidden fields, humans don't
+
+
+@router.post("/feedback")
+def create_feedback(body: FeedbackIn, user: dict | None = Depends(get_optional_user)):
+    """Private site feedback (non-member guestbook). Stored + emailed to the operator, never shown publicly."""
+    if body.hp.strip():
+        return {"ok": True}  # silently drop bot submissions, no error signal
+    message = body.message.strip()
+    if len(message) < 2:
+        raise HTTPException(status_code=400, detail="message required")
+
+    with database.db() as conn:
+        fid = database.create_feedback(
+            conn,
+            message=message,
+            contact=body.contact.strip(),
+            page=body.page.strip(),
+            lang=body.lang.strip(),
+            user_id=(user or {}).get("id"),
+        )
+
+    try:
+        contact_line = body.contact.strip() or (user or {}).get("email") or "(no contact given)"
+        send_mail(
+            "corelabs.studio@gmail.com",
+            f"[WakeAgain feedback #{fid}]",
+            f"Page: {body.page.strip() or '-'}\nContact: {contact_line}\n\n{message}",
+        )
+    except Exception:
+        pass  # feedback is already saved; email is best-effort
+
+    return {"ok": True, "id": fid}
+
+
+@router.get("/admin/feedback")
+def admin_list_feedback(status: str = "open", _: None = Depends(require_admin)):
+    with database.db() as conn:
+        items = database.list_feedback(conn, status=status)
+        counts = database.count_feedback(conn)
+    return {"ok": True, "feedback": items, "counts": counts}
+
+
+@router.post("/admin/feedback/{feedback_id}/read")
+def admin_mark_feedback_read(feedback_id: int, _: None = Depends(require_admin)):
+    with database.db() as conn:
+        found = database.mark_feedback_read(conn, feedback_id)
+    if not found:
+        raise HTTPException(status_code=404, detail="not found")
+    return {"ok": True}
 
 
 @router.get("/admin/visit-sources")

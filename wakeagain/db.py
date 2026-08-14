@@ -600,6 +600,20 @@ def init_db() -> None:
               visits INTEGER NOT NULL DEFAULT 0,
               PRIMARY KEY(day, source)
             );
+
+            -- Private site feedback (non-member guestbook, admin-only view; emailed to operator on submit)
+            CREATE TABLE IF NOT EXISTS feedback (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              message TEXT NOT NULL,
+              contact TEXT,
+              page TEXT,
+              lang TEXT,
+              user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+              status TEXT NOT NULL DEFAULT 'open',
+              created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
+
             INSERT OR IGNORE INTO site_counters(key, value) VALUES ('page_views', 0);
             INSERT OR IGNORE INTO site_counters(key, value) VALUES ('visitors', 0);
             """
@@ -750,6 +764,56 @@ def record_site_visit(
                 )
 
     return get_site_visit_stats(conn)
+
+
+def create_feedback(
+    conn: sqlite3.Connection,
+    *,
+    message: str,
+    contact: str = "",
+    page: str = "",
+    lang: str = "",
+    user_id: int | None = None,
+) -> int:
+    now = _now()
+    cur = conn.execute(
+        "INSERT INTO feedback(message, contact, page, lang, user_id, status, created_at) "
+        "VALUES (?, ?, ?, ?, ?, 'open', ?)",
+        (message, contact or None, page or None, lang or None, user_id, now),
+    )
+    return int(cur.lastrowid)
+
+
+def list_feedback(conn: sqlite3.Connection, status: str = "open") -> list[dict]:
+    where = ""
+    params: tuple = ()
+    if status in ("open", "read"):
+        where = "WHERE status = ?"
+        params = (status,)
+    rows = conn.execute(
+        f"SELECT id, message, contact, page, lang, user_id, status, created_at "
+        f"FROM feedback {where} ORDER BY id DESC",
+        params,
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def count_feedback(conn: sqlite3.Connection) -> dict:
+    rows = conn.execute(
+        "SELECT status, COUNT(*) AS c FROM feedback GROUP BY status"
+    ).fetchall()
+    counts = {"open": 0, "read": 0}
+    for r in rows:
+        counts[r["status"]] = int(r["c"])
+    return counts
+
+
+def mark_feedback_read(conn: sqlite3.Connection, feedback_id: int) -> bool:
+    cur = conn.execute(
+        "UPDATE feedback SET status = 'read' WHERE id = ? AND status != 'read'",
+        (feedback_id,),
+    )
+    return cur.rowcount > 0
 
 
 def get_site_visit_sources(conn: sqlite3.Connection, day: str | None = None) -> dict:
