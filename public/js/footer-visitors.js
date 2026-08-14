@@ -5,6 +5,38 @@
 (function () {
   var STORAGE_KEY = "wa_vid";
   var COOKIE = "wa_vid";
+  var NOTRACK_COOKIE = "wa_notrack";
+
+  function setCookie(name, value, maxAgeSeconds) {
+    try {
+      document.cookie =
+        name + "=" + encodeURIComponent(value) + "; path=/; max-age=" + maxAgeSeconds + "; SameSite=Lax";
+    } catch (e) {}
+  }
+
+  function getCookie(name) {
+    try {
+      var m = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
+      return m ? decodeURIComponent(m[1]) : "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // Owner opt-out: visiting once with ?notrack=1 sets a 1yr cookie so this
+  // browser's own visits stop counting toward the public footer numbers.
+  // ?notrack=0 turns counting back on.
+  function isOwnerNoTrack() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.has("notrack")) {
+        var on = params.get("notrack") === "1";
+        setCookie(NOTRACK_COOKIE, on ? "1" : "0", 31536000);
+        return on;
+      }
+    } catch (e) {}
+    return getCookie(NOTRACK_COOKIE) === "1";
+  }
 
   function t(key, fallback) {
     if (window.WakeAgainI18n && typeof window.WakeAgainI18n.t === "function") {
@@ -100,8 +132,25 @@
     return "";
   }
 
+  function fetchStatsOnly() {
+    if (window.WakeAgainAPI && typeof window.WakeAgainAPI.stats === "function") {
+      return window.WakeAgainAPI.stats()
+        .then(function (s) {
+          apply({ visitors: s.visitors, today_visitors: s.today_visitors });
+        })
+        .catch(function () {});
+    }
+    return fetch(apiBase() + "/api/v1/visit", { method: "GET", credentials: "same-origin" })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(apply)
+      .catch(function () {});
+  }
+
   function record() {
     ensureEl();
+    if (isOwnerNoTrack()) return fetchStatsOnly();
     var key = getVisitorKey();
     var url = apiBase() + "/api/v1/visit";
     var body = JSON.stringify({ visitor_key: key, referrer: document.referrer || "" });
