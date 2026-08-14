@@ -1391,6 +1391,8 @@
     "feedback.error": "전송에 실패했어요. 잠시 후 다시 시도해주세요.",
     "feedback.error_empty": "내용을 입력해주세요.",
     "feedback.close": "닫기",
+    "proj.safety_accordion_summary": "🛡️ 안전거래 보장 안내 및 거래 4단계",
+    "proj.report_accordion_summary": "▶ 문제 신고 및 판매자 차단",
 },
   "en": {
     "app.tab_projects": "Projects",
@@ -2764,6 +2766,8 @@
     "feedback.error": "Couldn't send that — please try again shortly.",
     "feedback.error_empty": "Please write something first.",
     "feedback.close": "Close",
+    "proj.safety_accordion_summary": "🛡️ Safe-deal guarantee & the 4-step process",
+    "proj.report_accordion_summary": "▶ Report a problem / block seller",
 }
 };
 })(typeof window !== 'undefined' ? window : globalThis);
