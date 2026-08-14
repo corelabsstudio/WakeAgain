@@ -312,8 +312,12 @@
     const flagBit = flag
       ? `<span class="listing-type-tag" title="${escapeAttr(window.WakeAgainCountries.countryName(p.seller_country))}">${flag}</span>`
       : "";
+    const enReadyBit = p.english_ready
+      ? `<span class="listing-type-tag listing-type-tag-en" title="${escapeAttr(tt("list.english_ready_title", isEn() ? "Seller says the product UI works in English" : "판매자가 밝힌: 제품 UI 영어 지원"))}">🌐 ${escapeHtml(tt("list.english_ready", isEn() ? "EN UI" : "영어 UI"))}</span>`
+      : "";
     const typeBit =
       flagBit +
+      enReadyBit +
       (ptype ? `<span class="listing-type-tag">${ptype}</span>` : "") +
       (st ? `<span class="listing-type-tag">${st}</span>` : "");
     const cta =

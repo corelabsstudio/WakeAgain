@@ -465,6 +465,8 @@ class ProjectIn(BaseModel):
     audience: str = Field(default="", max_length=120)
     works_now: str = Field(default="", max_length=500)
     limits: str = Field(default="", max_length=500)
+    # Seller self-declared: product's own UI works in English (or is easily switched). Not verified.
+    english_ready: bool = False
     # made | resale | other
     acquisition: str = Field(default="", max_length=20)
     acquisition_note: str = Field(default="", max_length=200)
@@ -4479,7 +4481,7 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
               price_current, bid_count, min_increment, auction_ends_at, auction_status,
               auction_days_intended, round_number, round_started_at,
               q_credits_offered, q_credit_unit_price, q_credit_sla_hours,
-              license_note, seller_attest_json,
+              license_note, seller_attest_json, english_ready,
               created_at, updated_at
             ) VALUES (
               ?, ?, ?, ?, ?, ?, ?,
@@ -4493,7 +4495,7 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
               ?, 0, ?, ?, 'pending',
               ?, 0, NULL,
               ?, ?, ?,
-              ?, ?,
+              ?, ?, ?,
               ?, ?
             )
             """,
@@ -4542,6 +4544,7 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
                 q_sla,
                 license_note[:200],
                 json.dumps(attest, ensure_ascii=False),
+                1 if body.english_ready else 0,
                 now,
                 now,
             ),

@@ -916,6 +916,7 @@
           <span class="badge live" id="liveBadgeSpot" data-i18n="proj.live_badge">진행 중</span>
         </div>
         <span id="pCountryFlag" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
+        <span id="pEnglishReadyBadge" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
         <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
         <p class="spotlight-one" id="pOne"></p>
         <div class="listing-kw" id="pKeywords" hidden></div>
@@ -2145,6 +2146,16 @@
             flagEl.hidden = false;
           } else {
             flagEl.hidden = true;
+          }
+        }
+        var enReadyEl = document.getElementById("pEnglishReadyBadge");
+        if (enReadyEl) {
+          if (p.english_ready) {
+            enReadyEl.textContent = "🌐 " + t("영어 UI", "EN UI");
+            enReadyEl.title = t("판매자가 밝힌: 제품 UI 영어 지원", "Seller says the product UI works in English");
+            enReadyEl.hidden = false;
+          } else {
+            enReadyEl.hidden = true;
           }
         }
         document.getElementById("pOne").textContent = oneShow;

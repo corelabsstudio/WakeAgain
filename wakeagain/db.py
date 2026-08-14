@@ -341,6 +341,9 @@ def init_db() -> None:
                 "reviewed_at": "TEXT",
                 "review_checklist_json": "TEXT",
                 "demo_verified": "INTEGER NOT NULL DEFAULT 0",
+                # Seller self-declared: is the product's own UI usable in English (or easily switched)?
+                # Not verified by us — self-report only, shown as a badge on cards/detail.
+                "english_ready": "INTEGER NOT NULL DEFAULT 0",
                 "sold_price": "INTEGER",
                 "sold_at": "TEXT",
                 "buyer_id": "INTEGER",
@@ -1871,6 +1874,7 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "paused_reason": _row_get(row, "paused_reason") or "",
         "license_note": (_row_get(row, "license_note") or "") or "",
         "demo_verified": bool(int(_row_get(row, "demo_verified", 0) or 0)),
+        "english_ready": bool(int(_row_get(row, "english_ready", 0) or 0)),
         # Trust exposure (from SQL join or computed later)
         "exposure_score": (
             int(_row_get(row, "exposure_score"))
@@ -5277,6 +5281,7 @@ def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
         "status": p["status"],
         "top_bidder": None,
         "seller_country": (row["seller_country"] if "seller_country" in row.keys() else None) or "",
+        "english_ready": p.get("english_ready") or False,
     }
     if top_bid:
         out["top_bidder"] = {

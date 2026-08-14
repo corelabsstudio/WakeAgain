@@ -1393,6 +1393,10 @@
     "feedback.close": "닫기",
     "proj.safety_accordion_summary": "🛡️ 안전거래 보장 안내 및 거래 4단계",
     "proj.report_accordion_summary": "▶ 문제 신고 및 판매자 차단",
+    "list.english_ready": "영어 UI",
+    "list.english_ready_title": "판매자가 밝힌: 제품 UI 영어 지원",
+    "app.create_global_note": "🌍 WakeAgain은 글로벌 마켓입니다 — 이 매물은 해외 구매자에게도 그대로 노출됩니다.",
+    "app.create_english_ready": "이 제품의 화면(UI)이 영어로도 쓸 수 있거나, 쉽게 영어로 바꿀 수 있어요.",
 },
   "en": {
     "app.tab_projects": "Projects",
@@ -2768,6 +2772,10 @@
     "feedback.close": "Close",
     "proj.safety_accordion_summary": "🛡️ Safe-deal guarantee & the 4-step process",
     "proj.report_accordion_summary": "▶ Report a problem / block seller",
+    "list.english_ready": "EN UI",
+    "list.english_ready_title": "Seller says the product UI works in English",
+    "app.create_global_note": "🌍 WakeAgain is a global marketplace — this listing is shown to buyers worldwide too.",
+    "app.create_english_ready": "This product's own UI works in English (or can be switched to it easily).",
 }
 };
 })(typeof window !== 'undefined' ? window : globalThis);

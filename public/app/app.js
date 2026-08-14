@@ -779,8 +779,10 @@
         p.exposure_score != null
           ? t("app.exposure", "Boost {n}", { n: p.exposure_score })
           : "";
+      const enReadyBit = p.english_ready ? "🌐 " + t("list.english_ready", "EN UI") : "";
       el.querySelector(".p-meta").textContent = [
         typeBit,
+        enReadyBit,
         statusBit,
         qBit,
         exp,
@@ -2848,6 +2850,7 @@
       audience,
       works_now: worksNow,
       limits,
+      english_ready: !!($("pEnglishReady") && $("pEnglishReady").checked),
       acquisition,
       acquisition_note: acqNote,
       story,
