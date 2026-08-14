@@ -81,6 +81,55 @@
     el.textContent = msg;
   }
 
+  function showBidCancelPolicyModal() {
+    return new Promise((resolve) => {
+      const root = document.createElement("div");
+      root.id = "waBidCancelNotice";
+      root.setAttribute("role", "dialog");
+      root.setAttribute("aria-modal", "true");
+      root.style.cssText =
+        "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;" +
+        "padding:1rem;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)";
+      const title = t("app.bid_cancel_notice_title", "You can't cancel once bidding starts");
+      const body = t(
+        "app.bid_cancel_notice_body",
+        "Once this listing goes live and receives a bid, you (the seller) can no longer cancel or delete it — the bidder is committed to the deal. Deletion only works before any bid has landed. After that, contact support if something is wrong."
+      );
+      const cta = t("app.bid_cancel_notice_confirm", "Understood, list it");
+      const back = t("app.bid_cancel_notice_back", "Go back");
+      root.innerHTML =
+        '<div style="max-width:420px;width:100%;border-radius:16px;background:linear-gradient(165deg,#1a1814 0%,#16140f 55%,#12100c 100%);' +
+        'border:1px solid rgba(212,160,23,.4);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1.35rem 1.4rem;color:#f0e8d8">' +
+        '<p style="font-weight:700;font-size:1.05rem;margin:0 0 .5rem;background:linear-gradient(90deg,#e8d5a3,#d4a86a);-webkit-background-clip:text;background-clip:text;color:transparent">WakeAgain</p>' +
+        '<h2 style="margin:0 0 .6rem;font-size:1.15rem;font-weight:700;color:#f5f0e6">' +
+        title +
+        "</h2>" +
+        '<p style="margin:0 0 1rem;font-size:.9rem;line-height:1.55;color:#c9c1dd">' +
+        body +
+        "</p>" +
+        '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
+        '<button type="button" id="waBidCancelNoticeConfirm" class="btn btn-primary" style="flex:1;min-width:8rem">' +
+        cta +
+        "</button>" +
+        '<button type="button" id="waBidCancelNoticeBack" class="btn btn-ghost" style="flex:1;min-width:6rem">' +
+        back +
+        "</button>" +
+        "</div></div>";
+      document.body.appendChild(root);
+      function finish(ok) {
+        root.remove();
+        resolve(ok);
+      }
+      root.addEventListener("click", (ev) => {
+        if (ev.target === root) finish(false);
+      });
+      const confirmBtn = document.getElementById("waBidCancelNoticeConfirm");
+      const backBtn = document.getElementById("waBidCancelNoticeBack");
+      if (confirmBtn) confirmBtn.addEventListener("click", () => finish(true));
+      if (backBtn) backBtn.addEventListener("click", () => finish(false));
+    });
+  }
+
   function setView(name) {
     Object.keys(views).forEach((k) => {
       if (views[k]) views[k].hidden = k !== name;
@@ -2892,6 +2941,8 @@
       if ($("pQUnitPrice")) $("pQUnitPrice").focus();
       return;
     }
+    const proceed = await showBidCancelPolicyModal();
+    if (!proceed) return;
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
     try {
