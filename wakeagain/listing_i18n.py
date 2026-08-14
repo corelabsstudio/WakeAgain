@@ -186,7 +186,7 @@ def _ai_translate_batch(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": os.environ.get("XAI_MODEL", "grok-4-1-fast-non-reasoning"),
+                    "model": os.environ.get("XAI_MODEL", "grok-4.20-non-reasoning"),
                     "messages": [
                         {
                             "role": "system",
@@ -323,7 +323,7 @@ def _ai_translate_long_fields(
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": os.environ.get("XAI_MODEL", "grok-4-1-fast-non-reasoning"),
+                    "model": os.environ.get("XAI_MODEL", "grok-4.20-non-reasoning"),
                     "messages": [
                         {
                             "role": "system",
