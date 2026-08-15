@@ -1023,7 +1023,7 @@
     "footer.visitors_label": "방문자",
     "footer.visitors_today": "오늘",
     "footer.visitors_total": "전체",
-    "footer.why": "왜 웨이크어게인인가",
+    "footer.why": "왜 WakeAgain인가",
     "hero.badge": "잠든 프로젝트 장터",
     "hero.cta_main": "시작가 힌트 · 무료 진단",
     "hero.stat_interest": "관심 등록",
