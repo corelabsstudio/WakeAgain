@@ -5487,6 +5487,41 @@ def admin_update_project_verification(
     return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
 
 
+class AdminTradeNameEnIn(BaseModel):
+    trade_name_en: str = Field(default="", max_length=80)
+
+
+@router.put("/admin/users/{user_id}/trade-name-en")
+def admin_set_trade_name_en(
+    user_id: int,
+    body: AdminTradeNameEnIn,
+    _: None = Depends(require_admin),
+):
+    """운영자가 판매자의 영문 상호만 설정한다.
+
+    매물 일부는 시드 스크립트가 만든 운영 계정(corelabs.seller@…) 소유라 본인 로그인으로
+    프로필을 고칠 수 없다. 관리자가 사용자 정보를 통째로 수정할 수 있게 열면 위험 범위가
+    너무 커지므로, 바꿀 수 있는 값을 이 한 필드로 제한한다. 빈 문자열이면 해제(한글 상호로 폴백).
+    """
+    name_en = (body.trade_name_en or "").strip()
+    with database.db() as conn:
+        row = conn.execute("SELECT id, email FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="user not found")
+        conn.execute(
+            "UPDATE users SET seller_trade_name_en = ?, profile_updated_at = ? WHERE id = ?",
+            (name_en, database._now(), user_id),
+        )
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    return {
+        "ok": True,
+        "user_id": user_id,
+        "email": row["email"],
+        "trade_name": (row["seller_trade_name"] or ""),
+        "trade_name_en": (row["seller_trade_name_en"] or ""),
+    }
+
+
 class AdminImagesIn(BaseModel):
     demo_images: list[str] = Field(default_factory=list, max_length=5)
 
