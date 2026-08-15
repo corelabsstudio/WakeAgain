@@ -64,7 +64,10 @@
     onParallax();
 
     var heroEl = document.querySelector(".hero");
-    var heroPhoto = heroEl && heroEl.querySelector(".hero-photo img");
+    // 스크린샷 타일 배경(.hero-photo--shots)에는 마우스 패럴랙스를 걸지 않는다.
+    // 격자가 통째로 따라 움직이면 배경이 앞의 카피와 경쟁하고, 연출 자체가 과해진다.
+    var heroPhotoBox = heroEl && heroEl.querySelector(".hero-photo:not(.hero-photo--shots)");
+    var heroPhoto = heroPhotoBox && heroPhotoBox.querySelector("img");
     if (heroEl && heroPhoto && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
       heroPhoto.classList.add("hero-photo-mouse");
       var hmx = 0,
