@@ -709,6 +709,14 @@
         body: JSON.stringify({ price_start: priceStart }),
       });
     },
+    // 필수 필드 정책(2026-08-15) 보완: 정책 이전 매물에 저장소·라이브데모·활동일을 채워 넣는다.
+    // 보낸 필드만 반영된다.
+    async updateProjectVerification(projectId, body) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/verification", {
+        method: "PUT",
+        body: JSON.stringify(body || {}),
+      });
+    },
     async getQCredits(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits");
     },

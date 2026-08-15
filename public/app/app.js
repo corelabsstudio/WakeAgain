@@ -890,6 +890,30 @@
         el.appendChild(priceActions);
       }
 
+      // Mine feed: fill in the verification fields the required-fields policy expects.
+      // Pre-policy listings show "unregistered" badges until this is done.
+      if (feed === "mine" && aStatus !== "sold") {
+        const gaps = missingVerification(p);
+        if (gaps.length) {
+          const vActions = document.createElement("div");
+          vActions.className = "p-card-actions";
+          vActions.style.marginTop = "8px";
+          const vBtn = document.createElement("button");
+          vBtn.type = "button";
+          vBtn.className = "btn btn-sm btn-primary";
+          vBtn.textContent = t("app.btn_fill_verification", "Add repo · demo · last activity ({n})", {
+            n: gaps.length,
+          });
+          vBtn.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            editVerification(p);
+          });
+          vActions.appendChild(vBtn);
+          el.appendChild(vActions);
+        }
+      }
+
       // Mine feed: self-delete a mistaken listing — only while no bid has landed
       if (feed === "mine" && bids === 0 && aStatus !== "sold") {
         const delActions = document.createElement("div");
@@ -982,6 +1006,79 @@
         (err && err.message) ||
         String(err);
       window.alert(t("app.edit_price_fail", "Couldn't update the price") + "\n" + msg);
+    }
+  }
+
+  // 필수 필드 정책(2026-08-15) 이전에 올라온 매물은 저장소·라이브데모·활동일이 비어 있고
+  // "미등록" 배지가 붙는다. relist는 라이브 라운드에서 막히므로 여기서 채워 넣는다.
+  function missingVerification(p) {
+    if (!p) return [];
+    const gaps = [];
+    if (!p.repo_url) gaps.push("repo");
+    if (!p.live_url && !p.is_offline) gaps.push("live");
+    if (!p.last_activity_at) gaps.push("activity");
+    return gaps;
+  }
+
+  async function editVerification(p) {
+    if (!p || !p.id) return;
+    const body = {};
+
+    if (!p.repo_url) {
+      const repo = window.prompt(
+        t(
+          "app.verify_repo_prompt",
+          "Repository URL\n\nGitHub · GitLab · Bitbucket. Private repos are fine — we never open the link."
+        ),
+        ""
+      );
+      if (repo == null) return;
+      if (repo.trim()) body.repo_url = repo.trim();
+      if (body.repo_url) {
+        body.is_private_repo = window.confirm(
+          t("app.verify_private_prompt", "Is this a private repository?\n\nOK = private · Cancel = public")
+        );
+      }
+    }
+
+    if (!p.live_url && !p.is_offline) {
+      const live = window.prompt(
+        t(
+          "app.verify_live_prompt",
+          "Live demo URL\n\nLeave blank if the service is already shut down — your screenshots stand in for it."
+        ),
+        ""
+      );
+      if (live == null) return;
+      if (live.trim()) body.live_url = live.trim();
+      else body.is_offline = true;
+    }
+
+    if (!p.last_activity_at) {
+      const act = window.prompt(
+        t("app.verify_activity_prompt", "Last activity (YYYY-MM)\n\nLast time you committed or operated it."),
+        ""
+      );
+      if (act == null) return;
+      if (act.trim()) body.last_activity_at = act.trim();
+    }
+
+    if (!Object.keys(body).length) return;
+
+    try {
+      const res = await api.updateProjectVerification(p.id, body);
+      window.alert(
+        (res && res.note && api.translateBackendText(res.note)) ||
+          t("app.verify_fields_ok", "Verification details updated.")
+      );
+      feed = "mine";
+      loadProjects(true);
+    } catch (err) {
+      const msg =
+        (err && err.detail && (err.detail.message || err.detail)) ||
+        (err && err.message) ||
+        String(err);
+      window.alert(t("app.verify_fields_fail", "Couldn't update the verification details") + "\n" + msg);
     }
   }
 
