@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>사이드 프로젝트 넘길 때, 코드만 주면 끝이 아닙니다 | WakeAgain</title>
+  <meta name="description" content="방치된 앱 처분을 결심했다면 코드보다 먼저 정리할 게 있습니다. 도메인·서버·API 키 이전 체크리스트로 MVP 프로토타입 판매를 실제 인수인계까지 끝내는 법." />
+  <meta name="robots" content="index, follow" />
+  <meta name="keywords" content="방치된 앱 처분, MVP 프로토타입 판매, 사이드 프로젝트 수익화, 인디해커 수익, WakeAgain" />
+  <link rel="canonical" href="https://wakeagain.com/blog/side-project-handover-checklist.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://wakeagain.com/blog/side-project-handover-checklist.html" />
+  <meta property="og:title" content="사이드 프로젝트 넘길 때, 코드만 주면 끝이 아닙니다" />
+  <meta property="og:description" content="도메인·서버·API 키까지 넘겨야 인수인계가 끝납니다. 방치된 앱 처분 전에 준비할 이전 체크리스트. WakeAgain." />
+  <meta property="og:image" content="https://wakeagain.com/assets/og-image.jpg" />
+  <meta name="theme-color" content="#1a1814" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260811-cscheme2" />
+  <link rel="stylesheet" href="/blog/blog.css?v=20260729-deep-qa" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "사이드 프로젝트 넘길 때, 코드만 주면 끝이 아닙니다",
+    "datePublished": "2026-08-12",
+    "dateModified": "2026-08-12",
+    "author": { "@type": "Organization", "name": "CoreLabs" },
+    "mainEntityOfPage": "https://wakeagain.com/blog/side-project-handover-checklist.html"
+  }
+  </script>
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-deep-qa" />
+</head>
+<body class="wa-blog theme-yard">
+  <header class="wa-blog-nav">
+    <div class="wa-blog-nav-inner">
+      <a class="wa-blog-brand" href="/">Wake<span class="brand-again">Again</span></a>
+      <nav class="wa-blog-links">
+        <a href="/blog/">블로그</a>
+        <a href="/sell.html">매물 등록</a>
+        <a href="/app/">마켓</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wa-blog-wrap">
+    <article>
+      <div class="wa-kicker">Indie maker · Handover</div>
+      <h1>사이드 프로젝트 넘길 때, 코드만 주면 끝이 아닙니다</h1>
+      <p class="wa-meta">
+        2026-08-12 · WakeAgain 성장팀<br />
+        키워드: 방치된 앱 처분 · MVP 프로토타입 판매 · 사이드 프로젝트 수익화 · 인디해커 수익
+      </p>
+
+      <div class="wa-prose">
+        <p>
+          매수자가 나타났습니다. 가격도 합의됐습니다.
+          그런데 막상 넘기려니 손이 멈춥니다 —
+          <strong>레포 초대만 보내면 되는 걸까요?</strong>
+          실제로 거래가 어그러지는 지점은 가격 협상이 아니라 이 다음 구간인 경우가 많습니다.
+        </p>
+
+        <h2>1. 이슈 요약 — 인수인계에서 실제로 문제되는 것들</h2>
+        <ul>
+          <li>
+            소프트웨어 인수인계 가이드들이 공통으로 지적하는 원칙이 있습니다.
+            <strong>“자격증명을 공유하는 것”과 “넘기는 것”은 다르다</strong>는 것.
+            이전 소유자에게 여전히 동작하는 키가 남아 있으면, 감사할 수 없는 문이 열려 있는 셈입니다.
+          </li>
+          <li>
+            넘겨야 할 목록은 코드보다 깁니다. 서드파티 API 키, OAuth 클라이언트 시크릿,
+            웹훅 서명 시크릿, JWT 서명 키, SMTP 계정, 스토리지 액세스 키,
+            그리고 도메인·DNS·SSL·CI/CD 설정까지.
+          </li>
+          <li>
+            인디 메이커 커뮤니티에서도 매각을 고민하는 글에 붙는 조언은 비슷합니다.
+            <strong>디지털 자산의 통제권을 완전히 넘겨받기 전에 돈이 먼저 움직이면 안 된다</strong>는 것.
+          </li>
+        </ul>
+
+        <div class="wa-source">
+          <strong>참고 (원문 링크 · 전문 전재 없음)</strong>
+          · <a href="https://koder.ai/blog/source-code-handoff-checklist" rel="noopener noreferrer" target="_blank">Source code handoff checklist for clients and agencies (Koder.ai)</a><br />
+          · <a href="https://www.tech4lyf.com/blog/software-handover-documentation-checklist-2026/" rel="noopener noreferrer" target="_blank">Software Handover Checklist (2026) — Documentation &amp; IP Guide</a><br />
+          · <a href="https://www.indiehackers.com/post/thinking-of-selling-my-side-project-10f94c7df5" rel="noopener noreferrer" target="_blank">Thinking of selling my side project (Indie Hackers)</a>
+        </div>
+
+        <h2>2. 인사이트 — 준비가 안 된 매물은 값이 깎입니다</h2>
+        <p>
+          구매자 입장에서 “받아도 굴릴 수 있을지 모르겠는 프로젝트”는 리스크입니다.
+          그리고 리스크는 가격으로 반영됩니다.
+          반대로 이전 목록이 정리돼 있으면 그 자체가 신호가 됩니다 —
+          이 판매자는 실제로 넘길 준비가 돼 있다는 신호요.
+        </p>
+
+        <h3>“나중에 정리하지” 가 만드는 비용</h3>
+        <ul>
+          <li>키가 어디에 박혀 있는지 본인도 기억 못 하면, 인수 후 장애가 났을 때 결국 다시 연락이 옵니다.</li>
+          <li>도메인이 개인 계정에 묶여 있으면 이전 절차가 며칠씩 늘어집니다.</li>
+          <li>무료 티어로 돌아가던 서비스는 소유권이 바뀌는 순간 결제 정보가 끊깁니다.</li>
+        </ul>
+
+        <h2>3. 실무 팁 — 넘기기 전 체크리스트</h2>
+        <p>
+          <strong>MVP 프로토타입 판매</strong>를 진행하기로 했다면, 아래를 먼저 문서 한 장으로 정리해 두세요.
+          매물 등록 시점에 이미 있으면 협상이 훨씬 빨라집니다.
+        </p>
+        <ul>
+          <li><strong>저장소</strong> — 소유권 이전 방식(조직 이전 / 새 소유자 초대), 비공개면 접근 권한 제공 시점</li>
+          <li><strong>도메인·DNS</strong> — 등록기관, 갱신일, 이전 잠금(transfer lock) 해제 가능 여부</li>
+          <li><strong>호스팅·DB</strong> — 어디서 돌아가는지, 월 얼마 나가는지, 백업이 있는지</li>
+          <li><strong>시크릿</strong> — 목록만 만들고 <strong>값은 이전 시점에 새로 발급</strong>하세요. 공유가 아니라 교체입니다</li>
+          <li><strong>동작 범위</strong> — 지금 되는 기능과 안 되는 기능을 그대로 적으세요. 숨기는 쪽이 손해입니다</li>
+          <li><strong>마지막 활동일</strong> — 마지막 커밋·마지막 운영일. 구매자가 제일 먼저 보는 숫자입니다</li>
+        </ul>
+
+        <h2>4. 해결책 및 Call to Action</h2>
+        <p>
+          WakeAgain은 방치된 사이드 프로젝트·MVP·SaaS 프로토타입을
+          공개 호가로 연결하는 거래소입니다.
+          매물 등록 단계에서 저장소·데모·마지막 활동일을 입력하도록 해 두었기 때문에,
+          위 체크리스트의 앞부분은 등록만 해도 자연스럽게 정리됩니다.
+        </p>
+        <ul>
+          <li>판매자: 매물 등록(무료) → 공개 호가 → 성사 시 단계별 이전 안내</li>
+          <li>구매자: 저장소·데모·활동일이 표시된 매물만 비교</li>
+          <li>목표: “넘기려다 흐지부지”를 줄이는 것</li>
+        </ul>
+
+        <div class="wa-cta">
+          <h3>지금 등록해 보세요</h3>
+          <p>
+            이전 준비가 반쯤 끝난 상태로 매물을 올릴 수 있습니다.
+            WakeAgain에 무료로 등록해 보세요.
+          </p>
+          <div class="wa-cta-actions">
+            <a class="wa-btn-primary" href="https://wakeagain.com/sell.html">매물 무료 등록</a>
+            <a class="wa-btn-ghost" href="https://wakeagain.com">https://wakeagain.com</a>
+            <a class="wa-btn-ghost" href="/guide/how-to-sell.html">판매 가이드</a>
+          </div>
+        </div>
+
+        <h2>한 줄 정리</h2>
+        <p>
+          <strong>방치된 앱 처분</strong>은 코드를 건네는 일이 아니라 <strong>통제권을 옮기는 일</strong>입니다.
+          도메인·서버·키까지 목록으로 만들어 두면, 그 자체가 매물의 신뢰도가 되고
+          <strong>사이드 프로젝트 수익화</strong>의 마지막 걸림돌이 사라집니다.
+        </p>
+
+        <p class="wa-disclaimer">
+          면책: 본 글은 공개된 커뮤니티·미디어 논의를 바탕으로 한 마케팅 콘텐츠입니다.
+          매물 판매·특정 수익을 보장하지 않습니다. 거래 조건·리스크는 약관과 매물 정보를 확인하세요.
+        </p>
+      </div>
+    </article>
+
+    <footer class="wa-blog-foot">
+      <a href="/blog/">← 블로그 목록</a>
+      <a href="/blog/abandoned-project-buyer-demand.html">관련 글: 인수하고 싶어하는 사람이 있습니다 →</a>
+    </footer>
+  </main>
+</body>
+</html>
