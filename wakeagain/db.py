@@ -309,6 +309,9 @@ def init_db() -> None:
                 # Public seller identity (전자상거래법 통신판매중개 — 구매자 확인용)
                 "seller_type": "TEXT",  # individual | business
                 "seller_trade_name": "TEXT",  # 상호 또는 개인 성명(공개)
+                # 영문 상호(선택). 해외 매수자에게 매물이 영어로 보일 때 판매자명만 한글로 남는 걸 막는다.
+                # 법인명은 임의 번역하지 않는다 — 판매자가 직접 적은 값만 쓰고, 없으면 한글 상호를 그대로 보여준다.
+                "seller_trade_name_en": "TEXT",
                 "seller_ceo_name": "TEXT",  # 대표자 (사업자)
                 "seller_biz_no": "TEXT",  # 사업자등록번호
                 "seller_mail_order_no": "TEXT",  # 통신판매업 신고번호
@@ -1409,6 +1412,8 @@ def public_seller_identity(
         "type": st,
         "type_label": "사업자" if st == "business" else "개인판매자",
         "name": (g("seller_trade_name") or "").strip(),
+        # 판매자가 적어 둔 영문 상호. 없으면 빈 문자열 — 프론트가 한글 상호로 폴백한다.
+        "name_en": (g("seller_trade_name_en") or "").strip(),
         "ceo_name": (g("seller_ceo_name") or "").strip() if st == "business" else "",
         "business_reg_no": biz_no if st == "business" else "",
         "mail_order_report_no": mail_order,
@@ -1472,6 +1477,8 @@ def user_to_dict(row: sqlite3.Row, *, public: bool = False) -> dict:
     seller_identity = {
         "type": (row["seller_type"] if "seller_type" in row.keys() else None) or "",
         "trade_name": (row["seller_trade_name"] if "seller_trade_name" in row.keys() else None) or "",
+        "trade_name_en": (row["seller_trade_name_en"] if "seller_trade_name_en" in row.keys() else None)
+        or "",
         "ceo_name": (row["seller_ceo_name"] if "seller_ceo_name" in row.keys() else None) or "",
         "business_reg_no": (row["seller_biz_no"] if "seller_biz_no" in row.keys() else None) or "",
         "mail_order_report_no": (row["seller_mail_order_no"] if "seller_mail_order_no" in row.keys() else None)

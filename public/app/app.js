@@ -575,6 +575,7 @@
     if ($("sidType")) $("sidType").value = sid.type || "individual";
     if ($("sidName"))
       $("sidName").value = sid.trade_name || u.real_name || u.display_name || "";
+    if ($("sidNameEn")) $("sidNameEn").value = sid.trade_name_en || "";
     if ($("sidCeo")) $("sidCeo").value = sid.ceo_name || "";
     if ($("sidBizNo")) $("sidBizNo").value = sid.business_reg_no || "";
     if ($("sidMailOrder")) $("sidMailOrder").value = sid.mail_order_report_no || "";
@@ -1950,6 +1951,7 @@
     const payload = {
       seller_type: type,
       trade_name: $("sidName") ? $("sidName").value.trim() : "",
+      trade_name_en: $("sidNameEn") ? $("sidNameEn").value.trim() : "",
       ceo_name: $("sidCeo") ? $("sidCeo").value.trim() : "",
       business_reg_no: $("sidBizNo") ? $("sidBizNo").value.trim() : "",
       mail_order_report_no: $("sidMailOrder") ? $("sidMailOrder").value.trim() : "",

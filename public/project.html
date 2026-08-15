@@ -2457,11 +2457,19 @@
           if (isEn() && cr && cr.grade && gradeLabelEn[cr.grade]) label = gradeLabelEn[cr.grade];
           var defaults = cr && cr.counts ? Number(cr.counts.defaults) || 0 : 0;
 
+          // 영어 화면에서 판매자명만 한글로 남지 않게, 판매자가 등록한 영문 상호를 우선한다.
+          // 안 적었으면 기존 표시명을 그대로 쓴다 — 법인명을 임의로 번역하지 않는다.
+          var sellerIdent = p.seller.identity || {};
+          var sellerName =
+            (isEn() && sellerIdent.name_en ? sellerIdent.name_en : "") ||
+            p.seller.display_name ||
+            "";
+
           var trustBar = document.getElementById("sellerTrustBar");
           if (trustBar) {
             trustBar.hidden = false;
             document.getElementById("sellerTrustName").textContent =
-              p.seller.display_name || t("판매자", "Seller");
+              sellerName || t("판매자", "Seller");
             document.getElementById("sellerTrustScore").textContent =
               score != null ? String(score) : "—";
             document.getElementById("sellerTrustLabel").textContent =
@@ -2481,7 +2489,7 @@
               ? t(" · 신용 ", " · credit ") + score + " " + label
               : "";
           document.getElementById("sellerLine").textContent =
-            t("파는 사람 ", "Seller ") + (p.seller.display_name || "—") +
+            t("파는 사람 ", "Seller ") + (sellerName || "—") +
             t(" · 공개 프로젝트 ", " · public listings ") + listN +
             t(" · 성사 ", " · sold ") + soldN +
             creditBit;

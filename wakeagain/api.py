@@ -517,6 +517,9 @@ class SellerIdentityIn(BaseModel):
     """구매자 확인용 판매자 공개 신원 (통신판매중개 정보 제공 의무)."""
     seller_type: Literal["individual", "business"]
     trade_name: str = Field(min_length=2, max_length=80)
+    # 영문 상호(선택). 매물이 영어로 보일 때 판매자명만 한글로 남는 걸 막는 용도.
+    # 비워 두면 한글 상호를 그대로 노출한다 — 법인명을 임의로 번역하지 않는다.
+    trade_name_en: str = Field(default="", max_length=80)
     ceo_name: str = Field(default="", max_length=40)
     business_reg_no: str = Field(default="", max_length=20)
     mail_order_report_no: str = Field(default="", max_length=40)
@@ -1806,6 +1809,7 @@ def update_seller_identity(body: SellerIdentityIn, user: dict = Depends(get_curr
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
         trade = body.trade_name.strip()
+        trade_en = (body.trade_name_en or "").strip()
         ceo = (body.ceo_name or "").strip()
         biz = re.sub(r"\D", "", body.business_reg_no or "")
         mail_order = (body.mail_order_report_no or "").strip()
@@ -1832,6 +1836,7 @@ def update_seller_identity(body: SellerIdentityIn, user: dict = Depends(get_curr
             UPDATE users SET
               seller_type = ?,
               seller_trade_name = ?,
+              seller_trade_name_en = ?,
               seller_ceo_name = ?,
               seller_biz_no = ?,
               seller_mail_order_no = ?,
@@ -1845,6 +1850,7 @@ def update_seller_identity(body: SellerIdentityIn, user: dict = Depends(get_curr
             (
                 body.seller_type,
                 trade,
+                trade_en,
                 ceo,
                 biz,
                 mail_order,

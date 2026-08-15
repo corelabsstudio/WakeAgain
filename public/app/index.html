@@ -440,6 +440,9 @@
         </select>
         <label for="sidName" id="sidNameLabel" data-i18n="app.sid_name">Public name (or business) *</label>
         <input id="sidName" required minlength="2" maxlength="80" placeholder="Legal name or business name" />
+        <label for="sidNameEn" data-i18n="app.sid_name_en">Name in English (optional)</label>
+        <input id="sidNameEn" maxlength="80" placeholder="e.g. CoreLabs" data-i18n-placeholder="app.sid_name_en_ph" />
+        <p class="price-guide muted fine" data-i18n="app.sid_name_en_hint">Shown to buyers browsing in English. Leave blank to keep your Korean name as-is.</p>
         <div id="sidBizFields" hidden>
           <label for="sidCeo" data-i18n="app.sid_ceo">Representative name *</label>
           <input id="sidCeo" maxlength="40" placeholder="Legal representative" />
