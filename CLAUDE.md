@@ -142,6 +142,33 @@
 
 ## 최근 배포 이력 (요약 · 최신 우선)
 
+### 2026-08-16 · `styles.css`의 죽은 "AI 티" 스타일 제거 (외형 변화 없음)
+
+**배경:** 사용자가 "사이트가 AI로 뽑아낸 티가 난다"고 지적. `styles.css`를 뒤지니 실제로
+전형적인 패턴이 다 있었다 — 히어로 제목 두 줄에 무한 shimmer 그라디언트 + **자홍색 드롭섀도**
+(`#e879f9`), 제목 주변 반짝이 점 2개, `.live-card`의 6겹 네온 그림자(자홍 `217,70,239` +
+보라 `109,40,217`)가 4.5초 주기로 맥동 + 그라디언트 테두리, `.live-metrics`의 4겹 초록 네온
+1.6초 맥동, 로고의 `0 0 40px` 골드 글로우.
+
+**⚠️ 그런데 이것들은 화면에 안 나오고 있었다.** `index.html`이 `<body class="theme-yard">`이고
+`yard-theme.css`가 `styles.css` **뒤에** 로드되면서 `!important`로 전부 무력화하고 있었다
+(yard-theme에 `/* Glass cards — deep brown field, no violet hover rim */` 주석까지 있다 —
+과거에 같은 진단을 하고 덮어놓은 흔적). **즉 이번 커밋은 죽은 코드 정리이고, 외형은 안 바뀐다.**
+`theme-yard` 클래스가 빠지는 순간 되살아나는 지뢰였으므로 제거 자체는 유지한다.
+
+**같이 한 것:** 히어로 `line-height` 1.1→1.06 + `text-wrap: balance`(수상작 공통 처리),
+`.live-metrics strong`에 `font-variant-numeric: tabular-nums`(숫자 갱신 시 폭 흔들림 방지).
+`styles.css`를 고쳤으므로 `?v=`를 **52곳 전부** `20260816-deadai`로 범프, `sw.js` → `v70-deadai`.
+
+**교훈 (일반화):** 이 저장소는 `styles.css` → `ux9.css` → `yard-theme.css` 순으로 로드되고
+**yard-theme이 `!important`로 광범위하게 덮는다.** 외형 문제를 고칠 때 `styles.css`만 보고
+판단하면 안 된다 — **`getComputedStyle`로 실제 렌더값을 확인**하고, 어느 파일이 이기는지부터 볼 것.
+
+**후속 (실제 외형 작업):** 렌더링되는 건 yard 테마다. 실측한 문제는 ①`home-hub`와 `listings`가
+**연속으로 3단 카드 그리드**(가장 전형적인 AI 레이아웃) ②섹션 패딩이 44/36, 44/38로 사실상 같아
+리듬이 없음 ③카드 라운드가 6px·12px 혼재 ④카드 배경 대비 거의 없음(`#2c241c` vs `#262018`).
+→ `yard-theme.css` 대상 별도 작업.
+
 ### 2026-08-16 · `data-i18n-html` 누락으로 내부 링크가 삭제되던 버그 수정
 
 **배경:** 바로 아래 EN 폴백 작업 중 발견. `buy.html`의 `buy.form_note`가 `<a>`를 품고 있는데
