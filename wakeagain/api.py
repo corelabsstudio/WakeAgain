@@ -5392,6 +5392,95 @@ def admin_list_projects(
     return {"ok": True, "counts": counts, "projects": projects, "checklist": REVIEW_CHECKLIST}
 
 
+@router.put("/admin/projects/{project_id}/verification")
+def admin_update_project_verification(
+    project_id: int,
+    body: VerificationIn,
+    _: None = Depends(require_admin),
+):
+    """운영자용 검증정보 보완.
+
+    정책 이전 매물 중에는 시드 스크립트가 만든 운영 계정(corelabs.seller@…) 소유가 있어
+    판매자 로그인으로는 손댈 수 없다. 소유자용 엔드포인트와 같은 검증을 쓰되 소유권만 건너뛴다.
+    입찰 후 링크 교체 방지 가드는 운영자에게 적용하지 않는다 — 데이터 정정이 목적이기 때문.
+    """
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+
+        def cur(col: str):
+            return row[col] if col in row.keys() else None
+
+        repo_url = cur("repo_url")
+        if body.repo_url is not None and body.repo_url.strip():
+            try:
+                repo_url = _normalize_repo_url(body.repo_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400, detail={"code": "repo_url_invalid", "message": str(e)}
+                ) from e
+
+        is_private_repo = (
+            int(bool(body.is_private_repo))
+            if body.is_private_repo is not None
+            else int(bool(cur("is_private_repo")))
+        )
+        is_offline = (
+            bool(body.is_offline) if body.is_offline is not None else bool(cur("is_offline"))
+        )
+
+        live_url = cur("live_url")
+        if is_offline:
+            live_url = None
+        elif body.live_url is not None and body.live_url.strip():
+            try:
+                live_url = _normalize_live_url(body.live_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400, detail={"code": "live_url_invalid", "message": str(e)}
+                ) from e
+
+        last_activity_at = cur("last_activity_at")
+        if body.last_activity_at is not None and body.last_activity_at.strip():
+            try:
+                last_activity_at = _normalize_last_activity(body.last_activity_at)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400, detail={"code": "last_activity_invalid", "message": str(e)}
+                ) from e
+
+        if is_offline and not database._parse_demo_images(row):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "demo_images_min",
+                    "message": "서비스가 내려간 매물은 스크린샷이 최소 1장 필요합니다.",
+                },
+            )
+
+        conn.execute(
+            """
+            UPDATE projects SET
+              repo_url = ?, is_private_repo = ?, live_url = ?,
+              is_offline = ?, last_activity_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                repo_url,
+                is_private_repo,
+                live_url,
+                1 if is_offline else 0,
+                last_activity_at,
+                database._now(),
+                project_id,
+            ),
+        )
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+
+    return {"ok": True, "project": database.project_to_dict(row, include_private=True)}
+
+
 class AdminImagesIn(BaseModel):
     demo_images: list[str] = Field(default_factory=list, max_length=5)
 
