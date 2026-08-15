@@ -163,6 +163,65 @@ check("미래 활동일 → 400", r.status_code == 400, f"{r.status_code}")
 r = post(last_activity_at="2026/03")
 check("잘못된 형식 → 400", r.status_code == 400, f"{r.status_code}")
 
+# 7.5) 정책 이전 매물 보완 경로: PUT /projects/{id}/verification
+#      라이브 매물은 relist가 막히므로 이 경로가 없으면 기존 판매자는 정책을 지킬 수 없다.
+r = post()
+if r.status_code == 200:
+    pid = r.json()["project"]["id"]
+    created_ids.append(pid)
+    # 정책 이전 상태로 되돌려 놓고(빈 값) 보완이 되는지 본다
+    with database.db() as conn:
+        conn.execute(
+            "UPDATE projects SET repo_url=NULL, live_url=NULL, last_activity_at=NULL,"
+            " is_private_repo=0, is_offline=0, bid_count=0 WHERE id=?",
+            (pid,),
+        )
+    v = c.put(
+        f"/api/v1/projects/{pid}/verification",
+        headers=H,
+        json={
+            "repo_url": "github.com/corelabsstudio/RoadLog",
+            "is_private_repo": False,
+            "live_url": "https://roadlog.co.kr",
+            "last_activity_at": "2026-08",
+        },
+    )
+    ok = v.status_code == 200
+    check("보완 엔드포인트 200", ok, "" if ok else f"{v.status_code} {v.text[:200]}")
+    if ok:
+        p = v.json()["project"]
+        check("보완 후 repo_url 반영", p.get("repo_url") == "https://github.com/corelabsstudio/RoadLog", str(p.get("repo_url")))
+        check("보완 후 활동일 반영", p.get("last_activity_at") == "2026-08", str(p.get("last_activity_at")))
+
+    # 입찰이 있으면 기존 링크 교체 금지
+    with database.db() as conn:
+        conn.execute("UPDATE projects SET bid_count=3 WHERE id=?", (pid,))
+    v2 = c.put(
+        f"/api/v1/projects/{pid}/verification",
+        headers=H,
+        json={"repo_url": "https://github.com/corelabsstudio/OtherRepo"},
+    )
+    check(
+        "입찰 후 링크 교체 → 400",
+        v2.status_code == 400 and v2.json()["detail"]["code"] == "locked_after_bid",
+        f"{v2.status_code}",
+    )
+    # 입찰이 있어도 빈 항목 채우기는 허용
+    with database.db() as conn:
+        conn.execute("UPDATE projects SET last_activity_at=NULL WHERE id=?", (pid,))
+    v3 = c.put(
+        f"/api/v1/projects/{pid}/verification",
+        headers=H,
+        json={"last_activity_at": "2026-07"},
+    )
+    check("입찰 후 빈 항목 채우기 허용", v3.status_code == 200, f"{v3.status_code} {v3.text[:150]}")
+
+    # 남의 매물은 거부
+    v4 = c.put(f"/api/v1/projects/{pid}/verification", json={"last_activity_at": "2026-07"})
+    check("비로그인 → 401/403", v4.status_code in (401, 403), f"{v4.status_code}")
+else:
+    check("보완 엔드포인트 200", False, "선행 등록 실패")
+
 # 8) 기존 매물(정책 이전)은 그대로 조회되어야 한다 — 빈 값으로 노출
 with database.db() as conn:
     old = conn.execute(

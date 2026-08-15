@@ -5149,6 +5149,154 @@ def update_project_price(
     }
 
 
+class VerificationIn(BaseModel):
+    """필수 필드 정책(2026-08-15) 보완 입력. 보낸 필드만 반영한다."""
+
+    repo_url: str | None = Field(default=None, max_length=300)
+    is_private_repo: bool | None = None
+    live_url: str | None = Field(default=None, max_length=300)
+    is_offline: bool | None = None
+    last_activity_at: str | None = Field(default=None, max_length=7)
+
+
+@router.put("/projects/{project_id}/verification")
+def update_project_verification(
+    project_id: int,
+    body: VerificationIn,
+    request: Request,
+    user: dict = Depends(get_current_user),
+):
+    """판매자가 저장소·라이브데모·마지막활동일을 나중에 채워 넣는다.
+
+    필수 필드 정책은 신규 등록에만 강제되므로, 정책 이전에 올라간 매물은 값이 비어 있고
+    "미등록" 배지가 붙는다. relist는 라이브 라운드에서 거부되기 때문에, 이 엔드포인트가
+    없으면 기존 판매자는 정책을 지킬 방법 자체가 없다.
+
+    입찰이 들어온 뒤에는 이미 채워진 값을 **바꿀 수 없다** (미끼 후 교체 방지).
+    비어 있는 값을 채우는 것은 언제든 허용한다.
+    """
+    lang = _lang_of(request)
+    en = lang.lower().startswith("en")
+
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        if int(row["owner_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="not your listing")
+
+        def cur(col: str):
+            return row[col] if col in row.keys() else None
+
+        locked = int(row["bid_count"] or 0) > 0
+
+        def guard(col: str, incoming) -> None:
+            """입찰 후에는 이미 값이 있는 항목을 다른 값으로 바꿀 수 없다."""
+            existing = (cur(col) or "") or ""
+            if locked and existing and incoming and incoming != existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": "locked_after_bid",
+                        "message": (
+                            "Bids have come in, so an existing link can't be swapped. "
+                            "You can still fill in fields that are empty."
+                            if en
+                            else "입찰이 들어온 뒤에는 이미 등록된 링크를 다른 것으로 바꿀 수 없습니다. "
+                            "비어 있는 항목을 채우는 것은 가능합니다."
+                        ),
+                    },
+                )
+
+        repo_url = cur("repo_url")
+        if body.repo_url is not None and body.repo_url.strip():
+            try:
+                new_repo = _normalize_repo_url(body.repo_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "repo_url_invalid", "message": str(e)},
+                ) from e
+            guard("repo_url", new_repo)
+            repo_url = new_repo
+
+        is_private_repo = (
+            int(bool(body.is_private_repo))
+            if body.is_private_repo is not None
+            else int(bool(cur("is_private_repo")))
+        )
+        is_offline = (
+            bool(body.is_offline) if body.is_offline is not None else bool(cur("is_offline"))
+        )
+
+        live_url = cur("live_url")
+        if is_offline:
+            live_url = None
+        elif body.live_url is not None and body.live_url.strip():
+            try:
+                new_live = _normalize_live_url(body.live_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "live_url_invalid", "message": str(e)},
+                ) from e
+            guard("live_url", new_live)
+            live_url = new_live
+
+        last_activity_at = cur("last_activity_at")
+        if body.last_activity_at is not None and body.last_activity_at.strip():
+            try:
+                last_activity_at = _normalize_last_activity(body.last_activity_at)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "last_activity_invalid", "message": str(e)},
+                ) from e
+
+        # 데모 대안 경로: 서비스가 내려갔다면 스크린샷이 최소 1장은 있어야 한다
+        if is_offline and not database._parse_demo_images(row):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "demo_images_min",
+                    "message": (
+                        "A shut-down product needs at least one screenshot."
+                        if en
+                        else "서비스가 내려간 매물은 스크린샷이 최소 1장 필요합니다."
+                    ),
+                },
+            )
+
+        conn.execute(
+            """
+            UPDATE projects SET
+              repo_url = ?, is_private_repo = ?, live_url = ?,
+              is_offline = ?, last_activity_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                repo_url,
+                is_private_repo,
+                live_url,
+                1 if is_offline else 0,
+                last_activity_at,
+                database._now(),
+                project_id,
+            ),
+        )
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=True),
+        "note": (
+            "Verification details updated. Badges refresh immediately."
+            if en
+            else "검증 정보가 갱신되었습니다. 배지에 즉시 반영됩니다."
+        ),
+    }
+
+
 # --- admin review (ops checklist — not code review) ---
 
 REVIEW_CHECKLIST = [
