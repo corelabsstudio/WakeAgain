@@ -21,7 +21,7 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 점유 중
 
-- [Claude Code] `public/theme-mono.css`(신규), `public/index.html`(테마 스위치 한 줄) — 모노/터미널 테마 시안 — 2026-08-16 시작
+_(없음)_
 
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.

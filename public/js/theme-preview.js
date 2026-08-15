@@ -23,29 +23,52 @@
   } catch (e) {
     return;
   }
-  if (theme !== "mono") return;
+  // 등록된 시안들. css = 스타일시트, font = 시안 전용 웹폰트,
+  // keepYard = 기존 yard 테마를 끄지 않고 그 위에 얹을지 여부.
+  var THEMES = {
+    mono: {
+      cls: "theme-mono",
+      css: "/theme-mono.css?v=20260816-mono2",
+      font: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap",
+      keepYard: false,
+    },
+    taste: {
+      cls: "theme-taste",
+      css: "/theme-taste.css?v=20260816-taste1",
+      font: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap",
+      // yard를 유지한 채 그 위에 얹는다 — 기존 디자인을 갈아엎는 게 아니라
+      // 'redesign' 성격이라, 살아있는 규칙은 그대로 두고 문제만 덮어쓴다.
+      keepYard: true,
+    },
+  };
 
-  document.documentElement.setAttribute("data-wa-theme", "mono");
+  var conf = THEMES[theme];
+  if (!conf) return;
+
+  document.documentElement.setAttribute("data-wa-theme", theme);
 
   // 시안 전용 폰트 — 평소 로딩에 부담을 주지 않도록 켜졌을 때만 주입
-  var f = document.createElement("link");
-  f.rel = "stylesheet";
-  f.href =
-    "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap";
-  document.head.appendChild(f);
+  if (conf.font) {
+    var f = document.createElement("link");
+    f.rel = "stylesheet";
+    f.href = conf.font;
+    document.head.appendChild(f);
+  }
 
   // 시안 스타일시트도 켜졌을 때만 주입 (평소엔 요청조차 안 나간다)
   var c = document.createElement("link");
   c.rel = "stylesheet";
-  c.href = "/theme-mono.css?v=20260816-mono2";
+  c.href = conf.css;
   document.head.appendChild(c);
 
   function applyBody() {
-    var y = document.querySelector('link[href*="yard-theme.css"]');
-    if (y) y.disabled = true;
+    if (!conf.keepYard) {
+      var y = document.querySelector('link[href*="yard-theme.css"]');
+      if (y) y.disabled = true;
+    }
     if (document.body) {
-      document.body.classList.remove("theme-yard");
-      document.body.classList.add("theme-mono");
+      if (!conf.keepYard) document.body.classList.remove("theme-yard");
+      document.body.classList.add(conf.cls);
     }
   }
   if (document.body) applyBody();

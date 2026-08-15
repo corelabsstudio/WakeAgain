@@ -1,0 +1,216 @@
+/* ── theme-taste ────────────────────────────────────────────────────────────
+   Leonxlnx/taste-skill 의 redesign-skill 규칙을 WakeAgain에 적용한 시안.
+   (github.com/Leonxlnx/taste-skill · skills/redesign-skill/SKILL.md)
+
+   원칙 — 스킬이 명시한 대로:
+     · 기존 스택 유지, 프레임워크 교체 없음
+     · 기능은 건드리지 않는다 (이 파일은 CSS만이고 JS·마크업 변경 없음)
+     · 통째로 다시 쓰지 않고, 문제로 진단된 부분만 덮어쓴다
+
+   그래서 yard 테마를 끄지 않고 **그 위에 얹는다**. body.theme-yard.theme-taste.
+
+   적용 순서도 스킬의 Fix Priority를 따랐다:
+     1 폰트 → 2 팔레트 정리 → 3 상태(hover/active/focus) → 4 레이아웃·여백
+     → 5 상투적 컴포넌트 교체 → 6 빈/에러 상태 → 7 타이포 마감
+
+   미리보기: /?theme=taste   (해제: /?theme=off)
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── 1. 폰트 ───────────────────────────────────────────────────────────────
+   스킬 지적: "Browser default fonts or Inter everywhere. Replace with a font
+   that has character." → 제목만 Outfit으로 교체한다. 본문까지 바꾸면 한글
+   Pretendard와의 리듬이 흔들리고, 우리 사이트는 본문 정보량이 많다. */
+
+body.theme-taste {
+  --font-display: Outfit, Inter, system-ui, sans-serif;
+}
+body.theme-taste h1,
+body.theme-taste h2,
+body.theme-taste h3,
+body.theme-taste .hero-title,
+body.theme-taste .center-title,
+body.theme-taste .brand-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  /* 마지막 줄에 한 단어만 떨어지는 것 방지 */
+  text-wrap: balance;
+}
+/* 한글은 Outfit에 글리프가 없어 폴백된다 — 명시적으로 Pretendard를 앞세운다 */
+html[lang="ko"] body.theme-taste h1,
+html[lang="ko"] body.theme-taste h2,
+html[lang="ko"] body.theme-taste h3,
+html[lang="ko"] body.theme-taste .hero-title,
+html[lang="ko"] body.theme-taste .center-title {
+  font-family: "Pretendard Variable", Pretendard, var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* 중간 굵기를 도입해 위계를 3단으로 (스킬: "Only Regular and Bold weights used") */
+body.theme-taste .lede,
+body.theme-taste .hero-sub { font-weight: 400; }
+body.theme-taste .eyebrow,
+body.theme-taste .label,
+body.theme-taste .live-badge { font-weight: 500; letter-spacing: 0.08em; }
+
+/* 본문 폭 제한 — 스킬: "Body text too wide. Limit to roughly 65 characters." */
+body.theme-taste .lede,
+body.theme-taste .hero-sub,
+body.theme-taste .story,
+body.theme-taste p.note { max-width: 62ch; }
+
+/* 데이터성 숫자는 자리폭 고정 */
+body.theme-taste .live-metrics strong,
+body.theme-taste .hero-stats strong,
+body.theme-taste .price,
+body.theme-taste [class*="price"] { font-variant-numeric: tabular-nums; }
+
+/* ── 2. 팔레트 정리 ────────────────────────────────────────────────────────
+   스킬 지적: "More than one accent color. Pick one." 현재 앰버(#e3b341)와
+   주황/벽돌(#c2410c)이 둘 다 강조로 쓰이고 있다. 앰버 하나로 통일하고,
+   주황은 '경매/낙찰' 상태 표시에만 남긴다. 초록은 라이브 상태 신호라 유지. */
+
+body.theme-taste {
+  --accent-glow: rgba(227, 179, 65, 0.18);
+  /* 스킬: "Tint shadows to match the background hue" — 순검정 대신 배경색 계열 */
+  --shadow: 0 18px 44px rgba(18, 14, 9, 0.55);
+  /* 컨테이너는 부드럽게, 내부 요소는 좁게 (스킬: "Vary the radius") */
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+body.theme-taste .hero-title .grad {
+  color: var(--amber) !important;
+  -webkit-text-fill-color: var(--amber) !important;
+  /* 벽돌색 밑줄 제거 — 두 번째 강조색이 생기는 지점이었다 */
+  border-bottom: none;
+}
+
+/* ── 3. 상태: hover / active / focus ───────────────────────────────────────
+   스킬: hover 이동, active 눌림감, 200–300ms 트랜지션, 포커스 링 필수. */
+
+body.theme-taste .btn,
+body.theme-taste .nav-links a,
+body.theme-taste .listing-card,
+body.theme-taste .home-hub-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease,
+    color 0.22s ease;
+}
+body.theme-taste .btn:hover { transform: translateY(-1px); }
+body.theme-taste .btn:active { transform: translateY(1px) scale(0.99); }
+
+body.theme-taste .listing-card:hover,
+body.theme-taste .home-hub-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+/* 키보드 접근성 — 스킬은 이걸 선택이 아니라 요구사항으로 못박는다 */
+body.theme-taste a:focus-visible,
+body.theme-taste button:focus-visible,
+body.theme-taste input:focus-visible,
+body.theme-taste select:focus-visible,
+body.theme-taste textarea:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* 현재 페이지 표시 — 스킬: "No indication of current page in navigation" */
+body.theme-taste .nav-links a[aria-current="page"] {
+  color: var(--text);
+  border-bottom: 1px solid var(--amber);
+}
+
+/* ── 4. 레이아웃과 여백 ────────────────────────────────────────────────────
+   스킬 지적 둘 — 섹션 여백 부족, 상하 패딩이 기계적으로 대칭.
+   실측했더니 섹션 패딩이 44/36·44/38로 사실상 같아 리듬이 없었다.
+   아래는 크게 벌리고, 광학적으로 하단을 조금 더 준다. */
+
+body.theme-taste .section {
+  padding-top: clamp(3.5rem, 7vw, 6.5rem);
+  padding-bottom: clamp(4rem, 8vw, 7.5rem);
+}
+
+/* 인접 섹션은 배경 톤을 한 단계 바꿔 경계를 만든다.
+   스킬은 "한 페이지 안에서 갑자기 색이 튀는 것"을 금하므로 같은 계열의
+   미세한 단차만 준다(#1a1814 ↔ #1d1a16). */
+body.theme-taste .section:nth-of-type(even) {
+  background: #1d1a16;
+}
+
+/* 3단 카드 그리드 = 스킬이 "가장 전형적인 AI 레이아웃"으로 지목한 패턴.
+   컬럼 수를 바꾸면 마크업 의미가 흔들리므로, 첫 카드에 무게를 줘서
+   대칭만 깬다(기능·순서 그대로). */
+@media (min-width: 900px) {
+  body.theme-taste .home-hub-grid,
+  body.theme-taste .home-hub > .grid-3 {
+    grid-template-columns: 1.35fr 1fr 1fr;
+    align-items: start;
+  }
+  body.theme-taste .home-hub-card:first-child {
+    padding: clamp(1.4rem, 2.4vw, 2.1rem);
+  }
+}
+
+/* 카드 높이를 억지로 맞추지 않는다 (스킬: "Cards of equal height forced") */
+body.theme-taste .home-hub-card { align-self: start; }
+
+/* ── 5. 면 처리 ────────────────────────────────────────────────────────────
+   스킬: "Generic card look (border + shadow + background)" — 셋을 다 쓰지 말고
+   위계가 필요한 곳에만 그림자를 남긴다. 카드 배경 대비도 실측상 거의 없었다
+   (#2c241c vs #262018) → 한 단계 벌린다. */
+
+body.theme-taste .home-hub-card,
+body.theme-taste .listing-card {
+  background: #241f19;
+  border: 1px solid rgba(245, 236, 220, 0.08);
+  box-shadow: none;
+  border-radius: var(--radius);
+}
+body.theme-taste .live-card {
+  background: #2b251d;
+  border-radius: var(--radius);
+}
+/* 내부 요소는 더 좁은 반경 — 반경 체계를 두 단으로 정리 */
+body.theme-taste .live-metrics > div,
+body.theme-taste .badge,
+body.theme-taste input,
+body.theme-taste select,
+body.theme-taste textarea { border-radius: var(--radius-sm); }
+
+/* 질감 — 스킬: "Flat design with zero texture. Add subtle noise."
+   yard가 이미 32px 격자를 깔고 있어, 그 위에 아주 옅은 그레인만 더한다. */
+body.theme-taste::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── 7. 타이포 마감 ────────────────────────────────────────────────────────*/
+
+body.theme-taste .hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.75rem);
+  line-height: 1.04;
+}
+body.theme-taste .center-title,
+body.theme-taste .section h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+  line-height: 1.15;
+  margin-bottom: 0.9rem;
+}
+
+/* 부드러운 앵커 이동 (스킬: "Scroll jumping") */
+html[data-wa-theme="taste"] { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-wa-theme="taste"] { scroll-behavior: auto; }
+  body.theme-taste .btn,
+  body.theme-taste .listing-card,
+  body.theme-taste .home-hub-card { transition: none; }
+}

@@ -142,6 +142,37 @@
 
 ## 최근 배포 이력 (요약 · 최신 우선)
 
+### 2026-08-16 · 디자인 시안 2종 (미리보기 전용 · 기본 테마 불변)
+
+사용자가 "AI로 뽑아낸 티가 난다"며 디자인 변경을 요청. **기능은 그대로 두고 표면만**,
+그리고 **실사이트에 적용하지 말고 미리보기로** 만들라는 지시에 따라 테마 시안으로 제작.
+
+**스위처:** `public/js/theme-preview.js` — 공개 페이지 51개에 삽입.
+`?theme=<이름>`으로 켜고 `?theme=off`로 끈다. `sessionStorage`라 페이지를 넘겨도 유지되고
+탭을 닫으면 자동 해제된다(localStorage 아님 — 시안이 영구히 남는 사고 방지).
+켜졌을 때만 해당 CSS·웹폰트를 주입하므로 **평소엔 요청조차 나가지 않는다.**
+
+| 시안 | URL | 성격 |
+|---|---|---|
+| `theme-mono` | `/?theme=mono` | 모노스페이스·대문자·차가운 슬레이트. yard를 **끄고** 대체 |
+| `theme-taste` | `/?theme=taste` | taste-skill 규칙 적용. yard를 **유지한 채 위에 얹음** |
+
+**theme-taste 근거:** [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)의
+`skills/redesign-skill/SKILL.md`. 스킬의 Fix Priority(폰트→팔레트→상태→레이아웃→컴포넌트→
+빈상태→타이포)를 그대로 따랐다. 적용한 것: 제목 폰트 Outfit(한글은 Pretendard 유지),
+강조색 1개로 통일(앰버 — 벽돌색 밑줄 제거), 섹션 패딩을 광학적 비대칭으로 크게(69/79px),
+인접 섹션 배경 미세 단차, 3단 그리드 대칭 깨기(1.35fr 1fr 1fr), 카드 반경 2단 체계(14/8px),
+hover/active/focus-visible 상태, 그레인 오버레이, `tabular-nums`, `text-wrap: balance`.
+
+**⚠️ 기본 테마(`theme-yard`)는 한 줄도 안 바뀐다.** 검증으로 확인:
+시안 OFF 상태에서 Inter·41.4px·weight 700·섹션패딩 34.5/29.6·시안 스타일시트 요청 0건.
+
+**주의:** `theme-mono`는 사용자가 "색·폰트만 바뀌고 UI/UX는 똑같다"고 지적한 상태다.
+원본(daoism.systems)의 실제 구조는 **스크롤 없는 챕터 전환**(`body{overflow:hidden}` +
+`main{position:fixed}` + `.section` 8개가 `absolute; top:0`로 겹쳐 하나만 `.active`)인데,
+그 구조는 크롤러가 첫 챕터만 읽어서 오늘 한 SEO 작업을 무효화한다. 채택 시 홈 한정 +
+정적 폴백을 함께 넣을 것.
+
 ### 2026-08-16 · 히어로 배경을 실매물 스크린샷으로 교체 + 네비/CTA 정렬 버그
 
 **배경:** 사용자가 "AI로 뽑아낸 티가 난다"고 지적 → 브라우저로 실제 화면을 보고 원인 3개 확인.
