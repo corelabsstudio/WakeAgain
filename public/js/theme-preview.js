@@ -34,7 +34,7 @@
     },
     taste: {
       cls: "theme-taste",
-      css: "/theme-taste.css?v=20260816-taste1",
+      css: "/theme-taste.css?v=20260816-taste2",
       font: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap",
       // yard를 유지한 채 그 위에 얹는다 — 기존 디자인을 갈아엎는 게 아니라
       // 'redesign' 성격이라, 살아있는 규칙은 그대로 두고 문제만 덮어쓴다.
