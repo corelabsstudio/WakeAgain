@@ -3,7 +3,37 @@
 이 파일을 읽은 뒤 **현재 디스크·git·라이브**를 재검증하고 작업한다.  
 옛 트랜스크립트·Grok 메모리는 자동 동기화되지 않는다. 아래 문서가 정본이다.
 
-**마지막 문서 갱신:** 2026-08-15 (방문자 카운터 소유자 제외 기능)
+**마지막 문서 갱신:** 2026-08-15 (PortOne 실서비스 환경변수 등록 · 페이팔 계약완료 확인 · 토스 승인대기)
+
+### 2026-08-15 · PortOne 실서비스(Railway) 환경변수 등록 + 페이팔 계약완료 확인 (코드 커밋 없음 — 설정 작업)
+
+**배경:** 사용자가 PortOne 콘솔 스크린샷을 보내며 "이 상태로 토스페이먼츠 신청해도 해외 결제도 가능한가" 질문 → 확인 과정에서 더 큰 문제 발견.
+
+**발견 1 — 페이팔은 진짜 계약 완료:** PortOne 콘솔 확인 결과 페이팔 상태 **"계약 완료"** · 상품 "해외결제 일반결제" · 실연동(live) 채널 `WakeAgain 페이팔` (PG Provider `paypal_v2`, MID `H5FF6VTZU8JPS`, 채널키 `channel-key-c11a9fe2-278d-44f7-96a9-bcbfc4875eb5`). 로컬 `.env`의 `PORTONE_CHANNEL_KEY_PAYPAL` 값과 정확히 일치(해시 비교로 검증, 값 자체는 노출 안 함). `PLATFORM.md`/이 문서에 "PG사 계약 심사 대기 중"으로 남아있던 게 실제로는 승인 완료된 상태였음.
+
+**발견 2 — 그런데 Railway엔 PortOne 환경변수가 하나도 없었음:** `wakeagain.com/api/v1/config`로 `payment_policy.portone.enabled`/`paypal_enabled` 확인했더니 둘 다 `false`. Railway `wakeagain` 서비스 Variables에서 `PORTONE` 검색 결과 **0건**. 로컬 `.env`에는 값이 있었지만 Railway엔 한 번도 옮겨진 적이 없었던 것 — "로컬에서 결제창까지 뜨는 것 확인"(`07fca5f`, 2026-08-11)은 로컬 한정이었고 실서비스는 계속 결제 기능 자체가 꺼져 있었던 상태.
+
+**조치:** 사용자가 Railway Variables → Raw Editor에 아래 5개를 직접 붙여넣고 Update Variables + Deploy까지 완료(API 키·시크릿 값은 안전 규칙상 Claude가 직접 입력 불가 — 값 확인·입력 전부 사용자가 수행):
+`PORTONE_STORE_ID` · `PORTONE_CHANNEL_KEY`(카드) · `PORTONE_API_SECRET` · `PORTONE_CHANNEL_KEY_PAYPAL` · `PORTONE_PAYPAL_MERCHANT_ID`
+
+배포 후 `wakeagain.com/api/v1/config` 재확인 → `portone.enabled: true`, `paypal_enabled: true` 둘 다 반영 확인.
+
+**⚠️ 중요 — "enabled: true"의 실제 의미:** `payments.py`의 `portone_enabled()`/`paypal_enabled()`는 **환경변수 3개(store_id·channel_key·api_secret)가 비어있지 않은지만 검사**한다. PG사(토스/페이팔)가 실제로 가맹점 계약을 승인했는지는 전혀 확인하지 않음. 페이팔은 콘솔상 "계약 완료"라 이 플래그가 실제 결제 가능 상태와 일치하지만, **토스페이먼츠는 아직 "신청 접수 및 계약 진행 중"(3단계 중 1단계, PG사 접수 완료)** — 즉 카드결제 쪽은 서버가 "enabled: true"라고 답해도 실제로는 Toss 승인 전이라 진짜 카드 결제는 실패할 수 있음. 사용자가 세션 중 토스페이먼츠 "등록비"를 결제했지만, 이는 계약 진행 단계의 비용이지 승인 완료를 뜻하지 않는다고 확인·전달함.
+
+**교훈 (일반화):** PG 관련 `*_enabled` 플래그를 코드에서 확인할 때는 "환경변수 존재 여부"와 "PG사 실제 승인 여부"를 반드시 구분해서 말할 것 — 둘을 섞으면 아직 승인 안 난 결제수단을 라이브로 오인하기 쉽다.
+
+**후속 필요:**
+- **토스페이먼츠**: PortOne 콘솔에서 "계약 완료"로 바뀔 때까지 대기. 바뀌면 재확인 필요 — 승인 전까지 카드 결제 가능하다고 홍보 금지.
+- **페이팔**: env var는 다 들어갔지만 실결제(`loadPaymentUI` 콜백·STC 필드 등)는 여전히 한 번도 안 해봄 — 실매물로 낙찰→결제 끝까지 테스트 필요.
+- **웹훅 시크릿**(`PORTONE_WEBHOOK_SECRET`)은 이번에도 미등록 — 콘솔에서 별도 발급 필요.
+
+### 2026-08-15 · 매물 시작가 인상·인하 (진행 중 라운드 · 무입찰 한정) (`fe84f0b`)
+
+**배경:** 사용자가 "올린 매물 시작가를 올린 후에도 내릴 수 있게 해달라" 요청 → 코드 확인 결과 애초에 판매자가 시작가를 바꾸는 UI/API 자체가 없었음(재등록(relist) 백엔드는 방향 제한 없이 가격을 받지만, 프론트가 가격 입력창을 아예 안 보냄). 되물어본 결과 사용자 의도는 "시작가를 너무 높게 잡아서 안 팔리면 낮춰서 입찰을 유도"하는 용도.
+
+**구현:** `PUT /api/v1/projects/{id}/price` 신규(`wakeagain/api.py`) — **라이브 라운드 + 입찰 0건**일 때만 시작가를 자유롭게 올리거나 내릴 수 있음(상태별 최저가 정책은 그대로 적용, `price_policy.validate_start_price` 재사용). 입찰이 하나라도 들어오면 `bids_exist`로 막고 재등록(relist)을 안내 — 입찰자가 이미 커밋한 뒤 시작가가 바뀌는 공정성 문제를 피하기 위해 의도적으로 제한. `public/app/app.js`의 "내 매물" 카드에 "시작가 조정" 버튼 추가(무입찰 라이브 매물에만 노출), `public/js/api.js`에 `updateProjectPrice()`, `i18n-messages.js`에 한/영 문구 5개. 정적 자산 변경이라 `sw.js` `CACHE`를 `v59-pricelive`로, 관련 `?v=` 쿼리들도 `20260815-pricelive`로 범프.
+
+**검증:** 자동화 테스트로 인상·인하·최저가 미만 거부·입찰 후 잠금·타인 매물 접근 차단 5개 시나리오 확인, `_smoke_check.py` 전체 통과 + `_auction_suite_test.py` 43/43 통과. 브라우저로 버튼이 무입찰 매물에만 뜨는 것도 확인.
 
 ### 2026-08-15 · 방문자 카운터 소유자 옵트아웃 (`bc41299`)
 
@@ -244,7 +274,7 @@
 ## 환경 설정
 
 `.env.example` 기반. 주요: `DATA_DIR`, `APP_SECRET`/`JWT_SECRET`, `ALLOWED_ORIGINS`, `XAI_API_KEY`(매물 양방향 번역 — **2026-08-11부터 Railway에 실제 값 등록됨**, 그 전엔 문서에만 있고 비어있어서 번역 기능이 항상 조용히 실패했음), `WA_DEFAULT_LOCALE`, `WA_DEFAULT_DISPLAY_CURRENCY`, `ADMIN_SECRET`.
-- **PortOne 결제** (2026-08-11 추가, 로컬 `.env`에만 있음 — Railway 등록 여부 확인 필요): `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`(카드), `PORTONE_API_SECRET`, `PORTONE_CHANNEL_KEY_PAYPAL`(PG 계약 심사 대기), `PORTONE_PAYPAL_MERCHANT_ID`, `PORTONE_WEBHOOK_SECRET`(아직 미발급)
+- **PortOne 결제** (2026-08-11 코드 추가, **2026-08-15부터 Railway에 실제 등록·라이브 반영 확인됨** — `wakeagain.com/api/v1/config`의 `portone.enabled`/`paypal_enabled` 둘 다 true): `PORTONE_STORE_ID`, `PORTONE_CHANNEL_KEY`(카드 · 토스 — **PG사 계약은 아직 진행 중, 승인 전이라 실카드 결제는 실패할 수 있음**), `PORTONE_API_SECRET`, `PORTONE_CHANNEL_KEY_PAYPAL`(페이팔 **계약 완료** · 실결제 미검증), `PORTONE_PAYPAL_MERCHANT_ID`, `PORTONE_WEBHOOK_SECRET`(아직 미발급)
 - **구글 로그인** (2026-08-11 신규, **Railway에 실제 등록 완료·라이브 동작 확인됨**): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`(Railway에만 존재, 재확인 불가 — 분실 시 Google Cloud Console에서 재발급), `OAUTH_PUBLIC_BASE=https://wakeagain.com`. 코드(`wakeagain/oauth.py`)는 이전부터 있었고 이 세션은 설정만 함
 - 환경변수 값 확인은 Railway 대시보드 Variables 탭에서만 가능(CLI 미로그인) — **값 실화 여부를 절대 추측하지 말 것**, 문서에 이름이 있다고 실제로 설정돼있다는 뜻 아님(2026-08-11에 실제로 이 착각으로 반나절 헤맴).
 
@@ -296,7 +326,8 @@ python _verify_handover.py
 
 ## 의도적 미완 (사람 행정·다음 코드)
 
-- **PayPal 실결제 검증** — 코드는 다 짜서 배포됨(`07fca5f`), **PG사 계약 심사 대기 중**(2026-08-11 신청, 영업일 3일). 승인 오면 실제 결제 한 번 끝까지 돌려서 `loadPaymentUI` 콜백·STC 필드 확인해야 함
+- **PayPal 실결제 검증** — **2026-08-15 계약 완료 + Railway env var 반영 확인됨**(위 2026-08-15 항목). 코드(`07fca5f`)도 배포돼 있음. 아직 실제 결제를 한 번도 끝까지 돌려본 적은 없음 — 실매물로 낙찰→결제까지 진행해서 `loadPaymentUI` 콜백·STC 필드 확인 필요
+- **토스페이먼츠(카드) 계약 승인 대기** — 2026-08-15 기준 "신청 접수 및 계약 진행 중"(3단계 중 1단계). 서버 `portone.enabled`는 이미 true지만 이건 환경변수 존재 여부만 보는 플래그라 실제 승인과는 별개 — **승인("계약 완료") 전까지 카드 결제 가능하다고 홍보 금지**. 승인되면 PortOne 콘솔 재확인
 - **웹훅 시크릿** 미설정 (`PORTONE_WEBHOOK_SECRET`) — 서버 검증(`/payments/verify`)은 이미 동작하므로 급하지 않음, 콘솔에서 발급만 하면 됨
 - **홍보 실행** — r/SideProject 2회 시도(1차 링크 포함→스팸필터 삭제됨, 2차 링크 제거 버전→최종 생존 여부 미확인) + X 게시 완료(PayPal 문구 제외). **r/indiehackers·r/SaaS·HN Show HN은 미착수** — 다음 세션 과제
 - **SNS 로그인**: 구글은 라이브·검증 완료(env var는 위 "환경 설정" 참고). GitHub/Kakao는 `oauth.py`에 구현은 있으나 이번 세션엔 미설정·미검증
@@ -314,7 +345,7 @@ python _verify_handover.py
 | WakeAgain EN 카피 이어서 | `docs/GROK_TO_CLAUDE_HANDOFF_2026-08-10.md` 부터 |
 | 백엔드 한국어 문자열 정리 | `db.py`/`api.py` 하드코딩 약 595개 감사부터 (2026-08-11 발견, 미착수) |
 | 앱 SPA 한국어 복구 | `i18n-messages.js` EN-only 46개 키에 KO 대응 추가 |
-| PortOne 연동 / 페이팔 이어서 | 카드 결제는 완료·검증됨(`07fca5f`). 페이팔은 PG 계약 심사 상태부터 확인(`hhs1261@naver.com` 메일함) → 승인됐으면 `wakeagain/payments.py`의 `build_paypal_payment_request` 실결제 테스트부터. pre-PG 우회 금지 (`PLATFORM.md` §B) |
+| PortOne 연동 / 페이팔 이어서 | Railway env var는 둘 다 반영됨(2026-08-15). 카드(토스)는 PG사 계약 진행 중 — 콘솔에서 "계약 완료"로 바뀌었는지부터 확인. 페이팔은 계약 완료 상태 — `wakeagain/payments.py`의 `build_paypal_payment_request` 실결제 테스트부터. pre-PG 우회 금지 (`PLATFORM.md` §B) |
 | SNS 로그인 연결 | 구글은 라이브·완료(env var는 위 참고). GitHub/Kakao는 `oauth.py` 구현만 있고 콘솔·env 설정 안 함 — 그것부터 |
 | PG | 결제 링크·웹훅→`paid` 만 · pre-PG 우회 금지 |
 | 홍보 시작하자 / 매물 채우기 홍보 | r/SideProject 2회 시도 완료(결과 미확인)·X 게시 완료. **r/indiehackers·r/SaaS·HN Show HN부터** 이어서 시작 |
