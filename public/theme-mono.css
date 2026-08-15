@@ -1,0 +1,240 @@
+/* ── theme-mono ─────────────────────────────────────────────────────────────
+   모노스페이스 · 대문자 · 차가운 슬레이트 계열의 "시스템/터미널" 표면 시안.
+   daoism.systems 계열의 디자인 언어를 참고했다(복제가 아니라 어휘만 가져옴):
+     · 본문까지 전부 모노스페이스
+     · 제목은 아주 크고, 굵지 않고(400), 전부 대문자
+     · 색은 거의 쓰지 않음 — 차가운 회청색 단계로만 위계를 만듦
+     · 라벨은 짧은 대문자 토큰 (START / ABOUT / PROCESS 같은)
+
+   ⚠️ 한글 처리: 이 언어의 핵심인 "대문자"는 한글에 존재하지 않고, 모노 폰트는
+   한글 자간이 깨진다. 그래서 text-transform은 :lang(en)에만 걸고, 한글은
+   Pretendard를 유지한다. 숫자·가격은 모노가 오히려 유리해서 그대로 둔다.
+
+   적용: <body class="theme-mono">  (기존 theme-yard 대신)
+   미리보기: /?theme=mono
+   ────────────────────────────────────────────────────────────────────────── */
+
+body.theme-mono {
+  /* 웜 브라운·골드 → 차가운 슬레이트. 강조색은 하나만 남긴다(신호용). */
+  --bg: #16181d;
+  --bg-elev: #1b1e25;
+  --card: #20242d;
+  --card-2: #262b35;
+  --border: rgba(168, 174, 188, 0.18);
+  --border-strong: rgba(168, 174, 188, 0.34);
+  --text: #e6e9ef;
+  --muted: #a8aebc;
+  --muted-2: #6f7686;
+
+  /* 강조는 채도를 낮춘 청록 하나. 골드를 그대로 쓰면 웜 팔레트가 남아 섞인다. */
+  --accent: #7fd1c4;
+  --accent-2: #62b8ab;
+  --accent-3: #4a978c;
+  --accent-soft: rgba(127, 209, 196, 0.12);
+  --accent-glow: rgba(127, 209, 196, 0.28);
+  --amber: #7fd1c4;
+
+  --radius: 2px;
+  --radius-sm: 2px;
+
+  --font: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+}
+
+/* 한글은 모노에서 자간이 무너진다 — 한글 로케일일 때만 Pretendard로 되돌린다.
+   숫자·영문이 섞인 문장에서도 한글 글리프만 Pretendard가 받는다. */
+body.theme-mono:lang(ko),
+html[lang="ko"] body.theme-mono {
+  --font: "IBM Plex Mono", "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  --font-display: "IBM Plex Mono", "Pretendard Variable", Pretendard, system-ui, sans-serif;
+}
+
+/* ── 타이포 ─────────────────────────────────────────────────────────────── */
+
+body.theme-mono h1,
+body.theme-mono h2,
+body.theme-mono h3,
+body.theme-mono .hero-title,
+body.theme-mono .center-title {
+  font-family: var(--font-display);
+  font-weight: 400; /* 굵게 하지 않는다 — 크기로만 존재감을 만든다 */
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* 대문자는 라틴에만. 한글엔 대소문자가 없어 무의미하고, 섞이면 리듬만 깨진다. */
+html[lang="en"] body.theme-mono h1,
+html[lang="en"] body.theme-mono h2,
+html[lang="en"] body.theme-mono .eyebrow,
+html[lang="en"] body.theme-mono .hero-badge,
+html[lang="en"] body.theme-mono .nav-links a,
+html[lang="en"] body.theme-mono .btn {
+  text-transform: uppercase;
+}
+
+body.theme-mono .hero-title {
+  font-size: clamp(2.6rem, 6.5vw, 6rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+body.theme-mono .hero-title .grad {
+  /* 강조는 색 하나로만 */
+  color: var(--accent) !important;
+  -webkit-text-fill-color: var(--accent) !important;
+  border-bottom: none;
+}
+body.theme-mono .hero-sub {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 46ch; /* 모노는 글자폭이 넓어 한 줄을 짧게 잡아야 읽힌다 */
+}
+
+/* 눈썹 라벨 = 짧은 대문자 토큰 */
+body.theme-mono .eyebrow,
+body.theme-mono .hero-badge,
+body.theme-mono .live-badge {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  font-weight: 400;
+  border-radius: 0;
+}
+
+/* 숫자·가격은 모노의 장점을 그대로 쓴다 */
+body.theme-mono .live-metrics strong,
+body.theme-mono .price,
+body.theme-mono .hero-stats strong {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ── 면 처리: 둥근 모서리·그림자·유리효과를 걷어낸다 ──────────────────────── */
+
+body.theme-mono .nav-pill,
+body.theme-mono .card,
+body.theme-mono .live-card,
+body.theme-mono .home-hub-card,
+body.theme-mono .listing-card,
+body.theme-mono .glass-card,
+body.theme-mono .form-card {
+  border-radius: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.theme-mono .nav-pill {
+  border-radius: 0;
+  background: rgba(22, 24, 29, 0.92);
+}
+
+body.theme-mono .btn {
+  border-radius: 0;
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  box-shadow: none;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+body.theme-mono .btn-primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #10161a;
+}
+body.theme-mono .btn-primary:hover {
+  background: transparent;
+  color: var(--accent);
+}
+body.theme-mono .btn-ghost,
+body.theme-mono .btn-white {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+body.theme-mono .btn-ghost:hover,
+body.theme-mono .btn-white:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 히어로 배경 사진은 이 테마에서 쓰지 않는다 — 사진이 들어가면
+   "시스템 도면" 톤이 깨진다. 대신 아주 옅은 격자선만 깐다. */
+body.theme-mono .hero-photo,
+body.theme-mono .hero-photo-scrim,
+body.theme-mono .hero-glow {
+  display: none;
+}
+body.theme-mono .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(168, 174, 188, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(168, 174, 188, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 100%);
+}
+
+/* ── 섹션 리듬: 같은 패딩이 반복되던 문제를 여기서 바로잡는다 ─────────────── */
+
+body.theme-mono .section {
+  padding-top: clamp(4.5rem, 9vw, 8rem);
+  padding-bottom: clamp(4.5rem, 9vw, 8rem);
+  border-top: 1px solid var(--border);
+}
+body.theme-mono .section + .section { border-top: 1px solid var(--border); }
+
+/* 섹션 제목 앞에 인덱스를 붙여 "문서/도면" 느낌을 만든다 (영문 로케일만) */
+html[lang="en"] body.theme-mono .section > .center-title::before,
+html[lang="en"] body.theme-mono .section > h2::before {
+  content: "— ";
+  color: var(--muted-2);
+}
+
+/* ── 링크·입력 ──────────────────────────────────────────────────────────── */
+
+body.theme-mono a.text-link,
+body.theme-mono .nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.18s ease, border-color 0.18s ease;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+}
+body.theme-mono a.text-link:hover,
+body.theme-mono .nav-links a:hover {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+body.theme-mono input,
+body.theme-mono textarea,
+body.theme-mono select {
+  border-radius: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font);
+}
+body.theme-mono input:focus,
+body.theme-mono textarea:focus,
+body.theme-mono select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 심전도는 이 테마에서도 유지한다(의미 있는 모션) — 색만 강조색에 맞춘다 */
+body.theme-mono .hero-ecg-bg-canvas { opacity: 0.5; }
