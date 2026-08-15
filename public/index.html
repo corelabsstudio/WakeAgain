@@ -67,37 +67,7 @@
     })();
   </script>
   <link rel="stylesheet" href="/yard-theme.css?v=20260810-global" />
-  <!-- 모노/터미널 테마 시안. 기본은 yard 그대로이고 ?theme=mono 로만 켜진다.
-       저장하지 않으므로 URL에서 빼면 즉시 원래 테마로 돌아온다. -->
-  <link rel="stylesheet" href="/theme-mono.css?v=20260816-mono1" />
-  <!-- 시안 전용 폰트. ?theme=mono 일 때만 주입해서 평소 로딩을 늘리지 않는다. -->
-  <script>
-    (function () {
-      try {
-        if (new URLSearchParams(location.search || "").get("theme") !== "mono") return;
-        var l = document.createElement("link");
-        l.rel = "stylesheet";
-        l.href = "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap";
-        document.head.appendChild(l);
-      } catch (e) {}
-    })();
-  </script>
-  <script>
-    (function () {
-      try {
-        if (new URLSearchParams(location.search || "").get("theme") !== "mono") return;
-        // yard-theme이 !important로 광범위하게 덮기 때문에, 얹는 것만으론 안 먹는다.
-        // 시안을 보는 동안에는 아예 끈다.
-        var y = document.querySelector('link[href*="yard-theme.css"]');
-        if (y) y.disabled = true;
-        document.documentElement.setAttribute("data-wa-theme", "mono");
-        document.addEventListener("DOMContentLoaded", function () {
-          document.body.classList.remove("theme-yard");
-          document.body.classList.add("theme-mono");
-        });
-      } catch (e) {}
-    })();
-  </script>
+  <script src="/js/theme-preview.js?v=20260816-mono2"></script>
   <script>
     /* Early locale hint so FOUC doesn’t flash Korean chrome for global visitors */
     (function () {
