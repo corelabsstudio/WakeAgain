@@ -2375,6 +2375,97 @@ def clear_project_boost(conn: sqlite3.Connection, project_id: int) -> sqlite3.Ro
     return row
 
 
+def project_transfer_blockers(conn: sqlite3.Connection, project_id: int) -> list[str]:
+    """Reasons a listing may NOT change seller. Empty list = safe to transfer.
+
+    Owner is normally write-once (set at create), because a lot of state hangs off
+    "who the seller is": bids people placed trusting that seller, deal/settlement
+    rows, fee invoices, help-ticket threads. Moving the listing under any of those
+    would silently rewrite history, so we refuse instead of trying to migrate them.
+    """
+    codes: list[str] = []
+    row = conn.execute(
+        "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    if not row:
+        return ["not_found"]
+
+    def cell(col: str):
+        return row[col] if col in row.keys() else None
+
+    if int(cell("bid_count") or 0) > 0:
+        codes.append("bids_exist")
+    if (cell("auction_status") or "") == "sold" or cell("sold_at") or cell("buyer_id"):
+        codes.append("already_sold")
+    if (cell("deal_status") or "").strip():
+        codes.append("deal_in_progress")
+
+    n = conn.execute(
+        "SELECT COUNT(*) c FROM fee_invoices WHERE project_id = ?", (int(project_id),)
+    ).fetchone()
+    if int(n["c"] or 0) > 0:
+        codes.append("fee_invoice_exists")
+
+    n = conn.execute(
+        "SELECT COUNT(*) c FROM q_threads WHERE project_id = ?", (int(project_id),)
+    ).fetchone()
+    if int(n["c"] or 0) > 0:
+        codes.append("help_tickets_exist")
+
+    return codes
+
+
+def transfer_project_owner(
+    conn: sqlite3.Connection, project_id: int, new_owner_id: int, *, note: str = ""
+) -> sqlite3.Row:
+    """Admin-only: hand a listing over to a different seller account.
+
+    Exists for consignment listings — with the original owner's consent we register
+    their abandoned project under the operator account, then move it to their own
+    account once they sign up (see CLAUDE.md 「위탁 등록 매물」). Call
+    project_transfer_blockers() first; this only writes.
+    """
+    now = _now()
+    prev = conn.execute(
+        "SELECT owner_id, title FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    if not prev:
+        raise ValueError("project not found")
+    prev_owner = int(prev["owner_id"])
+    if prev_owner == int(new_owner_id):
+        raise ValueError("already owned by that user")
+
+    conn.execute(
+        "UPDATE projects SET owner_id = ?, updated_at = ? WHERE id = ?",
+        (int(new_owner_id), now, int(project_id)),
+    )
+    # Messages on the listing stay put: they are per-sender rows, not per-seller.
+
+    title = (prev["title"] or "").strip()
+    link = f"/project.html?id={int(project_id)}"
+    notify(
+        conn,
+        new_owner_id,
+        "매물 명의가 이전되었습니다",
+        f"「{title}」 매물이 회원님 계정으로 이전되었습니다. 이제 직접 수정·재등록할 수 있습니다."
+        + (f"\n\n{note}" if note else ""),
+        link,
+    )
+    notify(
+        conn,
+        prev_owner,
+        "매물 명의를 넘겼습니다",
+        f"「{title}」 매물이 다른 계정으로 이전되어 더 이상 회원님 매물이 아닙니다."
+        + (f"\n\n{note}" if note else ""),
+        link,
+    )
+
+    row = conn.execute(
+        "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    return row
+
+
 # Listing asset keys → buyer receipt checklist labels
 HANDOVER_ASSET_LABELS: dict[str, tuple[str, str]] = {
     "code": (

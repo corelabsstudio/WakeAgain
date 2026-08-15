@@ -785,7 +785,15 @@
           '<button type="button" class="btn btn-ghost" id="btnHold">보류</button>' +
           '<button type="button" class="btn btn-ghost" id="btnReject" style="border-color:rgba(248,113,113,0.5);color:#fecaca">반려</button>' +
           "</div>" +
-          '<p class="err" id="detailErr" hidden></p>';
+          '<p class="err" id="detailErr" hidden></p>' +
+          '<div class="rp" style="margin-top:14px">' +
+          "<h4>매물 명의 이전 (위탁 등록 인계)</h4>" +
+          '<p class="rp-hint">동의를 받고 대신 올린 매물을, 원 소유자가 가입하면 그 계정으로 넘깁니다. 입찰·거래·수수료·헬프티켓 이력이 하나라도 있으면 서버가 거부합니다.</p>' +
+          '<input class="note" id="xferEmail" placeholder="넘겨받을 계정 이메일" style="width:100%;margin-bottom:6px" />' +
+          '<input class="note" id="xferNote" placeholder="메모 (선택 · 알림에 함께 전달됨)" style="width:100%;margin-bottom:6px" />' +
+          '<button type="button" class="btn btn-ghost" id="btnTransfer">명의 이전</button>' +
+          '<p class="err" id="xferErr" hidden></p>' +
+          "</div>";
 
         // restore previous checklist if any
         var prev = p.review_checklist || {};
@@ -882,6 +890,33 @@
         $("btnApprove").addEventListener("click", function () { review("approve"); });
         $("btnHold").addEventListener("click", function () { review("hold"); });
         $("btnReject").addEventListener("click", function () { review("reject"); });
+
+        $("btnTransfer").addEventListener("click", async function () {
+          var err = $("xferErr");
+          err.hidden = true;
+          var email = ($("xferEmail").value || "").trim();
+          if (!email) {
+            err.hidden = false;
+            err.textContent = "넘겨받을 계정 이메일을 입력하세요.";
+            return;
+          }
+          if (!confirm("「" + (p.title || "") + "」 매물을 " + email + " 계정으로 넘깁니다. 되돌리려면 반대로 다시 이전해야 합니다. 진행할까요?")) return;
+          try {
+            var res = await api("/api/v1/admin/projects/" + p.id + "/transfer-owner", {
+              method: "POST",
+              body: JSON.stringify({
+                new_owner_email: email,
+                note: ($("xferNote").value || "").trim(),
+              }),
+            });
+            alert("이전 완료: " + res.prev_owner_id + " → " + res.new_owner_id + " (" + res.new_owner_email + ")");
+            state.selected = null;
+            await load();
+          } catch (e) {
+            err.hidden = false;
+            err.textContent = e.message || "실패";
+          }
+        });
       }
 
       function trustLabel(u) {

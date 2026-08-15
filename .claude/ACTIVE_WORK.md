@@ -28,5 +28,6 @@ _(없음)_
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `wakeagain/db.py`, `wakeagain/api.py`, `public/admin/index.html`, `public/admin/sw.js`, `CLAUDE.md` — 관리자 매물 명의 이전(위탁 인계) — 2026-08-16 종료
 - [Claude Code] `wakeagain/db.py`, `wakeagain/api.py`, `public/app/index.html`, `public/app/app.js`, `public/js/i18n-messages.js` — 매물 등록 필수 필드 정책 백엔드·앱폼 — 2026-08-15 종료
 - [Cowork] `public/project.html`, `public/styles.css` — 신뢰 배지 3개 + `.trust-badge` CSS — 2026-08-15 종료 (추정 · 본인 확인 필요)

@@ -5522,6 +5522,104 @@ def admin_set_trade_name_en(
     }
 
 
+class AdminTransferOwnerIn(BaseModel):
+    new_owner_id: int | None = None
+    new_owner_email: str | None = None
+    note: str = ""
+
+
+_TRANSFER_BLOCKER_MSG = {
+    "bids_exist": "이미 입찰이 들어온 매물입니다. 입찰자가 지금 판매자를 믿고 넣은 것이라 명의를 못 바꿉니다. 라운드가 끝난 뒤 새 계정으로 재등록하세요.",
+    "already_sold": "이미 낙찰·판매된 매물이라 명의를 바꿀 수 없습니다.",
+    "deal_in_progress": "거래(딜)가 진행 중인 매물이라 명의를 바꿀 수 없습니다.",
+    "fee_invoice_exists": "수수료 청구서가 발행된 매물이라 명의를 바꿀 수 없습니다.",
+    "help_tickets_exist": "헬프티켓 문의가 오간 매물이라 명의를 바꿀 수 없습니다.",
+}
+
+
+@router.post("/admin/projects/{project_id}/transfer-owner")
+def admin_transfer_project_owner(
+    project_id: int,
+    body: AdminTransferOwnerIn,
+    _: None = Depends(require_admin),
+):
+    """운영자가 매물의 판매자 계정을 옮긴다 (위탁 등록 매물 인계용).
+
+    원 소유자 동의를 받고 코어랩스 계정으로 대신 올린 매물을, 본인이 가입하면 그 계정으로
+    넘겨주기 위한 경로다 (CLAUDE.md 「위탁 등록 매물」). 소유자는 원래 생성 시점에만 정해지고
+    이후 불변인데, 입찰·거래·수수료·헬프티켓이 전부 "판매자가 누구인가"에 묶여 있기 때문이다.
+    그래서 그 이력이 하나라도 붙은 매물은 옮기지 않고 거부한다 — 옮기면 이력이 조용히 바뀐다.
+
+    대상 계정은 id 또는 이메일로 지정한다(관리자 화면에선 이메일이 편하다).
+    """
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+
+        if body.new_owner_id:
+            target = conn.execute(
+                "SELECT * FROM users WHERE id = ?", (int(body.new_owner_id),)
+            ).fetchone()
+        elif (body.new_owner_email or "").strip():
+            target = conn.execute(
+                "SELECT * FROM users WHERE email = ?", ((body.new_owner_email or "").strip(),)
+            ).fetchone()
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "target_required",
+                    "message": "넘겨받을 계정의 id 또는 이메일을 지정해 주세요.",
+                },
+            )
+        if not target:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "target_not_found",
+                    "message": "그 계정을 찾을 수 없습니다. 상대가 아직 가입하지 않았을 수 있습니다.",
+                },
+            )
+        if int(target["id"]) == int(row["owner_id"]):
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "same_owner", "message": "이미 그 계정의 매물입니다."},
+            )
+        if (target["suspended_at"] if "suspended_at" in target.keys() else None):
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "target_suspended", "message": "정지된 계정으로는 넘길 수 없습니다."},
+            )
+
+        blockers = database.project_transfer_blockers(conn, project_id)
+        if blockers:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": blockers[0],
+                    "codes": blockers,
+                    "message": " / ".join(
+                        _TRANSFER_BLOCKER_MSG.get(c, c) for c in blockers
+                    ),
+                },
+            )
+
+        prev_owner_id = int(row["owner_id"])
+        row = database.transfer_project_owner(
+            conn, project_id, int(target["id"]), note=(body.note or "").strip()
+        )
+
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "prev_owner_id": prev_owner_id,
+        "new_owner_id": int(target["id"]),
+        "new_owner_email": target["email"],
+        "project": database.project_to_dict(row, include_private=True),
+    }
+
+
 class AdminImagesIn(BaseModel):
     demo_images: list[str] = Field(default_factory=list, max_length=5)
 
