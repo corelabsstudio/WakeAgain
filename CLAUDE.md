@@ -142,6 +142,25 @@
 
 ## 최근 배포 이력 (요약 · 최신 우선)
 
+### 2026-08-16 · `data-i18n-html` 누락으로 내부 링크가 삭제되던 버그 수정
+
+**배경:** 바로 아래 EN 폴백 작업 중 발견. `buy.html`의 `buy.form_note`가 `<a>`를 품고 있는데
+`data-i18n-html`이 없어서, `i18n.js`의 `apply()`가 `textContent`로 덮는 순간 **링크가 통째로
+사라지고 사전값에 박혀 있던 raw URL(`/guide/contact.html`)이 글자로 노출**되고 있었다.
+KO·EN 양쪽 모두. 처음엔 "사전 수정 = `?v=` 범프 동반"이라는 이유로 보류했는데,
+**그건 버그를 남길 이유가 안 된다**는 지적을 받고 같은 날 수정.
+
+**전수 점검부터:** 여는 태그의 짝을 깊이 계산으로 찾아 `data-i18n`인데 `data-i18n-html`이 없고
+내부에 태그가 있는 요소를 사이트 전체에서 스캔 → **`buy.form_note` 1건뿐**임을 확인(수정 후 0건).
+
+**조치:** `buy.html`에 `data-i18n-html` 부착 + `i18n-messages.js`의 ko/en 값에 앵커 포함
+(`<a class="text-link" href="/guide/contact.html">문의 안내 / Contact guide</a>`).
+사전을 고쳤으므로 **`i18n-messages.js`의 `?v=`를 21개 참조 파일 전부** `20260816-i18nhtmlfix`로 범프
+(문서에 기록된 함정 — 하나라도 빠지면 신규/수정 값이 조용히 무시된다). `sw.js` `CACHE` → `v69-i18nhtmlfix`.
+
+**검증:** 브라우저로 KO·EN 양쪽에서 `<a>`가 살아있고 href가 정상이며 raw URL 노출이 없는 것 확인.
+`_smoke_check.py` 통과. `sed` 일괄 치환 후 한글 무결성·diff 규모(23파일 25줄, 의도한 줄만) 확인.
+
 ### 2026-08-16 · 정적 폴백 KO→EN (봇에 한글 H1 노출 수정)
 
 **배경:** Awwwards 레퍼런스 후보들과 우리 홈을 Googlebot UA로 나란히 받아 비교하다 발견.
@@ -175,8 +194,8 @@ Googlebot UA로 `/`·`/sell.html`·`/buy.html`·`/project.html?id=11` 받아 H1�
 - `public/app/index.html` 2건, `legal/*.html` 3건은 **의도적으로 제외** — 앱은 로그인 뒤라 SEO 무관,
   legal은 `.en.html` 짝이 따로 있는 구조
 - 봇 본문에 한글이 완전히 0이 되지는 않는다 — 사업자정보(`.wa-kr-only`, 법적 필수)가 DOM에 남는다
-- **`buy.form_note` 근본 수정**: `data-i18n-html`을 붙이고 사전값에 앵커를 넣어야 링크가 살아난다.
-  사전 수정 = `?v=` 범프 동반이라 이번엔 보류
+- ~~`buy.form_note` 근본 수정~~ — **같은 날 해결**(아래 항목). 캐시 범프가 번거롭다는 이유로 버그를
+  남기려 한 판단을 사용자가 지적해서 바로잡았다. **버그는 발견 시점에 고친다.**
 - 홈 본문량 자체가 얇다(봇 기준 2,176자). Awwwards 비교군은 7,000~16,000자 —
   `docs/marketing/../design/awwwards_reference.md` 참고
 
