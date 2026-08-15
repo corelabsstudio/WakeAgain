@@ -1,5 +1,22 @@
 # WakeAgain 일일 SEO — 3단 에이전트 프롬프트 (Trigger)
 
+> ## ⚠️ 2026-08-15 — push 권한 문제 (해결 전까지 결과물이 유실됨)
+>
+> 실행 주체는 **Claude Code 클라우드 루틴 "WakeAgain Daily SEO"**(매일 09:15 KST) 하나다.
+> 그록 스케줄러와 로컬 `scripts/run_daily_seo_reminder.ps1`은 **둘 다 폐기**됐다.
+>
+> **알려진 장애:** 클라우드 세션의 GitHub App에 `corelabsstudio/WakeAgain` 에 대한
+> `contents: write` 권한이 없어 push가 `403 Resource not accessible by integration`으로
+> 막힌다. 브랜치 생성도 같은 403이라 PR 우회도 불가. 루틴 목록에는 "완료됨"으로 찍히지만
+> **커밋은 컨테이너와 함께 사라진다.**
+>
+> 실측 근거: `docs/marketing/logs/*.md` 리포트가 저장소에 들어온 적이 한 번도 없고,
+> `public/blog/` 글이 2026-08-11 이후 늘지 않았다.
+>
+> **이 루틴을 실행하는 세션에게:** 작업 시작 전에 push 권한이 살아 있는지 먼저 확인하고,
+> 막혀 있으면 글을 생성하는 데 시간을 쓰지 말고 **권한 문제라고만 보고하고 종료**할 것.
+> 권한은 사람이 GitHub 조직 설정에서 부여해야 한다(에이전트가 못 함).
+
 매일 1회(목표: 한국시간 오전 9시 전후) 또는  
 **「WakeAgain SEO」/「웨이크어게인 마케팅」** 발화 시 실행한다.
 
