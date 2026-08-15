@@ -703,6 +703,12 @@
     async deleteProject(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId), { method: "DELETE" });
     },
+    async updateProjectPrice(projectId, priceStart) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/price", {
+        method: "PUT",
+        body: JSON.stringify({ price_start: priceStart }),
+      });
+    },
     async getQCredits(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/q-credits");
     },

@@ -872,6 +872,24 @@
         el.appendChild(actions);
       }
 
+      // Mine feed: adjust starting price up or down — only while no bid has landed
+      if (feed === "mine" && ls === "approved" && aStatus === "live" && bids === 0) {
+        const priceActions = document.createElement("div");
+        priceActions.className = "p-card-actions";
+        priceActions.style.marginTop = "8px";
+        const priceBtn = document.createElement("button");
+        priceBtn.type = "button";
+        priceBtn.className = "btn btn-sm btn-ghost";
+        priceBtn.textContent = t("app.btn_edit_price", "Adjust starting price");
+        priceBtn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          editPriceListing(p);
+        });
+        priceActions.appendChild(priceBtn);
+        el.appendChild(priceActions);
+      }
+
       // Mine feed: self-delete a mistaken listing — only while no bid has landed
       if (feed === "mine" && bids === 0 && aStatus !== "sold") {
         const delActions = document.createElement("div");
@@ -934,6 +952,36 @@
         (err && err.message) ||
         String(err);
       window.alert(t("app.relist_fail", "Re-list failed") + "\n" + msg);
+    }
+  }
+
+  async function editPriceListing(p) {
+    if (!p || !p.id) return;
+    const cur = Number(p.price_start) || 0;
+    const raw = window.prompt(
+      t("app.edit_price_prompt", "New starting price (₩)\n\nNo bids yet, so you can raise or lower it freely.", {}),
+      String(cur)
+    );
+    if (raw == null || raw.trim() === "") return;
+    const next = parseInt(raw.replace(/[^0-9]/g, ""), 10);
+    if (!Number.isFinite(next) || next <= 0) {
+      window.alert(t("app.edit_price_invalid", "Enter a valid amount."));
+      return;
+    }
+    try {
+      const res = await api.updateProjectPrice(p.id, next);
+      window.alert(
+        (res && res.note && api.translateBackendText(res.note)) ||
+          t("app.edit_price_ok", "Starting price updated.")
+      );
+      feed = "mine";
+      loadProjects(true);
+    } catch (err) {
+      const msg =
+        (err && err.detail && (err.detail.message || err.detail)) ||
+        (err && err.message) ||
+        String(err);
+      window.alert(t("app.edit_price_fail", "Couldn't update the price") + "\n" + msg);
     }
   }
 

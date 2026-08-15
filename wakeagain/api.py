@@ -4850,6 +4850,105 @@ def relist_project(
     }
 
 
+class PriceUpdateIn(BaseModel):
+    price_start: int = Field(ge=50_000, le=100_000_000)
+
+
+@router.put("/projects/{project_id}/price")
+def update_project_price(
+    project_id: int,
+    body: PriceUpdateIn,
+    request: Request,
+    user: dict = Depends(get_current_user),
+):
+    """
+    Seller adjusts the starting bid on a live, still-unbid round — up or down.
+    Only before the first bid: once someone has bid, price_current already
+    reflects that bid and the round is locked to relist instead.
+    """
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    lang = _lang_of(request)
+    en = lang.lower().startswith("en")
+
+    with database.db() as conn:
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="not found")
+        if int(row["owner_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="not your listing")
+        row = _refresh_auction_ended(conn, row)
+        ls = (row["listing_status"] or "") or ""
+        ast = (row["auction_status"] or "") or ""
+        if ls != "approved" or ast != "live":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "not_live",
+                    "message": (
+                        "This listing isn't in a live, open round right now."
+                        if en
+                        else "지금 진행 중인 라이브 경매 상태가 아닙니다."
+                    ),
+                },
+            )
+        if int(row["bid_count"] or 0) > 0:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "bids_exist",
+                    "message": (
+                        "Bids have already come in, so the starting price is locked. "
+                        "Wait for this round to end, then re-list at a new price."
+                        if en
+                        else "이미 입찰이 들어와서 시작가를 바꿀 수 없습니다. 이번 라운드가 끝난 뒤 재등록으로 새 가격을 정해 주세요."
+                    ),
+                },
+            )
+
+        status = (row["status"] or "prototype") or "prototype"
+        try:
+            start, _meta = price_policy.validate_start_price(status, body.price_start, lang=lang)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail={"code": "start_price_invalid", "message": str(e)}) from e
+
+        buy_now = row["price_buy_now"] if "price_buy_now" in row.keys() else None
+        if buy_now is not None and int(buy_now) < start:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "buy_now_too_low",
+                    "message": (
+                        "The new starting price is above the buy-it-now price."
+                        if en
+                        else "새 시작가가 즉시구매가보다 높습니다."
+                    ),
+                },
+            )
+
+        now = database._now()
+        conn.execute(
+            """
+            UPDATE projects
+            SET price_start = ?, price_current = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (start, start, now, project_id),
+        )
+        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=True),
+        "note": (
+            "Starting price updated. It's visible to everyone immediately."
+            if en
+            else "시작가가 변경되었습니다. 즉시 전체 공개됩니다."
+        ),
+    }
+
+
 # --- admin review (ops checklist — not code review) ---
 
 REVIEW_CHECKLIST = [

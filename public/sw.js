@@ -1,5 +1,5 @@
 ﻿/* WakeAgain PWA ??app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v58-notrack";
+const CACHE = "wakeagain-shell-v59-pricelive";
 const PRECACHE = [
   "/",
   "/index.html",
