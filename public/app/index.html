@@ -1031,6 +1031,53 @@
           data-i18n-placeholder="app.create_demo_ph"
         ></textarea>
 
+        <fieldset class="acq-fieldset" id="pVerifyBlock">
+          <legend><span data-i18n="app.create_verify_legend">Proof buyers can check</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></legend>
+          <p class="price-guide muted fine" data-i18n="app.create_verify_hint">Other marketplaces make these optional. WakeAgain requires them — that is what buyers trust.</p>
+
+          <label for="pRepoUrl"><span data-i18n="app.create_repo_label">Repository URL</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
+          <p class="price-guide muted fine" data-i18n="app.create_repo_hint">GitHub · GitLab · Bitbucket. Private repos are fine — we never open the link.</p>
+          <input
+            id="pRepoUrl"
+            type="url"
+            maxlength="300"
+            placeholder="https://github.com/username/repo"
+            data-i18n-placeholder="app.create_repo_ph"
+            autocomplete="off"
+          />
+          <label class="checks check-single">
+            <input type="checkbox" id="pIsPrivateRepo" />
+            <span data-i18n="app.create_repo_private">This is a private repository</span>
+          </label>
+          <p class="price-guide muted fine" data-i18n="app.create_repo_private_note">Your listing will show: "Repository access is granted during buyer negotiation."</p>
+
+          <label for="pLiveUrl"><span data-i18n="app.create_live_label">Live demo URL</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
+          <p class="price-guide muted fine" data-i18n="app.create_live_hint">Where a buyer can open it right now. Already shut down? Tick the box below.</p>
+          <input
+            id="pLiveUrl"
+            type="url"
+            maxlength="300"
+            placeholder="https://myapp.com"
+            data-i18n-placeholder="app.create_live_ph"
+            autocomplete="off"
+          />
+          <label class="checks check-single">
+            <input type="checkbox" id="pIsOffline" />
+            <span data-i18n="app.create_offline">Service is already shut down (no live URL)</span>
+          </label>
+          <p class="price-guide muted fine" data-i18n="app.create_offline_note">Your screenshots above stand in for the demo. Listing stays allowed.</p>
+
+          <label for="pLastActivity"><span data-i18n="app.create_activity_label">Last activity</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
+          <p class="price-guide muted fine" data-i18n="app.create_activity_hint">Last time you committed or operated it. Buyers judge how long it sat idle.</p>
+          <input
+            id="pLastActivity"
+            type="month"
+            max="2100-12"
+            placeholder="2026-03"
+            data-i18n-placeholder="app.create_activity_ph"
+          />
+        </fieldset>
+
         <fieldset class="acq-fieldset">
           <legend><span data-i18n="app.create_acq_legend">How do you hold this asset?</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></legend>
           <p class="price-guide muted fine" data-i18n="app.create_acq_hint">No coding needed. Built it, bought it, or other — just pick one.</p>

@@ -2384,6 +2384,19 @@
   $("pProductType")?.addEventListener("change", applyDemoHelp);
   wireChoiceChips("pProductType", applyDemoHelp);
 
+  // 필수 필드 정책: "서비스 내려감" 체크 시 라이브 데모 URL 입력을 비활성화한다.
+  // 스크린샷은 어차피 항상 필수라 대안 경로가 자동으로 충족된다.
+  function syncOfflineToggle() {
+    const off = !!($("pIsOffline") && $("pIsOffline").checked);
+    const live = $("pLiveUrl");
+    if (!live) return;
+    live.disabled = off;
+    if (off) live.value = "";
+    live.closest("fieldset")?.classList.toggle("is-offline-mode", off);
+  }
+  $("pIsOffline")?.addEventListener("change", syncOfflineToggle);
+  syncOfflineToggle();
+
   // Demo: one-tap fill (optional text; screenshots preferred)
   document.getElementById("demoFillRow")?.addEventListener("click", function (e) {
     const btn = e.target.closest("[data-demo-fill]");
@@ -2938,6 +2951,34 @@
       if ($("pKeywordInput")) $("pKeywordInput").focus();
       return;
     }
+    // 매물 등록 필수 필드 정책 (2026-08-15): 저장소 · 라이브 데모 · 마지막 활동일.
+    // 형식은 서버가 최종 검증한다. 여기서는 빈 값만 먼저 잡아 왕복을 줄인다.
+    const repoUrl = ($("pRepoUrl") && $("pRepoUrl").value.trim()) || "";
+    const isPrivateRepo = !!($("pIsPrivateRepo") && $("pIsPrivateRepo").checked);
+    const isOffline = !!($("pIsOffline") && $("pIsOffline").checked);
+    const liveUrl = ($("pLiveUrl") && $("pLiveUrl").value.trim()) || "";
+    const lastActivity = ($("pLastActivity") && $("pLastActivity").value.trim()) || "";
+    if (!repoUrl) {
+      showErr(
+        $("projErr"),
+        t("app.err_repo_required", "Add the repository URL (GitHub · GitLab · Bitbucket). Private repos are fine.")
+      );
+      if ($("pRepoUrl")) $("pRepoUrl").focus();
+      return;
+    }
+    if (!isOffline && !liveUrl) {
+      showErr(
+        $("projErr"),
+        t("app.err_live_required", "Add the live demo URL, or tick “Service is already shut down”.")
+      );
+      if ($("pLiveUrl")) $("pLiveUrl").focus();
+      return;
+    }
+    if (!lastActivity) {
+      showErr($("projErr"), t("app.err_activity_required", "Pick the last activity month."));
+      if ($("pLastActivity")) $("pLastActivity").focus();
+      return;
+    }
     const payload = {
       title: $("pTitle").value.trim(),
       one_liner: one,
@@ -2948,6 +2989,11 @@
       works_now: worksNow,
       limits,
       english_ready: !!($("pEnglishReady") && $("pEnglishReady").checked),
+      repo_url: repoUrl,
+      is_private_repo: isPrivateRepo,
+      live_url: isOffline ? "" : liveUrl,
+      is_offline: isOffline,
+      last_activity_at: lastActivity,
       acquisition,
       acquisition_note: acqNote,
       story,

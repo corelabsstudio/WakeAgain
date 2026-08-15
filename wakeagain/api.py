@@ -61,6 +61,87 @@ _find_email_hits: dict[str, list[float]] = {}
 MIN_AGE_YEARS = 14
 MAX_AGE_YEARS = 120
 
+# ── 매물 등록 필수 필드 정책 (2026-08-15) ──────────────────────────────────
+# 경쟁사(SideProjectors 등)는 저장소 링크가 선택 필드라 빈 매물이 많다.
+# WakeAgain은 필수로 강제한다. 단 "코드를 검증해준다"가 아니라 "검증할 수 있게 강제한다" —
+# 형식 검증까지만 하고 실제 접근성은 확인하지 않는다 (비공개 레포에서 항상 실패하므로).
+REPO_HOSTS = {
+    "github.com",
+    "www.github.com",
+    "gitlab.com",
+    "www.gitlab.com",
+    "bitbucket.org",
+    "www.bitbucket.org",
+}
+# /{owner}/{repo} — 뒤에 트리 경로가 더 붙어도 허용
+_REPO_PATH_RE = re.compile(r"^/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/.*)?$")
+_LAST_ACTIVITY_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
+def _normalize_repo_url(raw: str) -> str:
+    """Return a cleaned repo URL, or raise ValueError with a user-facing message.
+
+    Format-only: host whitelist + /owner/repo path. Private repos are fine — we never
+    fetch the URL, so a 404 from a private repo can't reject a legitimate listing.
+    """
+    s = (raw or "").strip()
+    if not s:
+        raise ValueError("저장소 URL을 입력해 주세요.")
+    if "://" not in s:
+        s = "https://" + s
+    try:
+        u = urlparse(s)
+    except ValueError as e:
+        raise ValueError("저장소 URL 형식이 올바르지 않습니다.") from e
+    if u.scheme not in ("http", "https"):
+        raise ValueError("저장소 URL은 http(s) 주소여야 합니다.")
+    host = (u.hostname or "").lower()
+    if host not in REPO_HOSTS:
+        raise ValueError("저장소는 GitHub · GitLab · Bitbucket 주소만 등록할 수 있습니다.")
+    path = (u.path or "").rstrip("/")
+    if path.endswith(".git"):
+        path = path[: -len(".git")]
+    if not _REPO_PATH_RE.match(path):
+        raise ValueError(
+            "저장소 주소가 올바르지 않습니다. 예: https://github.com/사용자명/저장소명"
+        )
+    return f"https://{host}{path}"
+
+
+def _normalize_live_url(raw: str) -> str:
+    """Return a cleaned http(s) URL for the live demo, or raise ValueError."""
+    s = (raw or "").strip()
+    if not s:
+        raise ValueError("라이브 데모 URL을 입력해 주세요.")
+    if "://" not in s:
+        s = "https://" + s
+    try:
+        u = urlparse(s)
+    except ValueError as e:
+        raise ValueError("라이브 데모 URL 형식이 올바르지 않습니다.") from e
+    if u.scheme not in ("http", "https"):
+        raise ValueError("라이브 데모 URL은 http(s) 주소여야 합니다.")
+    host = (u.hostname or "").lower()
+    # 최소 형식 검증: 점이 있는 호스트. 접속 여부는 확인하지 않는다.
+    if not host or "." not in host or host.endswith("."):
+        raise ValueError("라이브 데모 주소가 올바르지 않습니다. 예: https://myapp.com")
+    return s
+
+
+def _normalize_last_activity(raw: str) -> str:
+    """Validate 'YYYY-MM'. Rejects the future and anything before 2000."""
+    s = (raw or "").strip()[:7]
+    if not s:
+        raise ValueError("마지막 활동일을 입력해 주세요. (예: 2026-03)")
+    if not _LAST_ACTIVITY_RE.match(s):
+        raise ValueError("마지막 활동일은 YYYY-MM 형식으로 입력해 주세요. (예: 2026-03)")
+    now = datetime.now(timezone.utc)
+    if s > f"{now.year:04d}-{now.month:02d}":
+        raise ValueError("마지막 활동일이 미래로 되어 있습니다.")
+    if s < "2000-01":
+        raise ValueError("마지막 활동일이 너무 과거입니다.")
+    return s
+
 
 def _parse_birth_date(raw: str) -> date:
     s = (raw or "").strip()
@@ -455,6 +536,15 @@ class ProjectIn(BaseModel):
     status: str = Field(min_length=1, max_length=40)
     product_type: str = Field(default="other", max_length=40)
     story: str = Field(min_length=1, max_length=2000)
+    # 매물 등록 필수 필드 정책 (2026-08-15) — 신규 등록 필수 3종
+    # 저장소 URL (GitHub/GitLab/Bitbucket). 비공개 레포 허용 → is_private_repo로 표시
+    repo_url: str = Field(default="", max_length=300)
+    is_private_repo: bool = False
+    # 라이브 데모 URL. is_offline=True면 면제 (스크린샷은 어차피 항상 필수)
+    live_url: str = Field(default="", max_length=300)
+    is_offline: bool = False
+    # 마지막 활동일 'YYYY-MM'
+    last_activity_at: str = Field(default="", max_length=7)
     # Optional free-text demo; screenshots can replace it
     demo: str = Field(default="", max_length=1000)
     # Public /media/demos/{user_id}/… URLs from upload endpoint (max 5)
@@ -793,6 +883,18 @@ def client_config():
             "listing_guidelines": {
                 "required": True,
                 "items": [
+                    {
+                        "key": "repo_url",
+                        "label_ko": "저장소 URL (GitHub·GitLab·Bitbucket · 비공개 레포 허용)",
+                    },
+                    {
+                        "key": "live_url",
+                        "label_ko": "라이브 데모 URL (서비스 종료 시 '내려감' 체크 + 스크린샷)",
+                    },
+                    {
+                        "key": "last_activity_at",
+                        "label_ko": "마지막 활동일 (YYYY-MM)",
+                    },
                     {
                         "key": "features",
                         "label_ko": "이 제품이 하는 일 (기능 3가지 이상, 쉬운 말)",
@@ -4252,6 +4354,38 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
             },
         )
 
+    # ── 필수 필드 정책 (2026-08-15): 저장소 · 라이브 데모 · 마지막 활동일 ──
+    # 신규 등록에만 강제. 기존 매물 수정(PUT)에서는 강제하지 않는다.
+    is_private_repo = bool(body.is_private_repo)
+    try:
+        repo_url = _normalize_repo_url(body.repo_url)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "repo_url_invalid", "message": str(e)},
+        ) from e
+
+    is_offline = bool(body.is_offline)
+    if is_offline:
+        # 서비스가 이미 내려간 매물: 데모 URL 면제. 스크린샷은 아래에서 어차피 필수로 검증됨.
+        live_url = ""
+    else:
+        try:
+            live_url = _normalize_live_url(body.live_url)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "live_url_invalid", "message": str(e)},
+            ) from e
+
+    try:
+        last_activity_at = _normalize_last_activity(body.last_activity_at)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "last_activity_invalid", "message": str(e)},
+        ) from e
+
     features = [
         str(f).strip()
         for f in (body.features or [])
@@ -4482,6 +4616,7 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
               auction_days_intended, round_number, round_started_at,
               q_credits_offered, q_credit_unit_price, q_credit_sla_hours,
               license_note, seller_attest_json, english_ready,
+              repo_url, is_private_repo, live_url, is_offline, last_activity_at,
               created_at, updated_at
             ) VALUES (
               ?, ?, ?, ?, ?, ?, ?,
@@ -4496,6 +4631,7 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
               ?, 0, NULL,
               ?, ?, ?,
               ?, ?, ?,
+              ?, ?, ?, ?, ?,
               ?, ?
             )
             """,
@@ -4545,6 +4681,11 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
                 license_note[:200],
                 json.dumps(attest, ensure_ascii=False),
                 1 if body.english_ready else 0,
+                repo_url,
+                1 if is_private_repo else 0,
+                live_url or None,
+                1 if is_offline else 0,
+                last_activity_at,
                 now,
                 now,
             ),
@@ -4618,6 +4759,13 @@ class RelistIn(BaseModel):
     price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
     price_buy_now: int | None = Field(default=None, ge=50_000, le=100_000_000)
     license_note: str | None = Field(default=None, max_length=200)
+    # 필수 필드 정책(2026-08-15) 보완 경로: 재등록 때 채워 넣을 수 있게 열어 두되 강제하지 않는다.
+    # 정책상 기존 매물은 "보완 요청 후 미등록 배지" — 재등록을 막지 않는다.
+    repo_url: str | None = Field(default=None, max_length=300)
+    is_private_repo: bool | None = None
+    live_url: str | None = Field(default=None, max_length=300)
+    is_offline: bool | None = None
+    last_activity_at: str | None = Field(default=None, max_length=7)
     attest_works: bool = False
     attest_features: bool = False
     attest_license: bool = False
@@ -4777,6 +4925,51 @@ def relist_project(
                 },
             )
 
+        # 필수 필드 정책: 재등록에서는 강제하지 않는다. 값을 보냈을 때만 검증 후 반영하고,
+        # 안 보내면 기존 값을 그대로 둔다 (미등록이면 미등록 배지가 계속 붙는다).
+        def _keep(col: str) -> Any:
+            return row[col] if col in row.keys() else None
+
+        repo_url = _keep("repo_url")
+        if body.repo_url is not None and body.repo_url.strip():
+            try:
+                repo_url = _normalize_repo_url(body.repo_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "repo_url_invalid", "message": str(e)},
+                ) from e
+        is_private_repo = (
+            int(bool(body.is_private_repo))
+            if body.is_private_repo is not None
+            else int(bool(_keep("is_private_repo")))
+        )
+        is_offline = (
+            bool(body.is_offline)
+            if body.is_offline is not None
+            else bool(_keep("is_offline"))
+        )
+        live_url = _keep("live_url")
+        if is_offline:
+            live_url = None
+        elif body.live_url is not None and body.live_url.strip():
+            try:
+                live_url = _normalize_live_url(body.live_url)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "live_url_invalid", "message": str(e)},
+                ) from e
+        last_activity_at = _keep("last_activity_at")
+        if body.last_activity_at is not None and body.last_activity_at.strip():
+            try:
+                last_activity_at = _normalize_last_activity(body.last_activity_at)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "last_activity_invalid", "message": str(e)},
+                ) from e
+
         attest = {
             "works": True,
             "features": True,
@@ -4796,6 +4989,8 @@ def relist_project(
               keywords_json = ?,
               price_start = ?, price_buy_now = ?, price_current = ?,
               license_note = ?, seller_attest_json = ?,
+              repo_url = ?, is_private_repo = ?, live_url = ?,
+              is_offline = ?, last_activity_at = ?,
               listing_status = 'pending',
               auction_status = 'pending',
               auction_days_intended = ?,
@@ -4825,6 +5020,11 @@ def relist_project(
                 start,
                 (license_note or "")[:200],
                 json.dumps(attest, ensure_ascii=False),
+                repo_url,
+                is_private_repo,
+                live_url,
+                1 if is_offline else 0,
+                last_activity_at,
                 days,
                 ends,
                 now,

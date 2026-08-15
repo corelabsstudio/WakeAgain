@@ -423,6 +423,19 @@ def init_db() -> None:
                 # PortOne payment tracking for the current awaiting_payment deal
                 "pg_payment_id": "TEXT",
                 "pg_payment_requested_at": "TEXT",
+                # 매물 등록 필수 필드 정책 (2026-08-15) — 신규 등록에만 강제.
+                # 기존 매물은 NULL/0으로 남고 "미등록" 배지가 붙는다 (비공개 처리 금지).
+                # 저장소 URL: host 화이트리스트 + owner/repo 패턴까지만 검증. 접근성은 확인하지 않음
+                # (비공개 레포에서 항상 실패하므로)
+                "repo_url": "TEXT",
+                # true면 매물 페이지에 "구매 협의 단계에서 저장소 접근 권한 제공" 문구 자동 노출
+                "is_private_repo": "INTEGER NOT NULL DEFAULT 0",
+                # 라이브 데모 URL. 자유 텍스트인 demo 컬럼과 별개 (demo는 영상 링크·설명 겸용)
+                "live_url": "TEXT",
+                # true면 live_url 면제. 스크린샷은 어차피 항상 필수라 대안 경로가 자동 충족됨
+                "is_offline": "INTEGER NOT NULL DEFAULT 0",
+                # 마지막 활동일 'YYYY-MM'. 커밋이든 운영이든 마지막으로 손댄 시점 (구매자 방치 기간 판단용)
+                "last_activity_at": "TEXT",
             },
         )
         conn.execute(
@@ -1818,6 +1831,12 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "story_ko": story_ko_val,
         "demo": row["demo"],
         "demo_images": _parse_demo_images(row),
+        # 매물 등록 필수 필드 정책 (2026-08-15). 정책 이전 매물은 빈 값 → 프론트에서 "미등록" 배지.
+        "repo_url": (_row_get(row, "repo_url") or "") or "",
+        "is_private_repo": bool(_row_get(row, "is_private_repo") or 0),
+        "live_url": (_row_get(row, "live_url") or "") or "",
+        "is_offline": bool(_row_get(row, "is_offline") or 0),
+        "last_activity_at": (_row_get(row, "last_activity_at") or "") or "",
         "assets": assets,
         "keywords": keywords,
         "keywords_en": keywords_en,

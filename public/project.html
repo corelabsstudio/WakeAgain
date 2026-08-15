@@ -919,6 +919,9 @@
         <span id="pEnglishReadyBadge" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
         <h1 class="spotlight-title" id="pTitle" data-i18n="common.loading">불러오는 중…</h1>
         <p class="spotlight-one" id="pOne"></p>
+        <!-- 매물 등록 필수 필드 정책 (2026-08-15): 저장소 / 데모·스크린샷 / 마지막 활동일 -->
+        <div class="trust-badges" id="pTrustBadges" hidden></div>
+        <p class="trust-badges-note" id="pTrustNote" hidden></p>
         <div class="listing-kw" id="pKeywords" hidden></div>
         <div class="price-rise" id="priceRise">
           <div class="price-rise-labels">
@@ -2159,6 +2162,75 @@
           }
         }
         document.getElementById("pOne").textContent = oneShow;
+        // ── 신뢰 배지 3개: 저장소 / 데모·스크린샷 / 마지막 활동일 ──
+        // 정책 이전 매물은 값이 비어 있다 → "미등록" 상태로 표시하고 매물을 내리지는 않는다.
+        (function renderTrustBadges() {
+          var host = document.getElementById("pTrustBadges");
+          var note = document.getElementById("pTrustNote");
+          if (!host) return;
+          function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+          }
+          var items = [];
+          if (p.repo_url) {
+            items.push({
+              on: true,
+              icon: "📦",
+              text: p.is_private_repo
+                ? t("저장소 등록 (비공개)", "Repository (private)")
+                : t("저장소 등록", "Repository linked"),
+              href: p.is_private_repo ? "" : p.repo_url,
+            });
+          } else {
+            items.push({ on: false, icon: "📦", text: t("저장소 미등록", "No repository") });
+          }
+          if (p.live_url && !p.is_offline) {
+            items.push({ on: true, icon: "🔗", text: t("라이브 데모", "Live demo"), href: p.live_url });
+          } else if (Array.isArray(p.demo_images) && p.demo_images.length) {
+            items.push({
+              on: true,
+              icon: "🖼",
+              text: p.is_offline
+                ? t("서비스 종료 · 스크린샷 " + p.demo_images.length + "장", "Shut down · " + p.demo_images.length + " screenshots")
+                : t("스크린샷 " + p.demo_images.length + "장", p.demo_images.length + " screenshots"),
+            });
+          } else {
+            items.push({ on: false, icon: "🔗", text: t("데모 미등록", "No demo") });
+          }
+          if (p.last_activity_at) {
+            items.push({ on: true, icon: "🕒", text: t("마지막 활동 " + p.last_activity_at, "Last active " + p.last_activity_at) });
+          } else {
+            items.push({ on: false, icon: "🕒", text: t("활동일 미등록", "No activity date") });
+          }
+          host.innerHTML = items
+            .map(function (it) {
+              var inner = esc(it.icon) + " " + esc(it.text);
+              var cls = "trust-badge" + (it.on ? " is-on" : " is-off");
+              if (it.href) {
+                return '<a class="' + cls + '" href="' + esc(it.href) + '" target="_blank" rel="noopener nofollow">' + inner + "</a>";
+              }
+              return '<span class="' + cls + '">' + inner + "</span>";
+            })
+            .join("");
+          host.hidden = false;
+          if (note) {
+            if (p.repo_url && p.is_private_repo) {
+              note.textContent = t(
+                "비공개 저장소입니다. 구매 협의 단계에서 저장소 접근 권한이 제공됩니다.",
+                "Private repository. Access is granted during buyer negotiation."
+              );
+              note.hidden = false;
+            } else if (!p.repo_url) {
+              note.textContent = t(
+                "이 매물은 저장소 링크 필수화 이전에 등록되었습니다. 판매자에게 보완을 요청했습니다.",
+                "Listed before repository links became mandatory. The seller has been asked to add one."
+              );
+              note.hidden = false;
+            } else {
+              note.hidden = true;
+            }
+          }
+        })();
         var kwHost = document.getElementById("pKeywords");
         if (kwHost) {
           var kwsLocalized = isEn()
