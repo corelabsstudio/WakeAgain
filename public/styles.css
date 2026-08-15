@@ -3261,36 +3261,6 @@ a.trust-badge.is-on:focus-visible {
   filter: saturate(1.04) contrast(1.02) brightness(1.04);
 }
 /* Mouse-follow parallax: JS-gated (hover+pointer:fine, motion not reduced) — scale up first so the pan never reveals an edge */
-/* 매물 스크린샷 타일 배경 (hero-shots.js가 채운다).
-   연출을 얹지 않는다 — 기울이거나 떠다니게 하면 그것 자체가 또 "AI 랜딩" 문법이 된다.
-   정직한 격자 + 낮은 불투명도 + 기존 scrim으로 카피 가독성을 확보한다. */
-.hero-photo--shots {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 8px;
-  padding: 8px;
-  /* 페이드인 없이 고정값. 타일이 없으면 격자 자체가 비어 있어 보이지 않으므로
-     별도 상태 클래스가 필요 없다(상태를 늘릴수록 어긋날 구석만 는다). */
-  opacity: 0.55;
-}
-.hero-photo--shots img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  border-radius: 8px;
-  /* 배경이므로 채도를 조금 낮춰 앞의 글자와 경쟁하지 않게 */
-  filter: saturate(0.85) contrast(0.95);
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-photo--shots { transition: none; }
-}
-@media (max-width: 720px) {
-  .hero-photo--shots { grid-template-columns: repeat(2, 1fr); }
-  .hero-photo--shots { opacity: 0.4; }
-}
-
 .hero-photo img.hero-photo-mouse {
   transform: scale(1.08) translate3d(var(--hero-mx, 0px), var(--hero-my, 0px), 0);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
