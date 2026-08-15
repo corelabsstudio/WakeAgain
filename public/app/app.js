@@ -2494,6 +2494,31 @@
   $("pIsOffline")?.addEventListener("change", syncOfflineToggle);
   syncOfflineToggle();
 
+  // 설치형 제품(데스크톱·모바일)은 열어볼 라이브 URL이 애초에 없다.
+  // 같은 체크박스지만 "서비스가 내려갔다"가 아니라 "설치형이라 주소가 없다"로 읽혀야 한다.
+  function syncOfflineWording() {
+    const ptype = ($("pProductType") && $("pProductType").value) || "";
+    const installable = ptype === "desktop" || ptype === "mobile";
+    const label = $("pIsOfflineLabel");
+    const note = $("pIsOfflineNote");
+    if (label) {
+      label.textContent = installable
+        ? t("app.create_offline_installable", "Installable product — no live URL")
+        : t("app.create_offline", "Service is already shut down (no live URL)");
+    }
+    if (note) {
+      note.textContent = installable
+        ? t(
+            "app.create_offline_installable_note",
+            "Desktop and mobile apps have nothing to open in a browser. Your screenshots stand in for the demo."
+          )
+        : t("app.create_offline_note", "Your screenshots above stand in for the demo. Listing stays allowed.");
+    }
+  }
+  $("pProductType")?.addEventListener("change", syncOfflineWording);
+  document.addEventListener("wa:langchange", syncOfflineWording);
+  syncOfflineWording();
+
   // Demo: one-tap fill (optional text; screenshots preferred)
   document.getElementById("demoFillRow")?.addEventListener("click", function (e) {
     const btn = e.target.closest("[data-demo-fill]");

@@ -2184,16 +2184,22 @@
           } else {
             items.push({ on: false, icon: "📦", text: t("저장소 미등록", "No repository") });
           }
+          // 설치형 제품(데스크톱·모바일)은 애초에 열어볼 라이브 URL이 없다.
+          // is_offline을 그대로 "서비스 종료"로 쓰면 멀쩡한 제품이 죽은 것처럼 보인다.
+          var installable = p.product_type === "desktop" || p.product_type === "mobile";
+          var shots = Array.isArray(p.demo_images) ? p.demo_images.length : 0;
           if (p.live_url && !p.is_offline) {
             items.push({ on: true, icon: "🔗", text: t("라이브 데모", "Live demo"), href: p.live_url });
-          } else if (Array.isArray(p.demo_images) && p.demo_images.length) {
-            items.push({
-              on: true,
-              icon: "🖼",
-              text: p.is_offline
-                ? t("서비스 종료 · 스크린샷 " + p.demo_images.length + "장", "Shut down · " + p.demo_images.length + " screenshots")
-                : t("스크린샷 " + p.demo_images.length + "장", p.demo_images.length + " screenshots"),
-            });
+          } else if (shots) {
+            var shotText;
+            if (installable) {
+              shotText = t("설치형 · 스크린샷 " + shots + "장", "Installable · " + shots + " screenshots");
+            } else if (p.is_offline) {
+              shotText = t("서비스 종료 · 스크린샷 " + shots + "장", "Shut down · " + shots + " screenshots");
+            } else {
+              shotText = t("스크린샷 " + shots + "장", shots + " screenshots");
+            }
+            items.push({ on: true, icon: installable ? "💻" : "🖼", text: shotText });
           } else {
             items.push({ on: false, icon: "🔗", text: t("데모 미등록", "No demo") });
           }
