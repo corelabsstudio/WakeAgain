@@ -134,20 +134,20 @@
     <button type="button" class="nav-drawer-backdrop" id="navDrawerBackdrop" data-i18n-aria="nav.menu_close" aria-label="메뉴 닫기"></button>
     <div class="nav-drawer-panel" role="dialog" aria-modal="true" data-i18n-aria="nav.menu" aria-label="메뉴">
       <div class="nav-drawer-head">
-        <strong data-i18n="nav.menu">메뉴</strong>
+        <strong data-i18n="nav.menu">Menu</strong>
         <button type="button" class="nav-drawer-close" id="navDrawerClose" data-i18n-aria="common.close" aria-label="닫기">×</button>
       </div>
-      <a href="/app/#list" data-i18n="nav.market">마켓</a>
-      <a href="/guide/" data-i18n="nav.guide">이용안내</a>
-      <a href="/guide/how-to-sell.html">판매 가이드</a>
-      <a href="/guide/how-to-buy.html">구매 가이드</a>
-      <a href="/guide/safety.html" data-i18n="nav.safety">사기 예방법</a>
-      <a href="/blog/">블로그</a>
-      <a href="/app/#login" id="navDrawerAuth" data-i18n="nav.login">로그인</a>
-      <a href="/get-app.html" data-i18n="nav.app">앱 설치</a>
+      <a href="/app/#list" data-i18n="nav.market">Marketplace</a>
+      <a href="/guide/" data-i18n="nav.guide">Guide</a>
+      <a href="/guide/how-to-sell.html" data-i18n="guide.tabs.sell">Sell guide</a>
+      <a href="/guide/how-to-buy.html" data-i18n="guide.tabs.buy">Buy guide</a>
+      <a href="/guide/safety.html" data-i18n="nav.safety">Safety</a>
+      <a href="/blog/" data-i18n="nav.blog">Blog</a>
+      <a href="/app/#login" id="navDrawerAuth" data-i18n="nav.login">Log in</a>
+      <a href="/get-app.html" data-i18n="nav.app">Get app</a>
       <div class="nav-drawer-cta">
-        <a class="btn btn-primary" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
-        <a class="btn btn-ghost" href="/app/#new" data-i18n="nav.list">프로젝트 올리기</a>
+        <a class="btn btn-primary" href="/app/#list" data-i18n="buyers.cta_market">Browse listings</a>
+        <a class="btn btn-ghost" href="/app/#new" data-i18n="nav.list">List a project</a>
       </div>
     </div>
   </div>
@@ -176,7 +176,7 @@
         <div class="hero-copy">
           <p class="hero-badge">
             <span class="hero-badge-dot" aria-hidden="true"></span>
-            <span data-i18n="hero.badge">잠든 프로젝트 장터</span>
+            <span data-i18n="hero.badge">Marketplace for paused projects</span>
           </p>
           <!-- Viral event: only shown while GET /api/v1/promo/event active -->
           <div id="homeEventBanner" class="home-event-banner" hidden>
@@ -187,33 +187,33 @@
             </a>
           </div>
           <h1 class="hero-title hero-title--sparkle">
-            <span class="hero-title-line" data-i18n="hero.title1">멈춰버린 프로젝트에</span><br />
-            <span class="grad" data-i18n="hero.title2">숨을 불어넣다.</span>
+            <span class="hero-title-line" data-i18n="hero.title1">Give your stalled project</span><br />
+            <span class="grad" data-i18n="hero.title2">a second life.</span>
           </h1>
-          <p class="hero-sub" data-i18n="hero.sub" data-i18n-html>데모 있는 중단 프로젝트를 사고파는 장터.<br />입찰 → 결제 → 이전 · 등록 무료.</p>
+          <p class="hero-sub" data-i18n="hero.sub" data-i18n-html>A marketplace to buy and sell paused projects with a working demo.<br />Bid → Pay → Transfer · Free to list.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
-            <a class="btn btn-white btn-lg" href="/app/#new" data-i18n="nav.list">프로젝트 올리기</a>
+            <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="buyers.cta_market">Browse listings</a>
+            <a class="btn btn-white btn-lg" href="/app/#new" data-i18n="nav.list">List a project</a>
             <a class="btn btn-ghost btn-lg" href="/promo/event.html" id="homeEventBtn" hidden data-i18n="home.event_btn">
               Share · 8% coupon
             </a>
           </div>
           <p class="hero-side-link">
-            <a class="text-link" href="/diagnose.html" data-i18n="hero.cta_main">시작가 힌트 · 무료 진단</a>
+            <a class="text-link" href="/diagnose.html" data-i18n="hero.cta_main">Starting-price hint · free diagnose</a>
           </p>
           <div class="hero-stats-block" id="heroStatsBlock" hidden>
             <ul class="hero-stats" aria-label="실제 숫자">
               <li>
                 <strong data-hero-stat="projects">—</strong>
-                <span data-i18n="hero.stat_projects">등록 프로젝트</span>
+                <span data-i18n="hero.stat_projects">Listed projects</span>
               </li>
               <li>
                 <strong data-hero-stat="interest">—</strong>
-                <span data-i18n="hero.stat_interest">관심 등록</span>
+                <span data-i18n="hero.stat_interest">Interest registered</span>
               </li>
               <li>
-                <strong class="is-later" data-i18n="hero.stat_went_live_later" id="heroWentLiveVal">추후 공개</strong>
-                <span data-i18n="hero.stat_went_live">다시 세상으로 나간 프로젝트</span>
+                <strong class="is-later" data-i18n="hero.stat_went_live_later" id="heroWentLiveVal">Coming soon</strong>
+                <span data-i18n="hero.stat_went_live">Projects back in the world</span>
               </li>
             </ul>
           </div>
@@ -234,11 +234,11 @@
             </div>
             <div class="live-metrics">
               <div>
-                <span class="label" data-i18n="live.price">현재 입찰가</span>
+                <span class="label" data-i18n="live.price">Current bid</span>
                 <strong class="mono">—</strong>
               </div>
               <div>
-                <span class="label" data-i18n="live.time">남은 시간</span>
+                <span class="label" data-i18n="live.time">Time left</span>
                 <strong class="mono timer">—</strong>
               </div>
             </div>
@@ -260,21 +260,21 @@
       <div class="home-hub-grid home-hub-grid--product">
         <a class="home-hub-card home-hub-card--with-icon" href="/app/#list">
           <img class="home-hub-icon" src="/assets/illustrations/step-browse.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.market_k">사기</span>
-          <strong data-i18n="hub.market_t">마켓 둘러보기</strong>
-          <span data-i18n="hub.market_d">데모·가격 공개 · 입찰 · 결제</span>
+          <span class="home-hub-kicker" data-i18n="hub.market_k">BUY</span>
+          <strong data-i18n="hub.market_t">Browse listings</strong>
+          <span data-i18n="hub.market_d">Live bids, demos, checkout</span>
         </a>
         <a class="home-hub-card home-hub-card--accent home-hub-card--with-icon" href="/app/#new">
           <img class="home-hub-icon" src="/assets/illustrations/step-list.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.sell_k">팔기</span>
-          <strong data-i18n="hub.sell_t">프로젝트 올리기</strong>
-          <span data-i18n="hub.sell_d">등록 무료 · 팔리면 수수료 10%</span>
+          <span class="home-hub-kicker" data-i18n="hub.sell_k">SELL</span>
+          <strong data-i18n="hub.sell_t">List a project</strong>
+          <span data-i18n="hub.sell_d">Free to list · 10% success fee</span>
         </a>
         <a class="home-hub-card home-hub-card--with-icon" href="/guide/">
           <img class="home-hub-icon" src="/assets/illustrations/step-deal.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.guide_k">안내</span>
-          <strong data-i18n="hub.guide_t">이용·거래 가이드</strong>
-          <span data-i18n="hub.guide_d">판매·구매·사기예방법</span>
+          <span class="home-hub-kicker" data-i18n="hub.guide_k">LEARN</span>
+          <strong data-i18n="hub.guide_t">How it works</strong>
+          <span data-i18n="hub.guide_d">Selling, buying, and safety</span>
         </a>
       </div>
     </section>
@@ -283,17 +283,17 @@
     <section class="section listings listings--home reveal" id="listings">
       <div class="listings-head">
         <div>
-          <h2 data-i18n="list.title">최근 올라온 매물</h2>
-          <p class="listing-source-note muted fine" id="listingSourceNote" data-i18n="list.loading">불러오는 중…</p>
+          <h2 data-i18n="list.title">Live listings</h2>
+          <p class="listing-source-note muted fine" id="listingSourceNote" data-i18n="list.loading">Loading…</p>
         </div>
-        <a class="btn btn-ghost btn-sm" href="/app/#list" data-i18n="nav.more_market">마켓플레이스 보기</a>
+        <a class="btn btn-ghost btn-sm" href="/app/#list" data-i18n="nav.more_market">Browse marketplace</a>
       </div>
       <div class="listing-grid" id="listingGrid" aria-live="polite">
-        <p class="listing-loading muted" data-i18n="list.loading">매물을 불러오는 중…</p>
+        <p class="listing-loading muted" data-i18n="list.loading">Loading…</p>
       </div>
-      <p class="filter-empty" id="filterEmpty" hidden data-i18n="list.empty_cat">해당 카테고리 매물이 없습니다.</p>
+      <p class="filter-empty" id="filterEmpty" hidden data-i18n="list.empty_cat">No listings in this category.</p>
       <p class="center-lead" style="margin-top:1rem">
-        <button type="button" class="btn btn-ghost btn-sm" id="listingsMore" hidden data-i18n="list.more">프로젝트 더 보기</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="listingsMore" hidden data-i18n="list.more">Show more listings</button>
       </p>
     </section>
 
@@ -301,12 +301,12 @@
     <section class="section home-exit reveal" id="cta">
       <div class="home-exit-inner">
         <div>
-          <h2 data-i18n="cta.title">프로젝트에 두 번째 기회를 주세요.</h2>
-          <p class="muted" data-i18n="cta.strong">등록 무료 · 판매 수수료 10% · 구매자 추가 수수료 없음</p>
+          <h2 data-i18n="cta.title">Give your side project a second life.</h2>
+          <p class="muted" data-i18n="cta.strong">Free to list · 10% seller fee · no extra fees for buyers</p>
         </div>
         <div class="hero-cta home-exit-cta">
-          <a class="btn btn-primary btn-lg" href="/app/#new" data-i18n="nav.list">내 프로젝트 올리기</a>
-          <a class="btn btn-ghost btn-lg" href="/app/#list" data-i18n="buyers.cta_market">마켓 둘러보기</a>
+          <a class="btn btn-primary btn-lg" href="/app/#new" data-i18n="nav.list">List a project</a>
+          <a class="btn btn-ghost btn-lg" href="/app/#list" data-i18n="buyers.cta_market">Browse listings</a>
         </div>
       </div>
     </section>

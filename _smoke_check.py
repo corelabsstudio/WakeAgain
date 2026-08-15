@@ -52,7 +52,13 @@ for p in [
 
 print("== 404 ==")
 r404 = cl.get("/this-page-does-not-exist-wakeagain")
-ok("pretty 404", r404.status_code == 404 and "페이지" in r404.text, str(r404.status_code))
+# 정적 폴백이 EN으로 바뀐 뒤(2026-08-16)라 한글 "페이지"로 검사하면 안 된다.
+# 사이트 기본 로케일이 EN이므로 JS 없이 받는 본문은 영문이다.
+ok(
+    "pretty 404",
+    r404.status_code == 404 and "Page not found" in r404.text,
+    str(r404.status_code),
+)
 
 print("== Public API ==")
 for p in [
