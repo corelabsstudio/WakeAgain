@@ -371,6 +371,11 @@ def run_live_probe(base: str, admin_key: str) -> None:
                 "min_increment": 10_000,
                 "license_note": "QA",
                 "keywords": ["QA", "테스트", "삭제예정", "웹앱", "입찰"],
+                # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+                "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+                "is_private_repo": False,
+                "is_offline": True,
+                "last_activity_at": "2026-08",
                 "attest_works": True,
                 "attest_license": True,
                 "attest_rights": True,

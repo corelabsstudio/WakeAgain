@@ -203,6 +203,11 @@ def main() -> int:
             "attest_shots": True,
             "price_start": 150000,
             "license_note": "사유 코드 전부 양도",
+            # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+            "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+            "is_private_repo": False,
+            "is_offline": True,
+            "last_activity_at": "2026-08",
             "attest_works": True,
             "attest_features": True,
             "attest_license": True,

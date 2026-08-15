@@ -288,6 +288,11 @@ LISTINGS = [
         "license_note": "코어랩스 직접 제작 · 양도 시 설치 패키지·소스·브랜드 협의 이전 · LLM API 키는 구매자 부담",
         "keywords": ["Trace", "AI", "인터뷰", "경험글", "블로그", "데스크톱", "BYOK"],
         "contact": "corelabs.studio@gmail.com",
+        # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+        "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+        "is_private_repo": False,
+        "is_offline": True,
+        "last_activity_at": "2026-08",
         "attest_works": True,
         "attest_features": True,
         "attest_license": True,
@@ -335,6 +340,11 @@ LISTINGS = [
         "license_note": "코어랩스 직접 제작 · 소스·브랜드·설치 패키지 양도 협의 · 외부 API 키는 구매자 부담",
         "keywords": ["리치킷", "ReachKit", "홍보", "마케팅", "카피", "채널추천", "데스크톱"],
         "contact": "corelabs.studio@gmail.com",
+        # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+        "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+        "is_private_repo": False,
+        "is_offline": True,
+        "last_activity_at": "2026-08",
         "attest_works": True,
         "attest_features": True,
         "attest_license": True,

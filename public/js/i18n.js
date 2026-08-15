@@ -799,6 +799,19 @@
   }
 
   function boot() {
+    // ?lang=en|ko 딥링크는 사이트 전체에서 동작해야 한다.
+    // 예전에는 index.html에만 이 처리가 있어서, 매물 링크를 ?lang=en으로 공유해도
+    // 저장된 언어가 우선(detectLang 순서: saved > query)이라 그대로 한국어로 보였다.
+    // 해외 매수자에게 링크를 보내는 게 핵심 동선이라 여기서 한 번에 처리한다.
+    try {
+      var q = new URLSearchParams(location.search || "");
+      var L = (q.get("lang") || "").toLowerCase();
+      if ((L === "ko" || L === "en") && L !== state.lang) {
+        setLang(L); // apply()까지 수행하고 선택을 저장한다
+        bindUi(document);
+        return;
+      }
+    } catch (e) {}
     bindUi(document);
     apply(document);
   }

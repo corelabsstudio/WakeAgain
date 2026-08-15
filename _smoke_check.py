@@ -191,6 +191,11 @@ if token and code:
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
+            # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+            "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+            "is_private_repo": False,
+            "is_offline": True,
+            "last_activity_at": "2026-08",
             "attest_works": True,
             "attest_features": True,
             "attest_license": True,
@@ -271,6 +276,11 @@ if token and code:
             "price_start": 2000000,
             "auction_days": 5,
             "license_note": "MIT",
+            # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+            "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+            "is_private_repo": False,
+            "is_offline": True,
+            "last_activity_at": "2026-08",
             "attest_works": True,
             "attest_features": True,
             "attest_license": True,

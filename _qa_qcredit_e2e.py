@@ -64,6 +64,11 @@ payload = {
     "works_now": "데모 링크에서 로그인 없이 예약 목록과 상태 변경을 눌러 볼 수 있다.",
     "limits": "결제 연동과 실 SMS 알림은 아직 없고 더미만 동작한다.",
     "acquisition": "made",
+    # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+    "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+    "is_private_repo": False,
+    "is_offline": True,
+    "last_activity_at": "2026-08",
     "attest_works": True,
     "attest_features": True,
     "attest_license": True,

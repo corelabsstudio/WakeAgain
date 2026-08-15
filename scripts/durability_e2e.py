@@ -204,6 +204,11 @@ def seed() -> dict:
             "auction_days": 7,
             "license_note": "MIT 양도 테스트",
             "keywords": ["내구성", "테스트", "SaaS", "웹앱", "영속성"],
+            # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
+            "repo_url": "https://github.com/corelabsstudio/WakeAgain",
+            "is_private_repo": False,
+            "is_offline": True,
+            "last_activity_at": "2026-08",
             "attest_works": True,
             "attest_features": True,
             "attest_license": True,
