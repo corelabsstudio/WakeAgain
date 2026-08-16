@@ -238,3 +238,107 @@ body.theme-mono select:focus {
 
 /* 심전도는 이 테마에서도 유지한다(의미 있는 모션) — 색만 강조색에 맞춘다 */
 body.theme-mono .hero-ecg-bg-canvas { opacity: 0.5; }
+
+/* ── 챕터 전환 모드 (chapters.js와 짝) ──────────────────────────────────────
+   원본 daoism.systems의 구조: 스크롤 없이 화면이 고정되고 섹션이 교체된다.
+   실측했던 값 그대로 — body{overflow:hidden}, 섹션은 absolute·top:0로 겹침.
+   ⚠️ 미리보기 전용. 기본 사이트에는 이 클래스가 붙지 않는다. */
+
+/* body만 잠그면 문서가 계속 스크롤됐다(실측) — html까지 같이 고정해야 한다 */
+html:has(body.chapters-on),
+body.chapters-on {
+  overflow: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+body.chapters-on #main,
+body.chapters-on main {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+}
+body.chapters-on .chapter {
+  position: absolute;
+  inset: 0;
+  height: 100dvh;
+  overflow-y: auto;          /* 내용이 길면 챕터 안에서 스크롤 (기능 보존) */
+  overscroll-behavior: contain;
+  padding-top: clamp(5rem, 9vh, 7rem);
+  padding-bottom: clamp(4rem, 8vh, 6rem);
+  opacity: 0;
+  /* visibility로 감추려 했더니 계산값이 visible로 남아(실측) 투명한 채 클릭이
+     잡히는 상태가 됐다. pointer-events로 바꾸면 상태가 하나뿐이라 어긋나지 않는다. */
+  pointer-events: none;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.chapters-on .chapter.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  z-index: 2;
+}
+
+/* 챕터 목차 = 원본의 상단 메뉴 역할 */
+body.chapters-on .chapter-index {
+  position: fixed;
+  left: clamp(1rem, 3vw, 2.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+body.chapters-on .chapter-index-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--muted-2);
+  font-family: var(--font);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: left;
+  transition: color 0.2s ease;
+}
+body.chapters-on .chapter-index-item:hover { color: var(--muted); }
+body.chapters-on .chapter-index-item.is-on { color: var(--accent); }
+body.chapters-on .chapter-index-num { opacity: 0.6; }
+body.chapters-on .chapter-index-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.35s ease, opacity 0.25s ease;
+}
+body.chapters-on .chapter-index:hover .chapter-index-label,
+body.chapters-on .chapter-index-item.is-on .chapter-index-label {
+  max-width: 16rem;
+  opacity: 1;
+}
+
+body.chapters-on .chapter-counter {
+  position: fixed;
+  right: clamp(1rem, 3vw, 2.5rem);
+  bottom: clamp(1rem, 3vh, 2rem);
+  z-index: 60;
+  color: var(--muted-2);
+  font-family: var(--font);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+
+/* 챕터 모드에선 스크롤 진행바가 의미 없다 */
+body.chapters-on .scroll-progress { display: none; }
+
+@media (max-width: 720px) {
+  body.chapters-on .chapter-index { display: none; }  /* 좁은 화면에선 목차 숨김 */
+}
+@media (prefers-reduced-motion: reduce) {
+  body.chapters-on .chapter { transition: opacity 0.01s, visibility 0s; transform: none; }
+}

@@ -28,9 +28,13 @@
   var THEMES = {
     mono: {
       cls: "theme-mono",
-      css: "/theme-mono.css?v=20260816-mono2",
+      css: "/theme-mono.css?v=20260816-mono5",
       font: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap",
       keepYard: false,
+      // 스크롤 없는 챕터 전환 구조 (원본 daoism.systems의 실제 UX).
+      // 홈에서만 의미가 있어 index에서만 로드한다.
+      js: "/js/chapters.js?v=20260816-ch4",
+      jsOnlyOnHome: true,
     },
     taste: {
       cls: "theme-taste",
@@ -71,6 +75,19 @@
       document.body.classList.add(conf.cls);
     }
   }
-  if (document.body) applyBody();
-  else document.addEventListener("DOMContentLoaded", applyBody);
+  function loadExtraJs() {
+    if (!conf.js) return;
+    if (conf.jsOnlyOnHome && !/^\/(index\.html)?$/.test(location.pathname)) return;
+    var s = document.createElement("script");
+    s.src = conf.js;
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
+  function boot() {
+    applyBody();
+    loadExtraJs();
+  }
+  if (document.body) boot();
+  else document.addEventListener("DOMContentLoaded", boot);
 })();
