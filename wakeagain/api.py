@@ -5528,6 +5528,17 @@ class AdminTransferOwnerIn(BaseModel):
     note: str = ""
 
 
+class AdminConsignorIn(BaseModel):
+    """위탁 등록 매물의 「진짜 판매자」 정보. 안 보낸 필드는 그대로 두고, ""를 보내면 지운다."""
+
+    consignor_name: str | None = None
+    consignor_contact: str | None = None
+    consignor_source_url: str | None = None
+    consignor_consent_quote: str | None = None
+    consignor_consent_at: str | None = None
+    consignor_payout_note: str | None = None
+
+
 _TRANSFER_BLOCKER_MSG = {
     "bids_exist": "이미 입찰이 들어온 매물입니다. 입찰자가 지금 판매자를 믿고 넣은 것이라 명의를 못 바꿉니다. 라운드가 끝난 뒤 새 계정으로 재등록하세요.",
     "already_sold": "이미 낙찰·판매된 매물이라 명의를 바꿀 수 없습니다.",
@@ -5617,6 +5628,45 @@ def admin_transfer_project_owner(
         "new_owner_id": int(target["id"]),
         "new_owner_email": target["email"],
         "project": database.project_to_dict(row, include_private=True),
+    }
+
+
+@router.post("/admin/projects/{project_id}/consignor")
+def admin_set_project_consignor(
+    project_id: int,
+    body: AdminConsignorIn,
+    _: None = Depends(require_admin),
+):
+    """운영자가 위탁 등록 매물의 실제 판매자를 기록한다 (상대 가입 불필요).
+
+    `transfer-owner`와 달리 `owner_id`를 건드리지 않는다. 명의 이전은 입찰·거래가 붙는
+    순간 막히기 때문에(=매물이 잘 될수록 불가능해짐) 인계를 전제로 한 구조를 쓰지 않고,
+    위탁자를 데이터로 들고 간다. 정산 정보는 팔린 뒤에 받는다.
+
+    안 보낸 필드는 유지, `""`를 보낸 필드는 삭제.
+    """
+    payload = body.model_dump(exclude_unset=True)
+    if not payload:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "no_fields", "message": "바꿀 항목을 하나 이상 보내주세요."},
+        )
+    with database.db() as conn:
+        try:
+            row = database.set_project_consignor(conn, project_id, **payload)
+        except ValueError as exc:
+            if "not found" in str(exc):
+                raise HTTPException(status_code=404, detail="not found") from exc
+            raise HTTPException(
+                status_code=400, detail={"code": "bad_field", "message": str(exc)}
+            ) from exc
+
+    data = database.project_to_dict(row, include_private=True)
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "is_consigned": data["is_consigned"],
+        "consignor": data["consignor"],
     }
 
 

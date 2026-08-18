@@ -1,5 +1,5 @@
 /* WakeAgain Admin PWA — scope /admin/ only */
-const CACHE = "wakeagain-admin-v5-xferowner";
+const CACHE = "wakeagain-admin-v6-consignor";
 const PRECACHE = [
   "/admin/",
   "/admin/index.html",

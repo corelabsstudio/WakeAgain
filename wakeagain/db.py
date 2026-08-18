@@ -439,6 +439,24 @@ def init_db() -> None:
                 "is_offline": "INTEGER NOT NULL DEFAULT 0",
                 # 마지막 활동일 'YYYY-MM'. 커밋이든 운영이든 마지막으로 손댄 시점 (구매자 방치 기간 판단용)
                 "last_activity_at": "TEXT",
+                # ── 위탁 등록 (consignment) ──────────────────────────────────────
+                # 원 소유자 동의를 받아 코어랩스 계정(owner_id)으로 대신 올린 매물의
+                # "진짜 판매자"를 기록한다. owner_id는 그대로 두는 게 핵심 —
+                # 입찰·거래·수수료·헬프티켓이 전부 owner_id에 묶여 있어서, 나중에
+                # 명의를 옮기려 하면 transfer-owner의 차단 조건(bids_exist 등)에 걸린다.
+                # 즉 매물이 잘 될수록 이전이 막히는 구조라, 이전에 기대지 않고
+                # 위탁자를 별도 데이터로 들고 간다. 상대는 가입할 필요가 없다.
+                "consignor_name": "TEXT",
+                # 연락 수단 (이메일 / GitHub 핸들 등). PII라 공개 응답엔 절대 안 실린다
+                "consignor_contact": "TEXT",
+                # 동의를 받은 출처 URL (GitHub 이슈 등) — 무단 등록이 아님을 증명하는 근거
+                "consignor_source_url": "TEXT",
+                # 동의 원문 인용. 나중에 "이거 허락받은 건가?"를 DB만 보고 답할 수 있게
+                "consignor_consent_quote": "TEXT",
+                "consignor_consent_at": "TEXT",
+                # 팔린 뒤 정산 방법 메모. 등록 시점엔 비워두고 낙찰 후에 받는다
+                # (이게 「가입 없이 등록」의 요점 — 돈이 오갈 때까지 아무것도 요구하지 않는다)
+                "consignor_payout_note": "TEXT",
             },
         )
         conn.execute(
@@ -1923,11 +1941,27 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "deal_dispute_note": _row_get(row, "deal_dispute_note") or "",
         "deal_policy": deal_policy_public(),
         "fee": fee,
+        # 위탁 등록 여부만 공개한다. 위탁자 신원·연락처는 PII라 include_private에서만.
+        # 공개 쪽에 불리언 하나는 필요하다 — 판매자 계정과 실제 소유자가 다르다는 걸
+        # 구매자가 알 수 있어야 하고, 이 배지가 없으면 "왜 한 계정이 매물을 다 갖고
+        # 있냐"는 의심을 살 수 있다 (TRUST.md 신뢰 게이트와 같은 취지)
+        "is_consigned": bool(
+            (_row_get(row, "consignor_name") or "").strip()
+            or (_row_get(row, "consignor_source_url") or "").strip()
+        ),
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
     if include_private:
         data["contact"] = row["contact"] or ""
+        data["consignor"] = {
+            "name": _row_get(row, "consignor_name") or "",
+            "contact": _row_get(row, "consignor_contact") or "",
+            "source_url": _row_get(row, "consignor_source_url") or "",
+            "consent_quote": _row_get(row, "consignor_consent_quote") or "",
+            "consent_at": _row_get(row, "consignor_consent_at") or "",
+            "payout_note": _row_get(row, "consignor_payout_note") or "",
+        }
         data["review_note"] = _row_get(row, "review_note") or ""
         data["reviewed_at"] = _row_get(row, "reviewed_at") or ""
         try:
@@ -2421,9 +2455,15 @@ def transfer_project_owner(
     """Admin-only: hand a listing over to a different seller account.
 
     Exists for consignment listings — with the original owner's consent we register
-    their abandoned project under the operator account, then move it to their own
-    account once they sign up (see CLAUDE.md 「위탁 등록 매물」). Call
-    project_transfer_blockers() first; this only writes.
+    their abandoned project under the operator account (see CLAUDE.md 「위탁 등록 매물」).
+
+    ⚠️ This is now the OPTIONAL path, not the default one. Transferring is blocked once
+    a listing has bids/deals/fees/tickets (see project_transfer_blockers), i.e. it stops
+    being possible exactly when the listing starts working. So consignment no longer
+    depends on the consignor signing up: set_project_consignor() records who the real
+    seller is while owner_id stays put. Use this only when the consignor actually made
+    an account and wants to run the listing themselves. Call project_transfer_blockers()
+    first; this only writes.
     """
     now = _now()
     prev = conn.execute(
@@ -2464,6 +2504,68 @@ def transfer_project_owner(
         "SELECT * FROM projects WHERE id = ?", (int(project_id),)
     ).fetchone()
     return row
+
+
+_CONSIGNOR_FIELDS = (
+    "consignor_name",
+    "consignor_contact",
+    "consignor_source_url",
+    "consignor_consent_quote",
+    "consignor_consent_at",
+    "consignor_payout_note",
+)
+
+
+def set_project_consignor(
+    conn: sqlite3.Connection, project_id: int, **fields: str | None
+) -> sqlite3.Row:
+    """Admin-only: record who really owns a consigned listing, without touching owner_id.
+
+    The point is that the consignor never has to sign up. owner_id stays on the operator
+    account so bids/deals/fees/tickets keep hanging off one consistent seller, and the
+    real owner lives here as data. Payout details (consignor_payout_note) are collected
+    only once something actually sells — asking for anything earlier is what stalled the
+    first consignment (owner said yes on 2026-08-03, never signed up).
+
+    Pass only the fields you want to change; pass "" to clear one. Unknown keys raise.
+    """
+    unknown = set(fields) - set(_CONSIGNOR_FIELDS)
+    if unknown:
+        raise ValueError(f"unknown consignor field(s): {', '.join(sorted(unknown))}")
+
+    row = conn.execute(
+        "SELECT id FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
+    if not row:
+        raise ValueError("project not found")
+
+    updates = {k: (v or "").strip() for k, v in fields.items() if v is not None}
+    if not updates:
+        return conn.execute(
+            "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+        ).fetchone()
+
+    # Stamp consent time automatically when consent evidence lands without one, so the
+    # audit trail can't be half-filled (this listing set is what made an earlier session
+    # misread listing #8 as an unauthorized listing).
+    if (
+        updates.get("consignor_consent_quote")
+        and "consignor_consent_at" not in updates
+    ):
+        existing = conn.execute(
+            "SELECT consignor_consent_at FROM projects WHERE id = ?", (int(project_id),)
+        ).fetchone()
+        if not (_row_get(existing, "consignor_consent_at") or "").strip():
+            updates["consignor_consent_at"] = _now()
+
+    sets = ", ".join(f"{k} = ?" for k in updates)
+    conn.execute(
+        f"UPDATE projects SET {sets}, updated_at = ? WHERE id = ?",
+        (*updates.values(), _now(), int(project_id)),
+    )
+    return conn.execute(
+        "SELECT * FROM projects WHERE id = ?", (int(project_id),)
+    ).fetchone()
 
 
 # Listing asset keys → buyer receipt checklist labels

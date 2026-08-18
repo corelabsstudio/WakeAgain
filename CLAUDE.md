@@ -48,6 +48,45 @@
 파일을 열었는데 내가 안 쓴 코드가 이미 있으면 **덮어쓰지 말고** 인터페이스가 맞는지 확인한 뒤
 그대로 쓴다. 중복 구현하지 말 것. 사용자에게 "이미 있어서 재사용했다"고 보고한다.
 
+### 2026-08-18 · 위탁 등록(consignor) — 판매자 가입 없이 매물 유지
+
+**배경:** GitHub 아웃리치 누적 12건 중 응답 2건(동의 1·거절 1), **가입 전환 0**. 특히
+`onsuYumYumYum` 소유자는 2026-08-03에 "넵 대신 올려주셔도 좋습니다"까지 답했는데도 15일째
+가입하지 않았다. 즉 병목은 설득이 아니라 **가입 요구** 자체다.
+
+**발견한 구조적 결함:** 기존 위탁 경로는 「대신 등록 → 상대가 가입 → `transfer-owner`로 인계」였는데,
+`project_transfer_blockers`가 `bids_exist` / `already_sold` / `deal_in_progress` / `fee_invoice_exists` /
+`help_tickets_exist`를 전부 막는다. **즉 매물이 실제로 잘 되기 시작하는 순간 인계가 영구히 불가능해진다.**
+인계를 전제로 한 설계 자체가 틀렸다.
+
+**구현:** `projects`에 위탁자 컬럼 6개 추가(`consignor_name`·`consignor_contact`·`consignor_source_url`·
+`consignor_consent_quote`·`consignor_consent_at`·`consignor_payout_note`) + `database.set_project_consignor()` +
+관리자 전용 `POST /api/v1/admin/projects/{id}/consignor` + 관리자 화면 입력란. `public/admin/sw.js`
+`CACHE`를 `v6-consignor`로 범프.
+
+**설계 요점 3가지:**
+1. **`owner_id`는 건드리지 않는다.** 입찰·거래·수수료·헬프티켓이 전부 owner_id에 묶여 있으므로 운영
+   계정에 고정해두고, 실제 판매자는 별도 데이터로 들고 간다. 인계가 필요 없어지므로 차단 조건과 무관해진다.
+2. **정산 정보는 팔린 뒤에 받는다**(`consignor_payout_note`). 돈이 오가기 전에는 상대에게 아무것도 요구하지 않는다.
+3. **위탁자 신원·연락처는 PII라 공개 응답에 절대 싣지 않는다.** 공개 dict에는 불리언 `is_consigned`만
+   나가고, 상세는 `include_private=True`에서만. 이 불리언은 필요하다 — 한 계정이 매물을 다 갖고 있는
+   이유를 구매자가 알 수 있어야 한다(TRUST.md 신뢰 게이트와 같은 취지).
+
+`transfer-owner`는 **삭제하지 않고 선택 경로로 남겼다** — 위탁자가 스스로 계정을 만들어 직접 운영하겠다고
+할 때만 쓴다. 관리자 화면 문구도 그렇게 바꿨다.
+
+**검증:** `_consignor_test.py` 신규 19개 전부 통과(owner_id 불변 · 공개 응답 PII 미노출 · **입찰 후에도
+위탁 정보 수정 가능**한 반면 같은 상황에서 `transfer-owner`는 `bids_exist`로 차단됨을 대조 확인 ·
+알 수 없는 필드 거부 · 관리자 인증 필수). `_transfer_owner_test.py` 통과, `_auction_suite_test.py` 43/43,
+`_smoke_check.py` 전체 통과. ⚠️ 스모크는 **DB 사본으로 돌릴 것** — 개발용 `data/wakeagain.db`에 신고
+카운트가 누적돼 있으면 report/auto-pause 2건이 오탐으로 실패한다(2026-08-18에 A/B로 확인, 코드 무관).
+
+**후속 필요:**
+- **라이브 매물 #8 백필** — `onsuYumYumYum` 위탁 정보(동의 인용·GitHub 이슈 URL)를 운영 관리자 화면에서
+  입력해야 함. 지금은 CLAUDE.md 산문에만 있고 DB에는 없다.
+- **아웃리치 문구 수정** — "가입하시면 명의를 넘겨드립니다"를 더 이상 쓰지 말 것. 가입은 이제 불필요하다.
+- **공개 페이지 배지** — `is_consigned`를 매물 상세에 노출하는 건 `public/**` 영역이라 미구현(Cowork 담당).
+
 ### 2026-08-15 · PortOne 실서비스(Railway) 환경변수 등록 + 페이팔 계약완료 확인 (코드 커밋 없음 — 설정 작업)
 
 **배경:** 사용자가 PortOne 콘솔 스크린샷을 보내며 "이 상태로 토스페이먼츠 신청해도 해외 결제도 가능한가" 질문 → 확인 과정에서 더 큰 문제 발견.
