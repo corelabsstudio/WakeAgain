@@ -10,6 +10,7 @@
 | **[AGENT_TEAM.md](./AGENT_TEAM.md)** | 역할·라우팅·Review (**팀 운영 SOP**) |
 | **[Context/ONE_PAGER.md](./Context/ONE_PAGER.md)** | 포지션·금지 문구·CTA·키워드 |
 | **[Templates/](./Templates/)** | 블로그·소셜·OG 골격 |
+| **[Templates/github-outreach.md](./Templates/github-outreach.md)** | GitHub 방치 레포 아웃리치 **문구 정본** (발송 전 필독) |
 | **[DAILY_SEO_PROMPT.md](./DAILY_SEO_PROMPT.md)** | 일일 SEO 3단 실행 프롬프트 |
 
 ### 트리거 문구
