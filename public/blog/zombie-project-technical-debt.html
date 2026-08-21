@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>죽은 게 아니라 좀비입니다 — 떠 있지만 아무도 안 고치는 프로젝트 | WakeAgain</title>
+  <meta name="description" content="최근 조사에서 코드베이스의 93%가 2년 넘게 손대지 않은 컴포넌트를 포함하고 있다는 결과가 나왔습니다. AI로 빠르게 만든 프로젝트일수록 '죽은 것'이 아니라 '떠 있지만 아무도 안 고치는 좀비'가 되기 쉽습니다. 방치된 앱을 넘기기 전에 알아야 할 차이를 정리합니다." />
+  <meta name="robots" content="index, follow" />
+  <meta name="keywords" content="사이드 프로젝트 수익화, 방치된 앱 처분, MVP 프로토타입 판매, 인디해커 수익, WakeAgain" />
+  <link rel="canonical" href="https://wakeagain.com/blog/zombie-project-technical-debt.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://wakeagain.com/blog/zombie-project-technical-debt.html" />
+  <meta property="og:title" content="죽은 게 아니라 좀비입니다 — 떠 있지만 아무도 안 고치는 프로젝트" />
+  <meta property="og:description" content="코드베이스의 93%가 2년 넘게 방치된 컴포넌트를 포함합니다. '죽은 프로젝트'와 '좀비 프로젝트'는 다릅니다 — 방치된 앱 처분, 삭제 대신 넘기는 법. WakeAgain." />
+  <meta property="og:image" content="https://wakeagain.com/assets/og-image.jpg" />
+  <meta name="theme-color" content="#1a1814" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260816-photoback" />
+  <link rel="stylesheet" href="/blog/blog.css?v=20260729-deep-qa" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "죽은 게 아니라 좀비입니다 — 떠 있지만 아무도 안 고치는 프로젝트",
+    "datePublished": "2026-08-21",
+    "dateModified": "2026-08-21",
+    "author": { "@type": "Organization", "name": "CoreLabs" },
+    "mainEntityOfPage": "https://wakeagain.com/blog/zombie-project-technical-debt.html"
+  }
+  </script>
+  <link rel="stylesheet" href="/yard-theme.css?v=20260729-deep-qa" />
+  <script src="/js/theme-preview.js?v=20260816-ch1"></script>
+</head>
+<body class="wa-blog theme-yard">
+  <header class="wa-blog-nav">
+    <div class="wa-blog-nav-inner">
+      <a class="wa-blog-brand" href="/">Wake<span class="brand-again">Again</span></a>
+      <nav class="wa-blog-links">
+        <a href="/blog/">블로그</a>
+        <a href="/sell.html">매물 등록</a>
+        <a href="/app/">마켓</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wa-blog-wrap">
+    <article>
+      <div class="wa-kicker">Indie maker · 방치의 재정의</div>
+      <h1>죽은 게 아니라 좀비입니다 — 떠 있지만 아무도 안 고치는 프로젝트</h1>
+      <p class="wa-meta">
+        2026-08-21 · WakeAgain 성장팀<br />
+        키워드: 사이드 프로젝트 수익화 · 방치된 앱 처분 · MVP 프로토타입 판매 · 인디해커 수익
+      </p>
+
+      <div class="wa-prose">
+        <p>
+          지금까지 "방치된 프로젝트"라고 하면 보통 서버가 내려가고 저장소에
+          커밋이 끊긴, 눈에 보이게 죽은 프로젝트를 떠올렸습니다. 하지만 최근
+          업계 조사들이 가리키는 건 좀 다른 그림입니다 — <strong>여전히
+          돌아가고 있고 누군가는 쓰고 있는데, 그 안에 쌓인 문제는 아무도
+          안 고치는</strong> 프로젝트가 더 흔한 방치 형태라는 것입니다.
+        </p>
+
+        <h2>1. 이슈 요약 — "죽은 것"보다 흔한 건 "좀비인 것"</h2>
+        <ul>
+          <li>
+            2026년 오픈소스 보안·리스크 분석 보고서는 <strong>조사 대상
+            코드베이스의 93%가 최근 2년간 개발 활동이 전혀 없는 컴포넌트를
+            포함</strong>하고 있다고 밝혔습니다. 겉으로는 멀쩡히 작동하고
+            실제로 의존되고 있지만 사실상 아무도 관리하지 않는 이런 상태를
+            업계에서는 <strong>"좀비 컴포넌트"</strong>라고 부릅니다.
+          </li>
+          <li>
+            AI로 작성된 커밋 약 30만 건을 추적한 연구에서는, AI가 만든
+            코드에서 발견된 이슈 중 <strong>22.7%가 끝까지 해결되지 않고
+            그대로 남아있다</strong>는 결과가 나왔습니다. 2026년 초 기준
+            누적 미해결 이슈가 10만 건을 넘었다는 집계도 함께 인용됩니다.
+          </li>
+          <li>
+            같은 흐름에서 "AI가 만든 방치물(abandonware)이 오픈소스를
+            속에서부터 갉아먹고 있다"는 분석도 나왔습니다 — 빠르게 만들어
+            배포까지는 됐지만, 만든 사람이 손을 뗀 뒤로는 아무도 들여다보지
+            않는 프로젝트가 늘고 있다는 지적입니다.
+          </li>
+        </ul>
+
+        <div class="wa-source">
+          <strong>참고 (원문 링크 · 전문 전재 없음)</strong>
+          · <a href="https://leaddev.com/software-quality/ai-generated-abandonware-is-hollowing-out-open-source" rel="noopener noreferrer" target="_blank">AI-generated abandonware is hollowing out open source — LeadDev</a>
+          · <a href="https://arxiv.org/html/2603.28592v2" rel="noopener noreferrer" target="_blank">Debt Behind the AI Boom: A Large-Scale Empirical Study of AI-Generated Code in the Wild — arXiv</a>
+        </div>
+
+        <h2>2. 인사이트 — "죽은 프로젝트"와 "좀비 프로젝트"는 처분법이 다릅니다</h2>
+        <p>
+          서버가 내려간 죽은 프로젝트는 판단이 쉽습니다 — 지울지 말지만
+          결정하면 됩니다. 문제는 <strong>여전히 켜져 있는데 아무도 안
+          고치는 프로젝트</strong>입니다. AI 도구 덕분에 몇 주 만에 배포까지
+          끝내고 다음 아이디어로 넘어가는 일이 흔해지면서, 이런 "일단
+          돌아가긴 하는" 상태로 방치되는 경우가 오히려 더 많아졌습니다.
+          이 상태를 그냥 두면 셋 중 하나로 흘러갑니다 — 계속 좀비로
+          남아 위험만 쌓이거나, 어느 날 조용히 서버비 청구서와 함께
+          잊히거나, <strong>혹은 지금이라도 넘겨서 실제로 관리할 사람에게
+          가는 것</strong>입니다.
+        </p>
+
+        <h3>내 프로젝트가 좀비인지 확인하는 법</h3>
+        <ul>
+          <li>서비스는 켜져 있는데 마지막 커밋이 몇 달 전이다 → 좀비 단계입니다.</li>
+          <li>보안 업데이트·의존성 업그레이드를 미룬 지 오래됐다 → 방치 위험이 실제로 쌓이고 있는 상태입니다.</li>
+          <li>그래도 사용자·트래픽·저장된 데이터 구조가 남아 있다 → 지우기엔 아까운, 실제로 매물이 될 수 있는 자산입니다.</li>
+        </ul>
+
+        <h2>3. 실무 팁 — 넘기기 전 최소한으로 정리할 것</h2>
+        <p>
+          완벽하게 고쳐서 넘길 필요는 없습니다. <strong>MVP 프로토타입
+          판매</strong>에서 구매자가 정말 필요로 하는 건 "지금 얼마나
+          방치돼 있는지"를 정직하게 아는 것입니다.
+        </p>
+        <ul>
+          <li>저장소 링크 — 비공개 레포도 괜찮습니다. 협의 단계에서 접근 권한만 넘기면 됩니다.</li>
+          <li>라이브 데모 또는 스크린샷 1장 — 지금도 돌아가고 있다면 그 자체가 강점입니다.</li>
+          <li>마지막으로 손댄 날짜 — 좀비 상태라는 걸 숨기지 말고, 구매자가 방치 기간을 바로 판단하게 해주세요.</li>
+        </ul>
+
+        <h2>4. 해결책 및 Call to Action</h2>
+        <p>
+          <strong>WakeAgain</strong>은 방치된 사이드 프로젝트·MVP·SaaS
+          프로토타입을 공개 호가(경매)로 연결하는 시간 거래소입니다. 켜져
+          있지만 아무도 안 고치는 좀비 프로젝트라도, 저장소와 마지막
+          활동일만 정직하게 밝히면 등록할 수 있습니다.
+        </p>
+        <ul>
+          <li>판매자: 저장소·마지막 활동일·데모(또는 스크린샷)만 준비하면 등록(무료) 가능</li>
+          <li>구매자: "죽은 매물"이 아니라 지금 상태가 정확히 표시된 매물만 탐색</li>
+          <li>목표: 좀비 상태로 위험만 쌓이게 두지 말고, 실제로 관리할 사람에게 넘기는 경로를 주는 것</li>
+        </ul>
+
+        <div class="wa-cta">
+          <h3>지금 등록해 보세요</h3>
+          <p>
+            아직 켜져는 있지만 몇 달째 손 안 댄 프로젝트가 있다면,
+            더 방치하기 전에 <strong>WakeAgain</strong>에 무료로 등록해서
+            시장 반응을 확인해 보세요.
+          </p>
+          <div class="wa-cta-actions">
+            <a class="wa-btn-primary" href="https://wakeagain.com/sell.html">매물 무료 등록</a>
+            <a class="wa-btn-ghost" href="https://wakeagain.com">https://wakeagain.com</a>
+            <a class="wa-btn-ghost" href="/guide/how-to-sell.html">판매 가이드</a>
+          </div>
+        </div>
+
+        <h2>한 줄 정리</h2>
+        <p>
+          방치는 서버가 꺼진 뒤에 시작되는 게 아닙니다. 여전히 돌아가고
+          있어도 아무도 안 고치는 순간부터 이미 좀비입니다.
+          <strong>방치된 앱 처분</strong>은 완전히 죽기를 기다릴 필요
+          없이, 지금 상태 그대로 <strong>사이드 프로젝트 수익화</strong>의
+          기회로 바꿀 수 있습니다.
+        </p>
+
+        <p class="wa-disclaimer">
+          면책: 본 글은 공개된 업계 조사·연구를 바탕으로 한 마케팅
+          콘텐츠입니다. 인용된 수치는 원문 시점 기준이며, 특정 매물의
+          판매·매각가·수익을 보장하지 않습니다. 거래 조건·리스크는
+          약관과 매물 정보를 확인하세요.
+        </p>
+      </div>
+    </article>
+
+    <footer class="wa-blog-foot">
+      <a href="/blog/">← 블로그 목록</a>
+      <a href="/blog/domain-graveyard-real-asset.html">관련 글: 도메인만 30개, 그건 자산이 아니라 무덤입니다 →</a>
+    </footer>
+  </main>
+</body>
+</html>
