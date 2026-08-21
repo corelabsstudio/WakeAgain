@@ -748,7 +748,8 @@
         })();
 
         // 언어가 바뀌면 카피만 갈아끼운다 (클립은 다시 받지 않는다)
-        window.addEventListener('wa:langchange', function () {
+        // i18n.js 는 document 에 발화한다(버블 안 됨) — window 에 걸면 못 받는다
+        document.addEventListener('wa:langchange', function () {
           var c = pick();
           var blocks = el.querySelectorAll('.sw-copy');
           for (var i = 0; i < blocks.length && i < c.length; i++) {
