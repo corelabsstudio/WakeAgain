@@ -1,0 +1,84 @@
+/* 홈 히어로 스크롤 월드 — 이 파일만 홈페이지에 적용된다.
+   styles.css(전 사이트 공용)는 건드리지 않는다. */
+
+.wa-world { position: relative; }
+
+/* 엔진 토큰을 WakeAgain 브랜드 색으로 */
+.wa-world .sw-root {
+  --sw-bg: #1a1814;
+  --sw-ink: #f5f0e6;
+  --sw-ink-soft: #b8ae9c;
+  --sw-accent: #d4a017;
+  --sw-font-display: Pretendard, "Pretendard Variable", -apple-system, "Apple SD Gothic Neo",
+                     "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --sw-font-body: Pretendard, "Pretendard Variable", -apple-system, "Apple SD Gothic Neo",
+                  "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+/* 한국어: 단어 중간에서 줄이 끊기지 않게 */
+.wa-world .sw-copy__title,
+.wa-world .sw-copy__body,
+.wa-world .sw-copy__eyebrow { word-break: keep-all; overflow-wrap: break-word; }
+
+/* 엔진이 밝은 배경을 전제로 짜여 있어 다크용으로 되짚는다.
+   .sw-topcta / .sw-btn--primary 는 color:#fff + background:var(--sw-ink) 라
+   크림 배경에 흰 글자가 되어 버튼이 안 보인다. */
+.wa-world .sw-btn--primary { color: #1a1814; background: var(--sw-accent); }
+.wa-world .sw-btn--ghost {
+  color: #f5f0e6;
+  border-color: color-mix(in srgb, #f5f0e6 30%, transparent);
+}
+
+/* 장면이 밝아져도 카피가 읽히도록 왼쪽에 어둠을 깐다 */
+.wa-world .sw-copylayer::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg,
+    rgba(26, 24, 20, .93) 0%,
+    rgba(26, 24, 20, .80) 24%,
+    rgba(26, 24, 20, .34) 50%,
+    rgba(26, 24, 20, 0) 70%);
+}
+.wa-world .sw-copy { z-index: 1; }
+
+/* 좁은 화면에선 카피가 아래로 내려가므로 어둠도 아래에 */
+@media (max-width: 860px) {
+  .wa-world .sw-copylayer::before {
+    background: linear-gradient(to top,
+      rgba(26, 24, 20, .94) 0%,
+      rgba(26, 24, 20, .82) 30%,
+      rgba(26, 24, 20, .34) 56%,
+      rgba(26, 24, 20, 0) 78%);
+  }
+}
+
+/* 이벤트 띠 — 히어로에서 빼내 네비 아래 얇은 줄로 */
+.wa-eventbar {
+  border-bottom: 1px solid rgba(245, 236, 220, .1);
+  background: #221f1a;
+  font-size: .8125rem;
+}
+.wa-eventbar__inner {
+  max-width: 1200px; margin: 0 auto;
+  padding: 9px 20px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  color: #b8ae9c;
+}
+.wa-eventbar b { color: #d4a017; font-weight: 700; }
+.wa-eventbar a { color: #f5f0e6; text-decoration: underline; text-underline-offset: 3px; }
+
+/* 세계가 끝나고 매물이 시작되는 경계 */
+.wa-world + .listings { border-top: 1px solid rgba(245, 236, 220, .1); }
+
+/* 세계를 다 지나가면 고정 레이어를 걷는다 — 아래 매물 섹션을 덮지 않도록.
+   엔진은 자기가 페이지 전체라고 가정하고 fixed 레이어를 깐다. */
+.wa-world.is-past .sw-sky,
+.wa-world.is-past .sw-stage,
+.wa-world.is-past .sw-copylayer,
+.wa-world.is-past .sw-route,
+.wa-world.is-past .sw-hint,
+.wa-world.is-past .sw-scrollbar {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s;
+}

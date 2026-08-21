@@ -87,6 +87,9 @@
       } catch (e) {}
     })();
   </script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="/assets/world/world.css?v=20260821">
 </head>
 <body class="theme-yard">
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
@@ -155,132 +158,21 @@
 
   <main id="main">
     <!-- 1. HERO -->
-    <section class="hero" id="top">
-      <!-- Photo: sunlit archive by the window — “다시 꺼냄”, not dark warehouse
-           (2026-08-16: 매물 스크린샷 타일 배경을 시도했다가 사용자 판단으로 사진으로 복귀) -->
-      <div class="hero-photo" aria-hidden="true">
-        <img
-          src="/assets/photo/hero-archive-window.jpg?v=3"
-          width="1600"
-          height="900"
-          alt=""
-          decoding="async"
-          fetchpriority="high"
-        />
-      </div>
-      <div class="hero-photo-scrim" aria-hidden="true"></div>
-      <div class="hero-glow" aria-hidden="true"></div>
-      <!-- Background only: the moving green ECG line (not the card monitor chrome) -->
-      <div class="hero-ecg-bg" aria-hidden="true">
-        <canvas id="heroEcgCanvas" class="hero-ecg-bg-canvas"></canvas>
-      </div>
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <p class="hero-badge">
-            <span class="hero-badge-dot" aria-hidden="true"></span>
-            <span data-i18n="hero.badge">Marketplace for paused projects</span>
-          </p>
-          <!-- Viral event: only shown while GET /api/v1/promo/event active -->
-          <div id="homeEventBanner" class="home-event-banner" hidden>
-            <a class="home-event-banner-link" href="/promo/event.html" id="homeEventLink">
-              <span class="home-event-pill">EVENT</span>
-              <span class="home-event-text" id="homeEventText" data-i18n="home.event_banner">Live event · Share WakeAgain, earn an 8% seller-fee coupon (once per account)</span>
-              <span class="home-event-cta" id="homeEventCta" data-i18n="home.event_cta">Join event →</span>
-            </a>
-          </div>
-          <h1 class="hero-title hero-title--sparkle">
-            <span class="hero-title-line" data-i18n="hero.title1">Give your stalled project</span><br />
-            <span class="grad" data-i18n="hero.title2">a second life.</span>
-          </h1>
-          <p class="hero-sub" data-i18n="hero.sub" data-i18n-html>A marketplace to buy and sell paused projects with a working demo.<br />Bid → Pay → Transfer · Free to list.</p>
-          <div class="hero-cta">
-            <a class="btn btn-primary btn-lg" href="/app/#list" data-i18n="buyers.cta_market">Browse listings</a>
-            <a class="btn btn-white btn-lg" href="/app/#new" data-i18n="nav.list">List a project</a>
-            <a class="btn btn-ghost btn-lg" href="/promo/event.html" id="homeEventBtn" hidden data-i18n="home.event_btn">
-              Share · 8% coupon
-            </a>
-          </div>
-          <p class="hero-side-link">
-            <a class="text-link" href="/diagnose.html" data-i18n="hero.cta_main">Starting-price hint · free diagnose</a>
-          </p>
-          <div class="hero-stats-block" id="heroStatsBlock" hidden>
-            <ul class="hero-stats" aria-label="실제 숫자">
-              <li>
-                <strong data-hero-stat="projects">—</strong>
-                <span data-i18n="hero.stat_projects">Listed projects</span>
-              </li>
-              <li>
-                <strong data-hero-stat="interest">—</strong>
-                <span data-i18n="hero.stat_interest">Interest registered</span>
-              </li>
-              <li>
-                <strong class="is-later" data-i18n="hero.stat_went_live_later" id="heroWentLiveVal">Coming soon</strong>
-                <span data-i18n="hero.stat_went_live">Projects back in the world</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="hero-stage" aria-hidden="true">
-          <article class="live-card live-card--lot">
-            <div class="live-card-top">
-              <span class="live-badge"><span class="live-dot" aria-hidden="true"></span><span class="live-badge-text">대기 중</span></span>
-              <span class="live-dots"></span>
-            </div>
-            <div class="live-card-head">
-              <div class="live-icon">—</div>
-              <div>
-                <strong>진행 중 매물 없음</strong>
-                <p>매물이 등록되면 여기에 표시됩니다</p>
-              </div>
-            </div>
-            <div class="live-metrics">
-              <div>
-                <span class="label" data-i18n="live.price">Current bid</span>
-                <strong class="mono">—</strong>
-              </div>
-              <div>
-                <span class="label" data-i18n="live.time">Time left</span>
-                <strong class="mono timer">—</strong>
-              </div>
-            </div>
-            <div class="live-progress">
-              <div class="live-progress-bar"><span style="--w:0%"></span></div>
-              <p>마켓 오픈 · 등록 무료</p>
-            </div>
-            <div class="live-toast">
-              <span class="pulse-dot"></span>
-              <a href="/sell.html" style="color:inherit;text-decoration:underline">매물 등록하기</a>
-            </div>
-          </article>
-        </div>
-      </div>
+        <!-- 스크롤 월드 히어로 — 스크롤이 카메라를 민다. 자산: /assets/world/ -->
+    <section class="wa-world" id="top">
+      <div id="waWorld"></div>
     </section>
 
-    <!-- Product paths: buy · sell · guide -->
-    <section class="section home-hub reveal" id="go" aria-label="바로 가기">
-      <div class="home-hub-grid home-hub-grid--product">
-        <a class="home-hub-card home-hub-card--with-icon" href="/app/#list">
-          <img class="home-hub-icon" src="/assets/illustrations/step-browse.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.market_k">BUY</span>
-          <strong data-i18n="hub.market_t">Browse listings</strong>
-          <span data-i18n="hub.market_d">Live bids, demos, checkout</span>
-        </a>
-        <a class="home-hub-card home-hub-card--accent home-hub-card--with-icon" href="/app/#new">
-          <img class="home-hub-icon" src="/assets/illustrations/step-list.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.sell_k">SELL</span>
-          <strong data-i18n="hub.sell_t">List a project</strong>
-          <span data-i18n="hub.sell_d">Free to list · 10% success fee</span>
-        </a>
-        <a class="home-hub-card home-hub-card--with-icon" href="/guide/">
-          <img class="home-hub-icon" src="/assets/illustrations/step-deal.png?v=1" width="96" height="96" alt="" loading="lazy" decoding="async" />
-          <span class="home-hub-kicker" data-i18n="hub.guide_k">LEARN</span>
-          <strong data-i18n="hub.guide_t">How it works</strong>
-          <span data-i18n="hub.guide_d">Selling, buying, and safety</span>
-        </a>
-      </div>
-    </section>
+    <!-- 이벤트 띠 (히어로에서 옮겨옴 · 스크립트가 hidden 을 풀어준다) -->
+    <div id="homeEventBanner" class="home-event-banner wa-eventbar" hidden>
+      <a class="home-event-banner-link wa-eventbar__inner" href="/promo/event.html" id="homeEventLink">
+        <span class="home-event-pill"><b>EVENT</b></span>
+        <span class="home-event-text" id="homeEventText" data-i18n="home.event_banner">Live event · Share WakeAgain, earn an 8% seller-fee coupon (once per account)</span>
+        <span class="home-event-cta" id="homeEventCta" data-i18n="home.event_cta">Join event →</span>
+      </a>
+    </div>
 
+<!-- Product paths: buy · sell · guide -->
     <!-- LIVE MARKET — product, not essay -->
     <section class="section listings listings--home reveal" id="listings">
       <div class="listings-head">
@@ -432,8 +324,6 @@
   <script src="/js/api.js?v=20260815-verify"></script>
   <script src="/js/countries.js?v=20260811a"></script>
   <script src="/js/listings.js?v=20260814-english-ready"></script>
-  <script src="/js/hero-ecg.js?v=20260729-multitrace"></script>
-  <script src="/js/hero-stats.js?v=20260729-productB"></script>
   <script src="/js/footer-visitors.js?v=20260810-global"></script>
   <script src="/js/feedback-widget.js?v=20260814a"></script>
   <script src="/js/motion.js"></script>
@@ -761,5 +651,139 @@
       }
     })();
   </script>
+    <script src="/assets/world/scrub-engine.js?v=20260821"></script>
+    <script>
+      (function () {
+        var el = document.getElementById('waWorld');
+        if (!el || typeof mountScrollWorld !== 'function') return;
+
+        var COPY = {
+          ko: [
+            { eyebrow: '멈춘 것들',
+              title: '만들다 멈춘 것들이 여기 있습니다',
+              body: '만들다 멈춘 사이드 프로젝트를 사고파는 곳입니다. 코드는 그대로 남아 있고 도메인도 아직 살아 있습니다. 다만 아무도 열어보지 않을 뿐입니다.',
+              tags: [] },
+            { eyebrow: '꺼내기',
+              title: '꺼내는 데 5분이면 됩니다',
+              body: '도는 데모 주소 하나면 매물이 됩니다. 등록은 무료입니다.',
+              tags: ['등록 무료', '데모만 있으면'] },
+            { eyebrow: '첫 입찰',
+              title: '누군가 값을 부르는 순간',
+              body: '경매로 값이 정해집니다. 팔릴지 아닐지는 시장이 답합니다.',
+              tags: ['공개 경매', '시작가 무료 진단'] },
+            { eyebrow: 'WakeAgain',
+              title: '다시 돌아갑니다',
+              body: '입찰 → 결제 → 이전. 구매자 수수료는 없습니다.',
+              tags: [],
+              cta: { primary: { label: '마켓 둘러보기', href: '/app/#list' },
+                     secondary: { label: '내 프로젝트 올리기', href: '/app/#new' } } }
+          ],
+          en: [
+            { eyebrow: 'STOPPED',
+              title: 'They stopped. They are still here.',
+              body: 'A marketplace to buy and sell paused side projects. The code still runs and the domain is still paid for. Nobody opens it any more.',
+              tags: [] },
+            { eyebrow: 'UNCOVER',
+              title: 'Five minutes to list it',
+              body: 'A working demo is all it takes. Free to list.',
+              tags: ['Free to list', 'Demo required'] },
+            { eyebrow: 'FIRST BID',
+              title: 'The moment someone bids',
+              body: 'An auction sets the price. The market answers.',
+              tags: ['Open auction', 'Free price hint'] },
+            { eyebrow: 'WakeAgain',
+              title: 'It runs again',
+              body: 'Bid → Pay → Transfer. No buyer fees.',
+              tags: [],
+              cta: { primary: { label: 'Browse listings', href: '/app/#list' },
+                     secondary: { label: 'List a project', href: '/app/#new' } } }
+          ]
+        };
+
+        function lang() {
+          try {
+            if (window.WakeAgainI18n && window.WakeAgainI18n.getLang) {
+              return String(window.WakeAgainI18n.getLang() || '');
+            }
+            return String(localStorage.getItem('wa_lang') || '');
+          } catch (e) { return ''; }
+        }
+        function pick() { return lang().toLowerCase().indexOf('ko') === 0 ? COPY.ko : COPY.en; }
+
+        var SCENES = [
+          { id: 'stopped',  still: '/assets/world/still_1.webp', clip: '/assets/world/vid/leg_1.mp4', clipMobile: '/assets/world/vid/leg_1-m.mp4', accent: '#8f8576', scroll: 1.6, linger: 0.4 },
+          { id: 'uncover',  still: '/assets/world/still_2.webp', clip: '/assets/world/vid/leg_2.mp4', clipMobile: '/assets/world/vid/leg_2-m.mp4', accent: '#b8ae9c' },
+          { id: 'firstbid', still: '/assets/world/still_3.webp', clip: '/assets/world/vid/leg_3.mp4', clipMobile: '/assets/world/vid/leg_3-m.mp4', accent: '#d4a017', linger: 0.35 },
+          { id: 'awake',    still: '/assets/world/still_4.webp', clip: '/assets/world/vid/leg_4.mp4', clipMobile: '/assets/world/vid/leg_4-m.mp4', accent: '#d4a017', scroll: 1.8, linger: 0.5 }
+        ];
+
+        function build() {
+          var c = pick();
+          return SCENES.map(function (s, i) {
+            var o = {}; for (var k in s) o[k] = s[k];
+            o.label = c[i].eyebrow; o.eyebrow = c[i].eyebrow;
+            o.title = c[i].title;  o.body = c[i].body; o.tags = c[i].tags;
+            if (c[i].cta) o.cta = c[i].cta;
+            return o;
+          });
+        }
+
+        mountScrollWorld(el, {
+          sections: build(),
+          connectors: [],
+          diveScroll: 1.4,
+          crossfade: 0.08,
+          atmosphere: false,
+          nav: false
+        });
+
+        // 엔진은 제목을 h2 로 그린다. 첫 장면 제목만 h1 으로 올린다 (페이지 유일 h1)
+        (function promoteH1() {
+          var first = el.querySelector('.sw-copy .sw-copy__title');
+          if (!first || first.tagName === 'H1') return;
+          var h1 = document.createElement('h1');
+          h1.className = first.className;
+          h1.textContent = first.textContent;
+          first.parentNode.replaceChild(h1, first);
+        })();
+
+        // 언어가 바뀌면 카피만 갈아끼운다 (클립은 다시 받지 않는다)
+        window.addEventListener('wa:langchange', function () {
+          var c = pick();
+          var blocks = el.querySelectorAll('.sw-copy');
+          for (var i = 0; i < blocks.length && i < c.length; i++) {
+            var b = blocks[i];
+            var eb = b.querySelector('.sw-copy__eyebrow');
+            var ti = b.querySelector('.sw-copy__title');
+            var bo = b.querySelector('.sw-copy__body');
+            if (eb) eb.textContent = c[i].eyebrow;
+            if (ti) ti.textContent = c[i].title;
+            if (bo) bo.textContent = c[i].body;
+            var tg = b.querySelectorAll('.sw-copy__tags li');
+            for (var j = 0; j < tg.length; j++) {
+              if (c[i].tags && c[i].tags[j] != null) tg[j].textContent = c[i].tags[j];
+            }
+            var btns = b.querySelectorAll('.sw-copy__cta a');
+            if (c[i].cta && btns.length) {
+              if (btns[0]) btns[0].textContent = c[i].cta.primary.label;
+              if (btns[1]) btns[1].textContent = c[i].cta.secondary.label;
+            }
+          }
+          var rl = el.querySelectorAll('.sw-route__label');
+          for (var r = 0; r < rl.length && r < c.length; r++) rl[r].textContent = c[r].eyebrow;
+        });
+
+        // 세계를 다 지나가면 고정 레이어를 걷어 아래 섹션을 가리지 않게 한다
+        var world = document.querySelector('.wa-world');
+        function past() {
+          if (!world) return;
+          var b = world.getBoundingClientRect().bottom;
+          world.classList.toggle('is-past', b <= 1);
+        }
+        addEventListener('scroll', past, { passive: true });
+        addEventListener('resize', past);
+        past();
+      })();
+    </script>
 </body>
 </html>
