@@ -408,6 +408,11 @@
       return request("/api/v1/config");
     },
     async register(email, password, display_name, birth_date, confirm_age_14, country) {
+      // 첫 방문 때 잡아둔 유입 경로를 함께 보낸다 (footer-visitors.js가 채워둠).
+      let src = { source: "", referrer: "", landing: "" };
+      try {
+        if (window.WakeAgainSource) src = window.WakeAgainSource.get() || src;
+      } catch (e) {}
       const data = await request("/api/v1/auth/register", {
         method: "POST",
         body: JSON.stringify({
@@ -417,6 +422,9 @@
           birth_date: birth_date || "",
           confirm_age_14: !!confirm_age_14,
           country: country || "",
+          signup_source: src.source || "",
+          signup_referrer: src.referrer || "",
+          signup_landing: src.landing || "",
         }),
       });
       return rememberAuth(data);
@@ -792,9 +800,18 @@
       return request("/api/v1/stats");
     },
     async recordVisit(visitor_key) {
+      let utm = "";
+      try {
+        const p = new URLSearchParams(window.location.search);
+        utm = (p.get("utm_source") || p.get("src") || "").slice(0, 60);
+      } catch (e) {}
       return request("/api/v1/visit", {
         method: "POST",
-        body: JSON.stringify({ visitor_key: visitor_key || "" }),
+        body: JSON.stringify({
+          visitor_key: visitor_key || "",
+          referrer: document.referrer || "",
+          utm_source: utm,
+        }),
       });
     },
     async pricing() {

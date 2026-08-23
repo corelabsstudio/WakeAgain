@@ -290,6 +290,11 @@ def init_db() -> None:
                 "settlement_account": "TEXT",
                 "is_business": "INTEGER NOT NULL DEFAULT 0",
                 "profile_updated_at": "TEXT",
+                # 유입 경로 (2026-08-23) — 첫 방문 시점의 채널/랜딩을 가입 때 그대로 옮겨 적는다.
+                # Direct로 뭉뚱그려지던 걸 쪼개려고 넣은 것이라 utm_source가 최우선이다.
+                "signup_source": "TEXT",
+                "signup_referrer": "TEXT",
+                "signup_landing": "TEXT",
                 # Credit score (auto) — see TRUST.md § credit
                 "credit_score": "INTEGER NOT NULL DEFAULT 50",
                 "credit_sold": "INTEGER NOT NULL DEFAULT 0",

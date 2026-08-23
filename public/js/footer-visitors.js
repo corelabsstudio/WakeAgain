@@ -55,6 +55,42 @@
     return s;
   }
 
+  // ── 유입 경로 (first-touch) ────────────────────────────────────────────
+  // 카톡·인앱 브라우저는 referrer를 안 넘긴다. 그래서 링크에 ?utm_source=를 박고
+  // 그 값을 최우선으로 쓴다. 한 번 잡은 경로는 덮어쓰지 않는다 — 가입 시점의
+  // referrer(대개 우리 사이트 자신)가 아니라 "처음 우리를 알게 된 곳"이 알고 싶은 것이라서.
+  var SRC_KEY = "wa_src";
+  var SRC_REF_KEY = "wa_src_ref";
+  var SRC_LAND_KEY = "wa_src_land";
+
+  function readUtmSource() {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      return (p.get("utm_source") || p.get("src") || "").slice(0, 60);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function captureFirstTouch() {
+    var utm = readUtmSource();
+    var stored = "";
+    try {
+      stored = localStorage.getItem(SRC_KEY) || "";
+    } catch (e) {}
+    // 이미 잡아둔 게 있으면 유지. 단 표식이 새로 붙어 오면 그건 더 정확하므로 갱신.
+    if (stored && !utm) return { source: stored, first: false };
+    var source = utm || "";
+    try {
+      localStorage.setItem(SRC_KEY, source || "(direct)");
+      if (!localStorage.getItem(SRC_REF_KEY)) {
+        localStorage.setItem(SRC_REF_KEY, (document.referrer || "").slice(0, 300));
+        localStorage.setItem(SRC_LAND_KEY, (window.location.href || "").slice(0, 300));
+      }
+    } catch (e2) {}
+    return { source: source, first: !stored };
+  }
+
   function getVisitorKey() {
     var k = "";
     try {
@@ -152,8 +188,14 @@
     ensureEl();
     if (isOwnerNoTrack()) return fetchStatsOnly();
     var key = getVisitorKey();
+    var touch = captureFirstTouch();
     var url = apiBase() + "/api/v1/visit";
-    var body = JSON.stringify({ visitor_key: key, referrer: document.referrer || "" });
+    var body = JSON.stringify({
+      visitor_key: key,
+      referrer: document.referrer || "",
+      utm_source: touch.source || "",
+      landing: (window.location.pathname || "").slice(0, 300),
+    });
 
     // Prefer shared client when present
     if (window.WakeAgainAPI && typeof window.WakeAgainAPI.request === "function") {
@@ -199,6 +241,24 @@
   } else {
     boot();
   }
+
+  // 가입 폼(api.js)에서 읽어 쓴다.
+  window.WakeAgainSource = {
+    get: function () {
+      var g = function (k) {
+        try {
+          return localStorage.getItem(k) || "";
+        } catch (e) {
+          return "";
+        }
+      };
+      return {
+        source: g(SRC_KEY),
+        referrer: g(SRC_REF_KEY),
+        landing: g(SRC_LAND_KEY),
+      };
+    },
+  };
 
   document.addEventListener("wa:langchange", function () {
     var root = document.getElementById("footerVisitors");

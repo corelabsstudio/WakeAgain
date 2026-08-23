@@ -464,6 +464,10 @@ class RegisterIn(BaseModel):
     confirm_age_14: bool = False
     # ISO 3166-1 alpha-2 (e.g. "KR", "US") — 매물 국기 배지·해외거래 판정용
     country: str = Field(default="", max_length=2)
+    # 첫 방문(first-touch) 유입 경로 — 프런트가 localStorage에 담아뒀다가 가입 때 넘긴다
+    signup_source: str = Field(default="", max_length=80)
+    signup_referrer: str = Field(default="", max_length=300)
+    signup_landing: str = Field(default="", max_length=300)
 
 
 class LoginIn(BaseModel):
@@ -1066,6 +1070,10 @@ def public_stats():
 class VisitIn(BaseModel):
     visitor_key: str = Field(min_length=8, max_length=64)
     referrer: str = Field(default="", max_length=500)
+    # 링크에 직접 박아 보내는 표식. 카톡·인앱 브라우저는 referrer를 안 넘겨서
+    # 그쪽에서 온 방문이 전부 Direct로 뭉친다 — utm_source가 그걸 쪼개는 유일한 수단이다.
+    utm_source: str = Field(default="", max_length=60)
+    landing: str = Field(default="", max_length=300)
 
 
 _BOT_UA = re.compile(
@@ -1087,6 +1095,16 @@ _REFERRER_CHANNELS = [
     (re.compile(r"kakao(corp|talk)?\.com$|kakao\.com$", re.I), "Kakao"),
     (re.compile(r"discord(app)?\.com$", re.I), "Discord"),
     (re.compile(r"youtube\.com$|youtu\.be$", re.I), "YouTube"),
+    (re.compile(r"tistory\.com$", re.I), "Tistory"),
+    (re.compile(r"github\.(com|io)$", re.I), "GitHub"),
+    (re.compile(r"(twitter\.com|^x\.com$|t\.co)$", re.I), "X"),
+    (re.compile(r"threads\.(net|com)$", re.I), "Threads"),
+    (re.compile(r"latpeed\.com$", re.I), "Latpeed"),
+    (re.compile(r"kmong\.com$", re.I), "Kmong"),
+    (re.compile(r"velog\.io$|medium\.com$|brunch\.co\.kr$", re.I), "Blog"),
+    (re.compile(r"news\.hada\.io$", re.I), "GeekNews"),
+    (re.compile(r"linkedin\.com$|lnkd\.in$", re.I), "LinkedIn"),
+    (re.compile(r"(bing\.com|duckduckgo\.com|search\.yahoo)", re.I), "Search"),
 ]
 
 
@@ -1123,7 +1141,10 @@ def record_visit(body: VisitIn, request: Request):
         raise HTTPException(status_code=400, detail="invalid visitor_key")
 
     own_host = (request.headers.get("host") or "").split(":")[0].lower()
-    source = _normalize_referrer(body.referrer, own_host)
+    # utm_source가 붙어 있으면 referrer보다 우선한다. referrer는 카톡·앱에서
+    # 아예 안 넘어오지만 URL 표식은 살아남기 때문.
+    utm = re.sub(r"[^A-Za-z0-9._-]", "", (body.utm_source or "").strip())[:60]
+    source = utm if utm else _normalize_referrer(body.referrer, own_host)
 
     with database.db() as conn:
         stats = database.record_site_visit(conn, key, count_page_view=True, source=source)
@@ -1226,9 +1247,10 @@ def register(body: RegisterIn, request: Request):
             """
             INSERT INTO users (
               email, password_hash, display_name, birth_date, country,
-              created_at, email_verified, role
+              created_at, email_verified, role,
+              signup_source, signup_referrer, signup_landing
             )
-            VALUES (?, ?, ?, ?, ?, ?, 0, 'both')
+            VALUES (?, ?, ?, ?, ?, ?, 0, 'both', ?, ?, ?)
             """,
             (
                 email,
@@ -1237,6 +1259,9 @@ def register(body: RegisterIn, request: Request):
                 birth_iso,
                 country_code,
                 database._now(),
+                (body.signup_source or "").strip()[:80],
+                (body.signup_referrer or "").strip()[:300],
+                (body.signup_landing or "").strip()[:300],
             ),
         )
         user_id = int(cur.lastrowid)
@@ -6086,6 +6111,10 @@ def _admin_user_row(conn: Any, row: Any, *, full: bool = False) -> dict[str, Any
         "role": (row["role"] if "role" in row.keys() else None) or "both",
         "email_verified": bool(int(row["email_verified"] or 0)),
         "created_at": (row["created_at"] or ""),
+        # 유입 경로 — 어디서 온 회원인지 관리자 목록에서 바로 보이게
+        "signup_source": (row["signup_source"] if "signup_source" in row.keys() else None) or "",
+        "signup_referrer": (row["signup_referrer"] if "signup_referrer" in row.keys() else None) or "",
+        "signup_landing": (row["signup_landing"] if "signup_landing" in row.keys() else None) or "",
         "trust": u.get("trust") or {},
         "is_suspended": bool(int(row["is_suspended"] or 0)) if "is_suspended" in row.keys() else False,
         "suspended_at": (row["suspended_at"] if "suspended_at" in row.keys() else None) or "",
