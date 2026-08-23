@@ -23,14 +23,11 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 _(없음)_
 
-
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `public/blog/**`, `public/sitemap.xml` — 일일 SEO 파이프 — 2026-08-23 종료
 - [Claude Code] `public/index.html`, `public/assets/world/**` — 홈 스크롤 랜딩(깨어나는 창고) 교체 — 2026-08-21 종료
-
 - [Claude Code] `wakeagain/db.py`, `wakeagain/api.py`, `public/admin/index.html`, `public/admin/sw.js` — 위탁 등록(consignor) 필드 — 2026-08-18 종료
-- [Claude Code] `wakeagain/db.py`, `wakeagain/api.py`, `public/admin/index.html`, `public/admin/sw.js`, `CLAUDE.md` — 관리자 매물 명의 이전(위탁 인계) — 2026-08-16 종료
-- [Claude Code] `wakeagain/db.py`, `wakeagain/api.py`, `public/app/index.html`, `public/app/app.js`, `public/js/i18n-messages.js` — 매물 등록 필수 필드 정책 백엔드·앱폼 — 2026-08-15 종료
