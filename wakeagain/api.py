@@ -1238,6 +1238,14 @@ def register(body: RegisterIn, request: Request):
         )
     birth = _require_age_eligible(body.birth_date)
     birth_iso = birth.isoformat()
+    # 프런트가 넘기는 signup_source는 URL 표식(utm)이 있을 때만 채워진다.
+    # 없으면 첫 방문 referrer로 채널을 판정한다 — 안 그러면 표식 없는 유입이
+    # 전부 빈 값으로 뭉쳐서 "어디서 온 회원인지"를 영영 못 본다.
+    signup_source = (body.signup_source or "").strip()[:80]
+    signup_referrer = (body.signup_referrer or "").strip()[:300]
+    if not signup_source:
+        own_host = (request.headers.get("host") or "").split(":")[0].lower()
+        signup_source = _normalize_referrer(signup_referrer, own_host)
     with database.db() as conn:
         exists = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
         if exists:
@@ -1259,8 +1267,8 @@ def register(body: RegisterIn, request: Request):
                 birth_iso,
                 country_code,
                 database._now(),
-                (body.signup_source or "").strip()[:80],
-                (body.signup_referrer or "").strip()[:300],
+                signup_source,
+                signup_referrer,
                 (body.signup_landing or "").strip()[:300],
             ),
         )

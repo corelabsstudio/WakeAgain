@@ -57,11 +57,14 @@
 
   // ── 유입 경로 (first-touch) ────────────────────────────────────────────
   // 카톡·인앱 브라우저는 referrer를 안 넘긴다. 그래서 링크에 ?utm_source=를 박고
-  // 그 값을 최우선으로 쓴다. 한 번 잡은 경로는 덮어쓰지 않는다 — 가입 시점의
-  // referrer(대개 우리 사이트 자신)가 아니라 "처음 우리를 알게 된 곳"이 알고 싶은 것이라서.
+  // 그 값을 쓴다. 단, 여기 저장하는 것은 가입 귀속용 first-touch 전용이다 —
+  // 방문 집계에는 이번 방문 URL의 표식만 쓰고, 없으면 서버가 referrer로 판정한다.
   var SRC_KEY = "wa_src";
   var SRC_REF_KEY = "wa_src_ref";
   var SRC_LAND_KEY = "wa_src_land";
+  // 2026-08-23 버그 잔재. referrer가 있어도 이 문자열을 저장해서,
+  // 재방문이 전부 direct로 덮였다. 값으로 치지 않고 빈 것으로 읽는다.
+  var LEGACY_DIRECT = "(direct)";
 
   function readUtmSource() {
     try {
@@ -72,23 +75,28 @@
     }
   }
 
+  function readStoredSource() {
+    try {
+      var v = localStorage.getItem(SRC_KEY) || "";
+      return v === LEGACY_DIRECT ? "" : v;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // 첫 방문의 표식·리퍼러·랜딩을 적어둔다 — 가입 때 "처음 우리를 알게 된 곳"으로 쓴다.
+  // 방문 집계(record)와는 쓰임이 다르다. 그쪽은 이번 방문의 URL 표식만 본다.
   function captureFirstTouch() {
     var utm = readUtmSource();
-    var stored = "";
+    var stored = readStoredSource();
     try {
-      stored = localStorage.getItem(SRC_KEY) || "";
-    } catch (e) {}
-    // 이미 잡아둔 게 있으면 유지. 단 표식이 새로 붙어 오면 그건 더 정확하므로 갱신.
-    if (stored && !utm) return { source: stored, first: false };
-    var source = utm || "";
-    try {
-      localStorage.setItem(SRC_KEY, source || "(direct)");
-      if (!localStorage.getItem(SRC_REF_KEY)) {
+      if (utm && !stored) localStorage.setItem(SRC_KEY, utm);
+      if (localStorage.getItem(SRC_REF_KEY) === null) {
         localStorage.setItem(SRC_REF_KEY, (document.referrer || "").slice(0, 300));
         localStorage.setItem(SRC_LAND_KEY, (window.location.href || "").slice(0, 300));
       }
-    } catch (e2) {}
-    return { source: source, first: !stored };
+    } catch (e) {}
+    return { source: utm || stored, first: !stored };
   }
 
   function getVisitorKey() {
@@ -117,7 +125,19 @@
     return k;
   }
 
+  // data-render="off" 페이지는 집계만 하고 푸터에 숫자를 그리지 않는다.
+  // (블로그·가이드·앱 — 영문 페이지에 한글 라벨이 붙거나 앱 UI가 바뀌는 걸 피한다)
+  var RENDER_OFF = (function () {
+    try {
+      var s = document.currentScript || document.querySelector('script[src*="footer-visitors.js"]');
+      return !!(s && s.getAttribute("data-render") === "off");
+    } catch (e) {
+      return false;
+    }
+  })();
+
   function ensureEl() {
+    if (RENDER_OFF) return null;
     var el = document.getElementById("footerVisitors");
     if (el) return el;
 
@@ -188,12 +208,14 @@
     ensureEl();
     if (isOwnerNoTrack()) return fetchStatsOnly();
     var key = getVisitorKey();
-    var touch = captureFirstTouch();
+    captureFirstTouch(); // 가입 귀속용 first-touch 갱신 (집계와는 별개)
     var url = apiBase() + "/api/v1/visit";
     var body = JSON.stringify({
       visitor_key: key,
       referrer: document.referrer || "",
-      utm_source: touch.source || "",
+      // 이번 방문 URL에 실제로 붙어 온 표식만 보낸다. 저장값을 보내면
+      // 재방문이 전부 그 값으로 덮여서 진짜 유입처(리퍼러)가 사라진다.
+      utm_source: readUtmSource(),
       landing: (window.location.pathname || "").slice(0, 300),
     });
 

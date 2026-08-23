@@ -181,6 +181,53 @@
 
 ## 최근 배포 이력 (요약 · 최신 우선)
 
+### 2026-08-24 · 유입경로가 전부 Direct로 나오던 문제 (집계 누락 + 재방문 덮어쓰기)
+
+**배경:** 사용자가 "아직도 방문자 유입경로가 다이렉트로 나온다"고 지적. 전날 `d6f00da`로
+유입 경로 기록을 넣었는데도 안 바뀐 상태였다. 원인이 두 개였다.
+
+**원인 1 — 발견 채널 페이지가 애초에 집계에 없었다.** `footer-visitors.js`가 붙은 페이지가
+`public/**` 63개 중 **9개**뿐이었다. 블로그 28개 전부, `/guide/*`, `/app/`이 전부 빠져 있었고,
+`/api/v1/visit`를 호출하는 곳은 이 파일 하나다 — 즉 **블로그로 들어온 방문은 기록 자체가 없었다.**
+GSC 실측(2026-08-21)상 발견형 질의 노출을 가져오는 건 영문 블로그 글인데, 집계에 잡히는 건
+홈·매물·판매처럼 이름을 알고 들어오는 페이지뿐이었으니 구조적으로 Direct만 남는다.
+
+**원인 2 — 재방문이 전부 direct로 덮였다.** `captureFirstTouch()`가 첫 방문에 리퍼러가 있어도
+localStorage에 `"(direct)"`를 저장하고, 이후 모든 방문이 그 값을 `utm_source`로 보냈다.
+서버(`record_visit`)는 특수문자를 턴 뒤(`"direct"`) **utm을 referrer보다 우선**하므로,
+오늘 구글에서 들어와도 재방문이면 `direct`로 찍혔다. 서버가 만드는 정상 라벨은 대문자 `Direct`라
+관리자 화면에 대소문자 두 행이 갈라져 보이는 게 이 버그의 표식이었다.
+
+**수정:**
+- `footer-visitors.js` — 방문 집계에는 **이번 방문 URL에 실제로 붙어 온 표식만** 싣는다
+  (`readUtmSource()`). 표식이 없으면 서버가 referrer로 판정한다. 저장된 값은 **가입 귀속(first-touch)
+  전용**으로 분리했고, 레거시 `"(direct)"`는 빈 값으로 읽는다(`LEGACY_DIRECT`)
+- `api.py` `register()` — `signup_source`가 비면 `signup_referrer`로 채널을 판정한다.
+  안 그러면 표식 없는 가입이 전부 빈 값으로 뭉친다
+- 블로그 28개 + `/guide/index.html` + `/app/index.html` **30개 페이지에 스크립트 부착**.
+  전부 **`data-render="off"`** — 집계만 하고 푸터에 숫자는 안 그린다(영문 페이지에 한글 라벨이
+  붙거나 앱 UI가 바뀌는 걸 피함). `ensureEl()`이 이 속성을 보고 렌더를 건너뛴다
+- `?v=` → `20260824-visits` (9개 파일), `sw.js` `CACHE` → `v80-visits`
+
+**⚠️ 공개 방문자 수가 올라간다.** 집계 대상 페이지가 9개 → 39개가 되므로 푸터의
+「방문자 전체」 숫자가 이전 추세와 불연속이 된다. 과거 수치와 직접 비교하지 말 것.
+
+**집계 규칙(그대로 유지):** 유입 채널은 **한 방문자의 그날 첫 요청에만** 기록된다.
+홈에 직접 들어왔다가 나중에 깃허브 링크를 타도 그날은 Direct로 남는다.
+
+**검증:** `_visit_source_test.py` 신규 12개(리퍼러→채널 정규화 · 표식 우선 · 자기 사이트 리퍼러 =
+Direct · 봇 제외 · 같은 방문자 중복 미집계 · 가입 귀속 4종) 통과. `_visit_source_front_test.js` 신규
+12개 통과 — **`git show HEAD~1`의 옛 코드로 돌리면 B·D가 실패**하는 것까지 확인해서 회귀를 실제로
+잡는 테스트임을 검증했다. `_smoke_check.py` 전체 통과 · `_predeploy_gate.py` 10/10 ·
+`_auction_suite_test.py` 43/43. 로컬 브라우저로 블로그 글에서 `POST /api/v1/visit`가 나가고
+카운터 DOM은 안 생기는 것, 홈은 카운터가 그대로 뜨는 것, `?utm_source=github`가 first-touch로
+잡히는 것 확인.
+
+**후속:** 아직 집계에 없는 페이지 — `/guide/` 나머지 8개, `get-app.html`, `diagnose.html`,
+`legal/*` 8개, `404.html`, `promo/instagram.html`. 아웃리치 링크(깃허브 이슈·메일)에
+`?utm_source=github` 같은 표식을 붙이는 건 **미착수** — 메일·카톡은 referrer가 안 넘어와서
+표식 말고는 쪼갤 방법이 없다.
+
 ### 2026-08-16 · ⛔ 디자인 변경 작업 종료 — 현 상태 유지 확정
 
 **사용자 결정: "디자인 바꾸는 건 접고 지금 있는 상태 유지."** 아래 시안 작업은 여기서 끝난다.
@@ -533,13 +580,21 @@ Googlebot UA로 `/`·`/sell.html`·`/buy.html`·`/project.html?id=11` 받아 H1�
 - **헬프티켓 (q-credits)**: 포함 1~3 · 스레드 · 추가 구매(PG 전 mock)
 - **인증**: `passlib` 제거 · `bcrypt` 직접 해시
 
-## 방문자 카운터 (푸터)
+## 방문자 카운터 · 유입경로 (푸터 + 관리자)
 
 - 형식: `방문자 오늘 N · 전체 M` (i18n 한/영)
-- 규칙: 전체=브라우저 1회(`wa_vid`), 오늘=KST 1일 1회, 봇 UA 제외
-- DB: `site_counters`, `site_daily`, `site_visitor_seen`
-- API: `POST/GET /api/v1/visit`, `GET /api/v1/stats`
-- FE: `public/js/footer-visitors.js`
+- 규칙: 전체=브라우저 1회(`wa_vid`), 오늘=KST 1일 1회, 봇 UA 제외, `?notrack=1`로 본인 제외
+- **유입 채널은 그날 첫 요청에만 기록된다.** 같은 방문자의 그날 이후 이동은 집계 안 함
+- 판정 순서: 이번 방문 URL의 `?utm_source=`(또는 `?src=`) → 없으면 `document.referrer`를
+  서버가 호스트별 채널로 정규화(`_normalize_referrer`, api.py). 자기 사이트·빈 리퍼러 = `Direct`
+- **저장된 first-touch 값은 집계에 쓰지 않는다** — 쓰면 재방문이 전부 그 값으로 덮인다
+  (2026-08-23~24 실제 사고, 위 배포 이력 참조). 저장값은 가입 귀속(`signup_source`) 전용
+- 스크립트 부착 시 **`data-render="off"`를 붙이면 집계만 하고 푸터에 숫자를 안 그린다.**
+  블로그·가이드·앱이 이 모드다. 새 페이지에 붙일 때 기본값으로 쓸 것
+- DB: `site_counters`, `site_daily`, `site_visitor_seen`, `site_daily_sources`
+- API: `POST/GET /api/v1/visit`, `GET /api/v1/stats`, `GET /api/v1/admin/visit-sources`
+- 관리자 화면: `/admin/` → 「유입경로」 탭
+- FE: `public/js/footer-visitors.js` · 테스트: `_visit_source_test.py`, `_visit_source_front_test.js`
 
 ## 사업·콜드스타트 (요약)
 
@@ -634,7 +689,7 @@ python _verify_handover.py
 ## 의도적 미완 (사람 행정·다음 코드)
 
 - **PayPal 실결제 검증** — **2026-08-15 계약 완료 + Railway env var 반영 확인됨**(위 2026-08-15 항목). 코드(`07fca5f`)도 배포돼 있음. 아직 실제 결제를 한 번도 끝까지 돌려본 적은 없음 — 실매물로 낙찰→결제까지 진행해서 `loadPaymentUI` 콜백·STC 필드 확인 필요
-- **토스페이먼츠(카드) 계약 승인 대기** — 2026-08-15 기준 "신청 접수 및 계약 진행 중"(3단계 중 1단계). 서버 `portone.enabled`는 이미 true지만 이건 환경변수 존재 여부만 보는 플래그라 실제 승인과는 별개 — **승인("계약 완료") 전까지 카드 결제 가능하다고 홍보 금지**. 승인되면 PortOne 콘솔 재확인
+- **토스페이먼츠(카드) 계약 승인 대기** — 2026-08-22 PortOne 콘솔 확인: 「신청 접수 및 계약 진행 중 → **PG사 접수 완료**」 단계(신용카드 일반결제·실시간 계좌이체·가상계좌). 취소된 중복 신청 1건 있음. **해외카드·유니온페이·위챗페이·알리페이는 신청 범위에 없음** — PortOne 해외결제 탭에 있는 PG는 페이먼트월·엑심베이·페이팔·KG이니시스(일본 전용)·페이레터·이지페이뿐. 카카오페이는 별도 진행중 1건. (8/15 기준은 1단계였음.) **토스페이먼츠 상점관리자(app.tosspayments.com, hhs1261@naver.com) 확인: 「심사중 — [코리아포트원(일반)] 코어랩스」** = 가입비 결제·신청서 제출 끝, 토스/카드사 심사 단계. 사용자가 더 할 일 없음. 심사 결과는 신청 때 적은 연락처로 옴(최대 10~14영업일). 서버 `portone.enabled`는 이미 true지만 이건 환경변수 존재 여부만 보는 플래그라 실제 승인과는 별개 — **승인("계약 완료") 전까지 카드 결제 가능하다고 홍보 금지**. 승인되면 PortOne 콘솔 재확인
 - **웹훅 시크릿** 미설정 (`PORTONE_WEBHOOK_SECRET`) — 서버 검증(`/payments/verify`)은 이미 동작하므로 급하지 않음, 콘솔에서 발급만 하면 됨
 - **홍보 실행** — r/SideProject 2회 시도(1차 링크 포함→스팸필터 삭제됨, 2차 링크 제거 버전→최종 생존 여부 미확인) + X 게시 완료(PayPal 문구 제외). **r/indiehackers·r/SaaS·HN Show HN은 미착수** — 다음 세션 과제
 - **SNS 로그인**: 구글은 라이브·검증 완료(env var는 위 "환경 설정" 참고). GitHub/Kakao는 `oauth.py`에 구현은 있으나 이번 세션엔 미설정·미검증
