@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Doc Review Scheduler</title>
+  <meta name="description" content="Privacy policy for Doc Review Scheduler, a Confluence Cloud app by CoreLabs." />
+  <meta name="robots" content="noindex, follow" />
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+      font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1a1a1a; background: #fff;
+    }
+    @media (prefers-color-scheme: dark) { body { color: #e8e8e8; background: #16161a; } }
+    h1 { font-size: 1.6rem; margin-bottom: .25rem; }
+    h2 { font-size: 1.08rem; margin-top: 2rem; }
+    .meta { color: #666; font-size: .9rem; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; margin: .75rem 0; font-size: .95rem; }
+    th, td { border: 1px solid #ccc; padding: .5rem .65rem; text-align: left; vertical-align: top; }
+    th { width: 34%; background: rgba(127,127,127,.1); }
+    code { background: rgba(127,127,127,.15); padding: .1rem .3rem; border-radius: 3px; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ccc; font-size: .88rem; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy — Doc Review Scheduler</h1>
+  <p class="meta">Confluence Cloud app by CoreLabs · Last updated 25 August 2026</p>
+
+  <h2>1. Summary</h2>
+  <p>
+    Doc Review Scheduler stores the minimum needed to remind the right person that a page is due
+    for review. It runs entirely on Atlassian infrastructure (Atlassian Forge). We operate no
+    servers of our own and no data leaves Atlassian's platform.
+  </p>
+
+  <h2>2. What the app stores</h2>
+  <table>
+    <tr><th>Data</th><td>Page ID, review interval, next review date, last reviewed date</td></tr>
+    <tr><th>Identifiers</th><td>Atlassian <code>accountId</code> of the assigned reviewer and of the person who marked a page reviewed</td></tr>
+    <tr><th>Where</th><td>Atlassian Forge storage, inside your own Atlassian Cloud tenancy</td></tr>
+    <tr><th>Not stored</th><td>Page content, names, email addresses, IP addresses, analytics or tracking data</td></tr>
+  </table>
+  <p>
+    An Atlassian <code>accountId</code> is a pseudonymous identifier issued by Atlassian. We store it
+    only to know who to notify, and we never resolve it to a name or email address.
+  </p>
+
+  <h2>3. What the app does with it</h2>
+  <p>
+    Once a week a scheduled job looks for pages whose review date has passed and posts a single
+    comment on Confluence mentioning the assigned reviewer. Notification delivery is handled by
+    Confluence itself and follows each user's own notification settings. The app sends no email
+    of its own.
+  </p>
+
+  <h2>4. Third parties</h2>
+  <p>
+    None. There are no external services, no sub-processors, no advertising and no analytics.
+    The app makes no network calls outside the Atlassian platform.
+  </p>
+
+  <h2>5. Retention and deletion</h2>
+  <p>
+    Data lives in your Atlassian tenancy for as long as the app is installed. Removing a schedule
+    from a page deletes that page's record immediately. Uninstalling the app removes all data the
+    app stored, in line with Atlassian's Forge storage lifecycle.
+  </p>
+
+  <h2>6. Your rights</h2>
+  <p>
+    Because all data sits inside your own Atlassian tenancy, your Confluence administrator controls
+    it. For access, correction or deletion requests, or any privacy question, contact us at the
+    address below and we will respond within 30 days.
+  </p>
+
+  <h2>7. Changes</h2>
+  <p>
+    If this policy changes materially we will update the date above and note the change in the app's
+    Atlassian Marketplace listing.
+  </p>
+
+  <h2>8. Contact</h2>
+  <p>
+    CoreLabs · Business registration 705-04-02867 · Republic of Korea<br />
+    8-3, Sesil-ro 192beon-gil, 1F, Chuncheon-si, Gangwon-do, 24307<br />
+    <a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>
+  </p>
+
+  <footer>
+    © 2026 CoreLabs · <a href="./terms.html">Terms of Service</a>
+  </footer>
+</body>
+</html>

@@ -21,7 +21,7 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 점유 중
 
-_(없음)_
+- [Claude Code] `public/apps/doc-review-scheduler/**` (신규) — Forge 앱 Marketplace 등재용 법적 고지 페이지. WakeAgain 본체는 안 건드림 — 2026-08-25 시작
 
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.
