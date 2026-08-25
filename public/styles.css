@@ -19,7 +19,7 @@
   --text: #f5f0e6;
   /* Muted slightly lighter for dark-mode secondary text contrast (≥ ~3:1 feel) */
   --muted: #b8ae9c;
-  --muted-2: #8f8576;
+  --muted-2: #948a7b;
   --accent: #d4a017;
   --accent-2: #c4920f;
   --accent-3: #a67c00;
@@ -157,7 +157,8 @@ h1, h2, h3, h4 {
   left: -999px;
   top: 0;
   background: var(--accent);
-  color: #fff;
+  /* 흰 글자는 금색 위에서 2.38:1 이라 기준 미달 — 어두운 글자가 7.39:1 */
+  color: #1a1814;
   padding: 0.5rem 1rem;
   z-index: 100;
 }
