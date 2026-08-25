@@ -74,9 +74,13 @@
    --wa-world-out 은 index.html 의 past() 가 1 → 0 으로 내려준다.
    .sw-sky 는 여기서 안 건드린다 — body 배경이 같은 #1a1814 라 그대로 둬도 이음매가 없고,
    중간에 투명해지면 html 의 밝은 기본색이 비친다. */
-.wa-world .sw-stage,
+/* 무대(영상)는 천천히 크로스페이드시키고 */
+.wa-world .sw-stage { opacity: var(--wa-world-out, 1); }
+/* 글자와 경로점은 먼저 뺀다 — 매물이 올라오기 시작할 때 카피가 겹쳐 보이면
+   전환이 아니라 잔상처럼 읽힌다. out 1→0.7 구간에서 0 이 된다.
+   (opacity 는 0~1 밖 값을 브라우저가 알아서 잘라주므로 clamp 가 따로 필요없다) */
 .wa-world .sw-copylayer,
-.wa-world .sw-route { opacity: var(--wa-world-out, 1); }
+.wa-world .sw-route { opacity: calc((var(--wa-world-out, 1) - 0.7) / 0.3); }
 
 /* 하늘은 색이 body 와 같으므로 걷지 않고 뒤로 보낸다.
    z-index 0 이어도 positioned 라 뒤따르는 static 콘텐츠(매물 제목·가격)를 덮는다.
