@@ -28,6 +28,7 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `public/styles.css`, `yard-theme.css`, `app/app.css`, `guide/guide-visual.css`, `project.html`, `?v=` 62파일 — 대비 결함 2건 + focus-visible — 2026-08-25 종료
 - [Claude Code] `public/**` HTML 16개, `public/sw.js` — 사이트 전체 접근성 결함 수정(th scope 95·폼 라벨 3·theme-color 1) — 2026-08-25 종료
 - [Claude Code] `public/apps/doc-review-scheduler/**`, `public/sw.js` — Forge 앱 문서·법적고지 3종 + 접근성·다크모드 정리(Vercel 가이드라인 검사) — 2026-08-25 종료
 - [Claude Code] `wakeagain/payments.py`, `wakeagain/db.py`, `wakeagain/api.py`, `public/project.html`, `public/sw.js` — 페이팔 KRW→USD 결제 통화 수정 + SPB 위젯이 폴링에 지워지던 문제 — 2026-08-25 종료
