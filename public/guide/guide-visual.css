@@ -317,7 +317,7 @@
 .gv-note {
   margin: 1rem 0 0;
   font-size: 0.82rem;
-  color: var(--muted-2, #8f8576);
+  color: var(--muted-2, #948a7b);
   line-height: 1.45;
 }
 .gv-note a { color: #e8b86d; }
