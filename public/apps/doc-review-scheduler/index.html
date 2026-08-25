@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doc Review Scheduler — Documentation</title>
+  <meta name="description" content="How to use Doc Review Scheduler, a Confluence Cloud app by CoreLabs." />
+  <meta name="robots" content="noindex, follow" />
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
+      font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1a1a1a; background: #fff;
+    }
+    @media (prefers-color-scheme: dark) { body { color: #e8e8e8; background: #16161a; } }
+    h1 { font-size: 1.7rem; margin-bottom: .25rem; }
+    h2 { font-size: 1.12rem; margin-top: 2.2rem; }
+    .meta { color: #666; font-size: .9rem; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; margin: .75rem 0; font-size: .95rem; }
+    th, td { border: 1px solid #ccc; padding: .5rem .65rem; text-align: left; vertical-align: top; }
+    th { background: rgba(127,127,127,.1); }
+    code { background: rgba(127,127,127,.15); padding: .1rem .3rem; border-radius: 3px; }
+    ol li, ul li { margin: .3rem 0; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ccc; font-size: .88rem; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Doc Review Scheduler — Documentation</h1>
+  <p class="meta">Confluence Cloud app by CoreLabs · Last updated 25 August 2026</p>
+
+  <h2>What it does</h2>
+  <p>
+    Attach a review date to a Confluence page. When the date passes, the page owner gets one
+    comment mentioning them, and a button on the page to clear it. The app runs on Atlassian
+    Forge inside your own Cloud tenancy.
+  </p>
+
+  <h2>Install</h2>
+  <ol>
+    <li>Open the app on the Atlassian Marketplace and select <strong>Try it free</strong> or <strong>Buy now</strong>.</li>
+    <li>A Confluence site admin approves the installation.</li>
+    <li>No configuration is needed. The app appears on every page byline immediately.</li>
+  </ol>
+
+  <h2>Set a review schedule</h2>
+  <ol>
+    <li>Open any Confluence page.</li>
+    <li>Select <strong>Review status</strong> in the byline, next to the page title.</li>
+    <li>Choose a cycle — every 3, 6 or 12 months — and select <strong>Set review schedule</strong>.</li>
+  </ol>
+  <p>The next review date is calculated from today. Month ends are clamped: 31 January plus one month is 28 February.</p>
+
+  <h2>Mark a page reviewed</h2>
+  <p>
+    Select <strong>Mark reviewed</strong> in the panel. The next review date moves forward by the
+    cycle length, counted from the day you pressed it — not from the old due date. Use
+    <strong>Remove</strong> to drop the schedule from the page entirely.
+  </p>
+
+  <h2>The weekly digest</h2>
+  <p>
+    Once a week the app looks for pages whose review date has passed, groups them by page owner,
+    and posts a single comment on Confluence mentioning that owner.
+  </p>
+  <table>
+    <tr><th>Why a comment, not email</th><td>Forge apps cannot send email. Using a comment means delivery follows each person's own Confluence notification settings.</td></tr>
+    <tr><th>One per owner</th><td>An owner with five overdue pages gets one comment listing all five, not five alerts.</td></tr>
+    <tr><th>Automation quota</th><td>The app runs on its own schedule and spends none of your Confluence automation quota.</td></tr>
+  </table>
+
+  <h2>Status badges</h2>
+  <table>
+    <tr><th><code>On track</code></th><td>The review date is today or later.</td></tr>
+    <tr><th><code>Overdue</code></th><td>The review date has passed. The page is included in the next weekly digest.</td></tr>
+  </table>
+
+  <h2>Licensing</h2>
+  <p>
+    Sites with 10 users or fewer use the app at no cost. Above that, the app is billed per user
+    through Atlassian. Without an active licence you can still see existing review dates, but
+    setting and clearing them is disabled — no data is deleted.
+  </p>
+
+  <h2>What the app does not do yet</h2>
+  <ul>
+    <li>No space-level dashboard or cross-space report — the app works page by page.</li>
+    <li>English only.</li>
+    <li>Confluence Cloud only. Data Center and Server are not supported.</li>
+    <li>No bulk assignment of review dates across many pages.</li>
+  </ul>
+
+  <h2>Data and privacy</h2>
+  <p>
+    The app stores a review interval and two dates per page, in Forge storage inside your own
+    tenancy. It stores no account identifiers, names or email addresses, uses no third-party
+    services, and makes no network calls outside Atlassian. See the
+    <a href="./privacy.html">Privacy Policy</a> and <a href="./terms.html">Terms of Service</a>.
+  </p>
+
+  <h2>Support</h2>
+  <p>
+    Email <a href="mailto:corelabs.studio@gmail.com">corelabs.studio@gmail.com</a>. Include your
+    Confluence site URL and the page ID if the question is about a specific page. We aim to reply
+    within two business days.
+  </p>
+
+  <footer>
+    © 2026 CoreLabs · <a href="./privacy.html">Privacy</a> · <a href="./terms.html">Terms</a>
+  </footer>
+</body>
+</html>
