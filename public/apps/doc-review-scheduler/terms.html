@@ -3,21 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16161a" />
   <title>Terms of Service — Doc Review Scheduler</title>
   <meta name="description" content="Terms of service for Doc Review Scheduler, a Confluence Cloud app by CoreLabs." />
   <meta name="robots" content="noindex, follow" />
   <style>
-    :root { color-scheme: light dark; }
+    :root {
+      color-scheme: light dark;
+      --bg: #fff; --text: #1a1a1a; --muted: #5a5a5a;
+      --line: #d4d4d4; --fill: rgba(127,127,127,.10); --link: #0b5cd5;
+    }
+    /* 다크에서 --muted 를 #666 로 두면 #16161a 위에서 3.4:1 로 AA 미달이라 색을 올린다 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16161a; --text: #e8e8e8; --muted: #a8a8b0;
+        --line: #33333c; --fill: rgba(127,127,127,.16); --link: #7fb4ff;
+      }
+    }
     body {
       max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem;
       font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: #1a1a1a; background: #fff;
+      color: var(--text); background: var(--bg); touch-action: manipulation;
     }
-    @media (prefers-color-scheme: dark) { body { color: #e8e8e8; background: #16161a; } }
     h1 { font-size: 1.6rem; margin-bottom: .25rem; }
     h2 { font-size: 1.08rem; margin-top: 2rem; }
-    .meta { color: #666; font-size: .9rem; margin-top: 0; }
-    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ccc; font-size: .88rem; color: #666; }
+    h1, h2 { text-wrap: balance; }
+    .meta { color: var(--muted); font-size: .9rem; margin-top: 0; }
+    a { color: var(--link); }
+    a:hover { color: var(--text); }
+    a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
+    code { background: var(--fill); padding: .1rem .3rem; border-radius: 3px; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -26,8 +43,8 @@
 
   <h2>1. Agreement</h2>
   <p>
-    These terms apply to the Confluence Cloud app <strong>Doc Review Scheduler</strong> ("the app"),
-    provided by CoreLabs ("we"). Installing or using the app means you accept them. Where the
+    These terms apply to the Confluence Cloud app <strong>Doc Review Scheduler</strong> (“the app”),
+    provided by CoreLabs (“we”). Installing or using the app means you accept them. Where the
     Atlassian Marketplace Terms of Use apply to your purchase, those terms govern the transaction
     and these terms cover use of the app itself.
   </p>
@@ -43,7 +60,7 @@
   <p>
     We grant you a non-exclusive, non-transferable right to use the app on the Atlassian sites you
     are licensed for, for as long as your subscription or free entitlement is active. You may not
-    resell, redistribute, reverse engineer or attempt to extract the app's source code.
+    resell, redistribute, reverse engineer or attempt to extract the ap’ source code.
   </p>
 
   <h2>4. Your responsibilities</h2>
@@ -55,14 +72,14 @@
 
   <h2>5. Availability</h2>
   <p>
-    The app depends on Atlassian's platform. Scheduled jobs run on Atlassian's infrastructure and
+    The app depends on Atlassia’ platform. Scheduled jobs run on Atlassia’ infrastructure and
     may be delayed or skipped by platform incidents outside our control. We do not offer an uptime
     guarantee. We will make reasonable efforts to fix defects reported to the support address below.
   </p>
 
   <h2>6. No warranty</h2>
   <p>
-    The app is provided "as is", without warranty of any kind, express or implied, including
+    The app is provided “as is”, without warranty of any kind, express or implied, including
     merchantability and fitness for a particular purpose.
   </p>
 
