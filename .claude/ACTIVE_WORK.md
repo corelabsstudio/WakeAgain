@@ -21,13 +21,14 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 점유 중
 
-- [Claude Code] `public/apps/doc-review-scheduler/**` (신규) — Forge 앱 Marketplace 등재용 법적 고지 페이지. WakeAgain 본체는 안 건드림 — 2026-08-25 시작
+(없음)
 
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `public/apps/doc-review-scheduler/**`, `public/sw.js` — Forge 앱 문서·법적고지 3종 + 접근성·다크모드 정리(Vercel 가이드라인 검사) — 2026-08-25 종료
 - [Claude Code] `wakeagain/payments.py`, `wakeagain/db.py`, `wakeagain/api.py`, `public/project.html`, `public/sw.js` — 페이팔 KRW→USD 결제 통화 수정 + SPB 위젯이 폴링에 지워지던 문제 — 2026-08-25 종료
 - [Claude Code] `public/js/footer-visitors.js`, `public/blog/**`, `public/guide/index.html`, `public/app/index.html`, `public/sw.js`, `wakeagain/api.py` — 유입경로 Direct 뭉침 수정 + 집계 누락 페이지 부착 — 2026-08-24 종료
 - [Claude Code] `public/blog/**`, `public/sitemap.xml` — 일일 SEO 파이프 — 2026-08-23 종료
