@@ -89,7 +89,7 @@
   </script>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="/assets/world/world.css?v=20260821">
+  <link rel="stylesheet" href="/assets/world/world.css?v=20260825-out">
 </head>
 <body class="theme-yard">
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
@@ -653,7 +653,7 @@
       }
     })();
   </script>
-    <script src="/assets/world/scrub-engine.js?v=20260825-past"></script>
+    <script src="/assets/world/scrub-engine.js?v=20260825-out"></script>
     <script>
       (function () {
         var el = document.getElementById('waWorld');
@@ -781,6 +781,14 @@
         function past() {
           if (!world) return;
           var b = world.getBoundingClientRect().bottom;
+          var vh = window.innerHeight || 1;
+          // 트랙 끝 1vh 는 엔진이 "마지막 비행을 완주시키려고" 남겨둔 여유분이다.
+          // 그 구간에서 무대·카피를 서서히 걷어야 한다.
+          // 예전엔 b <= 1 에서만 걷었는데, 그건 세계가 화면 위로 완전히 사라진 뒤다.
+          // 그전까지 화면 한 장 높이만큼 매물 섹션이 fixed 레이어에 덮여 있었다
+          // (.sw-sky 는 z-index 0 이어도 positioned 라 뒤따르는 static 콘텐츠를 가린다).
+          var t = b / vh; t = t < 0 ? 0 : (t > 1 ? 1 : t);
+          world.style.setProperty('--wa-world-out', String(t));
           world.classList.toggle('is-past', b <= 1);
         }
         addEventListener('scroll', past, { passive: true });
