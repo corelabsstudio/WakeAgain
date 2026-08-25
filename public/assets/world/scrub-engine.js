@@ -178,6 +178,7 @@ function mountScrollWorld(container, config) {
   const lingerEase = (x, L) => { L = clamp(L); const c = x - 0.5; return (1 - L) * x + L * (4 * c * c * c + 0.5); };
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1, ticking = false;
   let laidOutW = window.innerWidth;   // width the current layout was computed at (see onResize)
+  let isPast = false;                // 월드를 완전히 지나쳤는가 (fixed 레이어를 놓아줄 시점)
 
   function layout() {
     vh = window.innerHeight;
@@ -267,6 +268,16 @@ function mountScrollWorld(container, config) {
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
+
+    // 월드를 다 지나가면 fixed 레이어를 놓아준다.
+    // 안 놓으면 두 가지가 동시에 깨진다:
+    //   1) 마지막 챕터는 pr 이 1 로 고정돼 opacity 가 영원히 1 이다 (아래 `holds CTA` 줄).
+    //      .sw-copylayer 가 z-index 20 fixed 라 다음 섹션 위에 붙박이로 남는다.
+    //   2) .sw-sky 는 z-index 0 이지만 *positioned* 라, 뒤따르는 static 콘텐츠를 덮는다.
+    //      그래서 매물 카드가 position:absolute 인 썸네일만 보이고 제목·가격은 가려졌다.
+    const past = container.getBoundingClientRect().bottom <= 0;
+    if (past !== isPast) { isPast = past; container.classList.toggle('is-past', past); }
+
     ticking = false;
   }
 
@@ -410,6 +421,11 @@ function injectCSS() {
   .sw-hint i::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--sw-accent);transform:translateX(-50%);animation:sw-wheel 1.7s ease-in-out infinite;}
   @keyframes sw-wheel{0%{opacity:0;top:6px}40%{opacity:1}100%{opacity:0;top:17px}}
   .sw-track{position:relative;z-index:1;width:100%;pointer-events:none;}
+  /* 월드 밖으로 나가면 고정 레이어를 전부 내린다 (is-past 는 read() 가 토글) */
+  .sw-sky,.sw-stage,.sw-copylayer,.sw-route,.sw-topbar,.sw-scrollbar,.sw-hint{transition:opacity .28s ease,visibility .28s;}
+  .sw-root.is-past .sw-sky,.sw-root.is-past .sw-stage,.sw-root.is-past .sw-copylayer,
+  .sw-root.is-past .sw-route,.sw-root.is-past .sw-topbar,.sw-root.is-past .sw-scrollbar,
+  .sw-root.is-past .sw-hint{opacity:0;visibility:hidden;pointer-events:none;}
   @media (max-width:860px){
     .sw-nav{display:none;}
     .sw-copylayer::before{width:100%;height:60%;top:auto;bottom:0;background:linear-gradient(0deg,var(--sw-bg) 8%,color-mix(in srgb,var(--sw-bg) 70%,transparent) 46%,transparent 100%);}
