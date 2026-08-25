@@ -20,8 +20,6 @@ MERCHANT = {
     "사업장주소": "강원특별자치도 춘천시 세실로192번길 8-3, 1층 왼쪽 상가(후평동)",
     "유선전화": "033-818-2021",
     "가맹점 URL": "https://wakeagain.com",
-    "Test ID": "corelabs.seller@wakeagain.com",
-    "Test PW": "Toss-Review-2026!",
 }
 
 SLIDES = [
