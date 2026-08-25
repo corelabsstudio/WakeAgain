@@ -89,7 +89,7 @@
   </script>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="/assets/world/world.css?v=20260825-out">
+  <link rel="stylesheet" href="/assets/world/world.css?v=20260825-out2">
 </head>
 <body class="theme-yard">
   <div class="scroll-progress" aria-hidden="true"><span></span></div>
@@ -789,6 +789,10 @@
           // (.sw-sky 는 z-index 0 이어도 positioned 라 뒤따르는 static 콘텐츠를 가린다).
           var t = b / vh; t = t < 0 ? 0 : (t > 1 ? 1 : t);
           world.style.setProperty('--wa-world-out', String(t));
+          // 세계 바닥이 화면에 들어오는 순간부터 하늘을 뒤로 보낸다.
+          // 투명하게 만들지 않는 이유: 색이 body 와 같은 #1a1814 라 그대로 두는 게
+          // 이음매가 없고, 투명해지면 html 의 밝은 기본색이 비칠 위험이 있다.
+          world.classList.toggle('is-leaving', t < 1);
           world.classList.toggle('is-past', b <= 1);
         }
         addEventListener('scroll', past, { passive: true });
