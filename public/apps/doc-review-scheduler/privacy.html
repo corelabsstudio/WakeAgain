@@ -38,13 +38,14 @@
   <h2>2. What the app stores</h2>
   <table>
     <tr><th>Data</th><td>Page ID, review interval, next review date, last reviewed date</td></tr>
-    <tr><th>Identifiers</th><td>Atlassian <code>accountId</code> of the assigned reviewer and of the person who marked a page reviewed</td></tr>
+    <tr><th>Personal data</th><td><strong>None.</strong> The app stores no user identifiers, names, email addresses or IP addresses</td></tr>
     <tr><th>Where</th><td>Atlassian Forge storage, inside your own Atlassian Cloud tenancy</td></tr>
-    <tr><th>Not stored</th><td>Page content, names, email addresses, IP addresses, analytics or tracking data</td></tr>
+    <tr><th>Not stored</th><td>Page content, analytics or tracking data</td></tr>
   </table>
   <p>
-    An Atlassian <code>accountId</code> is a pseudonymous identifier issued by Atlassian. We store it
-    only to know who to notify, and we never resolve it to a name or email address.
+    The app deliberately does not store Atlassian <code>accountId</code> values. When the weekly
+    digest runs it looks up the current page owner from Confluence at that moment, mentions them in
+    a comment, and discards the identifier. Nothing about a person is written to storage.
   </p>
 
   <h2>3. What the app does with it</h2>
@@ -63,9 +64,10 @@
 
   <h2>5. Retention and deletion</h2>
   <p>
-    Data lives in your Atlassian tenancy for as long as the app is installed. Removing a schedule
-    from a page deletes that page's record immediately. Uninstalling the app removes all data the
-    app stored, in line with Atlassian's Forge storage lifecycle.
+    Review dates live in your Atlassian tenancy for as long as the app is installed. Removing a
+    schedule from a page deletes that page's record immediately. Uninstalling the app removes all
+    data the app stored, in line with Atlassian's Forge storage lifecycle. Because no personal data
+    is stored, there is nothing about an individual to erase.
   </p>
 
   <h2>6. Your rights</h2>
