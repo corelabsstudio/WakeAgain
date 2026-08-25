@@ -3537,22 +3537,25 @@ def payment_request(
                 detail="입금 대기 단계에서만 결제를 시작할 수 있습니다.",
             )
         payment_id = payments_mod.new_payment_id(project_id)
-        row = database.set_pending_payment(conn, row, payment_id=payment_id)
+        total_amount = int(
+            row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]
+        )
+        title = str(row["title"])
+        project_row_id = int(row["id"])
 
-    total_amount = int(row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"])
     try:
         if method == "paypal":
-            params = payments_mod.build_paypal_payment_request(
+            params, charge = payments_mod.build_paypal_payment_request(
                 payment_id=payment_id,
-                order_name=str(row["title"]),
+                order_name=title,
                 total_amount=total_amount,
                 buyer_name=user.get("real_name") or user.get("email") or "buyer",
                 buyer_email=user.get("email"),
             )
         else:
-            params = payments_mod.build_payment_request(
+            params, charge = payments_mod.build_payment_request(
                 payment_id=payment_id,
-                order_name=str(row["title"]),
+                order_name=title,
                 total_amount=total_amount,
                 buyer_name=user.get("real_name") or user.get("email") or "buyer",
                 buyer_email=user.get("email"),
@@ -3560,7 +3563,33 @@ def payment_request(
             )
     except payments_mod.PortOnePaymentError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
-    return {"ok": True, "method": method, "payment_request": params}
+
+    # 청구액이 정해진 뒤에 기록한다 — 환산이 실패하면 pg_payment_id도 남기지 않는다
+    with database.db() as conn:
+        row = conn.execute(
+            "SELECT * FROM projects WHERE id = ?", (project_row_id,)
+        ).fetchone()
+        database.set_pending_payment(
+            conn,
+            row,
+            payment_id=payment_id,
+            charge_amount=charge["amount"],
+            charge_currency=charge["currency"],
+            charge_fx=charge.get("fx_krw_per_usd"),
+        )
+    return {"ok": True, "method": method, "payment_request": params, "charge": charge}
+
+
+def _expected_charge(row) -> tuple[int, str]:
+    """검증에 쓸 (금액, 통화). 원장은 KRW지만 해외 채널은 USD 센트로 청구된다.
+
+    청구 기록이 없는 구버전 행은 KRW 원장값으로 폴백한다 — 이 컬럼이 생기기 전에
+    시작된 결제가 검증 단계에서 막히면 안 되기 때문이다.
+    """
+    charge = database.pending_charge(row)
+    if charge:
+        return charge
+    return int(row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]), "KRW"
 
 
 class PaymentVerifyIn(BaseModel):
@@ -3581,12 +3610,14 @@ def payment_verify(body: PaymentVerifyIn, user: dict = Depends(get_current_user)
         buyer_id = row["buyer_id"] if "buyer_id" in row.keys() else None
         if not buyer_id or int(buyer_id) != int(user["id"]):
             raise HTTPException(status_code=403, detail="buyer only")
-        expected_amount = int(
-            row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]
-        )
+        expected_amount, expected_currency = _expected_charge(row)
         try:
             payment = payments_mod.fetch_payment(body.payment_id)
-            payments_mod.assert_payment_paid(payment, expected_amount=expected_amount)
+            payments_mod.assert_payment_paid(
+                payment,
+                expected_amount=expected_amount,
+                expected_currency=expected_currency,
+            )
         except payments_mod.PortOnePaymentError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
         if payments_mod.is_paypal_payment(payment):
@@ -3619,12 +3650,14 @@ async def payment_webhook(request: Request):
         row = database.find_project_by_payment_id(conn, payment_id)
         if not row:
             return {"ok": True, "skipped": "no matching deal"}
-        expected_amount = int(
-            row["deal_amount"] if "deal_amount" in row.keys() else row["sold_price"]
-        )
+        expected_amount, expected_currency = _expected_charge(row)
         try:
             payment = payments_mod.fetch_payment(payment_id)
-            payments_mod.assert_payment_paid(payment, expected_amount=expected_amount)
+            payments_mod.assert_payment_paid(
+                payment,
+                expected_amount=expected_amount,
+                expected_currency=expected_currency,
+            )
         except payments_mod.PortOnePaymentError:
             return {"ok": True, "skipped": "not paid or amount mismatch"}
         if payments_mod.is_paypal_payment(payment):

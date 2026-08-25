@@ -1,5 +1,5 @@
 ﻿/* WakeAgain PWA ??app shell cache (network-first for API) */
-const CACHE = "wakeagain-shell-v81-refund";
+const CACHE = "wakeagain-shell-v82-paypalusd";
 const PRECACHE = [
   "/",
   "/index.html",

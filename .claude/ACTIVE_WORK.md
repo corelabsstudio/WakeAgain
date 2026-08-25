@@ -28,6 +28,7 @@ _(없음)_
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `wakeagain/payments.py`, `wakeagain/db.py`, `wakeagain/api.py`, `public/project.html`, `public/sw.js` — 페이팔 KRW→USD 결제 통화 수정 + SPB 위젯이 폴링에 지워지던 문제 — 2026-08-25 종료
 - [Claude Code] `public/js/footer-visitors.js`, `public/blog/**`, `public/guide/index.html`, `public/app/index.html`, `public/sw.js`, `wakeagain/api.py` — 유입경로 Direct 뭉침 수정 + 집계 누락 페이지 부착 — 2026-08-24 종료
 - [Claude Code] `public/blog/**`, `public/sitemap.xml` — 일일 SEO 파이프 — 2026-08-23 종료
 - [Claude Code] `public/index.html`, `public/assets/world/**` — 홈 스크롤 랜딩(깨어나는 창고) 교체 — 2026-08-21 종료

@@ -431,6 +431,13 @@ def init_db() -> None:
                 # PortOne payment tracking for the current awaiting_payment deal
                 "pg_payment_id": "TEXT",
                 "pg_payment_requested_at": "TEXT",
+                # 실제로 PG에 청구한 금액·통화. 원장(sold_price/deal_amount)은 KRW지만
+                # 해외 채널(PayPal)은 USD 센트로 청구하므로 둘이 다르다. 결제 검증은
+                # 원장이 아니라 **이 값**과 대조해야 한다 (2026-08-25).
+                # 최소 단위 정수: KRW=원, USD=센트.
+                "pg_charge_amount": "INTEGER",
+                "pg_charge_currency": "TEXT",
+                "pg_charge_fx": "REAL",
                 # 매물 등록 필수 필드 정책 (2026-08-15) — 신규 등록에만 강제.
                 # 기존 매물은 NULL/0으로 남고 "미등록" 배지가 붙는다 (비공개 처리 금지).
                 # 저장소 URL: host 화이트리스트 + owner/repo 패턴까지만 검증. 접근성은 확인하지 않음
@@ -4221,17 +4228,48 @@ def finalize_sale(
 
 
 def set_pending_payment(
-    conn: sqlite3.Connection, row: sqlite3.Row, *, payment_id: str
+    conn: sqlite3.Connection,
+    row: sqlite3.Row,
+    *,
+    payment_id: str,
+    charge_amount: int | None = None,
+    charge_currency: str | None = None,
+    charge_fx: float | None = None,
 ) -> sqlite3.Row:
-    """Buyer initiated a PortOne payment attempt; record paymentId for later verification."""
+    """Buyer initiated a PortOne payment attempt; record paymentId for later verification.
+
+    charge_* 는 **실제로 PG에 청구한** 금액·통화·환율이다. 해외 채널은 USD 센트라
+    원장의 KRW와 다르므로, 검증 때 이 값과 대조해야 한다.
+    """
     now = _now()
     pid = int(row["id"])
     conn.execute(
-        "UPDATE projects SET pg_payment_id = ?, pg_payment_requested_at = ?, updated_at = ? "
+        "UPDATE projects SET pg_payment_id = ?, pg_payment_requested_at = ?, "
+        "pg_charge_amount = ?, pg_charge_currency = ?, pg_charge_fx = ?, updated_at = ? "
         "WHERE id = ?",
-        (payment_id, now, now, pid),
+        (
+            payment_id,
+            now,
+            int(charge_amount) if charge_amount is not None else None,
+            (charge_currency or None),
+            float(charge_fx) if charge_fx is not None else None,
+            now,
+            pid,
+        ),
     )
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
+
+
+def pending_charge(row: sqlite3.Row) -> tuple[int, str] | None:
+    """저장해둔 청구 금액·통화. 구버전 행(컬럼 NULL)이면 None → 호출자가 KRW로 폴백한다."""
+    keys = row.keys()
+    if "pg_charge_amount" not in keys or "pg_charge_currency" not in keys:
+        return None
+    amt = row["pg_charge_amount"]
+    cur = row["pg_charge_currency"]
+    if amt is None or not cur:
+        return None
+    return int(amt), str(cur)
 
 
 def find_project_by_payment_id(

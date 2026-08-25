@@ -181,6 +181,60 @@
 
 ## 최근 배포 이력 (요약 · 최신 우선)
 
+### 2026-08-25 · 페이팔 결제가 통화 때문에 아예 안 되던 문제 + 위젯이 2초 만에 지워지던 문제
+
+**배경:** 토스 심사용 결제경로 캡처를 만들다가 「카드로 결제하기」·「PayPal로 결제」를
+**실제로 눌러봤더니 둘 다 실패**했다. 캡처만 하고 넘어갔으면 못 봤을 것이다.
+
+| 수단 | PortOne 응답 | 판정 |
+|---|---|---|
+| 카드(토스 채널) | `RECORD_NOT_FOUND: channelKey is not correct.` | **미해결** — 아래 참조 |
+| 페이팔 | `페이팔에서 지원하지 않는 화폐(CURRENCY_KRW)` | 이번에 수정 |
+
+**원인 1 — 페이팔에 KRW를 보내고 있었다.** `payments.py`의 `build_paypal_payment_request`가
+`currency: "CURRENCY_KRW"`로 하드코딩돼 있었다. 페이팔은 KRW를 받지 않는다.
+`CLAUDE.md`에 「PayPal 실결제 한 번도 안 해봄」이라고 적혀 있던 게 여기서 드러났다.
+
+**원인 2 — 고쳐서 위젯이 떴는데 2초 만에 사라졌다.** `project.html`의 4초 폴러가
+`refresh()` → `renderProject()`로 결제 영역을 통째로 다시 그리면서 **페이지에 박히는**
+PayPal SPB 위젯을 지웠다. 카드 결제는 팝업이라 이 문제가 없어서 여태 안 보였다.
+
+**구현:**
+- `payments.py` — `krw_to_paypal_charge()`가 KRW를 **USD 센트**로 환산(PortOne V2는 금액을
+  통화의 최소 단위 정수로 받는다: KRW 1배, USD 100배). 센트 미만은 **올림** — 내림하면
+  환산 손실이 판매자 정산분에서 나간다. 두 builder 모두 `(params, charge)` 튜플을 돌려준다
+- ⚠️ **환율은 표시용과 분리했다.** `global_config._fx()`의 `WA_FX_USD`는 주석에 "Not for
+  settlement"라고 명시돼 있다. 실제로 돈을 청구하는 값이라 **`WA_PAYPAL_FX_USD`**를 따로 뒀다
+  (미설정 시 `WA_FX_USD` → 기본 1350 순으로 폴백). **Railway에 아직 등록 안 함**
+- `db.py` — `pg_charge_amount` / `pg_charge_currency` / `pg_charge_fx` 컬럼 추가.
+  **원장(sold_price·deal_amount)은 KRW 그대로**이고 이건 "실제로 PG에 청구한 값"이다.
+  둘을 섞으면 검증이 깨진다
+- `api.py` — `_expected_charge()`가 검증 기준을 원장이 아니라 청구 기록에서 읽는다
+  (verify·webhook 양쪽). 컬럼이 비어 있는 구버전 행은 KRW로 폴백
+- `payments.py` `assert_payment_paid()`에 **통화 검사 추가.** 금액 숫자만 보면
+  「300,000원 청구 건에 300,000센트(=$3,000) 결제」가 통과한다 — 실제로 테스트로 잠갔다
+- `project.html` — 결제 버튼 누르면 **USD 환산액과 적용 환율을 먼저 보여준다**
+  (「해외 결제는 미국 달러로 청구됩니다 — 222.23 USD (적용 환율 1 USD = 1,350원)」).
+  `paypalUiMounted` 플래그로 위젯이 떠 있는 동안 폴링 중단
+
+**검증:** `_paypal_currency_test.py` 신규 18개 통과(환산·올림·통화 불일치 거부·하위호환).
+`_smoke_check.py` · `_predeploy_gate.py` 10/10 · `_auction_suite_test.py` 43/43 ·
+`_deal_flow_test.py` 46/46. **격리 DB로 띄운 로컬 서버에서 실제로 PayPal 결제창이 뜨는 것까지
+확인했다** — `initialize-payment/v2`가 400 → 200으로 바뀌고 PayPal 버튼 SDK가 렌더됨.
+캡처: `docs/toss-review/shots/06c_페이팔결제창.png`
+
+**⚠️ 카드(토스) 채널은 여전히 안 된다.** `channelKey is not correct.`
+토스 계약이 「심사중」이라 채널이 아직 활성이 아닌 것으로 **추정**하나 확인하지 못했다.
+PortOne 콘솔에서 카드 채널 키가 실제로 발급·활성 상태인지 봐야 한다.
+Railway에도 같은 값이 들어가 있으므로(2026-08-15 기록) **라이브도 같은 상태일 가능성이 높다.**
+
+**후속 필요:**
+- `WA_PAYPAL_FX_USD`를 Railway에 등록. 지금은 코드 기본값 1350으로 청구된다 —
+  **환율이 고정값이라 시세와 벌어진다.** 실거래가 시작되기 전에 정할 것
+  (고정 환율 + 마진, 또는 환율 API 연동)
+- 페이팔 **실제 결제 완료**는 아직 안 해봤다. 결제창이 뜨는 것까지만 확인했다
+- STC bypass 필드는 여전히 최소값
+
 ### 2026-08-24 · 유입경로가 전부 Direct로 나오던 문제 (집계 누락 + 재방문 덮어쓰기)
 
 **배경:** 사용자가 "아직도 방문자 유입경로가 다이렉트로 나온다"고 지적. 전날 `d6f00da`로

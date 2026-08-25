@@ -1330,6 +1330,10 @@
       var lastPrice = null;
       var lastBidEvents = null;
       var pollMs = 4000;
+      // PayPal SPB는 페이지에 **박히는** 위젯이라(카드 결제는 팝업이라 무관)
+      // 4초 폴러가 renderProject()로 결제 영역을 다시 그리면 그대로 지워진다.
+      // 2026-08-25 실측: 위젯이 떴다가 2초 만에 사라졌다. 붙어 있는 동안 폴링을 멈춘다.
+      var paypalUiMounted = false;
       var mentionState = {
         init: false,
         price: null,
@@ -2051,10 +2055,26 @@
               var reqRes = await api.paymentRequest(p.id, "paypal");
               var params = reqRes.payment_request;
               var box = document.getElementById("paypalPayBox");
-              box.innerHTML = '<div class="portone-ui-container"></div>';
+              // PayPal은 KRW를 못 받아 USD로 청구된다. 구매자가 누르기 전에
+              // 실제 청구 통화·금액과 적용 환율을 보게 한다.
+              var ch = reqRes.charge || {};
+              var fxLine = "";
+              if (ch.display && ch.currency && ch.currency !== "KRW") {
+                fxLine =
+                  '<p class="price-meta" style="margin:0 0 .5rem">' +
+                  t("해외 결제는 미국 달러로 청구됩니다 — ", "Overseas payments are charged in USD — ") +
+                  "<strong>" + ch.display + "</strong>" +
+                  (ch.fx_krw_per_usd
+                    ? t(" (적용 환율 1 USD = ", " (rate: 1 USD = ") + Number(ch.fx_krw_per_usd).toLocaleString() + t("원)", " KRW)")
+                    : "") +
+                  "</p>";
+              }
+              box.innerHTML = fxLine + '<div class="portone-ui-container"></div>';
               btn.hidden = true;
+              paypalUiMounted = true;
               window.PortOne.loadPaymentUI(params, {
                 onPaymentSuccess: async function () {
+                  paypalUiMounted = false;
                   try {
                     await api.paymentVerify(params.paymentId);
                     document.getElementById("dealOk").hidden = false;
@@ -2066,6 +2086,7 @@
                   }
                 },
                 onPaymentFail: function (err) {
+                  paypalUiMounted = false;
                   document.getElementById("dealErr").hidden = false;
                   document.getElementById("dealErr").textContent = (err && err.message) || t("결제 실패", "Payment failed");
                   btn.hidden = false;
@@ -2074,6 +2095,7 @@
                 },
               });
             } catch (ex) {
+              paypalUiMounted = false;
               document.getElementById("dealErr").hidden = false;
               document.getElementById("dealErr").textContent = ex.message || t("결제 실패", "Payment failed");
               btn.disabled = false;
@@ -3209,6 +3231,7 @@
       });
       });
       setInterval(function () {
+        if (paypalUiMounted) return;  // 결제 위젯이 떠 있는 동안은 다시 그리지 않는다
         refresh().then(function () {
         loadMessages();
         loadQCredits();
