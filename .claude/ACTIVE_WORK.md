@@ -21,13 +21,14 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 점유 중
 
-- [Claude Code] wakeagain/api.py, db.py, scheduler.py, pricing.py, payments.py, og.py, public/project.html, public/js/{listings,api,i18n-messages,i18n}.js, public/app/{app.js,index.html}, public/index.html, buy.html, sell.html, admin/index.html, legal/terms*.html, refund.html, sw.js, PLATFORM.md, TRUST.md, 테스트 전부 — 경매 → 고정가+제안(offer) 구조 전환 — 2026-09-02 시작
+(없음)
 
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `wakeagain/**`, `public/**`, 약관·PLATFORM·TRUST, 테스트 전부 — 경매 → 고정가+제안(offer) 전환 — 2026-09-02 종료
 - [Claude Code] `public/index.html`, `assets/world/world.css`, `public/sw.js` — 월드 fixed 레이어가 매물 섹션을 덮던 버그 — 2026-08-25 종료
 - [Claude Code] `public/styles.css`, `yard-theme.css`, `app/app.css`, `guide/guide-visual.css`, `project.html`, `?v=` 62파일 — 대비 결함 2건 + focus-visible — 2026-08-25 종료
 - [Claude Code] `public/**` HTML 16개, `public/sw.js` — 사이트 전체 접근성 결함 수정(th scope 95·폼 라벨 3·theme-color 1) — 2026-08-25 종료

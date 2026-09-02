@@ -397,7 +397,7 @@ for eid in ["listingGrid", "listingsMore", "navAuthLink"]:
 for href in ["/app/#list", "/sell.html", "/buy.html", "/guide/credit.html", "/app/#new"]:
     ok(f"index link {href}", href in index)
 proj = (ROOT / "public/project.html").read_text(encoding="utf-8")
-for eid in ["bidForm", "bidBtn", "buyNowBtn", "closeDealBtn", "msgForm", "sellerLine"]:
+for eid in ["offerForm", "offerBtn", "buyBtn", "ownerOfferList", "msgForm", "sellerLine"]:
     ok(f"project#{eid}", f'id="{eid}"' in proj)
 
 print("== JS syntax (node --check) ==")

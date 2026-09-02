@@ -3,7 +3,7 @@
 이 파일을 읽은 뒤 **현재 디스크·git·라이브**를 재검증하고 작업한다.  
 옛 트랜스크립트·Grok 메모리는 자동 동기화되지 않는다. 아래 문서가 정본이다.
 
-**마지막 문서 갱신:** 2026-09-02 (🛑 토스페이먼츠 심사 **거부** — 경매·입찰 구조 사유 · 국내 카드 결제 경로 없음)
+**마지막 문서 갱신:** 2026-09-02 (🔄 **경매 폐지 → 고정가(판매가) + 가격 제안(offer) 구조로 전환** — 토스 재심사 대비)
 
 ## ⚠️ 동시 작업 규칙 (Claude Code ↔ Cowork) — 작업 시작 전 필독
 
@@ -180,6 +180,64 @@
 - **환경변수 추가 후 주의:** Railway는 변수 추가만으로 자동 재시작되지 않을 수 있음 — Variables 탭에 "Apply N change / Deploy" 대기 패널이 뜨면 **Deploy 버튼을 직접 눌러야** 반영됨 (2026-08-11에 XAI_API_KEY 추가 때 실제로 이 단계를 놓쳐서 한동안 반영 안 됐던 적 있음).
 
 ## 최근 배포 이력 (요약 · 최신 우선)
+
+### 2026-09-02 · 🔄 경매 폐지 → 고정가(판매가) + 가격 제안(offer) 전환 (`f6f5821` 외)
+
+토스가 **입찰 형식(가격 미확정)**을 사유로 가맹을 거부했으므로(바로 아래 항목), 사용자 결정에 따라
+판매 방식 자체를 바꿨다. **선택지 1번을 실행한 것이고, 경매는 이제 없다.**
+
+**새 모델:** 판매자가 **판매가**를 정하고, 구매자는 ①판매가로 바로 구매 ②판매가보다 낮은 금액으로
+**가격 제안** 중 하나를 택한다. 판매자는 48시간 안에 수락·거절(`OFFER_RESPONSE_HOURS`),
+무응답이면 자동 만료. **역제안 없음.** 한 구매자당 대기 제안 1건(새 제안이 이전 것을 `replaced`).
+제안 하한 = 상태 등급 최저가, 상한 = 판매가 미만. 제안 금액은 기본 **공개**(`OFFER_AMOUNTS_PUBLIC=0`으로 비공개 전환).
+
+**삭제된 경매 동작 3가지 — 되살리지 말 것:**
+1. **마감 자동 낙찰** → 게시 기간(기본 7일) 종료 시 자동 성사 없이 목록에서 내려가고 대기 제안이 만료된다
+2. **차순위 자동 낙찰**(`SECOND_BIDDER_AUTO`) → 미입금 시 성사 무효 + 신용 감점 + **매물이 다시 판매 중으로 복귀**
+3. **즉시구매가(`price_buy_now`)·호가 단위(`min_increment`)** → 판매가 자체가 구매가라 불필요
+
+**⭐ 딜 플로우는 한 줄도 안 바꿨다.** `finalize_sale` → 수수료 청구서 → 1시간 결제 → 이전 → 검수 →
+정산 체인을 그대로 재사용하고, **진입점만** 낙찰에서 「판매가 구매 / 제안 수락」으로 갈아끼웠다.
+PortOne·페이팔 결제 코드는 무관.
+
+**구현:**
+- `db.py` — `offers` 테이블 신설(status 7종·`expires_at`·`message`) + `projects`에
+  `pending_offer_count`·`top_offer_amount`·`top_offer_buyer_id`. **`bids` 테이블은 지우지 않았다**(이력 보존).
+  `bid_count`/`bidder_count` 컬럼은 **"누적 제안 수/고유 제안자 수"로 의미만 재해석**해서 재사용한다 —
+  컬럼명만 보고 입찰이라고 오해하지 말 것.
+- `api.py` — `POST /projects/{id}/offers` · `…/accept` · `…/decline` · `…/withdraw`,
+  `POST /projects/{id}/buy`, `GET /listings/live` 신설. 입찰 엔드포인트는 **410**으로 안내.
+  `/auctions/live` · `/buy-now` · `resume-auction` · `auctions/release-all`은 **호환 별칭으로 살려뒀다.**
+- 공개 dict에 `price`·`sale_status`·`listing_ends_at`·`offer_count`·`pending_offer_count`·`top_offer`·
+  `offer_floor` 추가. 옛 키(`price_start`·`auction_status`·`auction_ends_at`·`bid_count`)도 같이 나간다.
+- **제안이 있어도 판매가 수정 가능** — 입찰 시절의 `bids_exist` 잠금을 풀었다(제안은 가격이 아니라 매물에 붙는 것).
+- 명의이전 차단 사유 `bids_exist` → `offers_pending`.
+- 관리자 사용자 통계의 `bids.user_id`(존재하지 않는 컬럼) 오타 버그를 `offers.buyer_id`로 고쳤다.
+
+**⚠️ 작업 중 실제로 낸 사고 — 같은 실수 반복 금지.** 입찰 엔드포인트를 "블록 단위로" 들어내는 패치가
+그 사이에 있던 **`POST /projects/{id}/report`와 차단 3종(`/me/blocks`·block·unblock)까지 함께 삭제**했다.
+스모크의 `Method Not Allowed`로 뒤늦게 잡았다. **범위를 인덱스로 잘라내는 패치는 자르기 전에 그 구간의
+`@router` 목록을 먼저 뽑아 확인할 것.** 이후 `git show HEAD:` 와 라우트 목록을 대조해 누락 0건을 확인하는
+절차를 넣었다.
+
+**약관:** 제12조를 「판매가 · 가격 제안 · 성사」로 전면 개정(v2.3), **영문 약관에 없던 대응 조항을 신설**
+(Article 12). 이게 토스 재심사의 근거 문서다. `refund.html`·`PLATFORM.md`·`TRUST.md`도 동기화.
+
+**검증:** `_offer_suite_test.py` 신규 59개 + `_sale_deal_suite_test.py` 신규 24개 통과.
+`_deal_flow_test` 47/47 · QA 21/21 · 차단 18/18 · 위탁 19/19 · 명의이전 17/17 · 단위 통과 ·
+`_smoke_check` 전체 통과 · `_predeploy_gate` 20/20. 입찰 전제라 이식 불가한
+`_auction_suite_test.py`·`_auction_advanced_test.py`는 **은퇴**시켰다(분쟁·해피패스·수수료 청구서 시나리오는
+`_sale_deal_suite_test.py`로 옮김). `?v=` 63파일 428참조 → `20260902-offers`,
+`sw.js` → `v91-offers`, `admin/sw.js` → `v7-offers`.
+
+**후속 필요:**
+- **라이브 매물 4건 가격 이관 미착수** — 즉시구매가가 있으면 그 값을, 없으면 시작가를 판매가로 옮기고
+  판매자에게 알려야 한다. 지금은 시작가가 그대로 판매가로 읽힌다
+- **가이드 9개·블로그 19편의 입찰/bid 문구 미수정**(이번 범위에서 의도적으로 제외).
+  특히 `blog/failed-side-project-pricing.html`은 **「고정가보다 경매가 낫다」를 논증하는 글**이라
+  find-replace가 아니라 다시 써야 한다
+- **토스 재심사 재신청 미착수** — 구조는 바뀌었으니 PortOne 콘솔에서 다시 신청할 수 있다
+- 라이브 스크린샷 검증 못 함(이 세션은 브라우저 접근 불가)
 
 ### 2026-09-02 · 🛑 토스페이먼츠 심사 거부 — 경매·입찰 구조가 사유 (코드 변경 없음 — 사실 기록)
 
