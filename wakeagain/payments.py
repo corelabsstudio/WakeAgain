@@ -164,7 +164,7 @@ def build_paypal_payment_request(
     blocking (PortOne recommends but the API only *requires* one bypass field),
     but seller-protection coverage on disputed charges may be narrower until then.
 
-    `total_amount` 는 **KRW 낙찰가**로 받는다. PayPal은 KRW를 거절하므로
+    `total_amount` 는 **KRW 성사가**로 받는다. PayPal은 KRW를 거절하므로
     (2026-08-25 실측: "지원하지 않는 화폐(CURRENCY_KRW)") 여기서 USD 센트로 환산한다.
 
     반환값은 `(params, charge)` 두 개다:
@@ -212,7 +212,7 @@ def paypal_fx_krw_per_usd() -> float:
 
 
 def krw_to_paypal_charge(krw_amount: int) -> tuple[int, float]:
-    """KRW 낙찰가를 PayPal에 청구할 (USD 센트, 적용 환율)로 바꾼다.
+    """KRW 성사가를 PayPal에 청구할 (USD 센트, 적용 환율)로 바꾼다.
 
     센트 미만은 **올림**한다. 내림하면 환산 손실이 판매자 정산분에서 나가고,
     올림해도 구매자 부담 증가는 1센트 미만이다.
@@ -274,7 +274,7 @@ def assert_payment_paid(
 ) -> None:
     """결제가 실제로 완료됐고 금액·통화가 우리가 청구한 것과 같은지 확인한다.
 
-    통화까지 보는 이유: PayPal은 USD 센트로 청구하므로 KRW 낙찰가와 숫자만 비교하면
+    통화까지 보는 이유: PayPal은 USD 센트로 청구하므로 KRW 성사가와 숫자만 비교하면
     엉뚱한 통화의 같은 숫자를 통과시킬 수 있다. 예) 300,000 KRW 청구 건에
     300,000 센트(=3,000 USD) 결제가 들어와도 금액만 보면 일치한다.
     """

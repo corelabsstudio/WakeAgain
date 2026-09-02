@@ -2,7 +2,7 @@
 
 핵심: 위탁자가 **가입하지 않아도** 매물이 정상적으로 굴러가야 한다. owner_id는 운영
 계정에 그대로 두고 실제 판매자는 데이터로만 기록한다. 명의 이전(transfer-owner)은
-입찰이 붙으면 막히므로 이 경로는 그것에 의존하지 않는다.
+제안이 붙으면 막히므로 이 경로는 그것에 의존하지 않는다.
 """
 
 import os
@@ -101,18 +101,18 @@ check("신규 필드 반영", "낙찰 후" in c.get("payout_note", ""), str(c))
 r = set_consignor(pid, consignor_payout_note="")
 check('""로 삭제', r.json().get("consignor", {}).get("payout_note") == "", r.text)
 
-# 7) 입찰이 붙어도 위탁 정보는 계속 수정 가능 (transfer-owner와 다른 점)
+# 7) 제안이 붙어도 위탁 정보는 계속 수정 가능 (transfer-owner와 다른 점)
 bidder = signup("bidder@example.com")
 with database.db() as conn:
     conn.execute(
-        "INSERT INTO bids (project_id, bidder_id, amount, created_at) VALUES (?,?,?,?)",
+        "INSERT INTO offers (project_id, buyer_id, amount, status, created_at) VALUES (?,?,?,'pending',?)",
         (pid, bidder, 400000, database._now()))
-    conn.execute("UPDATE projects SET bid_count = 1 WHERE id = ?", (pid,))
-r = set_consignor(pid, consignor_payout_note="입찰 후에도 기록 가능해야 함")
-check("입찰 후에도 위탁 정보 수정 가능", r.status_code == 200, r.text)
+    conn.execute("UPDATE projects SET bid_count = 1, pending_offer_count = 1 WHERE id = ?", (pid,))
+r = set_consignor(pid, consignor_payout_note="제안 후에도 기록 가능해야 함")
+check("제안 후에도 위탁 정보 수정 가능", r.status_code == 200, r.text)
 with database.db() as conn:
     blockers = database.project_transfer_blockers(conn, pid)
-check("대조: 같은 상황에서 명의이전은 차단됨", "bids_exist" in blockers, str(blockers))
+check("대조: 같은 상황에서 명의이전은 차단됨", "offers_pending" in blockers, str(blockers))
 
 # 8) 잘못된 필드 거부
 r = client.post(f"/api/v1/admin/projects/{pid}/consignor", json={"nope": "x"}, headers=ADMIN)

@@ -193,7 +193,7 @@ if r.status_code == 200:
         check("보완 후 repo_url 반영", p.get("repo_url") == "https://github.com/corelabsstudio/RoadLog", str(p.get("repo_url")))
         check("보완 후 활동일 반영", p.get("last_activity_at") == "2026-08", str(p.get("last_activity_at")))
 
-    # 입찰이 있으면 기존 링크 교체 금지
+    # 제안이 있으면 기존 링크 교체 금지
     with database.db() as conn:
         conn.execute("UPDATE projects SET bid_count=3 WHERE id=?", (pid,))
     v2 = c.put(
@@ -202,11 +202,11 @@ if r.status_code == 200:
         json={"repo_url": "https://github.com/corelabsstudio/OtherRepo"},
     )
     check(
-        "입찰 후 링크 교체 → 400",
-        v2.status_code == 400 and v2.json()["detail"]["code"] == "locked_after_bid",
+        "제안 후 링크 교체 → 400",
+        v2.status_code == 400 and v2.json()["detail"]["code"] == "locked_after_offer",
         f"{v2.status_code}",
     )
-    # 입찰이 있어도 빈 항목 채우기는 허용
+    # 제안이 있어도 빈 항목 채우기는 허용
     with database.db() as conn:
         conn.execute("UPDATE projects SET last_activity_at=NULL WHERE id=?", (pid,))
     v3 = c.put(
@@ -214,7 +214,7 @@ if r.status_code == 200:
         headers=H,
         json={"last_activity_at": "2026-07"},
     )
-    check("입찰 후 빈 항목 채우기 허용", v3.status_code == 200, f"{v3.status_code} {v3.text[:150]}")
+    check("제안 후 빈 항목 채우기 허용", v3.status_code == 200, f"{v3.status_code} {v3.text[:150]}")
 
     # 남의 매물은 거부
     v4 = c.put(f"/api/v1/projects/{pid}/verification", json={"last_activity_at": "2026-07"})

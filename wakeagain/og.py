@@ -17,7 +17,7 @@ import re
 from wakeagain import db as database
 from wakeagain import oauth as oauth_mod
 
-FALLBACK_DESCRIPTION = "Revive this abandoned side project. Bid now to continue its journey."
+FALLBACK_DESCRIPTION = "Revive this abandoned side project. Buy it at the asking price, or make an offer."
 
 
 def _usd(krw_amount: int) -> int:
@@ -48,15 +48,13 @@ def listing_og_tags(project_id: int) -> dict[str, str] | None:
         return None
     project = database.project_to_dict(row, include_private=False)
     title_en = _english_title(project)
-    price = project.get("sold_price") or project.get("price_current") or project.get(
-        "price_start"
-    )
+    price = project.get("sold_price") or project.get("price") or project.get("price_start")
     usd = _usd(int(price or 0))
     base = oauth_mod.public_base()
     images = project.get("demo_images") or []
     og_image = f"{base}{images[0]}" if images else f"{base}/assets/og-image.png"
     return {
-        "title": f"{title_en} — Now on Auction for ${usd:,} on WakeAgain",
+        "title": f"{title_en} — For sale at ${usd:,} on WakeAgain",
         "description": FALLBACK_DESCRIPTION,
         "image": og_image,
         "url": f"{base}/project.html?id={project_id}",

@@ -2,7 +2,7 @@
 """
 End-to-end deal flow simulation (local TestClient).
 
-Seller lists → admin approve → buyers bid (with ranks) → close deal
+Seller lists → admin approve → buyers make offers (with ranks) → seller accepts
 → simulate PG paid → transfer → buyer accept → credit/buyer_rank check.
 
 Also runs a few negative/guard checks.
@@ -157,7 +157,7 @@ def main() -> int:
             "assets": ["code", "domain"],
             "price_start": 500_000,
             "price_buy_now": 2_000_000,
-            "auction_days": 3,
+            "listing_days": 3,
             "min_increment": 10_000,
             "license_note": "사유 비공개 양도 · 테스트",
             "keywords": ["테스트", "거래", "SaaS", "웹앱", "E2E"],
@@ -186,15 +186,15 @@ def main() -> int:
     if not pid:
         return _finish(1)
 
-    # cannot bid while pending
-    print("\n3) Guard: bid while pending should fail")
+    # cannot make an offer while pending review
+    print("\n3) Guard: offer while pending should fail")
     buyer_early = register_user("early", role_name="buyer")
     r_bad = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer_early["headers"],
         json={"amount": 500_000},
     )
-    log("bid blocked when pending", r_bad.status_code == 400, r_bad.text[:100])
+    log("offer blocked when pending", r_bad.status_code == 400, r_bad.text[:100])
 
     # --- 4) Admin approve ---
     print("\n4) Admin approve")
@@ -222,80 +222,81 @@ def main() -> int:
     log(
         "public listing live",
         r_pub.status_code == 200 and p.get("listing_status") == "approved" and p.get("is_live"),
-        f"status={p.get('listing_status')} auction={p.get('auction_status')}",
+        f"status={p.get('listing_status')} sale={p.get('sale_status')}",
     )
 
-    # --- 5) Buyers bid ---
-    print("\n5) Bidding (buyer A then B higher)")
+    # --- 5) Buyers make offers ---
+    print("\n5) Offers (buyer A then B higher)")
     buyer_a = register_user("ba", role_name="buyer")
     buyer_b = register_user("bb", role_name="buyer")
 
-    # own listing bid forbidden
+    # own listing offer forbidden
     r_own = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=seller["headers"],
         json={"amount": 500_000},
     )
-    log("seller cannot bid own", r_own.status_code == 400, r_own.text[:80])
+    log("seller cannot offer on own", r_own.status_code == 400, r_own.text[:80])
 
-    # too low
+    # below the status-band floor
     r_low = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer_a["headers"],
         json={"amount": 100},
     )
-    log("bid too low rejected", r_low.status_code == 400, r_low.text[:100])
+    log("offer below floor rejected", r_low.status_code == 400, r_low.text[:100])
 
     r1 = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer_a["headers"],
-        json={"amount": 500_000},
+        json={"amount": 300_000},
     )
-    log("buyer A bid 500k", r1.status_code == 200, r1.text[:100])
+    log("buyer A offers 300k", r1.status_code == 200, r1.text[:100])
 
     r2 = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer_b["headers"],
-        json={"amount": 550_000},
+        json={"amount": 350_000},
     )
-    log("buyer B bid 550k", r2.status_code == 200, r2.text[:100])
+    log("buyer B offers 350k", r2.status_code == 200, r2.text[:100])
 
     r3 = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer_a["headers"],
-        json={"amount": 600_000},
+        json={"amount": 400_000},
     )
-    log("buyer A bid 600k (top)", r3.status_code == 200, r3.text[:100])
+    log("buyer A raises to 400k (top)", r3.status_code == 200, r3.text[:100])
+    top_offer_id = int((j(r3).get("offer") or {}).get("id") or 0)
 
-    r_bids = cl.get(f"/api/v1/projects/{pid}/bids")
-    bids = j(r_bids).get("bids") or []
-    top = j(r_bids).get("top_bidder") or (bids[0] if bids else {})
+    r_offers = cl.get(f"/api/v1/projects/{pid}/offers")
+    offers = j(r_offers).get("offers") or []
+    top = next((o for o in offers if o.get("is_top")), offers[0] if offers else {})
     log(
-        "bids public ranked",
-        r_bids.status_code == 200 and len(bids) >= 3 and top.get("is_top") is True,
-        f"n={len(bids)} top={top.get('bidder_label')} amt={top.get('amount')}",
+        "offers public ranked",
+        r_offers.status_code == 200 and len(offers) >= 2 and top.get("is_top") is True,
+        f"n={len(offers)} top={top.get('buyer_label')} amt={top.get('amount')}",
     )
     log(
-        "top amount is 600k",
-        int(top.get("amount") or 0) == 600_000,
+        "top amount is 400k",
+        int(top.get("amount") or 0) == 400_000,
         str(top.get("amount")),
     )
-    # handles should not be fully masked to one char for normal names
-    label = str(top.get("bidder_label") or "")
     log(
-        "top bidder handle public-ish",
-        len(label) >= 2 and not label.endswith("**") or "Buyer" in label or "ba" in label.lower() or "bb" in label.lower() or True,
-        label,
+        "one pending offer per buyer",
+        len(offers) == 2,
+        f"pending={len(offers)}",
     )
+    label = str(top.get("buyer_label") or "")
+    log("top offer handle public-ish", len(label) >= 1, label)
 
-    # live auctions include top_bidder
-    r_live = cl.get("/api/v1/auctions/live")
-    auctions = j(r_live).get("auctions") or []
-    mine = next((a for a in auctions if a.get("id") == pid), None)
+    # live board carries the top offer
+    r_live = cl.get("/api/v1/listings/live")
+    listings = j(r_live).get("listings") or []
+    mine = next((a for a in listings if a.get("id") == pid), None)
     log(
-        "live board has top_bidder",
-        bool(mine and mine.get("top_bidder")),
-        str((mine or {}).get("top_bidder")),
+        "live board has top_offer",
+        bool(mine and mine.get("top_offer")),
+        str((mine or {}).get("top_offer")),
     )
 
     # --- 6) Close deal (seller L3) ---
@@ -303,13 +304,13 @@ def main() -> int:
     r_close = cl.post(
         f"/api/v1/projects/{pid}/close-deal",
         headers=seller["headers"],
-        json={"use_current_bid": True, "note": "E2E 성사"},
+        json={"offer_id": top_offer_id, "note": "E2E 성사"},
     )
     close_body = j(r_close)
     proj = close_body.get("project") or {}
     log(
-        "close-deal",
-        r_close.status_code == 200 and proj.get("auction_status") == "sold",
+        "close-deal (accept top offer)",
+        r_close.status_code == 200 and proj.get("sale_status") == "sold",
         f"deal={proj.get('deal_status')} price={proj.get('sold_price')}",
     )
     log(
@@ -318,7 +319,7 @@ def main() -> int:
         str(proj.get("deal_status")),
     )
     log(
-        "buyer is top bidder A",
+        "buyer is top offerer A",
         int(proj.get("buyer_id") or 0) == int(buyer_a["id"] or 0),
         f"buyer_id={proj.get('buyer_id')} expected={buyer_a['id']}",
     )
@@ -443,7 +444,7 @@ def main() -> int:
             "demo": "https://example.com/d2",
             "assets": ["code"],
             "price_start": 300_000,
-            "auction_days": 2,
+            "listing_days": 2,
             "license_note": "양도",
             "keywords": ["테스트", "거래", "SaaS", "웹앱", "성사"],
             "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
@@ -472,15 +473,16 @@ def main() -> int:
             headers=ADMIN,
             json={"action": "approve", "note": "2", "checklist": {"demo_ok": True}},
         )
-        cl.post(
-            f"/api/v1/projects/{pid2}/bids",
+        r_o2 = cl.post(
+            f"/api/v1/projects/{pid2}/offers",
             headers=buyer_a["headers"],
-            json={"amount": 300_000},
+            json={"amount": 200_000},
         )
+        offer2_id = int((j(r_o2).get("offer") or {}).get("id") or 0)
         cl.post(
             f"/api/v1/projects/{pid2}/close-deal",
             headers=seller["headers"],
-            json={"use_current_bid": True},
+            json={"offer_id": offer2_id},
         )
         with database.db() as conn:
             row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid2,)).fetchone()
@@ -512,8 +514,8 @@ def main() -> int:
     for path in [
         "/api/v1/health",
         "/api/v1/credit-policy",
-        "/api/v1/auctions/live",
-        f"/api/v1/projects/{pid}/bids",
+        "/api/v1/listings/live",
+        f"/api/v1/projects/{pid}/offers",
     ]:
         rr = cl.get(path)
         log(f"GET {path}", rr.status_code == 200, f"len={len(rr.content)}")

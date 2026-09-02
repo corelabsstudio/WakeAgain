@@ -28,7 +28,7 @@
       role_label: "백엔드 개발자 · 사이드 프로젝트 2년차",
       role_label_en: "Backend dev · 2 years of side projects",
       body:
-        "주말마다 붙잡던 예약 관리 SaaS를 11주 만들고, 유저는 7명에서 멈췄습니다. WakeAgain에는 데모와 “왜 멈췄는지”만 적었는데, 시작가 45만 원으로 올리고 관심이 붙었습니다.",
+        "주말마다 붙잡던 예약 관리 SaaS를 11주 만들고, 유저는 7명에서 멈췄습니다. WakeAgain에는 데모와 “왜 멈췄는지”만 적었는데, 판매가 45만 원으로 올리고 관심이 붙었습니다.",
       body_en:
         "I spent 11 weeks on a booking SaaS that stalled at 7 users. On WakeAgain I only posted a demo and why I stopped — listed at ₩450k and interest started coming in.",
       sold_price: null,
@@ -41,9 +41,9 @@
       role_label: "인디 메이커 · 전 스타트업 프로덕트",
       role_label_en: "Indie maker · ex-startup product",
       body:
-        "처음부터 만들면 최소 6주는 잡는 계획이었습니다. 데모가 있는 프로토타입을 보고 현재가와 남은 시간을 확인한 뒤 판단할 수 있었습니다.",
+        "처음부터 만들면 최소 6주는 잡는 계획이었습니다. 데모가 있는 프로토타입과 판매가를 보고 제안을 넣을지 바로 판단할 수 있었습니다.",
       body_en:
-        "Building from zero would have taken at least six weeks. Seeing a runnable prototype with live price and countdown let me decide whether to bid.",
+        "Building from zero would have taken at least six weeks. Seeing a runnable prototype with a clear asking price let me decide whether to make an offer.",
       sold_price: null,
       side: "buyer",
       _scenario: true,

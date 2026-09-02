@@ -187,6 +187,21 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_interests_email ON interests(email);
             CREATE INDEX IF NOT EXISTS idx_bids_project ON bids(project_id);
             CREATE INDEX IF NOT EXISTS idx_bids_created ON bids(created_at);
+            -- 2026-09-02: 경매 폐지 → 고정가 + 가격 제안(offer). bids 테이블은 이력 보존용으로만 남긴다.
+            CREATE TABLE IF NOT EXISTS offers (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+              buyer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+              amount INTEGER NOT NULL,
+              message TEXT NOT NULL DEFAULT '',
+              status TEXT NOT NULL DEFAULT 'pending',
+              created_at TEXT NOT NULL,
+              expires_at TEXT,
+              responded_at TEXT,
+              response_note TEXT NOT NULL DEFAULT ''
+            );
+            CREATE INDEX IF NOT EXISTS idx_offers_project ON offers(project_id, status);
+            CREATE INDEX IF NOT EXISTS idx_offers_buyer ON offers(buyer_id, status);
             CREATE TABLE IF NOT EXISTS notifications (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -342,6 +357,10 @@ def init_db() -> None:
                 "bid_count": "INTEGER NOT NULL DEFAULT 0",
                 # Unique people who placed at least one bid (not total bid events)
                 "bidder_count": "INTEGER NOT NULL DEFAULT 0",
+                # 2026-09-02 offer 구조: bid_count/bidder_count 는 이제 "누적 제안 수 / 고유 제안자 수"로 재해석
+                "pending_offer_count": "INTEGER NOT NULL DEFAULT 0",
+                "top_offer_amount": "INTEGER",
+                "top_offer_buyer_id": "INTEGER",
                 "min_increment": "INTEGER NOT NULL DEFAULT 10000",
                 "auction_ends_at": "TEXT",
                 "auction_status": "TEXT DEFAULT 'live'",  # live | ended | sold | paused
@@ -454,7 +473,7 @@ def init_db() -> None:
                 # ── 위탁 등록 (consignment) ──────────────────────────────────────
                 # 원 소유자 동의를 받아 코어랩스 계정(owner_id)으로 대신 올린 매물의
                 # "진짜 판매자"를 기록한다. owner_id는 그대로 두는 게 핵심 —
-                # 입찰·거래·수수료·헬프티켓이 전부 owner_id에 묶여 있어서, 나중에
+                # 제안·거래·수수료·헬프티켓이 전부 owner_id에 묶여 있어서, 나중에
                 # 명의를 옮기려 하면 transfer-owner의 차단 조건(bids_exist 등)에 걸린다.
                 # 즉 매물이 잘 될수록 이전이 막히는 구조라, 이전에 기대지 않고
                 # 위탁자를 별도 데이터로 들고 간다. 상대는 가입할 필요가 없다.
@@ -466,7 +485,7 @@ def init_db() -> None:
                 # 동의 원문 인용. 나중에 "이거 허락받은 건가?"를 DB만 보고 답할 수 있게
                 "consignor_consent_quote": "TEXT",
                 "consignor_consent_at": "TEXT",
-                # 팔린 뒤 정산 방법 메모. 등록 시점엔 비워두고 낙찰 후에 받는다
+                # 팔린 뒤 정산 방법 메모. 등록 시점엔 비워두고 성사 후에 받는다
                 # (이게 「가입 없이 등록」의 요점 — 돈이 오갈 때까지 아무것도 요구하지 않는다)
                 "consignor_payout_note": "TEXT",
             },
@@ -952,7 +971,7 @@ CREDIT_RULES = {
     "default_unpaid": -40,
     "note_ko": (
         "사이트 내 신용 점수는 0~100이며 거래 행동에 따라 자동 반영됩니다. "
-        "기본점은 낮고, 성사·정시 입금에 가점, 낙찰 후 미입금에 큰 감점이 있습니다. "
+        "기본점은 낮고, 성사·정시 입금에 가점, 성사 후 미입금에 큰 감점이 있습니다. "
         "신원만 채운 상태로는 ‘신뢰’ 등급에 가지 않습니다. "
         "신뢰 레벨(Lv0~Lv3)과 별개이며 보증이 아닙니다."
     ),
@@ -980,7 +999,7 @@ def credit_grade(score: int) -> dict:
 # Visible to sellers & others as social proof; not a payment guarantee.
 BUYER_RANK_TIERS = (
     # min_bought, key, label_ko, short_perk_ko
-    (10, "whale", "파워 바이어", "최고 구매 배지 · 입찰·프로필에 강조 표시"),
+    (10, "whale", "파워 바이어", "최고 구매 배지 · 제안·프로필에 강조 표시"),
     (5, "heavy", "헤비 구매자", "헤비 배지 · 판매자에게 눈에 띄는 구매 신호"),
     (3, "regular", "단골 구매자", "단골 배지 · 성사 건수 공개"),
     (1, "starter", "첫 구매 완료", "첫 성사 배지"),
@@ -1235,9 +1254,10 @@ def compute_trust(row: sqlite3.Row | dict) -> dict:
         "can_interest": not suspended,
         # 매물 올리기 = Lv2 + 판매자 공개 신원 (중개자 고지 의무)
         "can_list": profile_ok and seller_ok and not suspended,
-        # 입찰 = Lv1(이메일)만 — 실명·휴대폰(Lv2)은 낙찰 후 결제·이전 단계
-        "can_bid": email_verified and not suspended,
-        # 낙찰 후 결제·인수 등 구매 이행
+        # 가격 제안·판매가 구매 = Lv1(이메일)만 — 실명·휴대폰(Lv2)은 성사 후 결제·이전 단계
+        "can_offer": email_verified and not suspended,
+        "can_bid": email_verified and not suspended,  # 호환 별칭
+        # 성사 후 결제·인수 등 구매 이행
         "can_fulfill_purchase": profile_ok and not suspended,
         "can_close_deal": deal_ready and not suspended,
         "can_report": profile_ok and not suspended,
@@ -1403,7 +1423,7 @@ def public_seller_identity(
 
     개인정보 보호 (필수):
     - 전체 전화·이메일을 불특정 다수에게 노출하지 않음 (유출·불법 소지 위험).
-    - 기본 마스킹. reveal_contact=True 는 낙찰 구매자·판매자 본인 등 권한 검사 후에만.
+    - 기본 마스킹. reveal_contact=True 는 성사 구매자·판매자 본인 등 권한 검사 후에만.
     """
     if not row or not seller_identity_complete(row):
         return None
@@ -1426,17 +1446,17 @@ def public_seller_identity(
         phone_out = format_phone_display(phone_raw) if phone_raw else ""
         email_out = email_raw
         addr_out = addr
-        contact_note = "낙찰·성사 당사자에게만 전체 연락처가 공개됩니다."
+        contact_note = "성사 당사자에게만 전체 연락처가 공개됩니다."
     else:
         phone_out = mask_phone_public(phone_raw) if phone_raw else ""
         email_out = mask_email_public(email_raw) if email_raw else ""
-        # 주소는 시·군 정도만 대략 노출(앞 구간) — 전체 주소는 낙찰 후
+        # 주소는 시·군 정도만 대략 노출(앞 구간) — 전체 주소는 성사 후
         if addr and len(addr) > 12:
             addr_out = addr[:10] + "…"
         else:
             addr_out = addr
         contact_note = (
-            "연락처는 일부만 표시됩니다. 낙찰(성사)된 구매자에게만 전체 전화·이메일이 공개됩니다."
+            "연락처는 일부만 표시됩니다. 성사된 구매자에게만 전체 전화·이메일이 공개됩니다."
         )
     out = {
         "type": st,
@@ -1752,24 +1772,28 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
     price_current = _row_get(row, "price_current")
     if price_current is None:
         price_current = price_start
-    bid_count = int(_row_get(row, "bid_count", 0) or 0)
-    # Unique bidders; fall back to bid_count only if column missing on very old rows
-    bidder_raw = _row_get(row, "bidder_count")
-    if bidder_raw is None:
-        bidder_count = bid_count
-    else:
-        bidder_count = int(bidder_raw or 0)
-    min_inc = int(_row_get(row, "min_increment", 10000) or 10000)
+    # 2026-09-02: 고정가 + 제안. bid_count/bidder_count 컬럼은 "누적 제안 수/고유 제안자 수"로 재사용.
+    offer_count = int(_row_get(row, "bid_count", 0) or 0)
+    offerer_raw = _row_get(row, "bidder_count")
+    offerer_count = offer_count if offerer_raw is None else int(offerer_raw or 0)
+    pending_offer_count = int(_row_get(row, "pending_offer_count", 0) or 0)
     auction_status = (_row_get(row, "auction_status") or "live") or "live"
     ends = _row_get(row, "auction_ends_at") or ""
-    # Public: next minimum bid amount
-    base = int(price_current or 0)
-    if bid_count == 0 and price_start is not None:
-        next_min = int(price_start)
-    else:
-        next_min = base + min_inc
-
     sold_price = _row_get(row, "sold_price")
+    # 판매가는 price_start. price_current 는 호환용(성사 시 성사가, 아니면 판매가).
+    if auction_status == "sold" and sold_price is not None:
+        price_current = int(sold_price)
+    else:
+        price_current = price_start
+    top_offer = None
+    top_amount = _row_get(row, "top_offer_amount")
+    top_buyer = _row_get(row, "top_offer_buyer_id")
+    if pending_offer_count > 0 and top_amount is not None:
+        top_offer = {
+            "amount": int(top_amount) if offer_amounts_public() else None,
+            "buyer_label": public_bidder_handle(None, int(top_buyer) if top_buyer else None),
+            "buyer_rank": None,
+        }
     fee = fee_breakdown(sold_price if sold_price is not None else price_current)
     ptype = product_type_public(_row_get(row, "product_type"))
     status_raw = _row_get(row, "status")
@@ -1892,20 +1916,29 @@ def project_to_dict(row: sqlite3.Row, *, include_private: bool = False) -> dict:
         "limits_ko": limits_ko,
         "acquisition": acquisition,
         "acquisition_note": (_row_get(row, "acquisition_note") or "") or "",
+        # --- 판매가 + 제안 (2026-09-02). auction_* / bid_* 키는 호환용 별칭 ---
+        "price": price_start,
         "price_start": price_start,
         "price_current": price_current,
-        "price_buy_now": _row_get(row, "price_buy_now"),
-        "bid_count": bid_count,
-        "bidder_count": bidder_count,
-        "min_increment": min_inc,
-        "next_min_bid": next_min,
-        "auction_ends_at": ends,
+        "price_buy_now": None,
+        "offer_count": offer_count,
+        "offerer_count": offerer_count,
+        "pending_offer_count": pending_offer_count,
+        "top_offer": top_offer,
+        "offer_amounts_public": offer_amounts_public(),
+        "offer_floor": offer_floor_for_status(status_raw),
+        "bid_count": offer_count,
+        "bidder_count": offerer_count,
+        "sale_status": auction_status,
         "auction_status": auction_status,
+        "listing_ends_at": ends,
+        "auction_ends_at": ends,
         "is_live": auction_status == "live" and (row["listing_status"] or "") == "approved",
         "is_paused": auction_status == "paused",
         "listing_status": row["listing_status"],
         "round_started_at": (_row_get(row, "round_started_at") or "") or "",
         "round_number": int(_row_get(row, "round_number") or 0),
+        "listing_days": int(_row_get(row, "auction_days_intended") or 7),
         "auction_days_intended": int(_row_get(row, "auction_days_intended") or 7),
         "can_relist": (
             (row["listing_status"] or "") in ("archived", "rejected", "hold")
@@ -2287,14 +2320,15 @@ def start_auction_round(
     clear_boost: bool = True,
 ) -> sqlite3.Row:
     """
-    Begin a public auction round after ops approve.
+    Begin a public listing period after ops approve (2026-09-02: 고정가 + 제안).
     - New round_started_at (queue position = back if relist)
-    - Fresh auction_ends_at from now + days
-    - Reset bid counters / current price to start for the new round
+    - Fresh auction_ends_at (= listing end) from now + days
+    - Reset offer counters; leftover pending offers from a previous period are closed
     """
     row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
     if not row:
         raise ValueError("project not found")
+    close_pending_offers(conn, int(project_id), status="closed", note="새 게시 기간 시작 · 이전 제안 종료")
     days = int(auction_days if auction_days is not None else (_row_get(row, "auction_days_intended") or 7))
     days = max(1, min(days, 30))
     now = _now()
@@ -2326,6 +2360,9 @@ def start_auction_round(
           price_current = ?,
           bid_count = 0,
           bidder_count = 0,
+          pending_offer_count = 0,
+          top_offer_amount = NULL,
+          top_offer_buyer_id = NULL,
           paused_reason = '',
           deal_note = '',
           reviewed_at = ?,
@@ -2341,14 +2378,19 @@ def start_auction_round(
     return fresh
 
 
+start_listing_round = start_auction_round
+
+
 def archive_unsold_round(
     conn: sqlite3.Connection,
     project_id: int,
     *,
-    note: str = "마감 · 입찰 없음 · 이번 라운드 종료",
+    note: str = "게시 기간 종료 · 미판매",
 ) -> None:
-    """End a live round with no sale — leave the public board (not permanent display)."""
+    """End a live listing period with no sale — leave the public board (not permanent display).
+    Pending offers are expired with it."""
     now = _now()
+    close_pending_offers(conn, int(project_id), status="expired", note="게시 기간 종료")
     conn.execute(
         """
         UPDATE projects SET
@@ -2425,7 +2467,7 @@ def project_transfer_blockers(conn: sqlite3.Connection, project_id: int) -> list
     """Reasons a listing may NOT change seller. Empty list = safe to transfer.
 
     Owner is normally write-once (set at create), because a lot of state hangs off
-    "who the seller is": bids people placed trusting that seller, deal/settlement
+    "who the seller is": offers people made trusting that seller, deal/settlement
     rows, fee invoices, help-ticket threads. Moving the listing under any of those
     would silently rewrite history, so we refuse instead of trying to migrate them.
     """
@@ -2439,8 +2481,8 @@ def project_transfer_blockers(conn: sqlite3.Connection, project_id: int) -> list
     def cell(col: str):
         return row[col] if col in row.keys() else None
 
-    if int(cell("bid_count") or 0) > 0:
-        codes.append("bids_exist")
+    if int(cell("pending_offer_count") or 0) > 0:
+        codes.append("offers_pending")
     if (cell("auction_status") or "") == "sold" or cell("sold_at") or cell("buyer_id"):
         codes.append("already_sold")
     if (cell("deal_status") or "").strip():
@@ -2806,11 +2848,11 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
     coupon_applied = rate is not None and abs(r - FEE_RATE) > 1e-9
     if amount is None:
         if is_free:
-            note = "성사 시 판매자 수수료 0% (프로모션 — 최소 수수료도 면제). 구매자는 합의가만 부담."
+            note = "성사 시 판매자 수수료 0% (프로모션 — 최소 수수료도 면제). 구매자는 성사가(판매가 또는 수락된 제안가)만 부담."
         elif rate is not None:
-            note = f"성사 시 판매자 수수료 {rate_pct}% (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
+            note = f"성사 시 판매자 수수료 {rate_pct}% (최소 {FEE_MIN_KRW:,}원). 구매자는 성사가(판매가 또는 수락된 제안가)만 부담."
         else:
-            note = f"성사 시 판매자에게 거래 대금의 10% 수수료 (최소 {FEE_MIN_KRW:,}원). 구매자는 합의가만 부담."
+            note = f"성사 시 판매자에게 거래 대금의 10% 수수료 (최소 {FEE_MIN_KRW:,}원). 구매자는 성사가(판매가 또는 수락된 제안가)만 부담."
         return {
             "rate": r,
             "rate_pct": rate_pct,
@@ -2828,7 +2870,7 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
     if is_free:
         fee = 0
         min_applied = False
-        note = "판매자 수수료 0% 적용 (프로모션, 최소 수수료 면제). 구매자는 합의가만 부담."
+        note = "판매자 수수료 0% 적용 (프로모션, 최소 수수료 면제). 구매자는 성사가(판매가 또는 수락된 제안가)만 부담."
     else:
         fee = int(round(amt * r))
         min_applied = fee < FEE_MIN_KRW < amt
@@ -2836,7 +2878,7 @@ def fee_breakdown(amount: int | None, *, rate: float | None = None) -> dict:
         note = f"최소 수수료 {FEE_MIN_KRW:,}원 적용" if min_applied else f"판매자 수수료 {rate_pct}% 적용"
         if coupon_applied:
             note += " (쿠폰)"
-        note += ". 구매자는 합의가만 부담."
+        note += ". 구매자는 성사가(판매가 또는 수락된 제안가)만 부담."
     return {
         "rate": r,
         "rate_pct": rate_pct,
@@ -3839,7 +3881,7 @@ def pause_project_for_reports(conn: sqlite3.Connection, project_id: int, count: 
         )
         return False
     note = (
-        f"[자동] 구매자 신고 {count}건 누적(기준 {REPORT_PAUSE_THRESHOLD})으로 경매 중단. "
+        f"[자동] 구매자 신고 {count}건 누적(기준 {REPORT_PAUSE_THRESHOLD})으로 판매 일시 중단. "
         "저퀄리티·표절·미작동 등 신고 검토 필요."
     )
     conn.execute(
@@ -3862,8 +3904,8 @@ def pause_project_for_reports(conn: sqlite3.Connection, project_id: int, count: 
     notify(
         conn,
         owner_id,
-        "경매 자동 중단 (신고 누적)",
-        f"「{title}」에 신고가 {count}건 쌓여 경매가 자동 중단되었습니다. 운영 검토 후 재개될 수 있습니다.",
+        "판매 일시 중단 (신고 누적)",
+        f"「{title}」에 신고가 {count}건 쌓여 판매가 일시 중단되었습니다. 운영 검토 후 재개될 수 있습니다.",
         f"/project.html?id={project_id}",
     )
     return True
@@ -4127,12 +4169,12 @@ def deal_policy_public() -> dict:
             "completed",
         ],
         "message_ko": (
-            f"낙찰 후 PG로 {pay_h}시간 이내 결제 → 입금 확인 후 판매자 이전 → 구매자 검수 후 「인수하기」. "
+            f"성사(판매가 구매 또는 제안 수락) 후 PG로 {pay_h}시간 이내 결제 → 입금 확인 후 판매자 이전 → 구매자 검수 후 「인수하기」. "
             f"이전(수령) 후 {insp_h}시간 안에 이의가 없으면 자동 구매 확정·정산. "
             "입금 확인 전 코드·계정 이전 금지. 대금은 인수(또는 자동 확정) 후 판매자에게 정산됩니다."
         ),
         "message_en": (
-            f"Pay via PG within {pay_h}h of award → seller transfers after payment confirmed → "
+            f"Pay via PG within {pay_h}h of the sale being agreed → seller transfers after payment confirmed → "
             f"buyer inspects and accepts. No dispute within {insp_h}h → auto-confirm & settle. "
             "No asset handoff before payment. Seller is paid after accept (or auto-accept)."
         ),
@@ -4148,8 +4190,10 @@ def finalize_sale(
     sold_price: int,
     buyer_id: int | None,
     note: str,
+    offer_id: int | None = None,
 ) -> sqlite3.Row:
-    """Mark project sold, open fee invoice (held), start payment deadline."""
+    """Mark project sold (판매가 구매 또는 제안 수락), open fee invoice (held), start payment deadline.
+    Every other pending offer on the listing is closed and its buyer notified."""
     now = _now()
     now_dt = datetime.now(timezone.utc)
     pay_deadline = (now_dt + timedelta(hours=deal_payment_hours())).isoformat(timespec="seconds")
@@ -4182,6 +4226,22 @@ def finalize_sale(
             pay_deadline,
             pid,
         ),
+    )
+    if offer_id:
+        conn.execute(
+            """
+            UPDATE offers SET status = 'accepted', responded_at = ?
+            WHERE id = ? AND project_id = ?
+            """,
+            (now, int(offer_id), pid),
+        )
+    close_pending_offers(
+        conn, pid, status="closed", note="다른 구매자와 성사", exclude_offer_id=offer_id, notify_buyers=True,
+        title=row["title"],
+    )
+    conn.execute(
+        "UPDATE projects SET pending_offer_count = 0, top_offer_amount = NULL, top_offer_buyer_id = NULL WHERE id = ?",
+        (pid,),
     )
     inv = create_fee_invoice(
         conn,
@@ -4217,8 +4277,8 @@ def finalize_sale(
         notify(
             conn,
             int(buyer_id),
-            "낙찰 · 결제 안내",
-            f"「{row['title']}」 ₩{sold_price:,} 낙찰. {pay_h}시간 이내 PG 결제해 주세요. "
+            "성사 · 결제 안내",
+            f"「{row['title']}」 ₩{sold_price:,} 에 성사되었습니다. {pay_h}시간 이내 PG 결제해 주세요. "
             f"결제·인수 전 실명·휴대폰(Lv2)이 필요합니다. "
             f"결제 확인 후 이전·검수, 「인수하기」 또는 {insp_h}시간 무이의 시 자동 확정·정산.",
             f"/project.html?id={pid}",
@@ -4558,7 +4618,7 @@ def open_q_thread(
     pid = int(row["id"])
     seller_id = int(row["owner_id"])
     if int(buyer_id) != int(_row_get(row, "buyer_id") or 0):
-        raise ValueError("낙찰 구매자만 헬프티켓을 사용할 수 있습니다.")
+        raise ValueError("성사된 구매자만 헬프티켓을 사용할 수 있습니다.")
     st = (_row_get(row, "deal_status") or "") or ""
     if st not in ("inspection", "completed"):
         raise ValueError("이전·검수 또는 인수 확정 후에 헬프티켓을 사용할 수 있습니다.")
@@ -4777,7 +4837,7 @@ def purchase_q_credit_units(
     """
     units = max(1, min(int(units or 1), 5))
     if int(buyer_id) != int(_row_get(row, "buyer_id") or 0):
-        raise ValueError("낙찰 구매자만 추가 헬프티켓을 살 수 있습니다.")
+        raise ValueError("성사된 구매자만 추가 헬프티켓을 살 수 있습니다.")
     st = (_row_get(row, "deal_status") or "") or ""
     if st not in ("inspection", "completed"):
         raise ValueError("이전·검수 이후에만 추가 헬프티켓을 구매할 수 있습니다.")
@@ -4972,99 +5032,37 @@ def mark_deal_disputed(
     return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
 
 
-def second_bidder_auto_enabled() -> bool:
-    """When primary winner misses payment, re-award to next highest unique bidder."""
-    raw = (os.environ.get("SECOND_BIDDER_AUTO") or "1").strip().lower()
-    return raw not in ("0", "false", "no", "off")
-
-
-def next_bid_after_default(
-    conn: sqlite3.Connection, project_id: int, excluded_buyer_id: int | None
-) -> sqlite3.Row | None:
-    """Highest bid from a different bidder than the defaulted winner."""
-    if excluded_buyer_id is None:
-        return conn.execute(
-            """
-            SELECT * FROM bids WHERE project_id = ?
-            ORDER BY amount DESC, id DESC LIMIT 1
-            """,
-            (int(project_id),),
-        ).fetchone()
-    return conn.execute(
-        """
-        SELECT * FROM bids
-        WHERE project_id = ? AND bidder_id != ?
-        ORDER BY amount DESC, id DESC
-        LIMIT 1
-        """,
-        (int(project_id), int(excluded_buyer_id)),
-    ).fetchone()
-
-
-def reaward_to_next_bidder(
-    conn: sqlite3.Connection,
-    row: sqlite3.Row,
-    *,
-    excluded_buyer_id: int | None,
-) -> sqlite3.Row | None:
-    """
-    After payment default: offer sale to next-highest unique bidder.
-    Returns re-awarded project row, or None if no eligible second bid.
-    """
-    pid = int(row["id"])
-    nxt = next_bid_after_default(conn, pid, excluded_buyer_id)
-    if not nxt:
-        return None
-    amount = int(nxt["amount"])
-    bidder_id = int(nxt["bidder_id"])
-    if amount <= 0:
-        return None
-    awarded = finalize_sale(
-        conn,
-        row,
-        sold_price=amount,
-        buyer_id=bidder_id,
-        note="1순위 미입금 · 차순위 자동 낙찰",
-    )
-    # Tag note for clarity
-    conn.execute(
-        """
-        UPDATE projects SET deal_note = ?
-        WHERE id = ?
-        """,
-        (
-            f"1순위 미입금 → 차순위 자동 낙찰 ₩{amount:,} (bidder#{bidder_id})",
-            pid,
-        ),
-    )
-    notify(
-        conn,
-        int(row["owner_id"]),
-        "차순위 자동 낙찰",
-        f"「{row['title']}」 1순위 미입금으로 차순위 ₩{amount:,} 에 자동 낙찰되었습니다. 새 구매자 입금 대기.",
-        f"/project.html?id={pid}",
-    )
-    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone() or awarded
-
-
 def void_for_nonpayment(conn: sqlite3.Connection, row: sqlite3.Row) -> sqlite3.Row:
-    """Buyer missed payment deadline → void award, credit penalty; optional 2nd bidder re-award."""
+    """Buyer missed payment deadline → void the sale, credit penalty.
+    2026-09-02 (고정가 + 제안): no runner-up re-award. The listing goes back to
+    'for sale' if its listing period is still open (or the clock hasn't started),
+    otherwise it leaves the board like an unsold listing."""
     now = _now()
     pid = int(row["id"])
     buyer_id = _row_get(row, "buyer_id")
     owner_id = int(row["owner_id"])
     title = row["title"]
+    ends_raw = (_row_get(row, "auction_ends_at") or "") or ""
+    ends = _parse_iso(ends_raw) if ends_raw else None
+    still_open = (not ends_raw) or (ends is not None and datetime.now(timezone.utc) <= ends)
     conn.execute(
         """
         UPDATE projects SET
           deal_status = 'payment_default',
-          auction_status = 'ended',
+          auction_status = ?,
+          sold_price = NULL, sold_at = NULL, buyer_id = NULL,
+          price_current = price_start,
+          payment_deadline_at = NULL,
           deal_note = ?,
           updated_at = ?
         WHERE id = ?
         """,
-        ("입금 기한 초과 · 낙찰 무효", now, pid),
+        ("live" if still_open else "ended", "입금 기한 초과 · 성사 무효", now, pid),
     )
+    if not still_open:
+        conn.execute(
+            "UPDATE projects SET listing_status = 'archived' WHERE id = ?", (pid,)
+        )
     # cancel open fee invoice
     conn.execute(
         """
@@ -5079,32 +5077,25 @@ def void_for_nonpayment(conn: sqlite3.Connection, row: sqlite3.Row) -> sqlite3.R
             conn,
             int(buyer_id),
             "입금 기한 초과",
-            f"「{title}」 입금 기한이 지나 낙찰이 무효 처리되었습니다. 사이트 내 신용 점수가 반영됩니다.",
+            f"「{title}」 입금 기한이 지나 성사가 무효 처리되었습니다. 사이트 내 신용 점수가 반영됩니다.",
             f"/project.html?id={pid}",
         )
     notify(
         conn,
         owner_id,
         "구매자 미입금",
-        f"「{title}」 구매자가 기한 내 입금하지 않아 낙찰이 무효 처리되었습니다.",
+        f"「{title}」 구매자가 기한 내 입금하지 않아 성사가 무효 처리되었습니다. "
+        + ("매물은 다시 판매 중으로 돌아갔습니다." if still_open else "게시 기간이 끝나 목록에서 내려갔습니다."),
         f"/project.html?id={pid}",
     )
-    row = conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
-
-    # Second-chance: next highest unique bidder gets a fresh payment window
-    if second_bidder_auto_enabled() and buyer_id:
-        reawarded = reaward_to_next_bidder(
-            conn, row, excluded_buyer_id=int(buyer_id)
-        )
-        if reawarded is not None:
-            return reawarded
-    return row
+    return conn.execute("SELECT * FROM projects WHERE id = ?", (pid,)).fetchone()
 
 
 def process_deal_deadlines(conn: sqlite3.Connection) -> dict[str, int]:
     """Payment timeout + inspection auto-accept. Returns counts."""
     now = datetime.now(timezone.utc)
-    out = {"payment_default": 0, "auto_settled": 0, "second_bidder_awards": 0}
+    out = {"payment_default": 0, "auto_settled": 0, "offers_expired": 0}
+    out["offers_expired"] = expire_stale_offers(conn)
     # unpaid
     rows = conn.execute(
         """
@@ -5117,18 +5108,8 @@ def process_deal_deadlines(conn: sqlite3.Connection) -> dict[str, int]:
     for row in rows:
         dl = _parse_iso(str(row["payment_deadline_at"] or ""))
         if dl and now > dl:
-            before_buyer = _row_get(row, "buyer_id")
-            after = void_for_nonpayment(conn, row)
+            void_for_nonpayment(conn, row)
             out["payment_default"] += 1
-            after_buyer = _row_get(after, "buyer_id") if after else None
-            after_status = (_row_get(after, "deal_status") or "") if after else ""
-            if (
-                after_status == "awaiting_payment"
-                and after_buyer
-                and before_buyer
-                and int(after_buyer) != int(before_buyer)
-            ):
-                out["second_bidder_awards"] += 1
     # inspection auto complete
     rows2 = conn.execute(
         """
@@ -5163,8 +5144,9 @@ def _parse_iso(ts: str) -> datetime | None:
         return None
 
 
-def process_expired_auctions(conn: sqlite3.Connection) -> int:
-    """End live auctions past auction_ends_at. Highest bid → sold; no bid → ended."""
+def process_expired_listings(conn: sqlite3.Connection) -> int:
+    """End live listings past their listing period (auction_ends_at column).
+    2026-09-02: no auto-award — pending offers expire and the listing leaves the board."""
     rows = conn.execute(
         """
         SELECT * FROM projects
@@ -5180,34 +5162,22 @@ def process_expired_auctions(conn: sqlite3.Connection) -> int:
         exp = _parse_iso(row["auction_ends_at"] or "")
         if not exp or now <= exp:
             continue
-        top = conn.execute(
-            """
-            SELECT * FROM bids WHERE project_id = ?
-            ORDER BY amount DESC, id DESC LIMIT 1
-            """,
-            (row["id"],),
-        ).fetchone()
-        if top:
-            finalize_sale(
-                conn,
-                row,
-                sold_price=int(top["amount"]),
-                buyer_id=int(top["bidder_id"]),
-                note="마감 자동 낙찰",
-            )
-        else:
-            # Unsold → leave public board (this round only; not permanent display)
-            archive_unsold_round(conn, int(row["id"]))
-            notify(
-                conn,
-                int(row["owner_id"]),
-                "이번 라운드 종료",
-                f"「{row['title']}」 입찰 없이 마감되어 공개 목록에서 내려갔습니다. "
-                f"다시 올리려면 내용을 다듬은 뒤 재등록·재검수가 필요합니다.",
-                f"/app/#mine",
-            )
+        # Unsold → leave public board (this period only; not permanent display)
+        archive_unsold_round(conn, int(row["id"]))
+        notify(
+            conn,
+            int(row["owner_id"]),
+            "게시 기간 종료",
+            f"「{row['title']}」 게시 기간이 끝나 공개 목록에서 내려갔습니다. "
+            f"다시 올리려면 내용을 다듬은 뒤 재등록·재검수가 필요합니다.",
+            f"/app/#mine",
+        )
         n += 1
     return n
+
+
+# 호환 별칭 — 옛 이름으로 부르는 코드/테스트용
+process_expired_auctions = process_expired_listings
 
 
 def public_bidder_handle(display_name: str | None, bidder_id: int | None = None) -> str:
@@ -5217,7 +5187,7 @@ def public_bidder_handle(display_name: str | None, bidder_id: int | None = None)
     """
     name = (display_name or "").strip()
     if not name:
-        return f"입찰자#{int(bidder_id)}" if bidder_id else "입찰자"
+        return f"구매자#{int(bidder_id)}" if bidder_id else "구매자"
     if "@" in name:
         local = name.split("@", 1)[0].strip() or "user"
         if len(local) <= 2:
@@ -5231,7 +5201,7 @@ def public_bidder_handle(display_name: str | None, bidder_id: int | None = None)
 def _party_label(display_name: str | None, user_id: int | None, *, role_ko: str) -> str:
     """Confirmation-card label: display name only (no email/phone/account)."""
     handle = public_bidder_handle(display_name, user_id)
-    if handle and not handle.startswith("입찰자") and "@" not in handle:
+    if handle and not handle.startswith("구매자") and "@" not in handle:
         return handle
     if user_id:
         return f"{role_ko} #{int(user_id)}"
@@ -5319,17 +5289,17 @@ def build_deal_certificate(
     title = row["title"] or ""
 
     if kind == "award":
-        doc_title_ko = "낙찰 기록 확인서"
+        doc_title_ko = "성사 기록 확인서"
         doc_title_en = "Award record confirmation"
-        status_label_ko = "낙찰"
+        status_label_ko = "성사"
         status_label_en = "Awarded"
         status_note_ko = "입금 · 자산 이전 · 인수 절차가 남아 있을 수 있습니다."
         status_note_en = "Payment, transfer, and acceptance may still be pending."
-        event_label_ko = "낙찰 시각"
+        event_label_ko = "성사 시각"
         event_label_en = "Awarded at"
-        lead_ko = "사이트에 아래 낙찰이 기록되었습니다."
+        lead_ko = "사이트에 아래 성사가 기록되었습니다."
         lead_en = "The following award is recorded on WakeAgain."
-        file_stem = f"WakeAgain-낙찰확인-{pid}-{token}"
+        file_stem = f"WakeAgain-성사확인-{pid}-{token}"
     else:
         doc_title_ko = "거래 기록 확인서"
         doc_title_en = "Transaction record confirmation"
@@ -5402,6 +5372,329 @@ def build_deal_certificate(
             "No real name or phone on this card — contact via listing messages or post-sale seller info."
         ),
     }
+
+# ---------------------------------------------------------------------------
+# 가격 제안 (offers) — 2026-09-02 경매 폐지 후의 구매 경로
+# ---------------------------------------------------------------------------
+
+OFFER_STATUSES = ("pending", "accepted", "declined", "withdrawn", "expired", "replaced", "closed")
+
+
+def offer_amounts_public() -> bool:
+    """OFFER_AMOUNTS_PUBLIC=0 이면 제안 금액을 당사자 외에는 숨긴다 (기본: 공개)."""
+    raw = (os.environ.get("OFFER_AMOUNTS_PUBLIC") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def offer_response_hours() -> int:
+    try:
+        v = int((os.environ.get("OFFER_RESPONSE_HOURS") or "48").strip())
+    except ValueError:
+        v = 48
+    return max(1, min(v, 24 * 14))
+
+
+def offer_floor_for_status(status: str | None) -> int:
+    """제안 하한 = 매물 상태 등급의 최저가."""
+    try:
+        from wakeagain import pricing as _pricing
+
+        return int(_pricing.pricing_for(status or "")["min"])
+    except Exception:
+        return 50_000
+
+
+def offer_policy_public() -> dict:
+    return {
+        "enabled": True,
+        "amounts_public": offer_amounts_public(),
+        "seller_response_hours": offer_response_hours(),
+        "floor": "status_band_min",
+        "max": "below_asking_price",
+        "counter_offers": False,
+        "one_pending_per_buyer": True,
+        "message_ko": (
+            f"판매가로 바로 사거나, 판매가보다 낮은 금액을 제안할 수 있습니다. "
+            f"판매자는 {offer_response_hours()}시간 안에 수락·거절하며, 지나면 제안은 자동 만료됩니다. "
+            "수락되면 1시간 안에 결제해야 성사가 유지됩니다."
+        ),
+        "message_en": (
+            f"Buy at the asking price, or make an offer below it. The seller accepts or declines "
+            f"within {offer_response_hours()}h; otherwise the offer expires. "
+            "An accepted offer must be paid within 1 hour."
+        ),
+    }
+
+
+def refresh_project_offer_stats(conn: sqlite3.Connection, project_id: int) -> None:
+    """Sync offer counters on projects: bid_count(=누적 제안), bidder_count(=고유 제안자),
+    pending_offer_count, top_offer_amount/buyer (highest pending)."""
+    stats = conn.execute(
+        """
+        SELECT COUNT(*) AS n, COUNT(DISTINCT buyer_id) AS u
+        FROM offers WHERE project_id = ?
+        """,
+        (int(project_id),),
+    ).fetchone()
+    pend = conn.execute(
+        """
+        SELECT COUNT(*) AS n FROM offers WHERE project_id = ? AND status = 'pending'
+        """,
+        (int(project_id),),
+    ).fetchone()
+    top = conn.execute(
+        """
+        SELECT amount, buyer_id FROM offers
+        WHERE project_id = ? AND status = 'pending'
+        ORDER BY amount DESC, id ASC LIMIT 1
+        """,
+        (int(project_id),),
+    ).fetchone()
+    conn.execute(
+        """
+        UPDATE projects
+        SET bid_count = ?, bidder_count = ?, pending_offer_count = ?,
+            top_offer_amount = ?, top_offer_buyer_id = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            int(stats["n"] or 0),
+            int(stats["u"] or 0),
+            int(pend["n"] or 0),
+            int(top["amount"]) if top else None,
+            int(top["buyer_id"]) if top else None,
+            _now(),
+            int(project_id),
+        ),
+    )
+
+
+def close_pending_offers(
+    conn: sqlite3.Connection,
+    project_id: int,
+    *,
+    status: str,
+    note: str,
+    exclude_offer_id: int | None = None,
+    notify_buyers: bool = False,
+    title: str | None = None,
+) -> int:
+    """Move every pending offer on a listing to `status` (closed/expired). Returns count."""
+    assert status in OFFER_STATUSES
+    rows = conn.execute(
+        "SELECT * FROM offers WHERE project_id = ? AND status = 'pending'",
+        (int(project_id),),
+    ).fetchall()
+    now = _now()
+    n = 0
+    for o in rows:
+        if exclude_offer_id and int(o["id"]) == int(exclude_offer_id):
+            continue
+        conn.execute(
+            """
+            UPDATE offers SET status = ?, responded_at = ?, response_note = ?
+            WHERE id = ?
+            """,
+            (status, now, note[:300], int(o["id"])),
+        )
+        n += 1
+        if notify_buyers:
+            notify(
+                conn,
+                int(o["buyer_id"]),
+                "제안 종료",
+                f"「{title or '매물'}」에 보낸 ₩{int(o['amount']):,} 제안이 종료되었습니다. ({note})",
+                f"/project.html?id={int(project_id)}",
+            )
+    if n:
+        refresh_project_offer_stats(conn, int(project_id))
+    return n
+
+
+def expire_stale_offers(conn: sqlite3.Connection) -> int:
+    """Pending offers past expires_at → expired (판매자 무응답). Buyer is told they can re-offer."""
+    now_dt = datetime.now(timezone.utc)
+    rows = conn.execute(
+        """
+        SELECT o.*, p.title AS project_title FROM offers o
+        JOIN projects p ON p.id = o.project_id
+        WHERE o.status = 'pending' AND o.expires_at IS NOT NULL AND o.expires_at != ''
+        """
+    ).fetchall()
+    n = 0
+    touched: set[int] = set()
+    for o in rows:
+        exp = _parse_iso(str(o["expires_at"] or ""))
+        if not exp or now_dt <= exp:
+            continue
+        conn.execute(
+            """
+            UPDATE offers SET status = 'expired', responded_at = ?, response_note = ?
+            WHERE id = ? AND status = 'pending'
+            """,
+            (_now(), "판매자 응답 기한 경과", int(o["id"])),
+        )
+        notify(
+            conn,
+            int(o["buyer_id"]),
+            "제안 만료",
+            f"「{o['project_title']}」에 보낸 ₩{int(o['amount']):,} 제안에 판매자가 기한 내 답하지 않아 만료되었습니다. "
+            "원하시면 다시 제안할 수 있습니다.",
+            f"/project.html?id={int(o['project_id'])}",
+        )
+        touched.add(int(o["project_id"]))
+        n += 1
+    for pid in touched:
+        refresh_project_offer_stats(conn, pid)
+    return n
+
+
+def offer_to_public(
+    row: sqlite3.Row | dict,
+    *,
+    viewer_id: int | None = None,
+    private: bool = False,
+    is_top: bool = False,
+) -> dict:
+    """Public offer card. Amount is hidden unless OFFER_AMOUNTS_PUBLIC, the viewer is the
+    buyer, or `private` (seller/admin view). Message is for parties only."""
+
+    def _g(key: str, default=None):
+        try:
+            if isinstance(row, dict):
+                return row.get(key, default)
+            return row[key] if key in row.keys() else default
+        except (IndexError, KeyError):
+            return default
+
+    buyer_id = _g("buyer_id")
+    is_mine = bool(viewer_id is not None and buyer_id is not None and int(viewer_id) == int(buyer_id))
+    show_amount = private or is_mine or offer_amounts_public()
+    bought = int(_g("credit_bought") or 0)
+    defaults = int(_g("credit_defaults") or 0)
+    rank = buyer_rank(bought, defaults)
+    out = {
+        "id": _g("id"),
+        "project_id": _g("project_id"),
+        "amount": int(_g("amount") or 0) if show_amount else None,
+        "buyer_label": public_bidder_handle(_g("display_name"), int(buyer_id) if buyer_id else None),
+        "status": _g("status") or "pending",
+        "created_at": _g("created_at"),
+        "expires_at": _g("expires_at") or "",
+        "responded_at": _g("responded_at") or "",
+        "is_top": bool(is_top),
+        "is_mine": is_mine,
+        "buyer_rank": None,
+    }
+    if private or is_mine:
+        out["message"] = (_g("message") or "") or ""
+        out["response_note"] = (_g("response_note") or "") or ""
+    if rank["key"] != "scout":
+        out["buyer_rank"] = {
+            "key": rank["key"],
+            "label": rank["label"],
+            "bought_complete": rank["bought_complete"],
+            "caution": rank["caution"],
+        }
+    return out
+
+
+def list_project_offers(
+    conn: sqlite3.Connection,
+    project_id: int,
+    *,
+    viewer_id: int | None = None,
+    private: bool = False,
+) -> list[dict]:
+    """Pending offers (public) or every offer (seller view), highest first."""
+    where = "" if private else " AND o.status = 'pending'"
+    rows = conn.execute(
+        f"""
+        SELECT o.*, u.display_name,
+               COALESCE(u.credit_bought, 0) AS credit_bought,
+               COALESCE(u.credit_defaults, 0) AS credit_defaults
+        FROM offers o
+        JOIN users u ON u.id = o.buyer_id
+        WHERE o.project_id = ?{where}
+        ORDER BY CASE o.status WHEN 'pending' THEN 0 ELSE 1 END, o.amount DESC, o.id DESC
+        LIMIT 200
+        """,
+        (int(project_id),),
+    ).fetchall()
+    out = []
+    top_seen = False
+    for r in rows:
+        is_top = (r["status"] == "pending") and not top_seen
+        if is_top:
+            top_seen = True
+        out.append(offer_to_public(r, viewer_id=viewer_id, private=private, is_top=is_top))
+    return out
+
+
+def top_offer_public(conn: sqlite3.Connection, project_id: int) -> dict | None:
+    row = conn.execute(
+        """
+        SELECT o.*, u.display_name,
+               COALESCE(u.credit_bought, 0) AS credit_bought,
+               COALESCE(u.credit_defaults, 0) AS credit_defaults
+        FROM offers o JOIN users u ON u.id = o.buyer_id
+        WHERE o.project_id = ? AND o.status = 'pending'
+        ORDER BY o.amount DESC, o.id ASC LIMIT 1
+        """,
+        (int(project_id),),
+    ).fetchone()
+    if not row:
+        return None
+    return offer_to_public(row, is_top=True)
+
+
+def listing_snapshot(row: sqlite3.Row, *, top_offer: dict | None = None) -> dict:
+    """Lightweight public payload for polling the live listings board (판매가 + 제안 요약)."""
+    p = project_to_dict(row, include_private=False)
+    out = {
+        "id": p["id"],
+        "title": p["title"],
+        "title_en": p.get("title_en") or "",
+        "one_liner": p["one_liner"],
+        "one_liner_en": p.get("one_liner_en") or "",
+        "keywords": p.get("keywords") or [],
+        "product_type": p.get("product_type"),
+        "price": p["price"],
+        "price_start": p["price_start"],
+        "price_current": p["price_current"],
+        "offer_count": p["offer_count"],
+        "offerer_count": p["offerer_count"],
+        "pending_offer_count": p["pending_offer_count"],
+        "bid_count": p["offer_count"],
+        "bidder_count": p["offerer_count"],
+        "top_offer": None,
+        "top_bidder": None,
+        "listing_ends_at": p["listing_ends_at"],
+        "auction_ends_at": p["listing_ends_at"],
+        "sale_status": p["sale_status"],
+        "auction_status": p["sale_status"],
+        "listing_status": p["listing_status"],
+        "updated_at": p["updated_at"],
+        "status": p["status"],
+        "seller_country": (row["seller_country"] if "seller_country" in row.keys() else None) or "",
+        "english_ready": p.get("english_ready") or False,
+    }
+    if top_offer:
+        out["top_offer"] = {
+            "label": top_offer.get("buyer_label"),
+            "amount": top_offer.get("amount"),
+            "buyer_rank": top_offer.get("buyer_rank"),
+        }
+        out["top_bidder"] = out["top_offer"]
+    elif p.get("top_offer"):
+        out["top_offer"] = {
+            "label": p["top_offer"].get("buyer_label"),
+            "amount": p["top_offer"].get("amount"),
+            "buyer_rank": None,
+        }
+        out["top_bidder"] = out["top_offer"]
+    return out
+
 
 
 def bid_to_public(row: sqlite3.Row | dict) -> dict:
@@ -5520,38 +5813,8 @@ def showcase_to_dict(row: sqlite3.Row) -> dict:
 
 
 def auction_snapshot(row: sqlite3.Row, *, top_bid: dict | None = None) -> dict:
-    """Lightweight public payload for polling live boards."""
-    p = project_to_dict(row, include_private=False)
-    out = {
-        "id": p["id"],
-        "title": p["title"],
-        "title_en": p.get("title_en") or "",
-        "one_liner": p["one_liner"],
-        "one_liner_en": p.get("one_liner_en") or "",
-        "keywords": p.get("keywords") or [],
-        "product_type": p.get("product_type"),
-        "price_start": p["price_start"],
-        "price_current": p["price_current"],
-        "bid_count": p["bid_count"],
-        "bidder_count": p["bidder_count"],
-        "min_increment": p["min_increment"],
-        "next_min_bid": p["next_min_bid"],
-        "auction_ends_at": p["auction_ends_at"],
-        "auction_status": p["auction_status"],
-        "listing_status": p["listing_status"],
-        "updated_at": p["updated_at"],
-        "status": p["status"],
-        "top_bidder": None,
-        "seller_country": (row["seller_country"] if "seller_country" in row.keys() else None) or "",
-        "english_ready": p.get("english_ready") or False,
-    }
-    if top_bid:
-        out["top_bidder"] = {
-            "label": top_bid.get("bidder_label"),
-            "amount": top_bid.get("amount"),
-            "buyer_rank": top_bid.get("buyer_rank"),
-        }
-    return out
+    """호환 별칭 — listing_snapshot 으로 위임."""
+    return listing_snapshot(row, top_offer=top_bid)
 
 
 def refresh_project_bid_stats(conn: sqlite3.Connection, project_id: int) -> None:

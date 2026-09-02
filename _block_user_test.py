@@ -222,21 +222,21 @@ def main() -> int:
     r = cl.get(f"/api/v1/projects/{pid}", headers=other["headers"])
     log("other still sees listing", r.status_code == 200, str(r.status_code))
 
-    # Bid rejected
+    # Offer rejected
     r = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer["headers"],
-        json={"amount": 150000},
+        json={"amount": 60000},
     )
     detail = j(r).get("detail")
     code = detail.get("code") if isinstance(detail, dict) else None
-    log("bid rejected when blocked", r.status_code == 403 and code == "blocked", f"{r.status_code} {code}")
+    log("offer rejected when blocked", r.status_code == 403 and code == "blocked", f"{r.status_code} {code}")
 
-    # Buy-now rejected
-    r = cl.post(f"/api/v1/projects/{pid}/buy-now", headers=buyer["headers"])
+    # Buy at asking price rejected
+    r = cl.post(f"/api/v1/projects/{pid}/buy", headers=buyer["headers"])
     detail = j(r).get("detail")
     code = detail.get("code") if isinstance(detail, dict) else None
-    log("buy-now rejected when blocked", r.status_code == 403 and code == "blocked", f"{r.status_code} {code}")
+    log("buy rejected when blocked", r.status_code == 403 and code == "blocked", f"{r.status_code} {code}")
 
     # Reverse: seller blocked buyer — seller also can't bid on buyer's listing if any.
     # Simpler: buyer blocked seller means seller trying to message on seller's own project is OK.
@@ -260,13 +260,13 @@ def main() -> int:
     ids = [p["id"] for p in (j(r).get("projects") or [])]
     log("after unblock list shows", pid in ids, f"n={len(ids)}")
 
-    # Bid works after unblock
+    # Offer works after unblock
     r = cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=buyer["headers"],
-        json={"amount": 150000},
+        json={"amount": 60000},
     )
-    log("bid ok after unblock", r.status_code == 200, str(r.status_code) + " " + (r.text or "")[:80])
+    log("offer ok after unblock", r.status_code == 200, str(r.status_code) + " " + (r.text or "")[:80])
 
     # Config exposes block_policy
     r = cl.get("/api/v1/config")

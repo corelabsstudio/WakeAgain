@@ -339,11 +339,11 @@
             "에 성사시켰어요! WakeAgain에서 잠든 프로젝트에 두 번째 기회를. wakeagain.com";
     }
     return en
-      ? "Won an auction on WakeAgain for " +
+      ? "Bought " +
           (cert.project_title || "a project") +
-          "! wakeagain.com"
+          " on WakeAgain! wakeagain.com"
       : (cert.project_title || "프로젝트") +
-          " 경매 낙찰받았어요! WakeAgain wakeagain.com";
+          "을(를) WakeAgain에서 구매했어요! wakeagain.com";
   }
 
   function shareImage(cert) {

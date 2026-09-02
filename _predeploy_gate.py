@@ -99,14 +99,14 @@ def main() -> int:
     # 05 process_expired exists
     from wakeagain import db as database
 
-    check(5, "process_expired_auctions", callable(database.process_expired_auctions))
+    check(5, "process_expired_listings", callable(database.process_expired_listings))
 
-    # 06 unit: expired auction close
+    # 06 unit: expired listing close
     database.init_db()
     closed = 0
     with database.db() as conn:
-        closed = database.process_expired_auctions(conn)
-    check(6, "auction closer callable", isinstance(closed, int))
+        closed = database.process_expired_listings(conn)
+    check(6, "listing closer callable", isinstance(closed, int))
 
     # 07 pricing policy
     from wakeagain import pricing as price_policy

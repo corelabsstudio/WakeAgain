@@ -12,12 +12,12 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20260825-contrast" />
-<link rel="stylesheet" href="/ux9.css?v=20260729-deep-qa" />
+  <link rel="stylesheet" href="/styles.css?v=20260902-offers" />
+<link rel="stylesheet" href="/ux9.css?v=20260902-offers" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/yard-theme.css?v=20260825-contrast" />
-  <script src="/js/theme-preview.js?v=20260816-ch1"></script>
+  <link rel="stylesheet" href="/yard-theme.css?v=20260902-offers" />
+  <script src="/js/theme-preview.js?v=20260902-offers"></script>
   <script>
     (function () {
       try {
@@ -78,7 +78,7 @@
       </a>
       <div class="path-card">
         <strong data-i18n="sell.path_guest_t">Quick intake (guest)</strong>
-        <span data-i18n="sell.path_guest_d">Form below is a pre-inquiry only. No public listing or bid rights</span>
+        <span data-i18n="sell.path_guest_d">Form below is a pre-inquiry only. No public listing or offer rights</span>
       </div>
     </div>
     <p class="trust-inline-note muted fine" data-i18n="sell.trust_html" data-i18n-html>Curious first? <a class="text-link" href="/diagnose.html">What's my project worth? (30-sec free diagnose)</a> · Settlement account (Lv3) before close</p>
@@ -87,7 +87,7 @@
       <strong data-i18n="sell.fee_title">Fees (read before listing)</strong>
       <ul style="margin:0.4rem 0 0;padding-left:1.15rem;line-height:1.55;color:var(--muted)">
         <li data-i18n="sell.fee_li1_html" data-i18n-html>Listing & pre-intake are <strong>free</strong></li>
-        <li data-i18n="sell.fee_li2_html" data-i18n-html>On close: <strong>10% seller fee</strong> · buyers pay the agreed (winning) price only</li>
+        <li data-i18n="sell.fee_li2_html" data-i18n-html>On close: <strong>10% seller fee</strong> · buyers pay the agreed price only</li>
         <li data-i18n="sell.fee_li3_html" data-i18n-html>No platform fee if no deal · <a class="text-link" href="/legal/terms.html" target="_blank" rel="noopener">Terms §13</a></li>
       </ul>
       <p class="fee-purpose" data-i18n="sell.fee_purpose">Transaction fees support fair and transparent trading for all users and the continued development of the site.</p>
@@ -136,7 +136,7 @@
       </select>
       <p class="price-guide" data-i18n="sell.status_guide_html" data-i18n-html>Pick the closest simple state — no jargon. Overstatement hurts trust and review. <a href="/guide/status.html" target="_blank" rel="noopener">How to choose</a></p>
       <div class="status-criteria" id="sellStatusCriteria" hidden></div>
-      <p class="price-guide" id="sellPriceGuide" data-i18n="sell.price_guide_default">Suggested starting bid ranges change with status.</p>
+      <p class="price-guide" id="sellPriceGuide" data-i18n="sell.price_guide_default">Suggested asking price ranges change with status.</p>
 
       <label for="features"><span data-i18n="sell.features">What the product does (min 3 lines)</span> <span class="req">*</span></label>
       <p class="price-guide muted fine" data-i18n="sell.features_guide">No coding needed. One plain-language bullet per line (screens/buttons).</p>
@@ -167,13 +167,9 @@
         <label><input type="checkbox" name="asset" value="accounts" /> <span data-i18n="sell.asset_accounts">Accounts / store</span></label>
       </div>
 
-      <label for="price_start"><span data-i18n="sell.price_start">Desired start bid (KRW)</span> <span class="req">*</span></label>
+      <label for="price_start"><span data-i18n="sell.price_start">Asking price (KRW)</span> <span class="req">*</span></label>
       <input id="price_start" name="price_start" type="number" min="50000" max="100000000" step="10000" placeholder="상태 선택 후 권장가가 채워집니다" data-i18n-placeholder="sell.price_start_ph" inputmode="numeric" required />
       <p class="note" id="sellPriceHint" data-i18n="sell.price_hint">Keep prototypes lower; launched-then-paused can go higher — match today's state. (Max ₩100M)</p>
-
-      <label for="price_buy_now" data-i18n="sell.price_buy_now_html" data-i18n-html>Buy-now price (KRW) — <strong>optional</strong></label>
-      <input id="price_buy_now" name="price_buy_now" type="number" min="50000" max="100000000" step="10000" placeholder="비워 두면 즉시구매 없음" data-i18n-placeholder="sell.price_buy_now_ph" inputmode="numeric" />
-      <p class="note" data-i18n="sell.price_buy_now_note_html" data-i18n-html><strong>Optional.</strong> Leave empty for auction (price bids) only. If set: start price up to ₩100M max. Leave empty if you want higher bids. Unrealistic amounts (999…) are rejected.</p>
 
       <label for="contact"><span data-i18n="sell.contact">Contact email or Telegram</span> <span class="req">*</span></label>
       <input id="contact" name="contact" required maxlength="120" placeholder="you@email.com 또는 @telegram" data-i18n-placeholder="sell.contact_ph" />
@@ -229,14 +225,14 @@
     </p>
     <p class="footer-copy muted" data-i18n="sell.footer_free">Operated by CoreLabs · listing free · Powered by CoreLabs</p>
   </footer>
-  <script src="/js/ui-sound.js?v=20260722a"></script>
-  <script src="/js/i18n-messages.js?v=20260816-i18nhtmlfix"></script>
-  <script src="/js/i18n.js?v=20260815-langdeep"></script>
+  <script src="/js/ui-sound.js?v=20260902-offers"></script>
+  <script src="/js/i18n-messages.js?v=20260902-offers"></script>
+  <script src="/js/i18n.js?v=20260902-offers"></script>
 
-  <script src="/js/api.js?v=20260815-verify"></script>
-  <script src="/js/footer-visitors.js?v=20260824-visits"></script>
+  <script src="/js/api.js?v=20260902-offers"></script>
+  <script src="/js/footer-visitors.js?v=20260902-offers"></script>
   <script src="/js/demo-help.js"></script>
-  <script src="/form.js?v=20260811-i18n-en"></script>
+  <script src="/form.js?v=20260902-offers"></script>
   <script>
     (function () {
       var sel = document.getElementById("product_type");

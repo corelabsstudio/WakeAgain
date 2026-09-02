@@ -28,6 +28,7 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 최근 종료 (참고용 · 3건까지만 남기고 정리)
 
+- [Claude Code] `wakeagain/**`, `public/**`, 약관·PLATFORM·TRUST, 테스트 전부 — 경매 → 고정가+제안(offer) 전환 — 2026-09-02 종료
 - [Claude Code] `public/index.html`, `assets/world/world.css`, `public/sw.js` — 월드 fixed 레이어가 매물 섹션을 덮던 버그 — 2026-08-25 종료
 - [Claude Code] `public/styles.css`, `yard-theme.css`, `app/app.css`, `guide/guide-visual.css`, `project.html`, `?v=` 62파일 — 대비 결함 2건 + focus-visible — 2026-08-25 종료
 - [Claude Code] `public/**` HTML 16개, `public/sw.js` — 사이트 전체 접근성 결함 수정(th scope 95·폼 라벨 3·theme-color 1) — 2026-08-25 종료

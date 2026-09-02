@@ -1,6 +1,6 @@
 /**
- * Landing marketplace — public live auction prices for every visitor.
- * Polls /api/v1/auctions/live so rising bids are visible site-wide.
+ * Landing marketplace — public asking prices for every visitor.
+ * Polls /api/v1/listings/live so asking prices and offer counts stay fresh.
  */
 (function () {
   const api = window.WakeAgainAPI;
@@ -192,40 +192,47 @@
     return p.story || "";
   }
 
-  function badge(p) {
-    if (p.listing_status === "preview") return { cls: "new", text: tt("list.badge_sample", isEn() ? "Sample" : "예시") };
-    const a = (p.auction_status || "live").toLowerCase();
-    if (a === "sold") return { cls: "ending", text: tt("list.badge_sold", isEn() ? "Sold" : "팔림") };
-    if (a === "ended") return { cls: "draft", text: tt("list.badge_ended", isEn() ? "Ended" : "끝남") };
-    if (bidderCount(p) > 0) return { cls: "live", text: tt("list.badge_live", isEn() ? "Live" : "입찰 중") };
-    if (p.listing_status === "pending") return { cls: "draft", text: tt("list.badge_review", isEn() ? "Under review" : "검토 중") };
-    return { cls: "live", text: tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기") };
+  /** live | ended | sold | paused | pending — `auction_status` kept as a compat fallback. */
+  function saleStatus(p) {
+    return String((p && (p.sale_status || p.auction_status)) || "live").toLowerCase();
   }
 
-  /** Unique people who bid (not total bid events). */
-  function bidderCount(p) {
+  function badge(p) {
+    if (p.listing_status === "preview") return { cls: "new", text: tt("list.badge_sample", isEn() ? "Sample" : "예시") };
+    const a = saleStatus(p);
+    if (a === "sold") return { cls: "ending", text: tt("list.badge_sold", isEn() ? "Sold" : "팔림") };
+    if (a === "ended") return { cls: "draft", text: tt("list.badge_ended", isEn() ? "Ended" : "끝남") };
+    if (p.listing_status === "pending") return { cls: "draft", text: tt("list.badge_review", isEn() ? "Under review" : "검토 중") };
+    return { cls: "live", text: tt("list.badge_sale", isEn() ? "For sale" : "판매 중") };
+  }
+
+  /** Offers received on a listing (`bid_count` kept as a compat fallback). */
+  function offerCount(p) {
     if (p == null) return 0;
-    if (p.bidder_count != null) return Number(p.bidder_count) || 0;
+    if (p.offer_count != null) return Number(p.offer_count) || 0;
     return Number(p.bid_count) || 0;
+  }
+
+  /** Asking price (`price_start` kept as a compat fallback). */
+  function askPrice(p) {
+    if (p == null) return null;
+    const v = p.price != null ? p.price : p.price_start;
+    return v == null ? null : Number(v);
   }
 
   function formatPrice(p) {
     var en = isEn();
+    const ask = askPrice(p);
     if (p.listing_status === "preview") {
-      const cur = p.price_current != null ? p.price_current : p.price_start;
       return {
-        label: bidderCount(p) > 0 ? tt("list.price_now", en ? "Current" : "지금 가격") : tt("list.price_start", en ? "Start" : "시작 가격"),
-        value: money(cur),
+        label: tt("list.price_ask", en ? "Asking price" : "판매가"),
+        value: money(ask),
       };
     }
-    const cur = p.price_current != null ? p.price_current : p.price_start;
-    if (cur != null) {
+    if (ask != null && !isNaN(ask)) {
       return {
-        label:
-          bidderCount(p) > 0
-            ? tt("list.price_now_pub", en ? "Current bid · public" : "지금 가격 · 공개")
-            : tt("list.price_start_pub", en ? "Starting bid · public" : "시작 가격 · 공개"),
-        value: money(cur),
+        label: tt("list.price_ask_pub", en ? "Asking price · public" : "판매가 · 공개"),
+        value: money(ask),
       };
     }
     return { label: tt("list.price", en ? "Price" : "가격"), value: tt("list.inquire", en ? "Inquire" : "문의") };
@@ -244,20 +251,18 @@
     return path;
   }
 
-  function bidNoteText(bidders, top) {
-    if (bidders > 0) {
-      const base = isEn()
-        ? bidders + " bidders · public"
-        : bidders + "명 입찰 · 모두 공개";
-      if (top && top.label) {
+  function offerNoteText(offers, top) {
+    if (offers > 0) {
+      const base = isEn() ? offers + " offers" : "제안 " + offers + "건";
+      if (top && top.buyer_label) {
         const rank = top.buyer_rank && top.buyer_rank.label ? " · " + creditLabelUi(top.buyer_rank.label) : "";
         return isEn()
-          ? "Lead " + creditLabelUi(top.label) + rank + " · " + base
-          : "최고 " + top.label + rank + " · " + base;
+          ? "Top " + creditLabelUi(top.buyer_label) + rank + " · " + base
+          : "최고 " + top.buyer_label + rank + " · " + base;
       }
       return base;
     }
-    return tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기");
+    return tt("list.offers_none", isEn() ? "No offers yet" : "아직 제안 없음");
   }
 
   function keywordsOf(p) {
@@ -298,12 +303,12 @@
     const price = formatPrice(p);
     const href = detailHref(p);
     const cats = p.cats || inferCats(p);
-    const bids = bidderCount(p);
+    const offers = offerCount(p);
     const title = escapeHtml(listingTitle(p) || "Untitled");
     const line = escapeHtml(oneLiner(p));
     const st = escapeHtml(statusLabel(p));
-    const top = p.top_bidder || null;
-    const bidNote = `<span class="listing-bid-note">${escapeHtml(bidNoteText(bids, top))}</span>`;
+    const top = p.top_offer || null;
+    const offerNote = `<span class="listing-bid-note">${escapeHtml(offerNoteText(offers, top))}</span>`;
     const ptype = escapeHtml(typeLabel(p));
     const flag =
       window.WakeAgainCountries && p.seller_country
@@ -321,8 +326,8 @@
       (ptype ? `<span class="listing-type-tag">${ptype}</span>` : "") +
       (st ? `<span class="listing-type-tag">${st}</span>` : "");
     const cta =
-      bids > 0
-        ? tt("list.cta_bid", isEn() ? "Place bid" : "가격 쓰고 보기")
+      saleStatus(p) === "live" && p.listing_status !== "preview"
+        ? tt("list.cta_offer", isEn() ? "View & make an offer" : "보고 제안하기")
         : tt("list.cta_view", isEn() ? "View listing" : "프로젝트 자세히 보기");
     const searchBlob = escapeAttr(
       [p.title, p.title_en, p.one_liner, p.one_liner_en, (p.keywords || []).join(" "), p.story]
@@ -342,10 +347,10 @@
       `<div class="listing-body">` +
       `<h3 class="lot-card-title">${title}</h3>` +
       `<p class="lot-card-line">${line}</p>` +
-      `<div class="lot-card-meta">${typeBit}${keywordsHtml(p)}${bidNote}</div>` +
+      `<div class="lot-card-meta">${typeBit}${keywordsHtml(p)}${offerNote}</div>` +
       `<div class="listing-foot">` +
       `<div class="lot-card-price"><span class="label">${price.label}</span>` +
-      `<strong data-price data-money-krw="${escapeAttr(String(p.price_current != null ? p.price_current : p.price_start || 0))}">${price.value}</strong></div>` +
+      `<strong data-price data-money-krw="${escapeAttr(String(askPrice(p) || 0))}">${price.value}</strong></div>` +
       `<a class="btn btn-primary btn-sm lot-card-cta" href="${href}">${cta}</a>` +
       `</div></div></article>`
     );
@@ -416,8 +421,8 @@
       ? tt(
           "list.source_api",
           isEn()
-            ? "Live auction · current price public to every visitor · refreshes every 4s"
-            : "공개 경매 · 현재가는 사이트 방문객 전원에게 실시간 공개 · 4초마다 갱신"
+            ? "Live listings · asking prices public · refreshes every 4s"
+            : "판매 중 매물 · 판매가 공개 · 4초마다 갱신"
         )
       : tt(
           "list.source_loading",
@@ -480,101 +485,58 @@
   }
 
   function heroPrice(p) {
-    const n = p.price_current != null ? p.price_current : p.price_start;
+    const n = askPrice(p);
     return Number(n) || 0;
   }
 
+  function topOfferAmount(p) {
+    if (!p || !p.top_offer || p.top_offer.amount == null) return null;
+    const n = Number(p.top_offer.amount);
+    return isNaN(n) ? null : n;
+  }
+
   /**
-   * Hero card = live auction with the highest public bid (current price).
-   * High number = social proof / curiosity on the landing page.
-   * Tie-break: more bids, then nearer end (if known).
+   * Hero card = a listing that already has an offer on it (social proof),
+   * otherwise simply the first live listing. No countdown, no price drama.
    */
   function pickHero(list) {
     if (!list || !list.length) return null;
     const live = list.filter(function (p) {
-      return (p.auction_status || "live") === "live";
+      return saleStatus(p) === "live";
     });
     const pool = live.length ? live : list.slice();
-    pool.sort(function (a, b) {
-      const pd = heroPrice(b) - heroPrice(a);
-      if (pd !== 0) return pd;
-      const bd = bidderCount(b) - bidderCount(a);
-      if (bd !== 0) return bd;
-      const ea = a.auction_ends_at ? Date.parse(a.auction_ends_at) : Infinity;
-      const eb = b.auction_ends_at ? Date.parse(b.auction_ends_at) : Infinity;
-      return (isNaN(ea) ? Infinity : ea) - (isNaN(eb) ? Infinity : eb);
+    const withOffer = pool.filter(function (p) {
+      return topOfferAmount(p) != null || offerCount(p) > 0;
     });
+    if (withOffer.length) {
+      withOffer.sort(function (a, b) {
+        const ta = topOfferAmount(a);
+        const tb = topOfferAmount(b);
+        if (ta != null && tb != null && ta !== tb) return tb - ta;
+        if (ta != null && tb == null) return -1;
+        if (tb != null && ta == null) return 1;
+        return offerCount(b) - offerCount(a);
+      });
+      return withOffer[0];
+    }
     return pool[0];
   }
 
-  /** Hero remaining-time: one stable countdown (not ISO date). */
-  let heroCountdownId = null;
-  let heroEndsKey = null;
-
-  function fmtRemainMs(ms) {
-    if (ms <= 0) return tt("list.ended_short", isEn() ? "Ended" : "마감");
-    var sec = Math.floor(ms / 1000);
-    var d = Math.floor(sec / 86400);
-    sec %= 86400;
-    var h = Math.floor(sec / 3600);
-    sec %= 3600;
-    var m = Math.floor(sec / 60);
-    var s = sec % 60;
-    var clock =
-      String(h).padStart(2, "0") +
-      ":" +
-      String(m).padStart(2, "0") +
-      ":" +
-      String(s).padStart(2, "0");
-    // Multi-day: "2d 14:22:01" / "2일 14:22:01"
-    if (d > 0) return d + (isEn() ? "d " : "일 ") + clock;
-    return clock;
-  }
-
-  function paintHeroTimer(timer) {
+  /** Quiet listing window — the end date, never a ticking clock. */
+  function paintListedUntil(timer, endsAt) {
     if (!timer) return;
-    var ends = timer.getAttribute("data-ends-at");
-    if (!ends) return;
-    var end = Date.parse(ends);
-    if (isNaN(end)) {
-      timer.textContent = "—";
-      timer.classList.remove("timer-urgent", "timer-ended");
-      return;
-    }
-    var left = end - Date.now();
-    var next = fmtRemainMs(left);
-    if (timer.textContent !== next) timer.textContent = next;
-    timer.classList.toggle("timer-urgent", left > 0 && left < 3600000);
-    timer.classList.toggle("timer-ended", left <= 0);
-    // Absolute end only on hover — never fight the countdown on screen
-    timer.title =
-      left > 0
-        ? (isEn() ? "Ends " : "마감 ") + String(ends).replace("T", " ").slice(0, 16)
-        : tt("list.auction_ended", isEn() ? "Auction ended" : "경매 종료");
-  }
-
-  function startHeroCountdown(timer, endsAt) {
-    if (!timer) return;
-    // Hand off from static demo timer (data-seconds)
     timer.removeAttribute("data-seconds");
+    timer.classList.remove("timer-urgent", "timer-ended");
     if (!endsAt) {
       timer.removeAttribute("data-ends-at");
-      heroEndsKey = null;
-      if (heroCountdownId) {
-        clearInterval(heroCountdownId);
-        heroCountdownId = null;
-      }
+      timer.removeAttribute("title");
+      timer.textContent = "—";
       return;
     }
-    var key = String(endsAt);
-    timer.setAttribute("data-ends-at", key);
-    paintHeroTimer(timer);
-    if (heroEndsKey === key && heroCountdownId) return;
-    heroEndsKey = key;
-    if (heroCountdownId) clearInterval(heroCountdownId);
-    heroCountdownId = setInterval(function () {
-      paintHeroTimer(timer);
-    }, 1000);
+    const stamp = String(endsAt).replace("T", " ").slice(0, 16);
+    timer.setAttribute("data-ends-at", String(endsAt));
+    timer.textContent = stamp.slice(0, 10) || stamp;
+    timer.title = (isEn() ? "Listed until " : "게시 마감 ") + stamp;
   }
 
   function updateHeroLive(first, fromApi) {
@@ -582,20 +544,20 @@
     if (!card) return;
     const name = card.querySelector(".live-card-head strong");
     const sub = card.querySelector(".live-card-head p");
-    const bid = card.querySelector(".live-metrics strong.mono");
+    const priceEl = card.querySelector(".live-metrics strong.mono");
     const timer = card.querySelector(".timer");
     const icon = card.querySelector(".live-icon");
     if (!first) {
-      if (name) name.textContent = tt("live.empty_title", isEn() ? "No live auction" : "진행 중 매물 없음");
+      if (name) name.textContent = tt("live.empty_title", isEn() ? "No live listing" : "진행 중 매물 없음");
       if (sub) {
         sub.textContent = tt(
           "live.empty_sub",
           isEn() ? "List a project to appear here" : "매물이 등록되면 여기에 표시됩니다"
         );
       }
-      if (bid) {
-        bid.textContent = "—";
-        bid.removeAttribute("data-money-krw");
+      if (priceEl) {
+        priceEl.textContent = "—";
+        priceEl.removeAttribute("data-money-krw");
       }
       if (icon) icon.textContent = "—";
       const badgeEl = card.querySelector(".live-badge");
@@ -604,13 +566,7 @@
         const label = tt("live.empty_badge", isEn() ? "WAITING" : "대기 중");
         if (textEl) textEl.textContent = label;
       }
-      if (timer) {
-        startHeroCountdown(timer, null);
-        timer.textContent = "—";
-        timer.removeAttribute("data-seconds");
-        timer.removeAttribute("title");
-        timer.classList.remove("timer-urgent", "timer-ended");
-      }
+      paintListedUntil(timer, null);
       var progP = card.querySelector(".live-progress p");
       if (progP) {
         progP.textContent = tt(
@@ -636,37 +592,28 @@
     if (icon) icon.textContent = (liveTitle || "?").trim().charAt(0).toUpperCase() || "—";
     if (sub) {
       if (fromApi) {
-        var bc = bidderCount(first);
-        sub.textContent = isEn()
-          ? bc + " bidders · " + (first.auction_status || "live")
-          : bc + "명 입찰 · " + (first.auction_status || "live");
+        var oc = offerCount(first);
+        sub.textContent = oc > 0
+          ? (isEn() ? oc + " offers · for sale" : "제안 " + oc + "건 · 판매 중")
+          : (isEn() ? "For sale · no offers yet" : "판매 중 · 아직 제안 없음");
       } else {
         sub.textContent = oneLiner(first);
       }
     }
-    const price = first.price_current != null ? first.price_current : first.price_start;
-    if (bid && price != null) {
-      const next = money(price);
-      if (bid.textContent !== next) {
-        bid.textContent = next;
-        bid.classList.add("price-flash");
+    const ask = askPrice(first);
+    if (priceEl && ask != null) {
+      const next = money(ask);
+      if (priceEl.textContent !== next) {
+        priceEl.textContent = next;
+        priceEl.classList.add("price-flash");
         setTimeout(function () {
-          bid.classList.remove("price-flash");
+          priceEl.classList.remove("price-flash");
         }, 500);
-        // Green ECG spike — bid = heartbeat of a living project
-        if (window.WakeAgainHeroEcg && window.WakeAgainHeroEcg.spike) {
-          window.WakeAgainHeroEcg.spike(1);
-        }
       }
     }
     const badgeEl = card.querySelector(".live-badge");
     if (badgeEl) {
-      const label =
-        fromApi && bidderCount(first) > 0
-          ? "AUCTION LIVE"
-          : fromApi
-            ? "LISTED · PUBLIC"
-            : "PREVIEW";
+      const label = fromApi ? "FOR SALE · PUBLIC" : "PREVIEW";
       const textEl = badgeEl.querySelector(".live-badge-text");
       if (textEl) {
         textEl.textContent = label;
@@ -682,49 +629,36 @@
     if (toast && fromApi && first.id) {
       toast.innerHTML =
         '<span class="pulse-dot"></span> ' +
-        (isEn() ? "Live price public · " : "현재가 전원 공개 · ") +
+        (isEn() ? "Asking price public · " : "판매가 전원 공개 · ") +
         '<a href="/project.html?id=' +
         encodeURIComponent(first.id) +
         '" style="color:inherit;text-decoration:underline">' +
-        (isEn() ? "Details & bid" : "상세·입찰") +
+        (isEn() ? "View & make an offer" : "보고 제안하기") +
         "</a>";
     }
-    // Real auction: stable HH:MM:SS (or N일 HH:MM:SS). Never show raw date in the value.
-    if (timer && first.auction_ends_at) {
-      startHeroCountdown(timer, first.auction_ends_at);
-    } else if (timer && fromApi) {
-      startHeroCountdown(timer, null);
-      timer.textContent = "—";
-      timer.removeAttribute("title");
-      timer.classList.remove("timer-urgent", "timer-ended");
-    }
+    paintListedUntil(timer, first.listing_ends_at || first.auction_ends_at || null);
 
-    // Progress line: show real start price + bidder count (not vague "vs start")
+    // Progress line: asking price + how many offers landed
     var progP = card.querySelector(".live-progress p");
     var progBar = card.querySelector(".live-progress-bar span");
-    var start = first.price_start != null ? Number(first.price_start) : null;
-    var cur =
-      first.price_current != null ? Number(first.price_current) : start;
-    var bidders = bidderCount(first);
+    var offers = offerCount(first);
     if (progP) {
-      var en = isEn();
-      var startTxt = start != null && !isNaN(start) ? money(start) : "—";
-      if (en) {
-        progP.textContent =
-          "Start " + startTxt + " · " + bidders + " bidder" + (bidders === 1 ? "" : "s");
-      } else {
-        progP.textContent =
-          "시작가 " + startTxt + " · 입찰자 " + bidders + "명";
-      }
+      var askTxt = ask != null && !isNaN(ask) ? money(ask) : "—";
+      progP.textContent = isEn()
+        ? "Asking " + askTxt + " · " + offers + " offer" + (offers === 1 ? "" : "s")
+        : "판매가 " + askTxt + " · 제안 " + offers + "건";
       // i18n must not overwrite dynamic numbers
       progP.removeAttribute("data-i18n");
     }
-    if (progBar && start != null && start > 0 && cur != null && !isNaN(cur)) {
-      // Fill vs start: 0% at start, ~100% when 2× start (cap 100%)
-      var ratio = Math.max(0, (cur - start) / start);
-      var pct = Math.min(100, Math.round(ratio * 100));
-      // Always show a little bar when listed
-      if (pct < 4 && cur >= start) pct = 4;
+    if (progBar) {
+      // How close the best offer sits to the asking price (0 offers = flat bar)
+      var top = topOfferAmount(first);
+      var pct = 0;
+      if (top != null && ask != null && ask > 0) {
+        pct = Math.min(100, Math.max(4, Math.round((top / ask) * 100)));
+      } else if (offers > 0) {
+        pct = 8;
+      }
       progBar.style.setProperty("--w", pct + "%");
     }
   }
@@ -737,10 +671,10 @@
     // keep link if present — optional secondary line only when no project link set
   }
 
-  function patchPrices(auctions) {
-    if (!auctions || !auctions.length) return;
+  function patchPrices(listings) {
+    if (!listings || !listings.length) return;
     const byId = {};
-    auctions.forEach(function (a) {
+    listings.forEach(function (a) {
       byId[String(a.id)] = a;
     });
     grid.querySelectorAll(".listing-card[data-id]").forEach(function (card) {
@@ -748,7 +682,7 @@
       const a = byId[id];
       if (!a) return;
       const strong = card.querySelector("[data-price]");
-      const price = a.price_current != null ? a.price_current : a.price_start;
+      const price = askPrice(a);
       if (strong && price != null) {
         const next = money(price);
         if (strong.textContent !== next) {
@@ -761,21 +695,12 @@
       }
       const note = card.querySelector(".listing-bid-note");
       if (note) {
-        note.textContent = bidNoteText(bidderCount(a));
+        note.textContent = offerNoteText(offerCount(a), a.top_offer || null);
       }
       const badgeEl = card.querySelector(".badge");
-      if (badgeEl) {
-        if (bidderCount(a) > 0) {
-          badgeEl.textContent = tt("list.badge_live", isEn() ? "Live" : "입찰 중");
-          badgeEl.className = "badge live";
-        } else if (
-          badgeEl.textContent === "입찰 중" ||
-          badgeEl.textContent === "Bidding" ||
-          badgeEl.textContent === "판매 중"
-        ) {
-          badgeEl.textContent = tt("list.badge_wait", isEn() ? "Awaiting first bid" : "첫 입찰 대기");
-          badgeEl.className = "badge live";
-        }
+      if (badgeEl && saleStatus(a) === "live" && a.listing_status !== "preview") {
+        badgeEl.textContent = tt("list.badge_sale", isEn() ? "For sale" : "판매 중");
+        badgeEl.className = "badge live";
       }
     });
     // merge into cache for hero
@@ -849,21 +774,26 @@
     }
   }
 
+  let lastTickerKey = null;
+
   async function pollLive() {
     if (!api || source !== "api") return;
     try {
-      const live = await api.liveAuctions();
-      if (live && live.auctions) patchPrices(live.auctions);
+      const live = await api.liveListings();
+      const rows = (live && (live.listings || live.auctions)) || null;
+      if (rows) patchPrices(rows);
       if (live && live.ticker && live.ticker.length) {
         const t = live.ticker[0];
+        const key = t ? String(t.id != null ? t.id : t.project_id + "|" + t.created_at) : null;
+        const isNew = !!(key && lastTickerKey !== null && key !== lastTickerKey);
+        if (key) lastTickerKey = key;
         const toast = document.querySelector(".live-toast");
         if (toast && t) {
           toast.innerHTML =
             '<span class="pulse-dot"></span> ' +
-            (isEn() ? "New bid · " : "방금 입찰 · ") +
-            money(t.amount) +
-            " · " +
-            (t.bidder_label || "") +
+            (isEn() ? "New offer · " : "방금 제안 · ") +
+            (t.amount != null ? money(t.amount) + " · " : "") +
+            (t.buyer_label || "") +
             ' · <a href="' +
             (window.WakeAgainAPI && window.WakeAgainAPI.pageUrl
               ? window.WakeAgainAPI.pageUrl("/project.html?id=" + encodeURIComponent(t.project_id))
@@ -871,6 +801,11 @@
             '" style="color:inherit;text-decoration:underline">' +
             (isEn() ? "view" : "보기") +
             "</a>";
+        }
+        // Green ECG spike — a new offer is the heartbeat of a living project.
+        // (Intentional: see CLAUDE.md — never remove hero-ecg.js.)
+        if (isNew && window.WakeAgainHeroEcg && window.WakeAgainHeroEcg.spike) {
+          window.WakeAgainHeroEcg.spike(1);
         }
       }
     } catch (e) {
