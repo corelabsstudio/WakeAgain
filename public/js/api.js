@@ -147,10 +147,10 @@
     "이메일 인증 후 매물을 등록할 수 있습니다.": "Verify your email before listing a project.",
     "실명·휴대폰 프로필을 완성한 뒤 매물을 등록할 수 있습니다.": "Complete your real name + phone profile before listing a project.",
     "구매자가 판매자를 확인할 수 있도록 판매자 공개 정보를 등록해 주세요. (통신판매중개 고지 의무)": "Add your public seller info so buyers can verify who they're dealing with. (Required disclosure for brokered sales.)",
-    "가격 쓰기(입찰)에는 이메일 인증만 있으면 됩니다. 먼저 이메일을 확인해 주세요.": "Placing a bid only needs email verification. Please verify your email first.",
-    "지금은 입찰할 수 없습니다. 계정 상태를 확인해 주세요.": "You can't bid right now. Please check your account status.",
+    "가격 제안에는 이메일 인증만 있으면 됩니다. 먼저 이메일을 확인해 주세요.": "Making an offer only needs email verification. Please verify your email first.",
+    "지금은 제안할 수 없습니다. 계정 상태를 확인해 주세요.": "You can't make an offer right now. Please check your account status.",
     "이메일 인증이 필요합니다.": "Email verification is required.",
-    "낙찰 후 결제·인수에는 실명·휴대폰(Lv2) 확인이 필요합니다. 앱 → 내 정보에서 완료해 주세요.": "Paying and taking over after winning a bid needs real name + phone verification (Lv2). Complete it under App → My info.",
+    "성사 후 결제·인수에는 실명·휴대폰(Lv2) 확인이 필요합니다. 앱 → 내 정보에서 완료해 주세요.": "Paying and taking over after a sale is agreed needs real name + phone verification (Lv2). Complete it under App → My info.",
     "정산·이전 확정 전 정산 계좌(예금주·은행·계좌, Lv3)를 등록해 주세요.": "Add your settlement account (holder name, bank, account, Lv3) before confirming settlement/transfer.",
     "소셜 로그인으로 가입한 계정입니다. 카카오·구글·깃허브로 로그인해 주세요.": "This account signed up via social login. Please sign in with Kakao, Google, or GitHub.",
     "정지된 계정입니다.": "Your account has been suspended.",
@@ -164,14 +164,14 @@
     "이메일 인증 후 프로필을 저장할 수 있습니다.": "Verify your email before saving your profile.",
     "신원 프로필(실명·휴대폰)을 먼저 완성해 주세요.": "Complete your identity profile (real name + phone) first.",
     "실명·휴대폰 프로필(Lv2)을 먼저 완성해 주세요.": "Complete your real name + phone profile (Lv2) first.",
-    "입찰 중 현재가는 전원 공개입니다.": "Current bids are public to everyone.",
+    "판매가와 제안 금액은 전원 공개입니다.": "The asking price and offers are public to everyone.",
     "키워드 추천을 위해 제목 또는 한 줄 소개를 먼저 적어 주세요.": "Enter a title or one-liner first to get keyword suggestions.",
     "AI 추천입니다. 수정·삭제 후 직접 입력도 가능합니다.": "AI-suggested. You can edit, remove, or type your own.",
     "자동 추천입니다. 수정·삭제 후 직접 입력도 가능합니다.": "Auto-suggested. You can edit, remove, or type your own.",
     "차단된 사용자의 매물입니다.": "This listing belongs to a blocked user.",
     "거래 기록 확인서는 해당 매물의 판매자·구매자만 볼 수 있습니다.": "Only the seller or buyer of this listing can view the deal certificate.",
-    "아직 낙찰·성사 기록이 없습니다.": "There's no award/completed-sale record yet.",
-    "거래 절차 완료 전이므로 「거래 기록 확인서」는 아직 발급할 수 없습니다. 낙찰 기록 확인서를 이용해 주세요.": "The deal isn't complete yet, so the “deal certificate” isn't available. Please use the award certificate instead.",
+    "아직 성사 기록이 없습니다.": "There's no sale record yet.",
+    "거래 절차 완료 전이므로 「거래 기록 확인서」는 아직 발급할 수 없습니다. 성사 기록 확인서를 이용해 주세요.": "The deal isn't complete yet, so the “deal certificate” isn't available. Please use the sale-agreed certificate instead.",
     "신고는 실명·휴대폰 확인(Lv2) 후 가능합니다.": "Reporting requires real name + phone verification (Lv2).",
     "이 매물은 신고할 수 없는 상태입니다.": "This listing can't be reported in its current state.",
     "본인 매물은 신고할 수 없습니다.": "You can't report your own listing.",
@@ -179,13 +179,13 @@
     "자기 자신은 차단할 수 없습니다.": "You can't block yourself.",
     "정지된 계정은 차단을 사용할 수 없습니다.": "Suspended accounts can't use blocking.",
     "차단 목록에 없는 사용자입니다.": "This user isn't on your block list.",
-    "신고 누적 등으로 경매가 중단된 매물입니다. 지금은 가격을 쓸 수 없습니다.": "This listing's auction is paused (e.g. due to reports). You can't bid right now.",
-    "신고 누적으로 경매가 중단된 매물입니다.": "This listing's auction is paused due to reports.",
-    "차단된 사용자의 매물에는 입찰할 수 없습니다.": "You can't bid on a blocked user's listing.",
+    "신고 누적으로 판매가 일시 중단된 매물입니다.": "This listing is paused after multiple reports.",
+    "지금은 판매 중인 매물이 아닙니다.": "This listing isn't for sale right now.",
+    "차단된 사용자의 매물에는 제안할 수 없습니다.": "You can't make offers on a blocked user's listing.",
     "차단된 사용자의 매물은 구매할 수 없습니다.": "You can't buy a blocked user's listing.",
-    "현재가가 사이트 전체에 즉시 공개됩니다.": "The current price is shown publicly site-wide, instantly.",
+    "제안 금액이 사이트 전체에 즉시 공개됩니다.": "Your offer amount is shown publicly site-wide, instantly.",
     "받는 사람 계정 아이디 또는 이메일을 입력해 주세요.": "Enter the recipient's account ID or email.",
-    "인수 확인 목록은 낙찰 구매자만 체크할 수 있습니다.": "Only the winning buyer can check the handover checklist.",
+    "인수 확인 목록은 구매자만 체크할 수 있습니다.": "Only the buyer can check the handover checklist.",
     "성사된 매물에서만 사용할 수 있습니다.": "This is only available for completed sales.",
     "입금·이전·검수 단계에서만 체크할 수 있습니다.": "You can only check this during payment/transfer/inspection.",
     "인수 확인 목록을 저장했습니다.": "Handover checklist saved.",
@@ -209,35 +209,50 @@
     "재판매·기타인 경우 어떻게 취득했는지 10자 이상 적어 주세요.": "If resale/other, describe how you acquired it in 10+ characters.",
     "「왜 팔나요?」를 10자 이상 적어 주세요. (예: 시간 없어서 넘깁니다)": "Describe “why you're selling” in 10+ characters. (e.g. no time to keep working on it)",
     "포함 자산(코드·디자인·도메인 등)을 하나 이상 선택해 주세요. 실제로 넘길 수 있는 것만.": "Select at least one included asset (code, design, domain, etc.) — only things you can actually hand over.",
-    "즉시구매가는 최대 ₩100,000,000 까지입니다. 쓰지 않으려면 비워 두세요.": "Buy-now price can be up to ₩100,000,000. Leave it blank if you don't want to use it.",
     "재등록 시에도 동작·기능·권리·양도 확인에 모두 동의해 주세요.": "Please confirm working condition, features, rights, and transfer again when relisting.",
     "성사된 매물은 재등록할 수 없습니다.": "A completed sale can't be relisted.",
-    "진행 중인 라운드입니다. 마감 후 재등록할 수 있습니다.": "This round is still live. You can relist after it ends.",
+    "아직 게시 기간 중입니다. 기간이 끝난 뒤 재등록할 수 있습니다.": "This listing period is still running. You can relist after it ends.",
     "이미 검수 대기 중입니다.": "Already pending review.",
     "지금 상태에서는 재등록할 수 없습니다.": "This listing can't be relisted in its current state.",
-    "즉시구매가는 시작가 이상이어야 합니다.": "Buy-now price must be at least the starting price.",
     "스크린샷이 있으면 실제 제품 화면 확인에 동의해 주세요.": "If you have screenshots, please confirm they're real product screens.",
     "스크린샷이 실제 실행 화면과 같다는 확인에 체크해 주세요. 실제 제품과 다른 화면은 매물 중단·이용 제한 대상이 될 수 있습니다.": "Please confirm your screenshots match the real running product. Screens that don't match the actual product may lead to the listing being paused or your account restricted.",
-    "재등록 접수 · 재검수 후 이번 라운드에 공개됩니다. 승인 시 공개 목록 후순위(줄 맨 뒤)부터 시작합니다. 오픈마켓식 끌올·도배 상위 노출이 아닙니다.": "Relist received. It goes public this round after re-review. Once approved, it starts at the back of the public queue — not open-market bump/repost boosting.",
+    "재등록 접수 · 재검수 후 새 게시 기간에 공개됩니다. 승인 시 공개 목록 후순위(줄 맨 뒤)부터 시작합니다. 오픈마켓식 끌올·도배 상위 노출이 아닙니다.": "Relist received. It goes public for a new listing period after re-review. Once approved, it starts at the back of the public queue — not open-market bump/repost boosting.",
     "게시 허용된 후기만 공개됩니다.": "Only approved reviews are shown publicly.",
     "후기가 접수되었습니다. 운영 검수 후 공개되며, 보통 1~2영업일 안에 반영됩니다.": "Review submitted. It'll go live after staff review, usually within 1–2 business days.",
-    "관심 등록은 경량 접수입니다. 입찰·성사 전에는 신원·정산 확인이 필요합니다.": "Registering interest is a lightweight signup. Bidding/closing a deal needs identity + settlement verification first.",
-    "사전 접수입니다. 공개 매물·입찰은 계정 이메일 인증·실명·휴대폰 확인 후 가능합니다.": "This is a pre-registration. Public listings/bidding need account email + real name + phone verification first.",
+    "관심 등록은 경량 접수입니다. 제안·성사 전에는 신원·정산 확인이 필요합니다.": "Registering interest is a lightweight signup. Making an offer/closing a deal needs identity + settlement verification first.",
+    "사전 접수입니다. 공개 매물·가격 제안은 계정 이메일 인증·실명·휴대폰 확인 후 가능합니다.": "This is a pre-registration. Public listings/offers need account email + real name + phone verification first.",
+    // 고정가 + 제안(offer) 전환 (2026-09-02) — 백엔드가 새로 내는 한국어 메시지
+    "판매가 이상이면 제안 대신 바로 구매해 주세요.": "That's at or above the asking price — just buy it instead.",
+    "이미 대기 중인 제안이 있습니다.": "You already have a pending offer.",
+    "본인 매물에는 제안할 수 없습니다.": "You can't make an offer on your own listing.",
+    "제안이 접수되었습니다. 판매자가 48시간 안에 수락하거나 거절합니다.": "Offer sent. The seller has 48 hours to accept or decline.",
+    "제안을 철회했습니다.": "Offer withdrawn.",
+    "제안을 수락했습니다. 결제 → 이전 → 검수 순서로 진행됩니다.": "Offer accepted. Next: payment → transfer → inspection.",
+    "제안을 거절했습니다.": "Offer declined.",
+    "이미 처리된 제안입니다.": "This offer has already been handled.",
+    "제안을 찾을 수 없습니다.": "Offer not found.",
+    "판매가로 바로 구매가 성사되었습니다. 결제를 진행해 주세요.": "Bought at the asking price. Please proceed to payment.",
   };
 
   // A few backend messages embed a runtime number/name via Korean sentence
   // templates, so they can't be matched verbatim — translate by pattern.
   var BACKEND_MSG_EN_PATTERNS = [
     {
-      re: /^최소 입찰가 ₩([\d,]+) 이상이어야 합니다\.$/,
+      re: /^제안 하한은 ₩([\d,]+) 입니다\.$/,
       en: function (m) {
-        return "Minimum bid is ₩" + m[1] + ".";
+        return "The minimum offer is ₩" + m[1] + ".";
       },
     },
     {
-      re: /^즉시구매가는 시작가\(₩([\d,]+)\) 이상이어야 합니다\. 쓰지 않으려면 비워 두세요\.$/,
+      re: /^제안 하한은 ₩([\d,]+)\s*입니다\.?/,
       en: function (m) {
-        return "Buy-now price must be at least the starting price (₩" + m[1] + "). Leave it blank if you don't want to use it.";
+        return "The minimum offer is ₩" + m[1] + ".";
+      },
+    },
+    {
+      re: /^판매가\(₩([\d,]+)\) 이상이면 제안 대신 바로 구매해 주세요\.?$/,
+      en: function (m) {
+        return "That's at or above the asking price (₩" + m[1] + ") — just buy it instead.";
       },
     },
     {
@@ -468,22 +483,73 @@
         body: JSON.stringify({ real_name, phone }),
       });
     },
-    async placeBid(projectId, amount) {
-      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/bids", {
-        method: "POST",
-        body: JSON.stringify({ amount: Number(amount) }),
-      });
-    },
-    async buyNow(projectId) {
-      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/buy-now", {
+    // ── 고정가 + 제안(offer) — 2026-09-02 계약 (scratchpad OFFER_API.md) ──
+    /** Buyer: buy immediately at the asking price → sale agreed (finalize_sale). */
+    async buyAtPrice(projectId) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/buy", {
         method: "POST",
         body: JSON.stringify({}),
       });
     },
+    /** @deprecated alias of buyAtPrice — kept for older pages */
+    async buyNow(projectId) {
+      return this.buyAtPrice(projectId);
+    },
+    /** Public: pending offers (+ `mine` when logged in; owner sees every status). */
+    async listOffers(projectId) {
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/offers");
+    },
+    /** Buyer: make an offer below the asking price (Lv1 email verified). */
+    async makeOffer(projectId, amount, message) {
+      var body = { amount: Number(amount) };
+      var msg = String(message == null ? "" : message).trim();
+      if (msg) body.message = msg.slice(0, 300);
+      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/offers", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+    /** Seller: accept one pending offer → sale agreed (Lv3 settlement ready). */
+    async acceptOffer(projectId, offerId) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/offers/" +
+          encodeURIComponent(offerId) +
+          "/accept",
+        { method: "POST", body: "{}" }
+      );
+    },
+    /** Seller: decline one pending offer (optional note to the buyer). */
+    async declineOffer(projectId, offerId, note) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/offers/" +
+          encodeURIComponent(offerId) +
+          "/decline",
+        { method: "POST", body: JSON.stringify({ note: String(note || "").trim() }) }
+      );
+    },
+    /** Buyer: withdraw my own pending offer. */
+    async withdrawOffer(projectId, offerId) {
+      return request(
+        "/api/v1/projects/" +
+          encodeURIComponent(projectId) +
+          "/offers/" +
+          encodeURIComponent(offerId) +
+          "/withdraw",
+        { method: "POST", body: "{}" }
+      );
+    },
+    /**
+     * Seller/admin manual close. Pass { offer_id } to accept that offer, or
+     * { sold_price, buyer_user_id, note } for a manual sale record.
+     */
     async closeDeal(projectId, payload) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/close-deal", {
         method: "POST",
-        body: JSON.stringify(payload || { use_current_bid: true }),
+        body: JSON.stringify(payload || {}),
       });
     },
     async dealMarkTransferred(projectId, note) {
@@ -693,28 +759,35 @@
     async listBlocks() {
       return request("/api/v1/me/blocks");
     },
-    async liveAuctions() {
-      return request("/api/v1/auctions/live");
+    /** Public live board: { listings, ticker (recent offers), poll_seconds }. */
+    async liveListings() {
+      return request("/api/v1/listings/live");
     },
-    async listBids(projectId) {
-      return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/bids");
+    /** @deprecated alias of liveListings — kept for older pages */
+    async liveAuctions() {
+      return this.liveListings();
     },
     async createProject(payload) {
       return request("/api/v1/projects", { method: "POST", body: JSON.stringify(payload) });
     },
+    /** Seller: relist for a new listing period — { listing_days (1–30, default 7), price? }. */
     async relistProject(projectId, payload) {
+      var body = Object.assign({}, payload || {});
+      if (body.listing_days == null && body.auction_days != null) body.listing_days = body.auction_days;
+      delete body.auction_days;
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/relist", {
         method: "POST",
-        body: JSON.stringify(payload || {}),
+        body: JSON.stringify(body),
       });
     },
     async deleteProject(projectId) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId), { method: "DELETE" });
     },
-    async updateProjectPrice(projectId, priceStart) {
+    /** Seller: change the asking price while the listing is for sale. */
+    async updateProjectPrice(projectId, price) {
       return request("/api/v1/projects/" + encodeURIComponent(projectId) + "/price", {
         method: "PUT",
-        body: JSON.stringify({ price_start: priceStart }),
+        body: JSON.stringify({ price: Number(price) }),
       });
     },
     // 필수 필드 정책(2026-08-15) 보완: 정책 이전 매물에 저장소·라이브데모·활동일을 채워 넣는다.

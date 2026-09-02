@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Multi-angle auction & deal suite for WakeAgain.
+성사 이후(딜) 시나리오 스위트 — 고정가 + 제안 구조 (2026-09-02 경매 폐지 후).
 
-Scenarios:
-  A) Multi-bidder ranking + seller close-deal (낙찰)
-  B) Auto award on auction end (마감 자동 낙찰)
-  C) No-bid auction ends cleanly
-  D) Buy-now button 낙찰
-  E) Bid reaches buy-now price → auto finalize
-  F) Payment default (미입금 무효 + credit)
-  G) Dispute during inspection
-  H) Full happy path pay→transfer→accept
-  I) Guards: own bid, low bid, pending bid, bid after sold, unverified bid
+제안·구매 자체의 시나리오는 `_offer_suite_test.py`가 담당한다. 이 파일은 성사된 뒤의
+결제·이전·검수·분쟁·신용 반영을 본다.
+
+시나리오:
+  F) 미입금 → 성사 무효 + 신용 감점 + 매물 판매 재개
+  G) 검수 중 이의(분쟁)
+  H) 해피패스 결제→이전→인수
+  I) 가드: 본인 매물·하한 미만·미인증·성사 후 제안 차단, Lv1만으로 제안 가능
+  L) 수수료 청구서 발행
 """
 from __future__ import annotations
 
@@ -31,6 +30,7 @@ from fastapi.testclient import TestClient
 from server import app
 from wakeagain import db as database
 
+database.init_db()
 cl = TestClient(app)
 ADMIN = {"X-Admin-Key": os.environ.get("ADMIN_SECRET", "wakeagain-admin-dev")}
 results: list[tuple[str, bool, str]] = []
@@ -130,25 +130,23 @@ def create_listing(
     *,
     title: str | None = None,
     price_start: int = 400_000,
-    price_buy_now: int | None = None,
-    auction_days: int = 3,
+    listing_days: int = 3,
 ) -> int:
     payload = {
-        "title": title or f"경매테스트 {random.randint(1000, 9999)}",
-        "one_liner": "입찰·낙찰 시나리오 테스트",
+        "title": title or f"판매테스트 {random.randint(1000, 9999)}",
+        "one_liner": "판매가·제안 시나리오 테스트",
         "status": "프로토타입",
         "product_type": "webapp",
         "story": "자동 테스트용 매물 스토리입니다.",
         "demo": "https://example.com/demo",
         "assets": ["code"],
-        "price_start": price_start,
-        "auction_days": auction_days,
-        "min_increment": 10_000,
+        "price": price_start,
+        "listing_days": listing_days,
         "license_note": "양도 테스트",
-        "keywords": ["테스트", "경매", "SaaS", "웹앱", "입찰"],
+        "keywords": ["테스트", "판매", "SaaS", "웹앱", "제안"],
         "features": ["로그인 후 목록을 볼 수 있어요", "항목을 체크하면 저장돼요"],
-        "audience": "경매 시나리오 검증 사용자",
-        "works_now": "등록부터 낙찰까지 시나리오로 동작합니다.",
+        "audience": "판매 시나리오 검증 사용자",
+        "works_now": "등록부터 성사까지 시나리오로 동작합니다.",
         "limits": "실제 결제 없음 · 테스트 전용",
         "acquisition": "made",
         "demo_images": [f"/media/demos/{seller['id']}/test.png"],
@@ -164,8 +162,6 @@ def create_listing(
         "attest_rights": True,
         "attest_transfer": True,
     }
-    if price_buy_now is not None:
-        payload["price_buy_now"] = price_buy_now
     r = cl.post("/api/v1/projects", headers=seller["headers"], json=payload)
     if r.status_code != 200:
         raise RuntimeError(f"create: {r.text[:200]}")
@@ -182,12 +178,26 @@ def approve(pid: int) -> None:
         raise RuntimeError(f"approve: {r.text[:200]}")
 
 
-def bid(user: dict, pid: int, amount: int):
+def offer(user: dict, pid: int, amount: int):
     return cl.post(
-        f"/api/v1/projects/{pid}/bids",
+        f"/api/v1/projects/{pid}/offers",
         headers=user["headers"],
         json={"amount": amount},
     )
+
+
+def buy(user: dict, pid: int):
+    return cl.post(f"/api/v1/projects/{pid}/buy", headers=user["headers"])
+
+
+def accept_top_offer(seller: dict, pid: int):
+    """판매자가 최고 대기 제안을 수락 → 성사."""
+    offers = j(cl.get(f"/api/v1/projects/{pid}/offers", headers=seller["headers"])).get("offers") or []
+    pending = [o for o in offers if o.get("status") == "pending"]
+    if not pending:
+        raise RuntimeError("no pending offer to accept")
+    oid = pending[0]["id"]
+    return cl.post(f"/api/v1/projects/{pid}/offers/{oid}/accept", headers=seller["headers"], json={})
 
 
 def get_project(pid: int, headers: dict | None = None) -> dict:
@@ -195,19 +205,19 @@ def get_project(pid: int, headers: dict | None = None) -> dict:
     return (j(r).get("project") or {}) if r.status_code == 200 else {}
 
 
-def get_bids(pid: int) -> dict:
-    r = cl.get(f"/api/v1/projects/{pid}/bids")
+def get_offers(pid: int, headers: dict | None = None) -> dict:
+    r = cl.get(f"/api/v1/projects/{pid}/offers", headers=headers or {})
     return j(r) if r.status_code == 200 else {}
 
 
-def expire_auction(pid: int) -> None:
+def expire_listing(pid: int) -> None:
     past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(timespec="seconds")
     with database.db() as conn:
         conn.execute(
             "UPDATE projects SET auction_ends_at = ? WHERE id = ?",
             (past, pid),
         )
-        database.process_expired_auctions(conn)
+        database.process_expired_listings(conn)
 
 
 def expire_payment(pid: int) -> None:
@@ -230,119 +240,13 @@ def section(title: str) -> None:
     print(f"\n=== {title} ===")
 
 
-def scenario_A_multi_bid_close() -> None:
-    section("A) Multi-bidder + seller close-deal (낙찰)")
-    s = seller_ready("A")
-    pid = create_listing(s, price_start=500_000)
-    approve(pid)
-    b1, b2, b3 = register("A1"), register("A2"), register("A3")
-
-    r = bid(b1, pid, 500_000)
-    log("A bid1 500k", r.status_code == 200, r.text[:80])
-    r = bid(b2, pid, 520_000)
-    log("A bid2 520k", r.status_code == 200, r.text[:80])
-    r = bid(b3, pid, 510_000)
-    log("A bid3 510k (below top still ok if >= next_min)", r.status_code in (200, 400), r.text[:100])
-    # after 520k, next min is 530k
-    r = bid(b3, pid, 530_000)
-    log("A bid3 530k", r.status_code == 200, r.text[:80])
-    r = bid(b1, pid, 600_000)
-    log("A bid1 tops 600k", r.status_code == 200, r.text[:80])
-
-    data = get_bids(pid)
-    bids = data.get("bids") or []
-    top = data.get("top_bidder") or {}
-    log("A ranked bids", len(bids) >= 3, f"n={len(bids)}")
-    log("A top is 600k", int(top.get("amount") or 0) == 600_000, str(top))
-    log("A top handle public", bool(top.get("bidder_label")), str(top.get("bidder_label")))
-    # amounts descending
-    amts = [int(b.get("amount") or 0) for b in bids]
-    log("A amounts sorted desc", amts == sorted(amts, reverse=True), str(amts[:5]))
-
-    r = cl.post(
-        f"/api/v1/projects/{pid}/close-deal",
-        headers=s["headers"],
-        json={"use_current_bid": True, "note": "A 낙찰"},
-    )
-    p = j(r).get("project") or {}
-    log("A close-deal sold", r.status_code == 200 and p.get("auction_status") == "sold", str(p.get("deal_status")))
-    log("A winner is b1", int(p.get("buyer_id") or 0) == int(b1["id"] or 0), f"buyer={p.get('buyer_id')} b1={b1['id']}")
-    log("A sold_price 600k", int(p.get("sold_price") or 0) == 600_000, str(p.get("sold_price")))
-
-    # bid after sold
-    r = bid(b2, pid, 700_000)
-    log("A bid after sold blocked", r.status_code == 400, r.text[:80])
-
-
-def scenario_B_auto_award() -> None:
-    section("B) Auto award on auction end")
-    s = seller_ready("B")
-    pid = create_listing(s, price_start=300_000, auction_days=1)
-    approve(pid)
-    b1, b2 = register("B1"), register("B2")
-    bid(b1, pid, 300_000)
-    bid(b2, pid, 350_000)
-    bid(b1, pid, 400_000)
-    expire_auction(pid)
-    p = get_project(pid)
-    log("B auto sold", p.get("auction_status") == "sold", f"status={p.get('auction_status')}")
-    log("B deal awaiting_payment", p.get("deal_status") == "awaiting_payment", str(p.get("deal_status")))
-    log("B winner highest bidder", int(p.get("buyer_id") or 0) == int(b1["id"] or 0), f"buyer={p.get('buyer_id')}")
-    log("B sold_price 400k", int(p.get("sold_price") or 0) == 400_000, str(p.get("sold_price")))
-
-
-def scenario_C_no_bid_end() -> None:
-    section("C) No-bid auction ends")
-    s = seller_ready("C")
-    pid = create_listing(s, price_start=300_000)
-    approve(pid)
-    expire_auction(pid)
-    p = get_project(pid, headers=s["headers"])
-    log("C ended without sale", p.get("auction_status") == "ended", str(p.get("auction_status")))
-    log("C no buyer", not p.get("buyer_id"), str(p.get("buyer_id")))
-
-
-def scenario_D_buy_now() -> None:
-    section("D) Buy-now 낙찰")
-    s = seller_ready("D")
-    pid = create_listing(s, price_start=200_000, price_buy_now=800_000)
-    approve(pid)
-    b = register("D1")
-    r = cl.post(f"/api/v1/projects/{pid}/buy-now", headers=b["headers"])
-    p = j(r).get("project") or {}
-    log("D buy-now ok", r.status_code == 200, r.text[:100])
-    log("D sold at buy_now", int(p.get("sold_price") or 0) == 800_000, str(p.get("sold_price")))
-    log("D buyer set", int(p.get("buyer_id") or 0) == int(b["id"] or 0), str(p.get("buyer_id")))
-    log("D awaiting_payment", p.get("deal_status") == "awaiting_payment", str(p.get("deal_status")))
-    # cannot buy again
-    r2 = cl.post(f"/api/v1/projects/{pid}/buy-now", headers=register("D2")["headers"])
-    log("D second buy-now blocked", r2.status_code == 400, r2.text[:80])
-
-
-def scenario_E_bid_hits_buy_now() -> None:
-    section("E) Bid >= buy-now auto finalize")
-    s = seller_ready("E")
-    pid = create_listing(s, price_start=200_000, price_buy_now=500_000)
-    approve(pid)
-    b = register("E1")
-    r = bid(b, pid, 500_000)
-    p = j(r).get("project") or get_project(pid)
-    log("E bid triggers sale", r.status_code == 200 and p.get("auction_status") == "sold", str(p.get("auction_status")))
-    log("E sold_price 500k", int(p.get("sold_price") or 0) == 500_000, str(p.get("sold_price")))
-
-
 def scenario_F_payment_default() -> None:
     section("F) Payment default (미입금 무효)")
     s = seller_ready("F")
     pid = create_listing(s, price_start=250_000)
     approve(pid)
     b = register("F1")
-    bid(b, pid, 250_000)
-    cl.post(
-        f"/api/v1/projects/{pid}/close-deal",
-        headers=s["headers"],
-        json={"use_current_bid": True},
-    )
+    buy(b, pid)
     p0 = get_project(pid)
     log("F awarded", p0.get("deal_status") == "awaiting_payment", str(p0.get("deal_status")))
 
@@ -352,7 +256,7 @@ def scenario_F_payment_default() -> None:
     expire_payment(pid)
     p = get_project(pid, headers=s["headers"])
     log("F payment_default", p.get("deal_status") == "payment_default", str(p.get("deal_status")))
-    log("F auction ended", p.get("auction_status") == "ended", str(p.get("auction_status")))
+    log("F 판매 재개", p.get("sale_status") == "live", str(p.get("sale_status")))
 
     me1 = j(cl.get("/api/v1/me", headers=b["headers"])).get("user") or {}
     defaults1 = int(((me1.get("credit") or {}).get("counts") or {}).get("defaults") or 0)
@@ -365,8 +269,7 @@ def scenario_G_dispute() -> None:
     pid = create_listing(s, price_start=200_000)
     approve(pid)
     b = register("G1")
-    bid(b, pid, 200_000)
-    cl.post(f"/api/v1/projects/{pid}/close-deal", headers=s["headers"], json={"use_current_bid": True})
+    buy(b, pid)
     pg_pay(pid)
     cl.post(
         f"/api/v1/projects/{pid}/deal/mark-transferred",
@@ -396,11 +299,11 @@ def scenario_H_full_happy() -> None:
     pid = create_listing(s, price_start=450_000)
     approve(pid)
     b1, b2 = register("H1"), register("H2")
-    bid(b1, pid, 450_000)
-    bid(b2, pid, 480_000)
-    bid(b1, pid, 520_000)
-    r = cl.post(f"/api/v1/projects/{pid}/close-deal", headers=s["headers"], json={"use_current_bid": True})
-    log("H close", r.status_code == 200, str((j(r).get("project") or {}).get("sold_price")))
+    offer(b2, pid, 300_000)
+    offer(b1, pid, 380_000)
+    r = accept_top_offer(s, pid)
+    log("H 제안 수락", r.status_code == 200, str((j(r).get("project") or {}).get("sold_price")))
+    log("H 성사가 = 최고 제안", int((j(r).get("project") or {}).get("sold_price") or 0) == 380_000)
     # transfer before pay fails
     r_early = cl.post(
         f"/api/v1/projects/{pid}/deal/mark-transferred",
@@ -441,62 +344,77 @@ def scenario_I_guards() -> None:
     section("I) Guards (trust / ownership / state)")
     s = seller_ready("I")
     pid = create_listing(s, price_start=300_000)
-    # unverified cannot bid
+    # 미인증 계정은 제안 불가
     raw = register("I0", verify=False, profile=False)
-    r = bid(raw, pid, 300_000)
-    # still pending listing anyway — approve first for unverified test
     approve(pid)
-    r = bid(raw, pid, 300_000)
-    log("I unverified bid blocked", r.status_code == 403, r.text[:120])
+    r = offer(raw, pid, 200_000)
+    log("I 미인증 제안 차단", r.status_code == 403, r.text[:120])
 
     b = register("I1")
-    r = bid(s, pid, 300_000)
-    log("I owner bid blocked", r.status_code == 400, r.text[:80])
-    r = bid(b, pid, 10)
-    log("I low bid blocked", r.status_code == 400, r.text[:80])
-    bid(b, pid, 300_000)
-    cl.post(f"/api/v1/projects/{pid}/close-deal", headers=s["headers"], json={"use_current_bid": True})
-    r = bid(b, pid, 400_000)
-    log("I bid after sold blocked", r.status_code == 400, r.text[:80])
+    r = offer(s, pid, 200_000)
+    log("I 본인 매물 제안 차단", r.status_code == 400, r.text[:80])
+    r = offer(b, pid, 10)
+    log("I 하한 미만 차단", r.status_code == 400, r.text[:80])
+    offer(b, pid, 200_000)
+    accept_top_offer(s, pid)
+    r = offer(b, pid, 250_000)
+    log("I 성사 후 제안 차단", r.status_code == 400, r.text[:80])
+    r = buy(b, pid)
+    log("I 성사 후 구매 차단", r.status_code == 400, r.text[:80])
 
-    # Lv1 only (verified, no profile) can still bid
+    # Lv1(이메일만)으로도 제안 가능
     v = register("I2", verify=True, profile=False)
     s2 = seller_ready("I2s")
     pid2 = create_listing(s2, price_start=200_000)
     approve(pid2)
-    r = bid(v, pid2, 200_000)
-    log("I Lv1-only can bid", r.status_code == 200, r.text[:100])
+    r = offer(v, pid2, 150_000)
+    log("I Lv1만으로 제안 가능", r.status_code == 200, r.text[:100])
+
+
+def scenario_L_fee_invoice() -> None:
+    section("L) 수수료 청구서")
+    s = seller_ready("L")
+    pid = create_listing(s, price_start=500_000)
+    approve(pid)
+    b = register("L1")
+    buy(b, pid)
+    with database.db() as conn:
+        inv = conn.execute(
+            "SELECT * FROM fee_invoices WHERE project_id = ? ORDER BY id DESC LIMIT 1", (pid,)
+        ).fetchone()
+    log("L 청구서 발행", inv is not None)
+    if inv:
+        log("L 거래액 = 판매가", int(inv["deal_amount"]) == 500_000, str(inv["deal_amount"]))
+        log("L 수수료 10%", int(inv["fee_amount"]) == 50_000, str(inv["fee_amount"]))
+        log("L 상태 pending", (inv["status"] or "") == "pending", str(inv["status"]))
+    mine = j(cl.get("/api/v1/me/fees", headers=s["headers"]))
+    log("L 판매자 수수료 목록", isinstance(mine.get("invoices"), list) and len(mine["invoices"]) >= 1,
+        str(len(mine.get("invoices") or [])))
 
 
 def main() -> int:
-    print("\n########## WakeAgain auction & deal suite ##########\n")
-    scenarios = [
-        scenario_A_multi_bid_close,
-        scenario_B_auto_award,
-        scenario_C_no_bid_end,
-        scenario_D_buy_now,
-        scenario_E_bid_hits_buy_now,
+    print("=== WakeAgain 성사 이후(딜) 스위트 — 고정가 + 제안 ===")
+    for fn in (
         scenario_F_payment_default,
         scenario_G_dispute,
         scenario_H_full_happy,
         scenario_I_guards,
-    ]
-    for fn in scenarios:
+        scenario_L_fee_invoice,
+    ):
         try:
             fn()
-        except Exception as e:
-            log(f"{fn.__name__} CRASH", False, str(e))
+        except Exception as e:  # noqa: BLE001
+            log(f"{fn.__name__} 예외", False, f"{type(e).__name__}: {e}")
             traceback.print_exc()
-
-    fails = [r for r in results if not r[1]]
-    print("\n########## SUMMARY ##########")
-    print(f"passed: {sum(1 for r in results if r[1])} / {len(results)}")
-    if fails:
-        print("FAILED:")
-        for s, _, d in fails:
-            print(f"  - {s}: {d}")
+    ok = sum(1 for _, o, _ in results if o)
+    total = len(results)
+    print(f"\n=== {ok}/{total} passed ===")
+    if ok != total:
+        for step, o, detail in results:
+            if not o:
+                print(f"  FAIL: {step} — {detail}")
         return 1
-    print("All multi-angle auction/deal checks passed.")
+    print("모든 딜 시나리오 통과")
     return 0
 
 

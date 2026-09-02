@@ -112,16 +112,16 @@ check("미가입 계정 지정 시 404", r.status_code == 404 and r.json()["deta
 r = transfer(pid2)
 check("대상 미지정 시 400", r.status_code == 400 and r.json()["detail"]["code"] == "target_required", r.text[:200])
 
-# 7. 입찰이 있으면 거부
-pid3 = make_project(seller, "위탁매물 C (입찰 있음)")
+# 7. 대기 중인 제안이 있으면 거부
+pid3 = make_project(seller, "위탁매물 C (제안 있음)")
 with database.db() as conn:
     conn.execute(
-        "INSERT INTO bids (project_id, bidder_id, amount, created_at) VALUES (?,?,?,?)",
+        "INSERT INTO offers (project_id, buyer_id, amount, status, created_at) VALUES (?,?,?,'pending',?)",
         (pid3, bidder, 310000, database._now()),
     )
-    conn.execute("UPDATE projects SET bid_count = 1, bidder_count = 1 WHERE id = ?", (pid3,))
+    conn.execute("UPDATE projects SET bid_count = 1, bidder_count = 1, pending_offer_count = 1 WHERE id = ?", (pid3,))
 r = transfer(pid3, new_owner_id=owner)
-check("입찰 있으면 거부", r.status_code == 400 and r.json()["detail"]["code"] == "bids_exist", r.text[:200])
+check("대기 제안 있으면 거부", r.status_code == 400 and r.json()["detail"]["code"] == "offers_pending", r.text[:200])
 with database.db() as conn:
     row = conn.execute("SELECT owner_id FROM projects WHERE id = ?", (pid3,)).fetchone()
 check("거부된 매물은 소유자 그대로", int(row["owner_id"]) == seller)

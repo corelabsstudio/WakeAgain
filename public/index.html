@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WakeAgain — Buy & sell abandoned side projects</title>
-  <meta name="description" content="Marketplace for abandoned side projects and unfinished SaaS. Bid, win, pay, handover. Free to list. $0 buyer fees." />
+  <meta name="description" content="Marketplace for abandoned side projects and unfinished SaaS. Fixed asking price, make an offer, pay, handover. Free to list. $0 buyer fees." />
   <meta name="robots" content="index, follow" />
   <meta name="author" content="CoreLabs" />
   <!-- 네이버 Search Advisor 사이트 소유확인 -->
@@ -16,7 +16,7 @@
   <meta property="og:site_name" content="WakeAgain" />
   <meta property="og:url" content="https://wakeagain.com/" />
   <meta property="og:title" content="WakeAgain — Buy & sell abandoned side projects" />
-  <meta property="og:description" content="Marketplace for abandoned side projects and unfinished SaaS. Bid, win, pay, handover. Free to list. $0 buyer fees." />
+  <meta property="og:description" content="Marketplace for abandoned side projects and unfinished SaaS. Fixed asking price, make an offer, pay, handover. Free to list. $0 buyer fees." />
   <meta property="og:image" content="https://wakeagain.com/assets/og-image.jpg?v=20260811" />
   <meta property="og:image:url" content="https://wakeagain.com/assets/og-image.jpg?v=20260811" />
   <meta property="og:image:secure_url" content="https://wakeagain.com/assets/og-image.jpg?v=20260811" />
@@ -31,7 +31,7 @@
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="WakeAgain — Buy & sell abandoned side projects" />
-  <meta name="twitter:description" content="Marketplace for abandoned side projects and unfinished SaaS. Bid, win, pay, handover. Free to list. $0 buyer fees." />
+  <meta name="twitter:description" content="Marketplace for abandoned side projects and unfinished SaaS. Fixed asking price, make an offer, pay, handover. Free to list. $0 buyer fees." />
   <meta name="twitter:image" content="https://wakeagain.com/assets/og-image.jpg?v=20260811" />
 
   <link rel="alternate" hreflang="en" href="/" />
@@ -343,7 +343,7 @@
             window.WakeAgainI18n.ingestConfig(cfg);
             window.WakeAgainI18n.apply(document);
             try {
-              var pol = (cfg && cfg.auction_policy) || {};
+              var pol = (cfg && (cfg.listing_policy || cfg.auction_policy)) || {};
               var seen = sessionStorage.getItem("wa_collection_notice_dismissed") === "1";
               if (pol.listing_collection_mode && !seen) {
                 showCollectionModeNotice();
@@ -399,15 +399,15 @@
         // Keep highlight markup in HTML (i18n strings are plain text)
         var body1 = en
           ? "Early days: we're filling the board with abandoned side projects. " +
-            '<b style="color:#f0e0b0">Auction timers don\'t start yet</b> on what you list — ' +
-            "once inventory builds up, we bring buyers in and start auctions."
+            '<b style="color:#f0e0b0">Listings go live now</b>; buyers can buy or make offers ' +
+            "as soon as we open the buyer side."
           : "오픈 초기라 방치된 프로젝트를 먼저 모으는 중입니다. " +
-            '지금 올려두신 매물은 <b style="color:#f0e0b0">경매 타이머가 바로 흐르지 않아요</b> — ' +
-            "매물이 어느 정도 쌓이면 운영자가 직접 구매자를 찾아다니며 그때 경매를 시작합니다.";
+            '올려두신 매물은 <b style="color:#f0e0b0">바로 게시됩니다</b> — ' +
+            "구매자 쪽을 열면 바로 판매가로 사거나 제안을 보낼 수 있습니다.";
         var body2 = t(
           "collect.body2",
-          "List now with low pressure. We'll notify you when auctions go live.",
-          "지금은 부담 없이 매물만 올려 주세요. 시작되면 알림으로 알려드릴게요."
+          "List now with low pressure. We'll notify you when buyers arrive.",
+          "지금은 부담 없이 매물만 올려 주세요. 구매자가 오면 알림으로 알려드릴게요."
         );
         var ctaList = t("collect.cta_list", "List a project", "매물 올리기");
         var ctaLater = t("collect.cta_later", "Not now", "나중에");
@@ -595,7 +595,7 @@
       })();
 
       /* Demo countdown only while data-seconds remains.
-         listings.js takes over with data-ends-at (real auction) and removes data-seconds. */
+         listings.js takes over with data-ends-at (real listing period) and removes data-seconds. */
       function fmt(sec) {
         sec = Math.max(0, Math.floor(sec));
         var h = Math.floor(sec / 3600);
@@ -669,13 +669,13 @@
               title: '꺼내는 데 5분이면 됩니다',
               body: '도는 데모 주소 하나면 매물이 됩니다. 등록은 무료입니다.',
               tags: ['등록 무료', '데모만 있으면'] },
-            { eyebrow: '첫 입찰',
-              title: '누군가 값을 부르는 순간',
-              body: '경매로 값이 정해집니다. 팔릴지 아닐지는 시장이 답합니다.',
-              tags: ['공개 경매', '시작가 무료 진단'] },
+            { eyebrow: '첫 제안',
+              title: '누군가 제안을 보내는 순간',
+              body: '판매가는 판매자가 정합니다. 구매자는 그 값에 사거나 제안을 보냅니다.',
+              tags: ['판매가 공개', '제안 → 수락 → 결제 → 이전'] },
             { eyebrow: 'WakeAgain',
               title: '다시 돌아갑니다',
-              body: '입찰 → 결제 → 이전. 구매자 수수료는 없습니다.',
+              body: '사거나 제안하고 → 결제 → 이전. 구매자 수수료는 없습니다.',
               tags: [],
               cta: { primary: { label: '마켓 둘러보기', href: '/app/#list' },
                      secondary: { label: '내 프로젝트 올리기', href: '/app/#new' } } }
@@ -689,13 +689,13 @@
               title: 'Five minutes to list it',
               body: 'A working demo is all it takes. Free to list.',
               tags: ['Free to list', 'Demo required'] },
-            { eyebrow: 'FIRST BID',
-              title: 'The moment someone bids',
-              body: 'An auction sets the price. The market answers.',
-              tags: ['Open auction', 'Free price hint'] },
+            { eyebrow: 'THE FIRST OFFER',
+              title: 'The moment someone makes an offer',
+              body: 'The seller sets the price. Buyers pay it or make an offer.',
+              tags: ['Asking price public', 'Offer → Accept → Pay → Transfer'] },
             { eyebrow: 'WakeAgain',
               title: 'It runs again',
-              body: 'Bid → Pay → Transfer. No buyer fees.',
+              body: 'Buy or offer → Pay → Transfer. No buyer fees.',
               tags: [],
               cta: { primary: { label: 'Browse listings', href: '/app/#list' },
                      secondary: { label: 'List a project', href: '/app/#new' } } }
@@ -715,7 +715,7 @@
         var SCENES = [
           { id: 'stopped',  still: '/assets/world/still_1.webp', clip: '/assets/world/vid/leg_1.mp4', clipMobile: '/assets/world/vid/leg_1-m.mp4', accent: '#8f8576', scroll: 1.6, linger: 0.4 },
           { id: 'uncover',  still: '/assets/world/still_2.webp', clip: '/assets/world/vid/leg_2.mp4', clipMobile: '/assets/world/vid/leg_2-m.mp4', accent: '#b8ae9c' },
-          { id: 'firstbid', still: '/assets/world/still_3.webp', clip: '/assets/world/vid/leg_3.mp4', clipMobile: '/assets/world/vid/leg_3-m.mp4', accent: '#d4a017', linger: 0.35 },
+          { id: 'firstoffer', still: '/assets/world/still_3.webp', clip: '/assets/world/vid/leg_3.mp4', clipMobile: '/assets/world/vid/leg_3-m.mp4', accent: '#d4a017', linger: 0.35 },
           { id: 'awake',    still: '/assets/world/still_4.webp', clip: '/assets/world/vid/leg_4.mp4', clipMobile: '/assets/world/vid/leg_4-m.mp4', accent: '#d4a017', scroll: 1.8, linger: 0.5 }
         ];
 

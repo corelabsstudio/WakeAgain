@@ -1,6 +1,7 @@
 """Background jobs for WakeAgain (no external cron required).
 
-Default: every 60s process expired auctions (auto-close / auto-award).
+Default: every 60s close listings whose listing period ended, expire stale offers,
+and process deal deadlines.
 Toggle: AUCTION_SCHEDULER=0 to disable.
 Interval: AUCTION_SCHEDULER_SEC (default 60, min 15).
 """
@@ -49,18 +50,18 @@ def status() -> dict[str, Any]:
 
 
 def run_once() -> int:
-    """Process expired auctions + deal deadlines (pay / auto-settle) + DB backup tick."""
+    """Close expired listings + deal deadlines (pay / auto-settle / offer expiry) + DB backup tick."""
     closed = 0
     deals: dict = {}
     err: str | None = None
     try:
         with database.db() as conn:
-            closed = int(database.process_expired_auctions(conn) or 0)
+            closed = int(database.process_expired_listings(conn) or 0)
             deals = database.process_deal_deadlines(conn) or {}
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
         traceback.print_exc()
-    # Member-data durability (independent of auction success)
+    # Member-data durability (independent of listing success)
     try:
         from wakeagain import backup as db_backup
 
@@ -77,16 +78,16 @@ def run_once() -> int:
         _state["last_error"] = err
         _state["runs"] = int(_state.get("runs") or 0) + 1
     if closed:
-        print(f"[WakeAgain] scheduler: closed {closed} auction(s)")
+        print(f"[WakeAgain] scheduler: closed {closed} listing(s)")
     if deals and (
         deals.get("payment_default")
         or deals.get("auto_settled")
-        or deals.get("second_bidder_awards")
+        or deals.get("offers_expired")
     ):
         print(
             f"[WakeAgain] scheduler deals: default={deals.get('payment_default', 0)} "
             f"auto_settled={deals.get('auto_settled', 0)} "
-            f"second={deals.get('second_bidder_awards', 0)}"
+            f"offers_expired={deals.get('offers_expired', 0)}"
         )
     return closed
 
@@ -114,7 +115,7 @@ def start() -> None:
     if not is_enabled():
         with _lock:
             _state["enabled"] = False
-        print("[WakeAgain] auction scheduler disabled (AUCTION_SCHEDULER=0)")
+        print("[WakeAgain] listing scheduler disabled (AUCTION_SCHEDULER=0)")
         return
     with _lock:
         if _thread and _thread.is_alive():
@@ -122,9 +123,9 @@ def start() -> None:
         _state["enabled"] = True
         _state["interval_sec"] = _interval()
         _stop.clear()
-        _thread = threading.Thread(target=_loop, name="wa-auction-scheduler", daemon=True)
+        _thread = threading.Thread(target=_loop, name="wa-listing-scheduler", daemon=True)
         _thread.start()
-    print(f"[WakeAgain] auction scheduler started (every {_interval()}s)")
+    print(f"[WakeAgain] listing scheduler started (every {_interval()}s)")
 
 
 def stop() -> None:

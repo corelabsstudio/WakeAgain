@@ -67,7 +67,7 @@ for p in [
     "/api/v1/config",
     "/api/v1/stats",
     "/api/v1/projects",
-    "/api/v1/auctions/live",
+    "/api/v1/listings/live",
     "/api/v1/credit-policy",
     "/api/v1/pricing",
     "/api/v1/reviews",
@@ -195,7 +195,7 @@ if token and code:
             "acquisition": "made",
             "demo_images": [f"/media/demos/{me_id}/smoke.png"],
             "price_start": 2000000,
-            "auction_days": 5,
+            "listing_days": 5,
             "license_note": "MIT",
             # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
             "repo_url": "https://github.com/corelabsstudio/WakeAgain",
@@ -258,7 +258,7 @@ if token and code:
             "demo": "https://example.com",
             "assets": ["code"],
             "price_start": 2000000,
-            "auction_days": 5,
+            "listing_days": 5,
         },
     )
     ok("create blocked without attest", r_bad.status_code == 400, r_bad.text[:100])
@@ -280,7 +280,7 @@ if token and code:
             "acquisition": "made",
             "demo_images": [f"/media/demos/{me_id}/smoke.png"],
             "price_start": 2000000,
-            "auction_days": 5,
+            "listing_days": 5,
             "license_note": "MIT",
             # 매물 등록 필수 필드 정책(2026-08-15) — 신규 등록에 필수
             "repo_url": "https://github.com/corelabsstudio/WakeAgain",
@@ -355,7 +355,7 @@ if token and code:
                 actions = rrep.json().get("actions") or {}
                 ok(
                     "auto pause at 3 reports",
-                    bool(actions.get("auction_paused"))
+                    bool(actions.get("auction_paused") or actions.get("listing_paused"))
                     or (rrep.json().get("project") or {}).get("is_paused"),
                     str(actions),
                 )

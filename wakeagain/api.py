@@ -333,11 +333,11 @@ def _lang_of(request: Request) -> str:
 
 
 def _require_trust(
-    user: dict, need: Literal["list", "bid", "fulfill", "deal"]
+    user: dict, need: Literal["list", "bid", "offer", "fulfill", "deal"]
 ) -> None:
     """Trust gates.
 
-    - bid: Lv1 email only (low friction auction entry)
+    - offer (alias bid): Lv1 email only — 가격 제안·판매가 구매 (low friction)
     - fulfill: Lv2 real name+phone (after award — pay / accept)
     - list: Lv2 + seller public identity
     - deal: Lv3 settlement (seller payout / close-deal)
@@ -379,21 +379,21 @@ def _require_trust(
                 "trust": trust,
             },
         )
-    if need == "bid" and not trust.get("can_bid"):
+    if need in ("bid", "offer") and not (trust.get("can_offer") or trust.get("can_bid")):
         if not trust.get("email_verified"):
             raise HTTPException(
                 status_code=403,
                 detail={
                     "code": "email_unverified",
-                    "message": "가격 쓰기(입찰)에는 이메일 인증만 있으면 됩니다. 먼저 이메일을 확인해 주세요.",
+                    "message": "가격 제안·구매에는 이메일 인증만 있으면 됩니다. 먼저 이메일을 확인해 주세요.",
                     "trust": trust,
                 },
             )
         raise HTTPException(
             status_code=403,
             detail={
-                "code": "bid_not_allowed",
-                "message": "지금은 입찰할 수 없습니다. 계정 상태를 확인해 주세요.",
+                "code": "offer_not_allowed",
+                "message": "지금은 제안·구매를 할 수 없습니다. 계정 상태를 확인해 주세요.",
                 "trust": trust,
             },
         )
@@ -411,7 +411,7 @@ def _require_trust(
             status_code=403,
             detail={
                 "code": "profile_incomplete",
-                "message": "낙찰 후 결제·인수에는 실명·휴대폰(Lv2) 확인이 필요합니다. 앱 → 내 정보에서 완료해 주세요.",
+                "message": "성사 후 결제·인수에는 실명·휴대폰(Lv2) 확인이 필요합니다. 앱 → 내 정보에서 완료해 주세요.",
                 "trust": trust,
             },
         )
@@ -492,10 +492,13 @@ class FindEmailIn(BaseModel):
 
 
 class CloseDealIn(BaseModel):
+    """2026-09-02: offer_id 를 주면 그 제안을 수락하는 것과 같다. use_current_bid 는 폐기(무시)."""
+
+    offer_id: int | None = None
     sold_price: int | None = Field(default=None, ge=0)
     buyer_user_id: int | None = None
     note: str = Field(default="", max_length=500)
-    use_current_bid: bool = True
+    use_current_bid: bool | None = None
 
 
 class VerifyEmailIn(BaseModel):
@@ -569,12 +572,15 @@ class ProjectIn(BaseModel):
     acquisition_note: str = Field(default="", max_length=200)
     # Marketplace tags (1–5) — AI suggest or manual; improves buyer search
     keywords: list[str] = Field(default_factory=list, max_length=10)
-    # Optional buy-now; both capped so 999999999999… abuse is rejected
+    # 판매가 (asking price). `price` 가 정식 필드, `price_start` 는 호환 별칭.
+    # price_buy_now / min_increment 는 2026-09-02 경매 폐지 후 무시된다(받아도 버림).
+    price: int | None = Field(default=None, ge=50_000, le=100_000_000)
     price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
-    price_buy_now: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    price_buy_now: int | None = Field(default=None, ge=0, le=100_000_000)
     contact: str = Field(default="", max_length=120)
-    min_increment: int | None = Field(default=10000, ge=1000, le=10_000_000)
-    auction_days: int = Field(default=7, ge=1, le=30)
+    min_increment: int | None = Field(default=None, ge=0, le=10_000_000)
+    listing_days: int | None = Field(default=None, ge=1, le=30)
+    auction_days: int | None = Field(default=None, ge=1, le=30)
     # 헬프티켓 (Kmong-style)
     q_credits_offered: int = Field(default=1, ge=1, le=3)  # 무료 헬프티켓 1~3
     q_credit_unit_price: int = Field(default=0, ge=0, le=100_000)  # 0 = no add-on sale
@@ -598,8 +604,13 @@ class KeywordSuggestIn(BaseModel):
     lang: str = Field(default="ko", max_length=8)
 
 
-class BidIn(BaseModel):
+class OfferIn(BaseModel):
     amount: int = Field(ge=0, le=10_000_000_000)
+    message: str = Field(default="", max_length=300)
+
+
+class OfferDeclineIn(BaseModel):
+    note: str = Field(default="", max_length=300)
 
 
 class InterestIn(BaseModel):
@@ -680,19 +691,20 @@ def client_config():
             "profile": "/api/v1/me/profile",
             "settlement": "/api/v1/me/settlement",
             "projects": "/api/v1/projects",
-            "auctions_live": "/api/v1/auctions/live",
-            "place_bid": "/api/v1/projects/{id}/bids",
+            "listings_live": "/api/v1/listings/live",
+            "make_offer": "POST /api/v1/projects/{id}/offers",
+            "buy": "POST /api/v1/projects/{id}/buy",
             "interest": "/api/v1/interest",
             "stats": "/api/v1/stats",
             "block_user": "POST /api/v1/users/{id}/block",
             "unblock_user": "DELETE /api/v1/users/{id}/block",
             "my_blocks": "GET /api/v1/me/blocks",
         },
-        "auction_policy": {
+        "listing_policy": {
+            "sale_model": "fixed_price_plus_offers",
             "public_live_board": True,
             "poll_seconds": 4,
-            "default_min_increment_krw": 10000,
-            "default_auction_days": 7,
+            "default_listing_days": 7,
             "public_board": "live_round_only",
             "unsold_leaves_board": True,
             "relist_requires_review": True,
@@ -707,21 +719,23 @@ def client_config():
                 ),
             },
             "note": (
-                "공개 목록·라이브 보드는 이번 경매 라운드(live) 매물만 노출합니다. "
-                "유찰 시 자동으로 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
+                "공개 목록·라이브 보드는 현재 게시 기간(live) 매물만 노출합니다. "
+                "기간이 끝나도 팔리지 않으면 자동으로 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
                 "재등록은 줄 맨 뒤(후순위)부터 시작합니다. "
-                "노출 순위는 매물 설명·포트폴리오·헬프티켓 가산점 → 라운드 순입니다. "
-                "입찰 중 현재가·호가는 방문객 전원 공개, 입찰자 실명은 마스킹."
+                "노출 순위는 매물 설명·포트폴리오·헬프티켓 가산점 → 게시 순입니다. "
+                "판매가는 방문객 전원 공개, 제안자 실명은 마스킹."
             ),
             "note_en": (
-                "Only the current live auction round is listed. "
-                "Unsold listings leave the board at close; re-list requires review "
+                "Only listings in their current listing period are shown. "
+                "Unsold listings leave the board when the period ends; re-list requires review "
                 "and joins the back of the queue. "
-                "Ranking: listing quality + help tickets, then round queue order."
+                "Ranking: listing quality + help tickets, then queue order."
             ),
+            "price_by_status": price_policy.public_policy(),
             "start_price_by_status": price_policy.public_policy(),
             "listing_collection_mode": database.listing_collection_mode(),
         },
+        "offer_policy": database.offer_policy_public(),
         "q_credit_policy": database.q_credit_policy_public(),
         "fee_policy": {
             "payer": "seller",
@@ -732,16 +746,16 @@ def client_config():
             "terms_article": "제13조",
             "message_ko": (
                 f"성사 시 판매자에게 거래 대금의 10% 수수료(최소 {database.FEE_MIN_KRW:,}원). "
-                "구매자는 합의(낙찰)가만 부담. 등록·관심·입찰 무료. (이용약관 제13조)"
+                "구매자는 성사가(판매가 또는 수락된 제안가)만 부담. 등록·관심·제안 무료. (이용약관 제13조)"
             ),
         },
         "payment_policy": {
             "stage": "pg_required_for_ops",
-            "auto_award_on_expiry": True,
+            "sale_model": "fixed_price_plus_offers",
             "background_scheduler": True,
             "payment_link_auto": False,
             "one_hour_timer_auto": True,
-            "second_bidder_auto": database.second_bidder_auto_enabled(),
+            "relist_on_payment_default": True,
             "buyer_protection": True,
             "no_pre_pg_fallback": True,
             "deal": database.deal_policy_public(),
@@ -791,12 +805,12 @@ def client_config():
         "trust_policy": {
             "doc": "TRUST.md",
             "friction_note_ko": (
-                "입찰은 Lv1(이메일)만. 실명·휴대폰(Lv2)은 낙찰 후 결제·인수 때, "
+                "가격 제안·판매가 구매는 Lv1(이메일)만. 실명·휴대폰(Lv2)은 성사 후 결제·인수 때, "
                 "계좌(Lv3)는 판매자 정산·성사 확정 때 요구합니다."
             ),
             "levels": [
                 {"level": 0, "code": "Lv0", "name": "가입", "can": ["browse", "interest"]},
-                {"level": 1, "code": "Lv1", "name": "이메일 인증", "can": ["bid", "profile"]},
+                {"level": 1, "code": "Lv1", "name": "이메일 인증", "can": ["offer", "buy", "profile"]},
                 {
                     "level": 2,
                     "code": "Lv2",
@@ -805,6 +819,7 @@ def client_config():
                 },
                 {"level": 3, "code": "Lv3", "name": "거래 준비", "can": ["close_deal", "settlement"]},
             ],
+            "offer_requires": ["email_verified"],
             "bid_requires": ["email_verified"],
             "fulfill_requires": ["email_verified", "real_name", "phone"],
             "list_requires": [
@@ -834,7 +849,7 @@ def client_config():
                     "운영자는 거래 당사자가 아닙니다."
                 ),
             },
-            "message": "큰돈이 오갈 수 있는 장입니다. 매물 등록·입찰 전 이메일 인증과 실명·연락처를 확인합니다.",
+            "message": "큰돈이 오갈 수 있는 장입니다. 매물 등록·제안 전 이메일 인증과 실명·연락처를 확인합니다.",
             "email_dev_mode": EMAIL_DEV_MODE,
             "email_smtp_configured": smtp_configured(),
             "email_code_fallback": EMAIL_CODE_FALLBACK,
@@ -864,7 +879,7 @@ def client_config():
                 "pause_threshold": database.REPORT_PAUSE_THRESHOLD,
                 "account_suspend_threshold": database.REPORT_ACCOUNT_SUSPEND_THRESHOLD,
                 "message_ko": (
-                    f"서로 다른 구매자 신고가 {database.REPORT_PAUSE_THRESHOLD}건이면 경매 자동 중단, "
+                    f"서로 다른 구매자 신고가 {database.REPORT_PAUSE_THRESHOLD}건이면 판매 자동 일시 중단, "
                     f"판매자 매물 합산 {database.REPORT_ACCOUNT_SUSPEND_THRESHOLD}건이면 계정 자동 정지."
                 ),
                 "path": "POST /api/v1/projects/{id}/report",
@@ -874,7 +889,7 @@ def client_config():
                 "requires": "login (정지 아님)",
                 "message_ko": (
                     "유저 차단 시 상대 매물이 목록·상세에서 숨겨지고, "
-                    "입찰·쪽지 등 상호 액션이 거부됩니다. 신고와 별개입니다."
+                    "제안·구매·쪽지 등 상호 액션이 거부됩니다. 신고와 별개입니다."
                 ),
                 "paths": {
                     "block": "POST /api/v1/users/{id}/block",
@@ -883,7 +898,7 @@ def client_config():
                 },
                 "effects": [
                     "hide_blocked_user_listings",
-                    "reject_bid_buy_message",
+                    "reject_offer_buy_message",
                     "bidirectional_interaction_guard",
                 ],
             },
@@ -1922,10 +1937,11 @@ def _refresh_auction_ended(conn, row) -> Any:
     return fresh or row
 
 
-@router.get("/auctions/live")
-def auctions_live(user: dict | None = Depends(get_optional_user)):
+@router.get("/listings/live")
+@router.get("/auctions/live")  # 호환 별칭 (구 클라이언트·캐시된 JS)
+def listings_live(user: dict | None = Depends(get_optional_user)):
     """
-    Public live board — anyone on the site can see current prices rising.
+    Public live board — 판매가 + 제안 요약. Anyone on the site can see asking prices.
     Designed for short-interval polling (auth optional; logged-in users hide blocked).
     """
     with database.db() as conn:
@@ -1963,40 +1979,44 @@ def auctions_live(user: dict | None = Depends(get_optional_user)):
                 continue
             top = None
             try:
-                if int(r["bid_count"] or 0) > 0:
-                    top = database.top_bid_public(conn, int(r["id"]))
+                if int(r["pending_offer_count"] or 0) > 0:
+                    top = database.top_offer_public(conn, int(r["id"]))
             except Exception:
                 top = None
-            snap = database.auction_snapshot(r, top_bid=top)
+            snap = database.listing_snapshot(r, top_offer=top)
             snap["seller_country"] = seller_country
             snaps.append(snap)
-        # recent public bid ticker (last 20 across board) — live rounds only
+        # recent public offer ticker (last 20 across board) — live listings only
         recent_sql = """
-            SELECT b.*, u.display_name,
+            SELECT o.*, u.display_name,
                    COALESCE(u.credit_bought, 0) AS credit_bought,
                    COALESCE(u.credit_defaults, 0) AS credit_defaults
-            FROM bids b
-            JOIN users u ON u.id = b.bidder_id
-            JOIN projects p ON p.id = b.project_id
+            FROM offers o
+            JOIN users u ON u.id = o.buyer_id
+            JOIN projects p ON p.id = o.project_id
             WHERE p.listing_status = 'approved'
               AND COALESCE(p.auction_status, 'live') = 'live'
+              AND o.status IN ('pending', 'accepted')
             """
         recent_params: list[Any] = []
         if hidden:
             placeholders = ",".join("?" * len(hidden))
             recent_sql += f" AND p.owner_id NOT IN ({placeholders})"
             recent_params = list(sorted(hidden))
-        recent_sql += " ORDER BY b.id DESC LIMIT 20"
+        recent_sql += " ORDER BY o.id DESC LIMIT 20"
         recent = conn.execute(recent_sql, recent_params).fetchall()
-        ticker = [database.bid_to_public(b) for b in recent]
+        viewer = int(user["id"]) if user else None
+        ticker = [database.offer_to_public(o, viewer_id=viewer) for o in recent]
     return {
         "ok": True,
         "server_time": database._now(),
         "poll_seconds": 4,
-        "auctions": snaps,
+        "listings": snaps,
+        "auctions": snaps,  # 호환 별칭
         "ticker": ticker,
         "public": True,
-        "note": "입찰 중 현재가는 전원 공개입니다.",
+        "offer_amounts_public": database.offer_amounts_public(),
+        "note": "판매가는 전원 공개입니다.",
     }
 
 
@@ -2243,7 +2263,7 @@ def get_project(
         project["exposure_score"] = project["exposure"]["score"]
     except Exception:
         pass
-    # 전체 연락처: 판매자 본인 또는 성사 매물의 낙찰 구매자만
+    # 전체 연락처: 판매자 본인 또는 성사 매물의 구매자만
     reveal_contact = False
     if user and u:
         uid = int(user["id"])
@@ -2294,21 +2314,21 @@ def get_project(
 
 @router.delete("/projects/{project_id}")
 def delete_project(project_id: int, user: dict = Depends(get_current_user)):
-    """Seller self-service delete — fixes a mistaken listing. Blocked once a bid
-    has landed or a deal is in progress, so a winning bidder can't be yanked out
-    from under them; use admin review (반려) for those cases instead."""
+    """Seller self-service delete — fixes a mistaken listing. Blocked while an offer
+    is pending or a deal is in progress, so a buyer can't be yanked out from under
+    them; use admin review (반려) for those cases instead."""
     with database.db() as conn:
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
         if int(row["owner_id"]) != int(user["id"]):
             raise HTTPException(status_code=403, detail="not your listing")
-        if int(row["bid_count"] or 0) > 0:
+        if int((row["pending_offer_count"] if "pending_offer_count" in row.keys() else 0) or 0) > 0:
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "code": "has_bids",
-                    "message": "이미 입찰이 들어온 매물은 삭제할 수 없습니다. 문의로 처리해 주세요.",
+                    "code": "offers_pending",
+                    "message": "대기 중인 가격 제안이 있는 매물은 삭제할 수 없습니다. 제안을 먼저 거절해 주세요.",
                 },
             )
         deal_status = (row["deal_status"] if "deal_status" in row.keys() else None) or ""
@@ -2321,6 +2341,7 @@ def delete_project(project_id: int, user: dict = Depends(get_current_user)):
                 },
             )
         conn.execute("DELETE FROM bids WHERE project_id = ?", (project_id,))
+        conn.execute("DELETE FROM offers WHERE project_id = ?", (project_id,))
         conn.execute("DELETE FROM messages WHERE project_id = ?", (project_id,))
         conn.execute("DELETE FROM reports WHERE project_id = ?", (project_id,))
         conn.execute("DELETE FROM fee_invoices WHERE project_id = ?", (project_id,))
@@ -2364,7 +2385,7 @@ def get_deal_certificate(
                 status_code=400,
                 detail={
                     "code": "not_sold",
-                    "message": "아직 낙찰·성사 기록이 없습니다.",
+                    "message": "아직 성사 기록이 없습니다.",
                 },
             )
 
@@ -2385,7 +2406,7 @@ def get_deal_certificate(
                     status_code=400,
                     detail={
                         "code": "not_complete",
-                        "message": "거래 절차 완료 전이므로 「거래 기록 확인서」는 아직 발급할 수 없습니다. 낙찰 기록 확인서를 이용해 주세요.",
+                        "message": "거래 절차 완료 전이므로 「거래 기록 확인서」는 아직 발급할 수 없습니다. 성사 기록 확인서를 이용해 주세요.",
                     },
                 ) from e
             if code == "not_sold":
@@ -2393,48 +2414,12 @@ def get_deal_certificate(
                     status_code=400,
                     detail={
                         "code": "not_sold",
-                        "message": "아직 낙찰·성사 기록이 없습니다.",
+                        "message": "아직 성사 기록이 없습니다.",
                     },
                 ) from e
             raise HTTPException(status_code=400, detail=code) from e
 
     return cert
-
-
-@router.get("/projects/{project_id}/bids")
-def list_bids(project_id: int):
-    """Public bid history for a listing — amounts visible to everyone."""
-    with database.db() as conn:
-        proj = conn.execute("SELECT id FROM projects WHERE id = ?", (project_id,)).fetchone()
-        if not proj:
-            raise HTTPException(status_code=404, detail="not found")
-        rows = conn.execute(
-            """
-            SELECT b.*, u.display_name,
-                   COALESCE(u.credit_bought, 0) AS credit_bought,
-                   COALESCE(u.credit_defaults, 0) AS credit_defaults
-            FROM bids b
-            JOIN users u ON u.id = b.bidder_id
-            WHERE b.project_id = ?
-            ORDER BY b.amount DESC, b.id DESC
-            LIMIT 100
-            """,
-            (project_id,),
-        ).fetchall()
-    bids = []
-    for i, r in enumerate(rows):
-        pub = database.bid_to_public(r)
-        pub["rank"] = i + 1
-        pub["is_top"] = i == 0
-        bids.append(pub)
-    return {
-        "ok": True,
-        "project_id": project_id,
-        "bids": bids,
-        "top_bidder": bids[0] if bids else None,
-        "public": True,
-        "note_ko": "입찰 금액·공개 닉네임·구매 배지는 전원에게 공개됩니다. 이메일·실명·연락처는 비공개입니다.",
-    }
 
 
 @router.post("/projects/{project_id}/report")
@@ -2531,6 +2516,7 @@ def report_project(
         "actions": actions,
         "project": {
             "id": project_id,
+            "sale_status": row["auction_status"] if row else None,
             "auction_status": row["auction_status"] if row else None,
             "report_count": int(row["report_count"] or 0) if row and "report_count" in row.keys() else actions["project_open_reports"],
             "is_paused": (row["auction_status"] if row else "") == "paused",
@@ -2538,7 +2524,7 @@ def report_project(
         "message_ko": (
             "신고가 접수되었습니다."
             + (
-                " 신고 누적으로 경매가 자동 중단되었습니다."
+                " 신고 누적으로 판매가 자동 일시 중단되었습니다."
                 if actions.get("auction_paused")
                 else ""
             )
@@ -2563,7 +2549,7 @@ def list_my_blocks(user: dict = Depends(get_current_user)):
         "ok": True,
         "blocks": blocks,
         "count": len(blocks),
-        "note_ko": "차단한 사용자의 매물은 목록·상세에서 숨겨지고, 입찰·쪽지가 거부됩니다.",
+        "note_ko": "차단한 사용자의 매물은 목록·상세에서 숨겨지고, 제안·구매·쪽지가 거부됩니다.",
     }
 
 
@@ -2604,7 +2590,7 @@ def block_user(target_user_id: int, user: dict = Depends(get_current_user)):
         "block": block,
         "blocked_user": {"id": tid, "display_name": name},
         "message_ko": (
-            f"「{name}」님을 차단했습니다. 상대 매물이 숨겨지고 입찰·쪽지가 불가합니다."
+            f"「{name}」님을 차단했습니다. 상대 매물이 숨겨지고 제안·쪽지가 불가합니다."
             if not already
             else f"「{name}」님은 이미 차단되어 있습니다."
         ),
@@ -2636,186 +2622,327 @@ def unblock_user(target_user_id: int, user: dict = Depends(get_current_user)):
     }
 
 
+@router.get("/projects/{project_id}/bids")
 @router.post("/projects/{project_id}/bids")
-def place_bid(project_id: int, body: BidIn, user: dict = Depends(get_current_user)):
-    """Place a bid. Requires Lv1 (email). Lv2 is required only after award for pay/accept."""
-    with database.db() as conn:
-        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
-    user = database.user_to_dict(row_u)
-    _require_trust(user, "bid")
+def bids_removed(project_id: int):
+    """2026-09-02: 경매·입찰 폐지. 옛 클라이언트에 410으로 안내."""
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "code": "bids_removed",
+            "message": "이제 입찰 대신 판매가로 바로 사거나 가격을 제안합니다. 페이지를 새로고침해 주세요.",
+            "use": {"offers": f"/api/v1/projects/{project_id}/offers", "buy": f"/api/v1/projects/{project_id}/buy"},
+        },
+    )
 
-    amount = int(body.amount)
+
+def _load_sale_row(conn, project_id: int, user: dict) -> Any:
+    """Common guards for offer/buy: listing must be approved + live, not own, not blocked."""
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="not found")
+    row = _refresh_auction_ended(conn, row)
+    if row["listing_status"] != "approved":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "listing_not_live", "message": "지금은 판매 중인 매물이 아닙니다."},
+        )
+    sale_status = (row["auction_status"] if "auction_status" in row.keys() else None) or "live"
+    if sale_status == "paused":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "listing_paused", "message": "신고 누적으로 판매가 일시 중단된 매물입니다."},
+        )
+    if sale_status != "live":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "listing_not_live", "message": "지금은 판매 중인 매물이 아닙니다."},
+        )
+    if int(row["owner_id"]) == int(user["id"]):
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "own_listing", "message": "본인 매물에는 제안할 수 없습니다."},
+        )
+    if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "blocked", "message": "차단된 사용자의 매물에는 제안할 수 없습니다."},
+        )
+    return row
+
+
+def _offer_row(conn, project_id: int, offer_id: int):
+    return conn.execute(
+        """
+        SELECT o.*, u.display_name,
+               COALESCE(u.credit_bought, 0) AS credit_bought,
+               COALESCE(u.credit_defaults, 0) AS credit_defaults
+        FROM offers o JOIN users u ON u.id = o.buyer_id
+        WHERE o.id = ? AND o.project_id = ?
+        """,
+        (int(offer_id), int(project_id)),
+    ).fetchone()
+
+
+@router.get("/projects/{project_id}/offers")
+def list_offers(project_id: int, user: dict | None = Depends(get_optional_user)):
+    """Offers on a listing. Public = pending offers (amount shown when OFFER_AMOUNTS_PUBLIC);
+    the seller sees every offer with status + message."""
     with database.db() as conn:
-        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
-        if not row:
+        proj = conn.execute("SELECT id, owner_id, title FROM projects WHERE id = ?", (project_id,)).fetchone()
+        if not proj:
             raise HTTPException(status_code=404, detail="not found")
-        row = _refresh_auction_ended(conn, row)
-        if row["listing_status"] != "approved":
-            raise HTTPException(status_code=400, detail="listing not open for bids (awaiting review)")
-        auction_status = (row["auction_status"] if "auction_status" in row.keys() else None) or "live"
-        if auction_status == "paused":
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "code": "auction_paused",
-                    "message": "신고 누적 등으로 경매가 중단된 매물입니다. 지금은 가격을 쓸 수 없습니다.",
-                },
-            )
-        if auction_status != "live":
-            raise HTTPException(status_code=400, detail="auction ended")
-        if int(row["owner_id"]) == int(user["id"]):
-            raise HTTPException(status_code=400, detail="cannot bid on own project")
-        if database.is_blocked_either(conn, user["id"], row["owner_id"]):
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "code": "blocked",
-                    "message": "차단된 사용자의 매물에는 입찰할 수 없습니다.",
-                },
-            )
-
-        p = database.project_to_dict(row, include_private=False)
-        next_min = int(p["next_min_bid"] or 0)
-        if amount < next_min:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "code": "bid_too_low",
-                    "message": f"최소 입찰가 ₩{next_min:,} 이상이어야 합니다.",
-                    "next_min_bid": next_min,
-                    "price_current": p["price_current"],
-                },
-            )
-        # buy-now ceiling optional
-        buy_now = p.get("price_buy_now")
-        if buy_now is not None and amount > int(buy_now) * 2:
-            # soft guard against typo — allow up to 2x buy_now; skip if no buy_now
-            pass
-
-        now = database._now()
-        cur = conn.execute(
-            """
-            INSERT INTO bids (project_id, bidder_id, amount, created_at)
-            VALUES (?, ?, ?, ?)
-            """,
-            (project_id, user["id"], amount, now),
-        )
-        bid_id = int(cur.lastrowid)
-        # Race-safe: price_current always reflects MAX bid (not last writer wins)
-        conn.execute(
-            """
-            UPDATE projects
-            SET price_current = (
-                  SELECT COALESCE(MAX(amount), ?)
-                  FROM bids WHERE project_id = ?
-                ),
-                updated_at = ?
-            WHERE id = ?
-            """,
-            (int(row["price_start"] or amount), project_id, now, project_id),
-        )
-        database.refresh_project_bid_stats(conn, project_id)
-        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
-        current = int(row["price_current"] or 0)
-        # optional: hit buy_now → finalize (payment deadline starts)
-        # only if this bid is still the winning (max) amount
-        if buy_now is not None and amount >= int(buy_now) and current >= int(buy_now):
-            # winner = highest bid holder
-            top = conn.execute(
+        viewer = int(user["id"]) if user else None
+        private = bool(viewer is not None and int(proj["owner_id"]) == viewer)
+        offers = database.list_project_offers(conn, project_id, viewer_id=viewer, private=private)
+        mine = None
+        if viewer is not None and not private:
+            m = conn.execute(
                 """
-                SELECT * FROM bids WHERE project_id = ?
-                ORDER BY amount DESC, id DESC LIMIT 1
+                SELECT o.*, u.display_name,
+                       COALESCE(u.credit_bought, 0) AS credit_bought,
+                       COALESCE(u.credit_defaults, 0) AS credit_defaults
+                FROM offers o JOIN users u ON u.id = o.buyer_id
+                WHERE o.project_id = ? AND o.buyer_id = ? AND o.status = 'pending'
+                ORDER BY o.id DESC LIMIT 1
                 """,
-                (project_id,),
+                (project_id, viewer),
             ).fetchone()
-            if top:
-                row = database.finalize_sale(
-                    conn,
-                    row,
-                    sold_price=int(top["amount"]),
-                    buyer_id=int(top["bidder_id"]),
-                    note="즉시구매가 도달 · 자동 성사",
-                )
-        else:
-            database.notify(
-                conn,
-                int(row["owner_id"]),
-                "새 입찰",
-                f"「{row['title']}」에 ₩{amount:,} 입찰이 들어왔습니다.",
-                f"/project.html?id={project_id}",
-            )
-            row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
-        bid_row = conn.execute(
-            """
-            SELECT b.*, u.display_name FROM bids b
-            JOIN users u ON u.id = b.bidder_id WHERE b.id = ?
-            """,
-            (bid_id,),
-        ).fetchone()
+            if m:
+                mine = database.offer_to_public(m, viewer_id=viewer)
+        pending = [o for o in offers if o.get("status") == "pending"]
+        highest = None
+        if pending and database.offer_amounts_public():
+            highest = max(int(o["amount"] or 0) for o in pending if o.get("amount") is not None)
     return {
         "ok": True,
-        "bid": database.bid_to_public(bid_row),
-        "project": database.project_to_dict(row, include_private=False),
-        "public_note": "현재가가 사이트 전체에 즉시 공개됩니다.",
+        "project_id": project_id,
+        "offers": offers,
+        "pending_count": len(pending),
+        "highest_amount": highest,
+        "amounts_public": database.offer_amounts_public(),
+        "mine": mine,
+        "public": True,
+        "note_ko": "제안 금액(공개 설정 시)·공개 닉네임·구매 배지는 전원에게 공개됩니다. 이메일·실명·연락처는 비공개입니다.",
+        "note_en": "Offer amounts (when public), display handle and buyer badge are visible to everyone. Email, real name and contact stay private.",
     }
 
 
-@router.post("/projects/{project_id}/buy-now")
-def buy_now(project_id: int, user: dict = Depends(get_current_user)):
-    """Immediate purchase at price_buy_now — L2 required. Seller gets notification."""
+@router.post("/projects/{project_id}/offers")
+def make_offer(
+    project_id: int,
+    body: OfferIn,
+    request: Request,
+    user: dict = Depends(get_current_user),
+):
+    """가격 제안. Lv1(이메일) 필요. 하한 = 상태 등급 최저가, 상한 = 판매가 미만.
+    한 구매자당 pending 1개 — 새 제안은 이전 것을 replaced 처리."""
     with database.db() as conn:
         row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
     user = database.user_to_dict(row_u)
-    _require_trust(user, "bid")
+    _require_trust(user, "offer")
+    en = _lang_of(request).lower().startswith("en")
 
+    amount = int(body.amount)
     with database.db() as conn:
-        database.process_expired_auctions(conn)
-        row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="not found")
-        if row["listing_status"] != "approved":
-            raise HTTPException(status_code=400, detail="listing not open")
-        if (row["auction_status"] or "live") == "paused":
+        row = _load_sale_row(conn, project_id, user)
+        price = int(row["price_start"] or 0)
+        floor = database.offer_floor_for_status(row["status"])
+        if amount >= price and price > 0:
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "code": "auction_paused",
-                    "message": "신고 누적으로 경매가 중단된 매물입니다.",
+                    "code": "use_buy",
+                    "message": (
+                        "That's at or above the asking price — just buy it instead."
+                        if en
+                        else "판매가 이상이면 제안 대신 바로 구매해 주세요."
+                    ),
+                    "price": price,
                 },
             )
-        if (row["auction_status"] or "live") != "live":
-            raise HTTPException(status_code=400, detail="auction not live")
-        buy = row["price_buy_now"]
-        if buy is None:
-            raise HTTPException(status_code=400, detail="buy-now not available")
-        if int(row["owner_id"]) == int(user["id"]):
-            raise HTTPException(status_code=400, detail="cannot buy own project")
-        if database.is_blocked_either(conn, user["id"], row["owner_id"]):
+        if amount < floor:
             raise HTTPException(
-                status_code=403,
+                status_code=400,
                 detail={
-                    "code": "blocked",
-                    "message": "차단된 사용자의 매물은 구매할 수 없습니다.",
+                    "code": "offer_too_low",
+                    "message": (
+                        f"The minimum offer is ₩{floor:,}." if en else f"제안 하한은 ₩{floor:,} 입니다."
+                    ),
+                    "floor": floor,
                 },
             )
-        buy = int(buy)
         now = database._now()
+        expires = (
+            datetime.now(timezone.utc) + timedelta(hours=database.offer_response_hours())
+        ).isoformat(timespec="seconds")
+        # supersede my previous pending offer (one pending per buyer)
         conn.execute(
             """
-            INSERT INTO bids (project_id, bidder_id, amount, created_at)
-            VALUES (?, ?, ?, ?)
+            UPDATE offers SET status = 'replaced', responded_at = ?, response_note = '새 제안으로 교체'
+            WHERE project_id = ? AND buyer_id = ? AND status = 'pending'
             """,
-            (project_id, user["id"], buy, now),
+            (now, project_id, user["id"]),
         )
-        database.refresh_project_bid_stats(conn, project_id)
+        cur = conn.execute(
+            """
+            INSERT INTO offers (project_id, buyer_id, amount, message, status, created_at, expires_at)
+            VALUES (?, ?, ?, ?, 'pending', ?, ?)
+            """,
+            (project_id, user["id"], amount, (body.message or "").strip()[:300], now, expires),
+        )
+        offer_id = int(cur.lastrowid)
+        database.refresh_project_offer_stats(conn, project_id)
+        database.notify(
+            conn,
+            int(row["owner_id"]),
+            "새 가격 제안",
+            f"「{row['title']}」에 ₩{amount:,} 제안이 들어왔습니다. "
+            f"{database.offer_response_hours()}시간 안에 수락하거나 거절해 주세요.",
+            f"/project.html?id={project_id}",
+        )
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+        o = _offer_row(conn, project_id, offer_id)
+    return {
+        "ok": True,
+        "offer": database.offer_to_public(o, viewer_id=int(user["id"])),
+        "project": database.project_to_dict(row, include_private=False),
+        "note_ko": f"제안이 판매자에게 전달되었습니다. {database.offer_response_hours()}시간 안에 답이 없으면 자동 만료됩니다.",
+    }
+
+
+@router.post("/projects/{project_id}/offers/{offer_id}/withdraw")
+def withdraw_offer(project_id: int, offer_id: int, user: dict = Depends(get_current_user)):
+    with database.db() as conn:
+        o = _offer_row(conn, project_id, offer_id)
+        if not o:
+            raise HTTPException(status_code=404, detail="offer not found")
+        if int(o["buyer_id"]) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="not your offer")
+        if o["status"] != "pending":
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "offer_not_pending", "message": "이미 처리된 제안입니다."},
+            )
+        conn.execute(
+            "UPDATE offers SET status = 'withdrawn', responded_at = ?, response_note = '구매자 철회' WHERE id = ?",
+            (database._now(), offer_id),
+        )
+        database.refresh_project_offer_stats(conn, project_id)
+        o = _offer_row(conn, project_id, offer_id)
+    return {"ok": True, "offer": database.offer_to_public(o, viewer_id=int(user["id"]))}
+
+
+def _seller_offer_guard(conn, project_id: int, offer_id: int, user: dict):
+    row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="not found")
+    if int(row["owner_id"]) != int(user["id"]):
+        raise HTTPException(status_code=403, detail="owner only")
+    o = _offer_row(conn, project_id, offer_id)
+    if not o:
+        raise HTTPException(status_code=404, detail="offer not found")
+    if o["status"] != "pending":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "offer_not_pending", "message": "이미 처리된 제안입니다."},
+        )
+    return row, o
+
+
+@router.post("/projects/{project_id}/offers/{offer_id}/decline")
+def decline_offer(
+    project_id: int,
+    offer_id: int,
+    body: OfferDeclineIn | None = None,
+    user: dict = Depends(get_current_user),
+):
+    body = body or OfferDeclineIn()
+    with database.db() as conn:
+        row, o = _seller_offer_guard(conn, project_id, offer_id, user)
+        note = (body.note or "").strip()[:300]
+        conn.execute(
+            "UPDATE offers SET status = 'declined', responded_at = ?, response_note = ? WHERE id = ?",
+            (database._now(), note, offer_id),
+        )
+        database.refresh_project_offer_stats(conn, project_id)
+        database.notify(
+            conn,
+            int(o["buyer_id"]),
+            "제안 거절",
+            f"「{row['title']}」에 보낸 ₩{int(o['amount']):,} 제안이 거절되었습니다."
+            + (f" 판매자 메모: {note}" if note else "")
+            + " 다른 금액으로 다시 제안하거나 판매가로 바로 살 수 있습니다.",
+            f"/project.html?id={project_id}",
+        )
+        o = _offer_row(conn, project_id, offer_id)
+    return {"ok": True, "offer": database.offer_to_public(o, private=True)}
+
+
+def _accept_offer_impl(conn, row, o, user: dict, note: str) -> Any:
+    _require_trust(user, "deal")
+    row = _refresh_auction_ended(conn, row)
+    if (row["listing_status"] or "") != "approved" or (row["auction_status"] or "live") != "live":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "listing_not_live", "message": "지금은 판매 중인 매물이 아닙니다."},
+        )
+    amount = int(o["amount"])
+    return database.finalize_sale(
+        conn,
+        row,
+        sold_price=amount,
+        buyer_id=int(o["buyer_id"]),
+        note=note or f"제안 수락 ₩{amount:,}",
+        offer_id=int(o["id"]),
+    )
+
+
+@router.post("/projects/{project_id}/offers/{offer_id}/accept")
+def accept_offer(
+    project_id: int,
+    offer_id: int,
+    body: OfferDeclineIn | None = None,
+    user: dict = Depends(get_current_user),
+):
+    """판매자가 제안을 수락 → 성사(awaiting_payment, 1시간 결제 기한). Lv3(정산 준비) 필요."""
+    body = body or OfferDeclineIn()
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    with database.db() as conn:
+        row, o = _seller_offer_guard(conn, project_id, offer_id, user)
+        row = _accept_offer_impl(conn, row, o, user, (body.note or "").strip())
+        sold_price = int(row["sold_price"] or 0)
+    return {
+        "ok": True,
+        "project": database.project_to_dict(row, include_private=True),
+        "fee": database.fee_breakdown(sold_price),
+        "deal_policy": database.deal_policy_public(),
+    }
+
+
+@router.post("/projects/{project_id}/buy")
+@router.post("/projects/{project_id}/buy-now")  # 호환 별칭
+def buy_at_price(project_id: int, user: dict = Depends(get_current_user)):
+    """판매가로 바로 구매 — Lv1(이메일). 즉시 성사되고 1시간 결제 기한이 시작된다."""
+    with database.db() as conn:
+        row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
+    user = database.user_to_dict(row_u)
+    _require_trust(user, "offer")
+
+    with database.db() as conn:
+        row = _load_sale_row(conn, project_id, user)
+        price = int(row["price_start"] or 0)
+        if price <= 0:
+            raise HTTPException(status_code=400, detail={"code": "no_price", "message": "판매가가 없는 매물입니다."})
         row = database.finalize_sale(
-            conn, row, sold_price=buy, buyer_id=user["id"], note="즉시구매"
+            conn, row, sold_price=price, buyer_id=user["id"], note="판매가 구매"
         )
     return {
         "ok": True,
         "project": database.project_to_dict(row, include_private=False),
-        "fee": database.fee_breakdown(buy),
+        "fee": database.fee_breakdown(price),
     }
 
 
@@ -2825,13 +2952,14 @@ def close_deal(
     body: CloseDealIn,
     user: dict = Depends(get_current_user),
 ):
-    """Seller confirms deal (needs L3 settlement). Uses current bid by default."""
+    """Seller confirms a sale (needs L3 settlement). Pass offer_id to accept that offer,
+    or sold_price (+ buyer_user_id) for an explicit manual close."""
     with database.db() as conn:
         row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
     user = database.user_to_dict(row_u)
 
     with database.db() as conn:
-        database.process_expired_auctions(conn)
+        database.process_expired_listings(conn)
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="not found")
@@ -2844,28 +2972,29 @@ def close_deal(
 
         _require_trust(user, "deal")
 
-        sold_price = body.sold_price
-        buyer_id = body.buyer_user_id
-        if body.use_current_bid or sold_price is None:
-            top = conn.execute(
-                """
-                SELECT * FROM bids WHERE project_id = ? ORDER BY amount DESC, id DESC LIMIT 1
-                """,
-                (project_id,),
-            ).fetchone()
-            if top:
-                sold_price = int(top["amount"])
-                buyer_id = int(top["bidder_id"])
-            elif sold_price is None:
-                raise HTTPException(status_code=400, detail="no bids — set sold_price")
-        sold_price = int(sold_price)
-        row = database.finalize_sale(
-            conn,
-            row,
-            sold_price=sold_price,
-            buyer_id=buyer_id,
-            note=(body.note or "성사 확정").strip(),
-        )
+        if body.offer_id:
+            o = _offer_row(conn, project_id, int(body.offer_id))
+            if not o or o["status"] != "pending":
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "offer_not_pending", "message": "수락할 수 있는 제안이 아닙니다."},
+                )
+            row = _accept_offer_impl(conn, row, o, user, (body.note or "").strip())
+            sold_price = int(row["sold_price"] or 0)
+        else:
+            if body.sold_price is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"code": "sold_price_required", "message": "offer_id 또는 sold_price 가 필요합니다."},
+                )
+            sold_price = int(body.sold_price)
+            row = database.finalize_sale(
+                conn,
+                row,
+                sold_price=sold_price,
+                buyer_id=body.buyer_user_id,
+                note=(body.note or "성사 확정").strip(),
+            )
     return {
         "ok": True,
         "project": database.project_to_dict(row, include_private=True),
@@ -3391,7 +3520,7 @@ def deal_handover_checklist(
                 status_code=403,
                 detail={
                     "code": "buyer_only",
-                    "message": "인수 확인 목록은 낙찰 구매자만 체크할 수 있습니다.",
+                    "message": "인수 확인 목록은 성사된 구매자만 체크할 수 있습니다.",
                 },
             )
         astatus = (row["auction_status"] or "") or ""
@@ -3679,11 +3808,15 @@ def _can_message_project(conn, project_id: int, user_id: int) -> bool:
         return False
     if int(row["owner_id"]) == int(user_id):
         return True
-    bid = conn.execute(
-        "SELECT 1 FROM bids WHERE project_id = ? AND bidder_id = ? LIMIT 1",
-        (project_id, user_id),
+    party = conn.execute(
+        """
+        SELECT 1 FROM offers WHERE project_id = ? AND buyer_id = ?
+        UNION SELECT 1 FROM projects WHERE id = ? AND buyer_id = ?
+        LIMIT 1
+        """,
+        (project_id, user_id, project_id, user_id),
     ).fetchone()
-    return bool(bid)
+    return bool(party)
 
 
 class QThreadIn(BaseModel):
@@ -3918,17 +4051,17 @@ def post_message(project_id: int, body: MessageIn, user: dict = Depends(get_curr
         # notify the other party
         owner_id = int(proj["owner_id"])
         if int(user["id"]) == owner_id:
-            # notify latest bidder or all unique bidders? notify recent bidders
-            bidders = conn.execute(
+            # notify everyone who made an offer on this listing
+            buyers = conn.execute(
                 """
-                SELECT DISTINCT bidder_id FROM bids WHERE project_id = ? AND bidder_id != ?
+                SELECT DISTINCT buyer_id FROM offers WHERE project_id = ? AND buyer_id != ?
                 """,
                 (project_id, user["id"]),
             ).fetchall()
-            for b in bidders[:10]:
+            for b in buyers[:10]:
                 database.notify(
                     conn,
-                    int(b["bidder_id"]),
+                    int(b["buyer_id"]),
                     "매물 쪽지",
                     f"「{proj['title']}」 판매자 메시지: {text[:80]}",
                     f"/project.html?id={project_id}",
@@ -3938,7 +4071,7 @@ def post_message(project_id: int, body: MessageIn, user: dict = Depends(get_curr
                 conn,
                 owner_id,
                 "매물 쪽지",
-                f"「{proj['title']}」 입찰자 메시지: {text[:80]}",
+                f"「{proj['title']}」 구매 희망자 메시지: {text[:80]}",
                 f"/project.html?id={project_id}",
             )
         row = conn.execute(
@@ -4287,7 +4420,7 @@ def credit_policy_public():
             f"판매 성사 1건 +{database.CREDIT_RULES['sold_as_seller']} (최대 +{database.CREDIT_RULES['sold_as_seller_cap']})",
             f"구매 성사 1건 +{database.CREDIT_RULES['bought_complete']} (최대 +{database.CREDIT_RULES['bought_complete_cap']})",
             f"정시 입금(안내 기한 준수 · PG 후 1시간 목표) 1회 +{database.CREDIT_RULES['on_time_payment']} (최대 +{database.CREDIT_RULES['on_time_payment_cap']})",
-            f"낙찰 후 미입금 1회 {database.CREDIT_RULES['default_unpaid']} (하한 0)",
+            f"성사 후 미입금 1회 {database.CREDIT_RULES['default_unpaid']} (하한 0)",
             "최종 점수는 0~100으로 자동 반영 · 신뢰 레벨(Lv0~Lv3)과 별개",
         ],
         "buyer_rank": database.buyer_rank_policy(),
@@ -4312,7 +4445,7 @@ def admin_credit_default(body: CreditDefaultIn, _: None = Depends(require_admin)
             conn,
             int(body.user_id),
             "사이트 내 신용 점수 변동 · 미입금",
-            (body.note or "낙찰 후 미입금이 기록되어 사이트 내 신용 점수가 낮아졌습니다.")[:400]
+            (body.note or "성사 후 미입금이 기록되어 사이트 내 신용 점수가 낮아졌습니다.")[:400]
             + f" 현재 {credit['score']}점({credit['label']}).",
             "/guide/credit.html",
         )
@@ -4583,9 +4716,10 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
 
     status = price_policy.normalize_status(body.status.strip())
     product_type = database.normalize_product_type(body.product_type)
+    asking = body.price if body.price is not None else body.price_start
     try:
         start, price_meta = price_policy.validate_start_price(
-            status, body.price_start, lang=_lang_of(request)
+            status, asking, lang=_lang_of(request)
         )
     except ValueError as e:
         raise HTTPException(
@@ -4597,11 +4731,8 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
             },
         ) from e
 
-    # min increment defaults to status band unless client sent higher
-    band_inc = int(price_meta["suggested_increment"])
-    min_inc = int(body.min_increment or band_inc)
-    if min_inc < band_inc:
-        min_inc = band_inc
+    # (경매 폐지) min_increment 컬럼은 남아 있어 상태 등급 기본값만 기록한다
+    min_inc = int(price_meta["suggested_increment"])
 
     now = database._now()
     assets = [
@@ -4618,7 +4749,33 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
             },
         )
     contact = (body.contact or user["email"]).strip()
-    auction_days = int(body.auction_days or 7)
+    auction_days = int(body.listing_days or body.auction_days or 7)
+    auction_days = max(1, min(auction_days, 30))
+    q_offered = database.normalize_q_credits_offered(body.q_credits_offered)
+    q_unit = database.normalize_q_credit_unit_price(body.q_credit_unit_price)
+    q_sla = database.normalize_q_credit_sla_hours(body.q_credit_sla_hours)
+    # ends_at is provisional until approve; start_auction_round refreshes on go-live
+    ends = _auction_end_iso(auction_days)
+
+    # 2026-09-02: 즉시구매가(price_buy_now)는 폐지 — 판매가 자체가 구매가
+    buy_now = None
+
+    now = database._now()
+    assets = [
+        a.strip()
+        for a in body.assets
+        if isinstance(a, str) and a.strip()
+    ][:20]
+    if not assets:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "assets_required",
+                "message": "포함 자산(코드·디자인·도메인 등)을 하나 이상 선택해 주세요. 실제로 넘길 수 있는 것만.",
+            },
+        )
+    contact = (body.contact or user["email"]).strip()
+    auction_days = int(body.listing_days or body.auction_days or 7)
     auction_days = max(1, min(auction_days, 30))
     q_offered = database.normalize_q_credits_offered(body.q_credits_offered)
     q_unit = database.normalize_q_credit_unit_price(body.q_credit_unit_price)
@@ -4793,13 +4950,13 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
         "ph_first50_applied": ph_first50,
         "pricing": {
             "status": status,
+            "applied_price": start,
             "applied_start": start,
-            "min_increment": min_inc,
             "band": price_meta["band"],
         },
         "note": (
-            "등록됨 · 운영 형식 검수 후 이번 경매 라운드에 공개됩니다. "
-            "유찰 시 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
+            "등록됨 · 운영 형식 검수 후 공개 목록에 게시됩니다. "
+            "게시 기간(기본 7일) 안에 팔리지 않으면 목록에서 내려가며, 다시 올리려면 재검수가 필요합니다. "
             "검수는 보통 1~2영업일 · 품질 보증 아님."
         ),
         "review_sla": {
@@ -4814,9 +4971,10 @@ def create_project(body: ProjectIn, request: Request, user: dict = Depends(get_c
 
 
 class RelistIn(BaseModel):
-    """Seller re-enters the auction: requires re-review; joins back of queue on approve."""
+    """Seller re-lists after the listing period ended: requires re-review; joins back of queue on approve."""
 
-    auction_days: int = Field(default=7, ge=1, le=30)
+    listing_days: int | None = Field(default=None, ge=1, le=30)
+    auction_days: int | None = Field(default=None, ge=1, le=30)
     # Optional updates before re-review (empty = keep existing)
     title: str | None = Field(default=None, max_length=80)
     one_liner: str | None = Field(default=None, max_length=120)
@@ -4829,7 +4987,8 @@ class RelistIn(BaseModel):
     limits: str | None = Field(default=None, max_length=500)
     keywords: list[str] | None = Field(default=None, max_length=10)
     price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
-    price_buy_now: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    price: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    price_buy_now: int | None = Field(default=None, ge=0, le=100_000_000)  # ignored
     license_note: str | None = Field(default=None, max_length=200)
     # 필수 필드 정책(2026-08-15) 보완 경로: 재등록 때 채워 넣을 수 있게 열어 두되 강제하지 않는다.
     # 정책상 기존 매물은 "보완 요청 후 미등록 배지" — 재등록을 막지 않는다.
@@ -4920,7 +5079,7 @@ def relist_project(
                 },
             )
 
-        days = max(1, min(int(body.auction_days or 7), 30))
+        days = max(1, min(int(body.listing_days or body.auction_days or 7), 30))
         now = database._now()
         # Optional field patches
         title = (body.title if body.title is not None else row["title"] or "").strip()
@@ -4966,21 +5125,15 @@ def relist_project(
                 keywords = []
         status = (row["status"] or "prototype") or "prototype"
         start = int(row["price_start"] or 0)
-        if body.price_start is not None:
+        new_price = body.price if body.price is not None else body.price_start
+        if new_price is not None:
             try:
                 start, _meta = price_policy.validate_start_price(
-                    status, body.price_start, lang=_lang_of(request)
+                    status, new_price, lang=_lang_of(request)
                 )
             except ValueError as e:
                 raise HTTPException(status_code=400, detail={"code": "start_price_invalid", "message": str(e)}) from e
-        buy_now = row["price_buy_now"] if "price_buy_now" in row.keys() else None
-        if body.price_buy_now is not None:
-            buy_now = int(body.price_buy_now)
-            if buy_now < start:
-                raise HTTPException(
-                    status_code=400,
-                    detail={"code": "buy_now_too_low", "message": "즉시구매가는 시작가 이상이어야 합니다."},
-                )
+        buy_now = None  # 즉시구매가 폐지
         license_note = (
             body.license_note
             if body.license_note is not None
@@ -5123,7 +5276,8 @@ def relist_project(
 
 
 class PriceUpdateIn(BaseModel):
-    price_start: int = Field(ge=50_000, le=100_000_000)
+    price: int | None = Field(default=None, ge=50_000, le=100_000_000)
+    price_start: int | None = Field(default=None, ge=50_000, le=100_000_000)
 
 
 @router.put("/projects/{project_id}/price")
@@ -5134,9 +5288,8 @@ def update_project_price(
     user: dict = Depends(get_current_user),
 ):
     """
-    Seller adjusts the starting bid on a live, still-unbid round — up or down.
-    Only before the first bid: once someone has bid, price_current already
-    reflects that bid and the round is locked to relist instead.
+    Seller adjusts the asking price on a live listing — up or down, any time.
+    Pending offers are untouched (an offer is on the item, not on the price).
     """
     with database.db() as conn:
         row_u = conn.execute("SELECT * FROM users WHERE id = ?", (user["id"],)).fetchone()
@@ -5161,43 +5314,18 @@ def update_project_price(
                     "message": (
                         "This listing isn't in a live, open round right now."
                         if en
-                        else "지금 진행 중인 라이브 경매 상태가 아닙니다."
+                        else "지금 판매 중인 매물이 아닙니다."
                     ),
                 },
             )
-        if int(row["bid_count"] or 0) > 0:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "code": "bids_exist",
-                    "message": (
-                        "Bids have already come in, so the starting price is locked. "
-                        "Wait for this round to end, then re-list at a new price."
-                        if en
-                        else "이미 입찰이 들어와서 시작가를 바꿀 수 없습니다. 이번 라운드가 끝난 뒤 재등록으로 새 가격을 정해 주세요."
-                    ),
-                },
-            )
-
         status = (row["status"] or "prototype") or "prototype"
+        new_price = body.price if body.price is not None else body.price_start
+        if new_price is None:
+            raise HTTPException(status_code=400, detail={"code": "price_required", "message": "price 가 필요합니다."})
         try:
-            start, _meta = price_policy.validate_start_price(status, body.price_start, lang=lang)
+            start, _meta = price_policy.validate_start_price(status, new_price, lang=lang)
         except ValueError as e:
             raise HTTPException(status_code=400, detail={"code": "start_price_invalid", "message": str(e)}) from e
-
-        buy_now = row["price_buy_now"] if "price_buy_now" in row.keys() else None
-        if buy_now is not None and int(buy_now) < start:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "code": "buy_now_too_low",
-                    "message": (
-                        "The new starting price is above the buy-it-now price."
-                        if en
-                        else "새 시작가가 즉시구매가보다 높습니다."
-                    ),
-                },
-            )
 
         now = database._now()
         conn.execute(
@@ -5214,9 +5342,9 @@ def update_project_price(
         "ok": True,
         "project": database.project_to_dict(row, include_private=True),
         "note": (
-            "Starting price updated. It's visible to everyone immediately."
+            "Asking price updated. It's visible to everyone immediately."
             if en
-            else "시작가가 변경되었습니다. 즉시 전체 공개됩니다."
+            else "판매가가 변경되었습니다. 즉시 전체 공개됩니다."
         ),
     }
 
@@ -5244,7 +5372,7 @@ def update_project_verification(
     "미등록" 배지가 붙는다. relist는 라이브 라운드에서 거부되기 때문에, 이 엔드포인트가
     없으면 기존 판매자는 정책을 지킬 방법 자체가 없다.
 
-    입찰이 들어온 뒤에는 이미 채워진 값을 **바꿀 수 없다** (미끼 후 교체 방지).
+    제안이 들어온 뒤에는 이미 채워진 값을 **바꿀 수 없다** (미끼 후 교체 방지).
     비어 있는 값을 채우는 것은 언제든 허용한다.
     """
     lang = _lang_of(request)
@@ -5260,21 +5388,21 @@ def update_project_verification(
         def cur(col: str):
             return row[col] if col in row.keys() else None
 
-        locked = int(row["bid_count"] or 0) > 0
+        locked = int(row["bid_count"] or 0) > 0  # bid_count == 누적 제안 수 (2026-09-02)
 
         def guard(col: str, incoming) -> None:
-            """입찰 후에는 이미 값이 있는 항목을 다른 값으로 바꿀 수 없다."""
+            """제안이 들어온 뒤에는 이미 값이 있는 항목을 다른 값으로 바꿀 수 없다."""
             existing = (cur(col) or "") or ""
             if locked and existing and incoming and incoming != existing:
                 raise HTTPException(
                     status_code=400,
                     detail={
-                        "code": "locked_after_bid",
+                        "code": "locked_after_offer",
                         "message": (
-                            "Bids have come in, so an existing link can't be swapped. "
+                            "Offers have come in, so an existing link can't be swapped. "
                             "You can still fill in fields that are empty."
                             if en
-                            else "입찰이 들어온 뒤에는 이미 등록된 링크를 다른 것으로 바꿀 수 없습니다. "
+                            else "제안이 들어온 뒤에는 이미 등록된 링크를 다른 것으로 바꿀 수 없습니다. "
                             "비어 있는 항목을 채우는 것은 가능합니다."
                         ),
                     },
@@ -5414,7 +5542,7 @@ def admin_checklist(_: None = Depends(require_admin)):
         ],
         "items": REVIEW_CHECKLIST,
         "actions": {
-            "approve": "공개 마켓·입찰 오픈",
+            "approve": "공개 마켓 게시 · 판매 오픈",
             "reject": "반려 (공개 안 함)",
             "hold": "보류 (추가 확인)",
         },
@@ -5474,7 +5602,7 @@ def admin_update_project_verification(
 
     정책 이전 매물 중에는 시드 스크립트가 만든 운영 계정(corelabs.seller@…) 소유가 있어
     판매자 로그인으로는 손댈 수 없다. 소유자용 엔드포인트와 같은 검증을 쓰되 소유권만 건너뛴다.
-    입찰 후 링크 교체 방지 가드는 운영자에게 적용하지 않는다 — 데이터 정정이 목적이기 때문.
+    제안 후 링크 교체 방지 가드는 운영자에게 적용하지 않는다 — 데이터 정정이 목적이기 때문.
     """
     with database.db() as conn:
         row = conn.execute("SELECT * FROM projects WHERE id = ?", (project_id,)).fetchone()
@@ -5606,8 +5734,9 @@ class AdminConsignorIn(BaseModel):
 
 
 _TRANSFER_BLOCKER_MSG = {
-    "bids_exist": "이미 입찰이 들어온 매물입니다. 입찰자가 지금 판매자를 믿고 넣은 것이라 명의를 못 바꿉니다. 라운드가 끝난 뒤 새 계정으로 재등록하세요.",
-    "already_sold": "이미 낙찰·판매된 매물이라 명의를 바꿀 수 없습니다.",
+    "offers_pending": "대기 중인 가격 제안이 있는 매물입니다. 제안자가 지금 판매자를 믿고 넣은 것이라 명의를 못 바꿉니다. 제안을 처리한 뒤 진행하세요.",
+    "bids_exist": "대기 중인 가격 제안이 있는 매물입니다.",
+    "already_sold": "이미 성사·판매된 매물이라 명의를 바꿀 수 없습니다.",
     "deal_in_progress": "거래(딜)가 진행 중인 매물이라 명의를 바꿀 수 없습니다.",
     "fee_invoice_exists": "수수료 청구서가 발행된 매물이라 명의를 바꿀 수 없습니다.",
     "help_tickets_exist": "헬프티켓 문의가 오간 매물이라 명의를 바꿀 수 없습니다.",
@@ -5624,7 +5753,7 @@ def admin_transfer_project_owner(
 
     원 소유자 동의를 받고 코어랩스 계정으로 대신 올린 매물을, 본인이 가입하면 그 계정으로
     넘겨주기 위한 경로다 (CLAUDE.md 「위탁 등록 매물」). 소유자는 원래 생성 시점에만 정해지고
-    이후 불변인데, 입찰·거래·수수료·헬프티켓이 전부 "판매자가 누구인가"에 묶여 있기 때문이다.
+    이후 불변인데, 제안·거래·수수료·헬프티켓이 전부 "판매자가 누구인가"에 묶여 있기 때문이다.
     그래서 그 이력이 하나라도 붙은 매물은 옮기지 않고 거부한다 — 옮기면 이력이 조용히 바뀐다.
 
     대상 계정은 id 또는 이메일로 지정한다(관리자 화면에선 이메일이 편하다).
@@ -5705,7 +5834,7 @@ def admin_set_project_consignor(
 ):
     """운영자가 위탁 등록 매물의 실제 판매자를 기록한다 (상대 가입 불필요).
 
-    `transfer-owner`와 달리 `owner_id`를 건드리지 않는다. 명의 이전은 입찰·거래가 붙는
+    `transfer-owner`와 달리 `owner_id`를 건드리지 않는다. 명의 이전은 제안·거래가 붙는
     순간 막히기 때문에(=매물이 잘 될수록 불가능해짐) 인계를 전제로 한 구조를 쓰지 않고,
     위탁자를 데이터로 들고 간다. 정산 정보는 팔린 뒤에 받는다.
 
@@ -5873,8 +6002,8 @@ def admin_review_project(
         }
         bodies = {
             "approve": (
-                f"「{row['title']}」이(가) 이번 경매 라운드에 공개되었습니다. "
-                f"마감 후 유찰되면 목록에서 내려갑니다."
+                f"「{row['title']}」이(가) 공개 목록에 게시되었습니다. "
+                f"게시 기간 안에 팔리지 않으면 목록에서 내려갑니다."
             ),
             "reject": f"「{row['title']}」이(가) 반려되었습니다. {body.note or ''}".strip(),
             "hold": f"「{row['title']}」이(가) 보류되었습니다. {body.note or ''}".strip(),
@@ -5996,15 +6125,17 @@ def admin_resolve_report(
 
 
 class AdminResumeIn(BaseModel):
-    """Re-open policy: default re-queues for review; force starts a new live round (back of queue)."""
+    """Re-open policy: default re-queues for review; force starts a new listing period (back of queue)."""
 
-    auction_days: int = Field(default=7, ge=1, le=30)
+    listing_days: int | None = Field(default=None, ge=1, le=30)
+    auction_days: int | None = Field(default=None, ge=1, le=30)
     force_live: bool = False
     note: str = Field(default="", max_length=500)
 
 
-@router.post("/admin/projects/{project_id}/resume-auction")
-def admin_resume_auction(
+@router.post("/admin/projects/{project_id}/resume-listing")
+@router.post("/admin/projects/{project_id}/resume-auction")  # 호환 별칭
+def admin_resume_listing(
     project_id: int,
     body: AdminResumeIn | None = None,
     _: None = Depends(require_admin),
@@ -6025,9 +6156,9 @@ def admin_resume_auction(
         ):
             raise HTTPException(
                 status_code=400,
-                detail="auction is not paused/ended/archived — nothing to resume",
+                detail="listing is not paused/ended/archived — nothing to resume",
             )
-        days = int(body.auction_days or 7)
+        days = int(body.listing_days or body.auction_days or 7)
         if body.force_live:
             # Emergency ops: new round now, back of queue (round_started_at = now)
             conn.execute(
@@ -6043,8 +6174,8 @@ def admin_resume_auction(
             database.notify(
                 conn,
                 int(row["owner_id"]),
-                "새 라운드 강제 게시",
-                f"「{row['title']}」 운영자가 새 경매 라운드를 열었습니다. (후순위 정렬)",
+                "다시 게시됨",
+                f"「{row['title']}」 운영자가 새 게시 기간으로 다시 올렸습니다. (후순위 정렬)",
                 f"/project.html?id={project_id}",
             )
             return {
@@ -6085,7 +6216,7 @@ def admin_resume_auction(
         "ok": True,
         "mode": "pending_review",
         "project": database.project_to_dict(row, include_private=True),
-        "note": "재검수 후 승인 시 새 라운드로 게시되며 줄 맨 뒤(후순위)부터 시작합니다.",
+        "note": "재검수 후 승인 시 새 게시 기간으로 게시되며 줄 맨 뒤(후순위)부터 시작합니다.",
     }
 
 
@@ -6104,14 +6235,15 @@ def admin_get_listing_collection_mode(_: None = Depends(require_admin)):
         "ok": True,
         "enabled": database.listing_collection_mode(),
         "waiting_count": int(pending["n"] or 0),
-        "note": "WA_LISTING_COLLECTION_MODE 환경변수로 켜고 끕니다 (재배포 필요). 켜져 있으면 승인된 매물은 공개 목록엔 뜨지만 경매 타이머는 시작되지 않습니다.",
+        "note": "WA_LISTING_COLLECTION_MODE 환경변수로 켜고 끕니다 (재배포 필요). 켜져 있으면 승인된 매물은 공개 목록엔 뜨지만 게시 기간 타이머는 시작되지 않습니다.",
     }
 
 
-@router.post("/admin/auctions/release-all")
-def admin_release_all_auctions(_: None = Depends(require_admin)):
-    """Launch-day trigger: start the countdown for every listing that's been
-    sitting live with no auction clock (listing_collection_mode backlog)."""
+@router.post("/admin/listings/release-all")
+@router.post("/admin/auctions/release-all")  # 호환 별칭
+def admin_release_all_listings(_: None = Depends(require_admin)):
+    """Launch-day trigger: start the listing-period clock for every listing that's been
+    sitting live with no clock (listing_collection_mode backlog)."""
     with database.db() as conn:
         rows = conn.execute(
             """
@@ -6126,8 +6258,8 @@ def admin_release_all_auctions(_: None = Depends(require_admin)):
             database.notify(
                 conn,
                 int(row["owner_id"]),
-                "경매 시작",
-                f"「{row['title']}」 경매가 지금부터 시작되어 카운트다운이 흐릅니다.",
+                "게시 기간 시작",
+                f"「{row['title']}」 게시 기간이 지금부터 흐릅니다.",
                 f"/project.html?id={row['id']}",
             )
     return {
@@ -6186,7 +6318,7 @@ def _admin_user_row(conn: Any, row: Any, *, full: bool = False) -> dict[str, Any
         bids_n = 0
         try:
             bids_n = conn.execute(
-                "SELECT COUNT(*) AS c FROM bids WHERE user_id = ?", (uid,)
+                "SELECT COUNT(*) AS c FROM offers WHERE buyer_id = ?", (uid,)
             ).fetchone()["c"]
         except Exception:
             bids_n = 0
@@ -6412,7 +6544,7 @@ def _purge_users_except_emails(conn: Any, keep_emails: list[str]) -> dict[str, A
 @router.post("/admin/users/purge-all")
 def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_admin)):
     """
-    테스트·초기화용: 모든 회원 및 연관 데이터(매물·입찰·알림 등) 삭제.
+    테스트·초기화용: 모든 회원 및 연관 데이터(매물·제안·알림 등) 삭제.
 
     **프로덕션 기본 차단.** 실행 조건:
       1) env ALLOW_DESTRUCTIVE_ADMIN=1
@@ -6437,6 +6569,7 @@ def admin_purge_all_users(body: AdminPurgeUsersIn, _: None = Depends(require_adm
 
     tables = [
         "bids",
+        "offers",
         "messages",
         "notifications",
         "fee_invoices",
@@ -7187,7 +7320,7 @@ def list_showcases(limit: int = 24):
     return {
         "ok": True,
         "showcases": [database.showcase_to_dict(r) for r in rows],
-        "note_ko": "프로젝트 자랑 보드입니다. 판매·입찰 매물이 아니며 품질을 보증하지 않습니다.",
+        "note_ko": "프로젝트 자랑 보드입니다. 판매 매물이 아니며 품질을 보증하지 않습니다.",
     }
 
 
@@ -7425,7 +7558,7 @@ def create_interest(body: InterestIn, user: dict | None = Depends(get_optional_u
     return {
         "ok": True,
         "id": iid,
-        "note": "관심 등록은 경량 접수입니다. 입찰·성사 전에는 신원·정산 확인이 필요합니다.",
+        "note": "관심 등록은 경량 접수입니다. 제안·성사 전에는 신원·정산 확인이 필요합니다.",
     }
 
 
@@ -7473,5 +7606,5 @@ async def create_lead_v1(request: Request):
             )
     return {
         "ok": True,
-        "note": "사전 접수입니다. 공개 매물·입찰은 계정 이메일 인증·실명·휴대폰 확인 후 가능합니다.",
+        "note": "사전 접수입니다. 공개 매물·제안은 계정 이메일 인증·실명·휴대폰 확인 후 가능합니다.",
     }

@@ -21,7 +21,7 @@ Claude Code와 Cowork는 서로의 세션을 볼 수 없다. 이 파일이 유�
 
 ## 점유 중
 
-(없음)
+- [Claude Code] wakeagain/api.py, db.py, scheduler.py, pricing.py, payments.py, og.py, public/project.html, public/js/{listings,api,i18n-messages,i18n}.js, public/app/{app.js,index.html}, public/index.html, buy.html, sell.html, admin/index.html, legal/terms*.html, refund.html, sw.js, PLATFORM.md, TRUST.md, 테스트 전부 — 경매 → 고정가+제안(offer) 구조 전환 — 2026-09-02 시작
 
 > 참고: 소셜/홍보(Reddit·X·Product Hunt)는 **Cowork 담당**으로 분리됨 (2026-08-15).
 > Claude Code는 코드만 본다.

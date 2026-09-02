@@ -224,7 +224,7 @@
     <section id="viewAuth" class="app-panel">
       <p class="eyebrow">Web · Play · App Store</p>
       <h1 data-i18n="app.auth_title">Easy to start. Serious when it sells.</h1>
-      <p class="lede" data-i18n="app.auth_lede">One account on web and mobile. Anyone can list and bid — after award, deposit and identity rules close the deal.</p>
+      <p class="lede" data-i18n="app.auth_lede">One account on web and mobile. Anyone can list and make offers — once a sale is agreed, deposit and identity rules close the deal.</p>
       <p class="auth-need" id="authNeedNote" hidden></p>
 
       <div class="auth-tabs">
@@ -413,7 +413,7 @@
         <button type="button" class="btn btn-primary" id="btnVerifySkip" data-i18n="app.browse_market">Browse marketplace</button>
         <button type="button" class="btn btn-ghost" id="btnVerifyHome" data-i18n="nav.home">Home</button>
       </div>
-      <p class="muted fine" data-i18n="app.verify_skip_hint">Verify before bidding or listing. You can browse the market now.</p>
+      <p class="muted fine" data-i18n="app.verify_skip_hint">Verify before making offers or listing. You can browse the market now.</p>
     </section>
 
     <!-- Seller public identity (required to list) -->
@@ -538,7 +538,7 @@
       <div class="form-card" id="blockListCard" style="margin-top:1.25rem">
         <h2 style="font-size:1.05rem;margin:0 0 0.35rem" data-i18n="app.blocks_title">Blocked users</h2>
         <p class="muted fine" style="margin:0 0 0.75rem" data-i18n="app.blocks_help">
-          Their listings are hidden and bids/messages are blocked. Separate from reports.
+          Their listings are hidden and offers/messages are blocked. Separate from reports.
         </p>
         <div id="blockList" class="project-list project-list--stack"></div>
         <p id="blockListEmpty" class="empty" hidden data-i18n="app.blocks_empty">No blocked users.</p>
@@ -574,7 +574,7 @@
     <section id="viewNotif" class="app-panel" hidden>
       <button type="button" class="text-link back" id="btnBackNotif" data-i18n="app.back_list">← Back to list</button>
       <h1 data-i18n="nav.notif">Alerts</h1>
-      <p class="lede muted fine" data-i18n="app.notif_lede">Bids, listings, and deal alerts in-app. Email delivery may be enabled later.</p>
+      <p class="lede muted fine" data-i18n="app.notif_lede">Offers, listings, and deal alerts in-app. Email delivery may be enabled later.</p>
       <button type="button" class="btn btn-ghost btn-sm" id="btnMarkRead" data-i18n="app.notif_mark">Mark all read</button>
       <div id="notifList" class="project-list project-list--stack" style="margin-top:0.75rem"></div>
       <p id="notifEmpty" class="empty" hidden data-i18n="app.notif_empty">No alerts.</p>
@@ -600,7 +600,7 @@
           </span>
           <div>
             <strong data-i18n="app.buyhow_title">Buying is simple</strong>
-            <p data-i18n="app.buyhow_lead">Open a card → place a bid → pay if you win → handover. Checks are for safety.</p>
+            <p data-i18n="app.buyhow_lead">Open a card → buy at the asking price or make an offer → seller accepts → pay within 1 hour → transfer & inspect. Checks are for safety.</p>
           </div>
         </div>
         <ul class="buy-how-grid">
@@ -615,22 +615,22 @@
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><path d="M8 22l6-12h4l6 12" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M12 16h8" stroke="#e8c56a" stroke-width="2"/></svg>
             </span>
-            <strong data-i18n="app.buyhow_2_t">2. Bid</strong>
-            <em data-i18n="app.buyhow_2_d">Place a bid</em>
+            <strong data-i18n="app.buyhow_2_t">2. Buy or offer</strong>
+            <em data-i18n="app.buyhow_2_d">Pay the asking price or make an offer</em>
           </li>
           <li>
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
             </span>
-            <strong data-i18n="app.buyhow_3_t">3. Pay fast</strong>
-            <em data-i18n="app.buyhow_3_d">After you win</em>
+            <strong data-i18n="app.buyhow_3_t">3. Accept → pay</strong>
+            <em data-i18n="app.buyhow_3_d">Within 1 hour of the seller accepting</em>
           </li>
           <li>
             <span class="wa-icon-sm" aria-hidden="true">
               <svg viewBox="0 0 32 32"><path d="M8 16l5 5 11-11" fill="none" stroke="#86efac" stroke-width="2.4" stroke-linecap="round"/></svg>
             </span>
-            <strong data-i18n="app.buyhow_4_t">4. Receive</strong>
-            <em data-i18n="app.buyhow_4_d">Handover</em>
+            <strong data-i18n="app.buyhow_4_t">4. Transfer &amp; inspect</strong>
+            <em data-i18n="app.buyhow_4_d">Handover, then check</em>
           </li>
         </ul>
         <details class="buy-how-fold">
@@ -979,7 +979,7 @@
           <a class="text-link" href="/guide/status.html" target="_blank" rel="noopener" data-i18n="app.create_status_guide">How to choose</a>
         </p>
         <div class="status-criteria" id="pStatusCriteria" hidden></div>
-        <p class="price-guide" id="pPriceGuide" data-i18n="app.create_price_band">Start-price band depends on status.</p>
+        <p class="price-guide" id="pPriceGuide" data-i18n="app.create_price_band">Asking price band depends on status.</p>
         <label for="pStory"><span data-i18n="app.create_story_label">Why sell? (story)</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
         <p class="price-guide muted fine" data-i18n-html data-i18n="app.create_story_hint">Short is OK. <span class="field-tag is-rec">Recommended</span> more background boosts ↑ · features stay above</p>
         <textarea id="pStory" required maxlength="2000" minlength="10" placeholder="e.g. day job got busy · pivoting, open to transfer" data-i18n-placeholder="app.create_story_ph"></textarea>
@@ -1109,14 +1109,9 @@
           </div>
         </fieldset>
 
-        <label for="pPrice"><span data-i18n="app.create_price_label">Starting bid (KRW ledger)</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
+        <label for="pPrice"><span data-i18n="app.create_price_label">Asking price (KRW)</span> <span class="field-tag is-req" data-i18n="app.create_req">Required</span></label>
         <input id="pPrice" type="number" min="50000" max="100000000" step="10000" inputmode="numeric" required />
         <p class="price-guide muted fine" id="pPriceHint"></p>
-        <label for="pBuyNow"><span data-i18n="app.create_buynow_label">Buy-now price (KRW ledger)</span> <span class="field-tag is-rec" data-i18n="app.create_rec">Recommended</span></label>
-        <input id="pBuyNow" type="number" min="50000" max="100000000" step="10000" inputmode="numeric" placeholder="Leave blank for no buy-now" data-i18n-placeholder="app.create_buynow_ph" />
-        <p class="price-guide muted fine" data-i18n-html data-i18n="app.create_buynow_hint">
-          <strong>Optional.</strong> Blank = auction only. If set: ≥ start price · max 100,000,000 KRW. Leave blank if you want higher bids.
-        </p>
 
         <fieldset class="q-credit-fields" style="border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.85rem 1rem;margin:0.75rem 0">
           <legend style="padding:0 0.35rem"><strong data-i18n="app.create_q_legend">Help tickets</strong> <span class="field-tag is-req" data-i18n="app.create_req">Required</span> <span data-i18n="app.create_q_boost">· ranking boost</span></legend>

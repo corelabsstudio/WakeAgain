@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Listing — WakeAgain</title>
-  <meta name="description" content="WakeAgain public auction. Current bid is live and visible to every visitor." />
+  <meta name="description" content="WakeAgain listing. Buy at the asking price or make an offer." />
   <meta name="theme-color" content="#1a1814" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,14 +18,14 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <style>
-    /* Auction pulse field — deep navy + ECG waves (public bid stage) */
-    .auction-page {
+    /* Sale pulse field — deep navy + ECG waves (public listing stage) */
+    .sale-page {
       position: relative;
       isolation: isolate;
       background: #03040a;
       transition: background 0.6s ease;
     }
-    .auction-ambient {
+    .sale-ambient {
       pointer-events: none;
       position: fixed;
       inset: 0;
@@ -39,12 +39,12 @@
         radial-gradient(ellipse 50% 40% at 0% 80%, rgba(212, 160, 23, 0.14), transparent 50%),
         linear-gradient(180deg, #05060f 0%, #03040a 45%, #020308 100%);
     }
-    .auction-page.auction-hot .auction-ambient { filter: saturate(1.08) brightness(1.03); }
-    .auction-page.auction-hotter .auction-ambient { filter: saturate(1.15) brightness(1.06); }
-    .auction-page.auction-sold .auction-ambient {
+    .sale-page.sale-hot .sale-ambient { filter: saturate(1.08) brightness(1.03); }
+    .sale-page.sale-hotter .sale-ambient { filter: saturate(1.15) brightness(1.06); }
+    .sale-page.sale-sold .sale-ambient {
       filter: saturate(1.25) brightness(1.12);
     }
-    .auction-ambient .wave-canvas {
+    .sale-ambient .wave-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -52,22 +52,22 @@
       display: block;
       opacity: 0.92;
     }
-    .auction-ambient .amb-vignette {
+    .sale-ambient .amb-vignette {
       position: absolute;
       inset: 0;
       background:
         radial-gradient(ellipse 55% 50% at 50% 42%, transparent 0%, rgba(3, 4, 10, 0.35) 55%, rgba(3, 4, 10, 0.78) 100%);
       pointer-events: none;
     }
-    .auction-page > header,
-    .auction-page > main,
-    .auction-page > footer {
+    .sale-page > header,
+    .sale-page > main,
+    .sale-page > footer {
       position: relative;
       z-index: 1;
     }
     @media (prefers-reduced-motion: reduce) {
-      .auction-ambient .wave-canvas { opacity: 0.35; }
-      .pulse-metric, .price-rise-fill, .spotlight-card { animation: none !important; }
+      .sale-ambient .wave-canvas { opacity: 0.35; }
+      .pulse-metric, .spotlight-card { animation: none !important; }
     }
 
     /* Central spotlight card (매물 하나 강하게) */
@@ -99,7 +99,7 @@
       pointer-events: none;
     }
     .spotlight-card > * { position: relative; z-index: 1; }
-    .auction-page.auction-hot .spotlight-card {
+    .sale-page.sale-hot .spotlight-card {
       border-color: rgba(232, 184, 109, 0.55);
       box-shadow:
         0 0 0 1px rgba(34, 211, 238, 0.12),
@@ -107,11 +107,11 @@
         0 0 100px rgba(212, 160, 23, 0.28);
       animation-duration: 3.6s;
     }
-    .auction-page.auction-hotter .spotlight-card {
+    .sale-page.sale-hotter .spotlight-card {
       animation-duration: 2.6s;
       border-color: rgba(232, 121, 249, 0.55);
     }
-    .auction-page.auction-sold .spotlight-card {
+    .sale-page.sale-sold .spotlight-card {
       animation: none;
       border-color: rgba(52, 211, 153, 0.45);
       box-shadow:
@@ -146,10 +146,10 @@
       font-size: 0.92rem;
       line-height: 1.45;
     }
-    .price-rise {
+    .sale-figures {
       margin: 0 0 0.85rem;
     }
-    .price-rise-labels {
+    .sale-figures-row {
       display: flex;
       justify-content: space-between;
       gap: 0.75rem;
@@ -157,7 +157,7 @@
       color: var(--muted);
       margin-bottom: 0.35rem;
     }
-    .price-rise-labels strong {
+    .sale-figures-row strong {
       display: block;
       margin-top: 0.12rem;
       font-size: clamp(1.05rem, 2.5vw, 1.35rem);
@@ -166,27 +166,11 @@
       letter-spacing: -0.02em;
       color: var(--text);
     }
-    .price-rise-labels .is-now strong {
+    .sale-figures-row .is-ask strong {
       color: #f0e0b0;
       text-shadow: 0 0 18px rgba(232, 184, 109, 0.45);
     }
-    .price-rise-track {
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      overflow: hidden;
-      position: relative;
-    }
-    .price-rise-fill {
-      height: 100%;
-      width: 8%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #c4920f 0%, #d4a017 55%, #e8b86d 100%);
-      box-shadow: 0 0 16px rgba(212, 160, 23, 0.55);
-      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .price-rise-arrow {
+    .sale-figures-note {
       margin: 0.35rem 0 0;
       font-size: 0.8rem;
       color: #a5b4fc;
@@ -222,7 +206,7 @@
       color: #f5f0e6;
       letter-spacing: -0.02em;
     }
-    .auction-page.auction-hotter .pulse-metric { animation-duration: 1.8s; }
+    .sale-page.sale-hotter .pulse-metric { animation-duration: 1.8s; }
     @keyframes metric-pulse {
       0%, 100% { box-shadow: inset 0 0 0 0 rgba(34, 211, 238, 0); transform: scale(1); }
       50% { box-shadow: inset 0 0 0 1px rgba(212, 160, 23, 0.25), 0 0 18px rgba(34, 211, 238, 0.08); transform: scale(1.015); }
@@ -241,11 +225,7 @@
       font-size: 1.02rem;
       text-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
     }
-    .auction-page.auction-sold .sold-ribbon { display: block; }
-    .auction-page.auction-sold .price-rise-fill {
-      background: linear-gradient(90deg, #34d399, #6ee7b7);
-      width: 100% !important;
-    }
+    .sale-page.sale-sold .sold-ribbon { display: block; }
 
     /* 사는 법: 모바일=작은 아이콘만 / 사이트(≥768)=큰 아이콘 — 크기 완전 분리 */
     .buy-how-proj {
@@ -294,13 +274,13 @@
     .buy-how-proj summary::before { content: "▸ "; color: #d4a017; }
     .buy-how-proj details[open] summary::before { content: "▾ "; }
     .buy-how-proj details p { margin: 0; padding: 0 0.5rem 0.5rem; font-size: 0.72rem; line-height: 1.4; color: rgba(220,210,180,0.7); }
-    .bid-easy-hint {
+    .offer-easy-hint {
       display: flex; gap: 0.4rem; align-items: center; margin: 0 0 0.65rem;
       padding: 0.45rem 0.55rem; border-radius: 10px;
       background: rgba(212,160,23,0.1); border: 1px solid rgba(212,160,23,0.25);
       font-size: 0.78rem; color: #f0e0b0; line-height: 1.35;
     }
-    .bid-easy-hint svg { flex-shrink: 0; }
+    .offer-easy-hint svg { flex-shrink: 0; }
 
     /* 모바일 전용: 작은 아이콘 */
     @media (max-width: 767.98px) {
@@ -316,7 +296,7 @@
       .buy-how-proj-grid .ico svg {
         width: 1.25rem !important; height: 1.25rem !important;
       }
-      .bid-easy-hint svg { width: 1.15rem !important; height: 1.15rem !important; }
+      .offer-easy-hint svg { width: 1.15rem !important; height: 1.15rem !important; }
     }
 
     /* 사이트(데스크톱): 큰 아이콘 — 모바일과 다름 */
@@ -343,16 +323,16 @@
       .buy-how-proj-grid em { font-size: 0.78rem; }
       .buy-how-proj summary { font-size: 0.85rem; padding: 0.55rem 0.65rem; }
       .buy-how-proj details p { font-size: 0.82rem; }
-      .bid-easy-hint { font-size: 0.88rem; padding: 0.55rem 0.7rem; gap: 0.55rem; }
-      .bid-easy-hint svg { width: 1.6rem !important; height: 1.6rem !important; }
+      .offer-easy-hint { font-size: 0.88rem; padding: 0.55rem 0.7rem; gap: 0.55rem; }
+      .offer-easy-hint svg { width: 1.6rem !important; height: 1.6rem !important; }
     }
-    .auction-hero {
+    .sale-hero {
       display: grid;
       gap: 1.25rem;
       margin-bottom: 1.5rem;
     }
     @media (min-width: 800px) {
-      .auction-hero { grid-template-columns: 1.05fr 0.95fr; align-items: start; }
+      .sale-hero { grid-template-columns: 1.05fr 0.95fr; align-items: start; }
     }
     .price-panel {
       background: linear-gradient(160deg, rgba(30, 27, 55, 0.88), rgba(8, 10, 22, 0.96));
@@ -365,7 +345,7 @@
       transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
       animation: panel-pulse 4s ease-in-out infinite;
     }
-    .auction-page.auction-hot .price-panel {
+    .sale-page.sale-hot .price-panel {
       border-color: rgba(232, 121, 249, 0.5);
       animation-duration: 3s;
       box-shadow:
@@ -373,13 +353,13 @@
         0 0 0 1px rgba(34, 211, 238, 0.1),
         0 0 70px rgba(212, 160, 23, 0.16);
     }
-    .auction-page.auction-hotter .price-panel {
+    .sale-page.sale-hotter .price-panel {
       animation-duration: 2.2s;
       box-shadow:
         0 18px 56px rgba(212, 160, 23, 0.3),
         0 0 80px rgba(34, 211, 238, 0.12);
     }
-    .auction-page.auction-sold .price-panel {
+    .sale-page.sale-sold .price-panel {
       animation: none;
       border-color: rgba(52, 211, 153, 0.35);
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25), 0 0 40px rgba(52, 211, 153, 0.12);
@@ -388,7 +368,7 @@
       0%, 100% { box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 40px rgba(212, 160, 23, 0.1); }
       50% { box-shadow: 0 18px 56px rgba(0,0,0,0.45), 0 0 70px rgba(34, 211, 238, 0.1); }
     }
-    /* Mobile: sidebar (bid widget first) appears above the long story content, not after it. */
+    /* Mobile: sidebar (buy/offer widget first) appears above the long story content, not after it. */
     .price-panel { order: -1; }
     @media (min-width: 800px) {
       /* Desktop: back to source order (right column) and pinned while the story scrolls. */
@@ -418,7 +398,7 @@
     .pp-accordion[open] > summary::before { content: "▾"; }
     .pp-accordion-body { padding: 0 0.85rem 0.85rem; }
     .pp-seller-summary { margin: 0.85rem 0 0; }
-    .pp-bid-history { margin: 0.85rem 0 0; }
+    .pp-offers { margin: 0.85rem 0 0; }
     .price-panel .live-row {
       display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
       margin-bottom: 0.75rem;
@@ -433,12 +413,12 @@
       text-shadow: 0 0 22px rgba(232, 184, 109, 0.35);
       transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.35s ease;
     }
-    .auction-page.auction-hot .price-big {
+    .sale-page.sale-hot .price-big {
       text-shadow: 0 0 28px rgba(34, 211, 238, 0.35), 0 0 40px rgba(232, 121, 249, 0.35);
     }
     .price-big.flash { color: #e8b86d; transform: scale(1.04); text-shadow: 0 0 28px rgba(232, 121, 249, 0.7); }
     .price-meta { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0; }
-    .quick-bid-form {
+    .quick-offer-form {
       background: linear-gradient(160deg, rgba(30, 27, 55, 0.88), rgba(8, 10, 22, 0.96));
       border: 1px solid rgba(232, 184, 109, 0.4);
       border-radius: 20px;
@@ -446,13 +426,13 @@
       margin: 0 0 1.35rem;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 50px rgba(212, 160, 23, 0.12);
     }
-    .quick-bid-form label:first-of-type { margin-top: 0; }
-    .bid-form label { display: block; font-weight: 600; font-size: 0.88rem; margin: 0.85rem 0 0.35rem; }
-    .bid-form input {
+    .quick-offer-form label:first-of-type { margin-top: 0; }
+    .sale-form label { display: block; font-weight: 600; font-size: 0.88rem; margin: 0.85rem 0 0.35rem; }
+    .sale-form input {
       width: 100%; border-radius: 12px; border: 1px solid var(--border-strong);
       background: var(--bg-elev); color: var(--text); padding: 0.75rem 0.9rem; font: inherit;
     }
-    .bid-form input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18); }
+    .sale-form input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18); }
     .chat-offplatform-warn {
       position: sticky;
       top: 0;
@@ -480,14 +460,14 @@
     }
     .chat-offplatform-warn p strong { display: inline; color: #fca5a5; font-weight: 700; }
     .chat-msg-list { max-height: 200px; }
-    .top-bidder-card {
+    .top-offer-card {
       margin: 0.85rem 0 0.35rem;
       padding: 0.85rem 0.9rem;
       border-radius: 14px;
       border: 1px solid rgba(212, 160, 23, 0.4);
       background: linear-gradient(145deg, rgba(180, 120, 40, 0.16), rgba(15, 15, 22, 0.55));
     }
-    .top-bidder-kicker {
+    .top-offer-kicker {
       margin: 0 0 0.45rem;
       font-size: 0.72rem;
       font-weight: 800;
@@ -495,19 +475,19 @@
       text-transform: uppercase;
       color: #e8b86d;
     }
-    .top-bidder-row {
+    .top-offer-row {
       display: flex;
       align-items: center;
       gap: 0.55rem;
       flex-wrap: wrap;
     }
-    .top-bidder-rank {
+    .top-offer-rank {
       font-size: 0.8rem;
       font-weight: 900;
       color: #fde68a;
       min-width: 1.6rem;
     }
-    .top-bidder-main {
+    .top-offer-main {
       flex: 1;
       min-width: 0;
       display: flex;
@@ -515,30 +495,30 @@
       align-items: center;
       gap: 0.35rem 0.5rem;
     }
-    .top-bidder-name {
+    .top-offer-name {
       font-size: 1.05rem;
       color: var(--text);
       word-break: break-word;
     }
-    .top-bidder-amt {
+    .top-offer-amt {
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       color: var(--accent);
       font-size: 1.05rem;
     }
-    .top-bidder-note { margin: 0.45rem 0 0; }
-    .bid-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; max-height: 320px; overflow: auto; }
-    .bid-list li {
+    .top-offer-note { margin: 0.45rem 0 0; }
+    .sale-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; max-height: 320px; overflow: auto; }
+    .sale-list li {
       display: flex; justify-content: space-between; gap: 0.75rem; align-items: center;
       padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--bg-elev);
       border: 1px solid var(--border); font-size: 0.9rem;
       transition: border-color 0.2s ease, background 0.2s ease;
     }
-    .bid-list li.is-top {
+    .sale-list li.is-top {
       border-color: rgba(251, 191, 36, 0.45);
       background: rgba(251, 191, 36, 0.08);
     }
-    .bid-list .bid-rank {
+    .sale-list .offer-rank {
       display: inline-block;
       min-width: 1.5rem;
       font-weight: 800;
@@ -546,13 +526,13 @@
       color: #d4a017;
       margin-right: 0.25rem;
     }
-    .bid-list li.is-top .bid-rank { color: #fde68a; }
-    .bid-list .bid-handle { font-weight: 700; color: var(--text); }
-    .auction-page.auction-hot .bid-list li:first-child {
+    .sale-list li.is-top .offer-rank { color: #fde68a; }
+    .sale-list .offer-handle { font-weight: 700; color: var(--text); }
+    .sale-page.sale-hot .sale-list li:first-child {
       border-color: rgba(232, 184, 109, 0.45);
       background: rgba(212, 160, 23, 0.1);
     }
-    .bid-list .amt { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .sale-list .amt { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .wa-buyer-badge {
       display: inline-flex; align-items: center;
       font-size: 0.68rem; font-weight: 800;
@@ -564,21 +544,21 @@
     .wa-buyer-badge[data-rank="heavy"] { background: rgba(212, 160, 23, 0.25); color: #f5f0e6; }
     .wa-buyer-badge[data-rank="whale"] { background: rgba(245, 158, 11, 0.18); border-color: rgba(251, 191, 36, 0.5); color: #fde68a; }
     .wa-buyer-badge.is-caution { border-style: dashed; opacity: 0.9; }
-    .auction-mentions {
+    .offers-mentions {
       margin: 0.85rem 0 0.35rem;
       border-radius: 14px;
       border: 1px solid rgba(232, 184, 109, 0.28);
       background: linear-gradient(145deg, rgba(90, 72, 52, 0.22), rgba(15, 15, 22, 0.65));
       overflow: hidden;
     }
-    .auction-mentions-head {
+    .offers-mentions-head {
       display: flex; align-items: center; gap: 0.4rem;
       padding: 0.5rem 0.75rem;
       font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em;
       color: var(--accent-bright, #e8d5a3);
       border-bottom: 1px solid rgba(232, 184, 109, 0.2);
     }
-    .auction-mentions-head .dot {
+    .offers-mentions-head .dot {
       width: 7px; height: 7px; border-radius: 50%;
       background: #c4920f;
       box-shadow: 0 0 8px rgba(232, 184, 109, 0.9);
@@ -746,7 +726,7 @@
       line-height: 1.5 !important;
       color: var(--muted-2) !important;
     }
-    .fair-bid-pledge {
+    .fair-deal-pledge {
       margin: 0.75rem 0 0;
       padding: 0.7rem 0.85rem;
       border-radius: 12px;
@@ -757,14 +737,14 @@
       color: var(--text);
       text-align: center;
     }
-    .fair-bid-pledge strong {
+    .fair-deal-pledge strong {
       display: block;
       font-size: 0.9rem;
       font-weight: 700;
       color: #f5f0e6;
       margin-bottom: 0.25rem;
     }
-    .fair-bid-pledge .sub {
+    .fair-deal-pledge .sub {
       display: block;
       font-size: 0.75rem;
       color: var(--muted);
@@ -808,10 +788,58 @@
       font-size: 0.9rem; color: var(--text);
       backdrop-filter: blur(8px);
     }
-    .auction-page.auction-hot .public-banner {
+    .sale-page.sale-hot .public-banner {
       background: rgba(212, 160, 23, 0.12);
       border-color: rgba(232, 184, 109, 0.4);
     }
+
+    /* —— Fixed price + offers (2026-09-02) —— */
+    .buy-block {
+      background: linear-gradient(160deg, rgba(30, 27, 55, 0.88), rgba(8, 10, 22, 0.96));
+      border: 1px solid rgba(232, 184, 109, 0.4);
+      border-radius: 20px;
+      padding: 1.1rem 1.2rem 1.25rem;
+      margin: 0 0 0.85rem;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 50px rgba(212, 160, 23, 0.12);
+    }
+    .buy-block .btn { width: 100%; }
+    .buy-block .price-meta { margin-top: 0.55rem; }
+    .my-offer-card {
+      margin: 0 0 0.85rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: 16px;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      background: linear-gradient(145deg, rgba(49, 46, 129, 0.28), rgba(15, 15, 22, 0.6));
+    }
+    .my-offer-kicker {
+      margin: 0 0 0.4rem;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #c7d2fe;
+    }
+    .my-offer-amt {
+      margin: 0; font-size: 1.35rem; font-weight: 800;
+      font-variant-numeric: tabular-nums; color: #e0e7ff;
+    }
+    .my-offer-msg { margin: 0.35rem 0 0; font-size: 0.84rem; line-height: 1.45; color: var(--muted); word-break: break-word; }
+    .offer-status {
+      display: inline-block; font-size: 0.68rem; font-weight: 800;
+      padding: 0.1rem 0.42rem; border-radius: 999px; margin-left: 0.3rem;
+      border: 1px solid rgba(148, 163, 184, 0.4); color: #cbd5e1;
+      background: rgba(148, 163, 184, 0.12);
+    }
+    .offer-status[data-st="pending"] { border-color: rgba(212, 160, 23, 0.5); color: #f0e0b0; background: rgba(212, 160, 23, 0.14); }
+    .offer-status[data-st="accepted"] { border-color: rgba(52, 211, 153, 0.5); color: #a7f3d0; background: rgba(52, 211, 153, 0.12); }
+    .offer-status[data-st="declined"],
+    .offer-status[data-st="withdrawn"],
+    .offer-status[data-st="expired"],
+    .offer-status[data-st="replaced"],
+    .offer-status[data-st="closed"] { border-color: rgba(248, 113, 113, 0.4); color: #fca5a5; background: rgba(248, 113, 113, 0.1); }
+    .offer-row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .sale-list li.offer-row { display: block; }
+    .sale-list li.offer-row .offer-line {
+      display: flex; justify-content: space-between; gap: 0.75rem; align-items: center;
+    }
+    .owner-offers { margin: 0.85rem 0 0; }
   </style>
   <link rel="stylesheet" href="/yard-theme.css?v=20260825-contrast" />
   <script src="/js/theme-preview.js?v=20260816-ch1"></script>
@@ -834,8 +862,8 @@
     })();
   </script>
 </head>
-<body class="form-body auction-page theme-yard">
-  <div class="auction-ambient" aria-hidden="true">
+<body class="form-body sale-page theme-yard">
+  <div class="sale-ambient" aria-hidden="true">
     <canvas class="wave-canvas" id="waveCanvas"></canvas>
     <div class="amb-vignette"></div>
   </div>
@@ -871,7 +899,7 @@
     </div>
     <p class="public-banner" id="publicBanner">
       <strong id="publicBannerStrong" data-i18n="proj.banner_live">For sale</strong>
-      <span id="publicBannerText" data-i18n="proj.banner_live_t">  — Anyone can see the live price. Bidding is easy; after you win, deposit promptly per instructions.</span>
+      <span id="publicBannerText" data-i18n="proj.banner_live_t">  — Anyone can see the asking price. Buy it now, or make an offer below it. Once the sale is agreed, pay promptly per instructions.</span>
     </p>
 
     <aside class="buy-how-proj" aria-label="사는 법">
@@ -881,7 +909,7 @@
         </span>
         <div>
           <strong data-i18n="proj.howbuy_title">How to buy this listing</strong>
-          <p data-i18n="proj.howbuy_lede">It's simple. Place a bid → pay if you win → confirm receipt. The checks along the way are just fraud prevention.</p>
+          <p data-i18n="proj.howbuy_lede">It's simple. Buy at the asking price or make an offer → pay once it's agreed → confirm receipt. The checks along the way are just fraud prevention.</p>
         </div>
       </div>
       <ul class="buy-how-proj-grid">
@@ -891,11 +919,11 @@
         </li>
         <li>
           <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><text x="16" y="20" text-anchor="middle" fill="#e8c56a" font-size="12" font-weight="700">₩</text></svg></span>
-          <strong data-i18n="proj.howbuy_s2_t">2. Place a bid</strong><em data-i18n="proj.howbuy_s2_d">Button below</em>
+          <strong data-i18n="proj.howbuy_s2_t">2. Buy or offer</strong><em data-i18n="proj.howbuy_s2_d">Button below</em>
         </li>
         <li>
           <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="none" stroke="#e8c56a" stroke-width="2"/><path d="M16 10v6l4 2" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg></span>
-          <strong data-i18n="proj.howbuy_s3_t">3. Pay after winning</strong><em data-i18n="proj.howbuy_s3_d">Quickly</em>
+          <strong data-i18n="proj.howbuy_s3_t">3. Pay once agreed</strong><em data-i18n="proj.howbuy_s3_d">Quickly</em>
         </li>
         <li>
           <span class="ico" aria-hidden="true"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 16l5 5 11-11" fill="none" stroke="#86efac" stroke-width="2.4" stroke-linecap="round"/></svg></span>
@@ -909,12 +937,12 @@
     </aside>
 
     <!-- Public heartbeat stage: one listing card over flowing waves -->
-    <section class="spotlight-stage" id="spotlightStage" aria-label="경매 현황">
+    <section class="spotlight-stage" id="spotlightStage" aria-label="Listing status">
       <div class="spotlight-card" id="spotlightCard">
         <div class="sold-ribbon" id="soldRibbon">다음 주인을 만났습니다</div>
         <div class="spotlight-kicker">
-          <p class="eyebrow" id="statusEyebrow" style="margin:0" data-i18n="proj.auction_eyebrow">Auction</p>
-          <span class="badge live" id="liveBadgeSpot" data-i18n="proj.live_badge">Live</span>
+          <p class="eyebrow" id="statusEyebrow" style="margin:0" data-i18n="proj.sale_eyebrow">For sale</p>
+          <span class="badge live" id="liveBadgeSpot" data-i18n="proj.live_badge">For sale</span>
         </div>
         <span id="pCountryFlag" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
         <span id="pEnglishReadyBadge" class="listing-type-tag" hidden style="margin-bottom:0.3rem"></span>
@@ -924,36 +952,33 @@
         <div class="trust-badges" id="pTrustBadges" hidden></div>
         <p class="trust-badges-note" id="pTrustNote" hidden></p>
         <div class="listing-kw" id="pKeywords" hidden></div>
-        <div class="price-rise" id="priceRise">
-          <div class="price-rise-labels">
+        <div class="sale-figures" id="saleFigures">
+          <div class="sale-figures-row">
+            <div class="is-ask">
+              <span data-i18n="proj.ask_price_short">Asking</span>
+              <strong id="figAsk">—</strong>
+            </div>
             <div>
-              <span data-i18n="proj.start_price_short">Start</span>
-              <strong id="riseStart">—</strong>
-            </div>
-            <div class="is-now">
-              <span data-i18n="proj.now_price_short">Current</span>
-              <strong id="riseNow">—</strong>
+              <span data-i18n="proj.top_offer_short">Top offer</span>
+              <strong id="figTopOffer">—</strong>
             </div>
           </div>
-          <div class="price-rise-track" aria-hidden="true">
-            <div class="price-rise-fill" id="riseFill"></div>
-          </div>
-          <p class="price-rise-arrow" id="riseDelta" data-i18n="proj.rise_default">The rise will be public in real time</p>
+          <p class="sale-figures-note" id="figNote" data-i18n="proj.rise_default">Offers show up here in real time</p>
         </div>
         <div class="pulse-metrics">
           <div class="pulse-metric">
-            <span class="pm-lab" data-i18n="proj.time_left_short">Time left</span>
-            <span class="pm-val" id="pulseCountdown">—</span>
+            <span class="pm-lab" data-i18n="proj.listed_until_short">Listed until</span>
+            <span class="pm-val" id="pulseListedUntil">—</span>
           </div>
           <div class="pulse-metric">
-            <span class="pm-lab" data-i18n="proj.bid_pulse_short">Bid pulse</span>
-            <span class="pm-val" id="pulseBids">—</span>
+            <span class="pm-lab" data-i18n="proj.offer_pulse_short">Offers</span>
+            <span class="pm-val" id="pulseOffers">—</span>
           </div>
         </div>
       </div>
     </section>
 
-    <div class="auction-hero">
+    <div class="sale-hero">
       <div>
         <div class="story-box" id="featuresBox" hidden>
           <h2 data-i18n="proj.features">What this product does</h2>
@@ -1017,7 +1042,7 @@
             사이트는 헬프티켓 사용 여부·내용에 <strong>중재·개입하지 않습니다.</strong>
             (사기·약관 위반·결제 장애는 신고 절차를 이용해 주세요.)
           </p>
-          <ul class="bid-list" id="qThreadList" style="max-height:240px;overflow:auto"></ul>
+          <ul class="sale-list" id="qThreadList" style="max-height:240px;overflow:auto"></ul>
           <form id="qAskForm" hidden style="margin-top:0.75rem">
             <label for="qAskBody">헬프 요청 (한 주제 · 1회 차감은 답변 후)</label>
             <textarea id="qAskBody" maxlength="2000" required placeholder="예: Windows에서 설정 파일이 어디인가요?" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
@@ -1038,13 +1063,13 @@
           </form>
         </div>
         <div class="story-box chat-box" id="msgBox" style="margin-top:1rem" hidden>
-          <h2 data-i18n="proj.messages">Messages (seller · bidders)</h2>
+          <h2 data-i18n="proj.messages">Messages (seller · buyers who offered)</h2>
           <div class="chat-offplatform-warn" role="alert" aria-live="polite">
             <strong data-i18n="chat.offplatform_title">No protection for off-platform deals</strong>
             <p data-i18n="chat.offplatform_body" data-i18n-html>Moving to Kakao/Telegram/personal bank accounts is a <strong>common fraud pattern</strong>. Off-platform deals lose protected checkout, disputes, and report tools. Stay on-site: pay → handover → confirm.</p>
           </div>
-          <ul class="bid-list chat-msg-list" id="msgList" style="max-height:200px"></ul>
-          <form id="msgForm" class="bid-form" style="margin-top:0.75rem">
+          <ul class="sale-list chat-msg-list" id="msgList" style="max-height:200px"></ul>
+          <form id="msgForm" class="sale-form" style="margin-top:0.75rem">
             <label for="msgBody" data-i18n="proj.msg_label">Message</label>
             <textarea id="msgBody" maxlength="2000" required placeholder="이전·질문 등 — 외부 연락처 유도 금지" data-i18n-placeholder="proj.msg_ph" style="min-height:70px;width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
             <div class="form-actions" style="margin-top:0.5rem">
@@ -1052,39 +1077,56 @@
             </div>
             <p class="form-error" id="msgErr" hidden></p>
           </form>
-          <p class="price-meta" data-i18n="proj.msg_note">Only the seller or bidders after login.</p>
+          <p class="price-meta" data-i18n="proj.msg_note">Only the seller or buyers who made an offer, after login.</p>
         </div>
       </div>
 
       <aside class="price-panel">
-        <!-- 1. Bid widget — first thing in the sidebar, both mobile and desktop -->
+        <!-- 1. Sale panel — asking price, buy button, offer form. First in the sidebar. -->
         <div class="live-row">
-          <span class="badge live" id="liveBadge" data-i18n="proj.live_badge">Live</span>
+          <span class="badge live" id="liveBadge" data-i18n="proj.live_badge">For sale</span>
           <span class="price-meta" id="pollHint" data-i18n="proj.poll">Refreshes every 4s</span>
         </div>
-        <p class="price-meta" data-i18n="proj.price_public">Live price (public to everyone)</p>
+        <p class="price-meta" data-i18n="proj.price_public">Asking price (public to everyone)</p>
         <p class="price-big" id="priceCurrent">—</p>
-        <p class="price-meta" id="priceStartLine"></p>
-        <p class="price-meta" id="bidCountLine"></p>
+        <p class="price-meta" id="priceUsdLine"></p>
+        <p class="price-meta" id="offerCountLine"></p>
         <p class="price-meta" id="endsLine"></p>
-        <p class="price-meta" id="countdownLine" style="font-weight:700;color:var(--accent)"></p>
-        <p class="price-meta" id="nextMinLine"></p>
         <p class="price-meta" id="feeLine"></p>
         <p class="price-meta" id="sellerLine"></p>
         <p class="price-meta" id="dealLine" hidden></p>
 
-        <form class="bid-form bid-form-related quick-bid-form" id="bidForm">
-          <p class="bid-easy-hint">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="#e8c56a" stroke-width="1.8"/><path d="M12 7v6M12 16v1" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
-            <span data-i18n="proj.bid_easy_hint" data-i18n-html><strong>Just enter a price and click the button</strong> — that's it. If you win, you'll get payment instructions. (Login/email verification may be required)</span>
-          </p>
-          <label for="bidAmount" data-i18n="proj.bid_label">Your bid (KRW)</label>
-          <input id="bidAmount" type="number" min="0" step="10000" required inputmode="numeric" />
-          <div class="form-actions" style="margin-top:0.85rem;flex-wrap:wrap">
-            <button class="btn btn-primary btn-lg" type="submit" id="bidBtn" data-i18n="proj.bid_btn">Place bid</button>
-            <button class="btn btn-white btn-lg" type="button" id="buyNowBtn" hidden data-i18n="proj.buy_now">Buy now at this price</button>
+        <div class="buy-block offer-form-related" id="buyBlock">
+          <button class="btn btn-primary btn-lg" type="button" id="buyBtn" data-i18n="proj.buy_btn">Buy at asking price</button>
+          <p class="price-meta" data-i18n="proj.buy_hint">Buying at the asking price agrees the sale instantly. Want to pay less? Make an offer below.</p>
+          <p class="form-error" id="buyErr" hidden></p>
+        </div>
+
+        <div class="my-offer-card offer-form-related" id="myOfferCard" hidden>
+          <p class="my-offer-kicker" data-i18n="proj.my_offer_kicker">My offer (waiting for the seller)</p>
+          <p class="my-offer-amt" id="myOfferAmt">—</p>
+          <p class="price-meta" id="myOfferMeta"></p>
+          <p class="my-offer-msg" id="myOfferMsg" hidden></p>
+          <div class="form-actions" style="margin-top:0.6rem">
+            <button class="btn btn-ghost btn-sm" type="button" id="withdrawOfferBtn" data-i18n="proj.offer_withdraw">Withdraw offer</button>
           </div>
-          <p class="form-error" id="bidErr" hidden></p>
+          <p class="form-error" id="myOfferErr" hidden></p>
+        </div>
+
+        <form class="sale-form offer-form-related quick-offer-form" id="offerForm">
+          <p class="offer-easy-hint">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="#e8c56a" stroke-width="1.8"/><path d="M12 7v6M12 16v1" stroke="#e8c56a" stroke-width="2" stroke-linecap="round"/></svg>
+            <span data-i18n="proj.offer_easy_hint" data-i18n-html><strong>Buy at the asking price, or type what you'd pay and make an offer.</strong> Once it's agreed, you'll get payment instructions. (Login/email verification may be required)</span>
+          </p>
+          <label for="offerAmount" data-i18n="proj.offer_label">Your offer (KRW)</label>
+          <input id="offerAmount" type="number" min="0" step="10000" required inputmode="numeric" />
+          <p class="price-meta" id="offerFloorHint"></p>
+          <label for="offerMessage" data-i18n="proj.offer_msg_label">Note to the seller (optional · up to 300 chars)</label>
+          <textarea id="offerMessage" maxlength="300" rows="2" style="width:100%;border-radius:12px;border:1px solid var(--border-strong);background:var(--bg-elev);color:var(--text);padding:0.65rem;font:inherit"></textarea>
+          <div class="form-actions" style="margin-top:0.85rem;flex-wrap:wrap">
+            <button class="btn btn-primary btn-lg" type="submit" id="offerBtn" data-i18n="proj.offer_btn">Make an offer</button>
+          </div>
+          <p class="form-error" id="offerErr" hidden></p>
         </form>
 
         <div class="deal-protect-box" id="dealProtectBox" hidden>
@@ -1151,25 +1193,26 @@
           <p class="price-meta muted fine" id="sellerIdNote"></p>
         </div>
 
-        <!-- 3. Bid history -->
-        <div class="pp-bid-history">
-          <div class="top-bidder-card" id="topBidderCard" hidden>
-            <p class="top-bidder-kicker" data-i18n="proj.top_bidder_kicker">Top bidder (public)</p>
-            <div class="top-bidder-row">
-              <span class="top-bidder-rank" aria-hidden="true">#1</span>
-              <div class="top-bidder-main">
-                <strong class="top-bidder-name" id="topBidderName">—</strong>
-                <span class="wa-buyer-badge" id="topBidderBadge" hidden data-rank=""></span>
+        <!-- 3. Offers -->
+        <div class="pp-offers">
+          <div class="top-offer-card" id="topOfferCard" hidden>
+            <p class="top-offer-kicker" data-i18n="proj.top_offer_kicker">Top offer (public)</p>
+            <div class="top-offer-row">
+              <span class="top-offer-rank" aria-hidden="true">#1</span>
+              <div class="top-offer-main">
+                <strong class="top-offer-name" id="topOfferName">—</strong>
+                <span class="wa-buyer-badge" id="topOfferBadge" hidden data-rank=""></span>
               </div>
-              <span class="top-bidder-amt" id="topBidderAmt">—</span>
+              <span class="top-offer-amt" id="topOfferAmt">—</span>
             </div>
-            <p class="top-bidder-note muted fine" data-i18n="proj.top_bidder_note">Public handle & buyer badge only · email/real name hidden</p>
+            <p class="top-offer-note muted fine" data-i18n="proj.top_offer_note">Public handle & buyer badge only · email/real name hidden</p>
           </div>
-          <h3 style="margin:0.85rem 0 0.5rem;font-size:0.95rem" data-i18n="proj.bids_title">Public bids</h3>
-          <p class="price-meta" style="margin:0 0 0.5rem" data-i18n="proj.bids_sub">Top bidder handles and buyer badges appear on the listing. No live presence list.</p>
-          <ul class="bid-list bid-leaderboard" id="bidList"></ul>
-          <div class="auction-mentions" id="auctionMentions" aria-live="polite">
-            <div class="auction-mentions-head">
+          <h3 style="margin:0.85rem 0 0.5rem;font-size:0.95rem" data-i18n="proj.offers_title">Public offers</h3>
+          <p class="price-meta" style="margin:0 0 0.5rem" data-i18n="proj.offers_sub">Offer handles and buyer badges appear on the listing. No live presence list.</p>
+          <ul class="sale-list offers-leaderboard" id="offerList"></ul>
+          <p class="form-error" id="offerActionErr" hidden></p>
+          <div class="offers-mentions" id="offersMentions" aria-live="polite">
+            <div class="offers-mentions-head">
               <span class="dot" aria-hidden="true"></span>
               <span data-i18n="proj.mentions_title">Live mentions</span>
             </div>
@@ -1178,14 +1221,14 @@
         </div>
 
         <!-- 4. Safety notice & the 4-step process — collapsed by default -->
-        <details class="pp-accordion bid-form-related" id="bidFormFooter">
+        <details class="pp-accordion offer-form-related" id="offerFormFooter">
           <summary data-i18n="proj.safety_accordion_summary">🛡️ Safe-deal guarantee & the 4-step process</summary>
           <div class="pp-accordion-body">
-            <p class="price-meta" style="margin-top:0.65rem;line-height:1.55" data-i18n-html data-i18n="proj.bid_fee_note">Bid with <a class="text-link" href="/app/#register">email verified (Lv1)</a>. After you win, Lv2 (name + phone) for pay/accept. When sold, <strong>seller fee 10%</strong>.</p>
-            <p class="price-meta bid-notice" style="margin-top:0.45rem;line-height:1.55" data-i18n-html data-i18n="proj.bid_notice">This page focuses on <strong>features &amp; demo</strong>. Source, keys, and DB are handed over after payment is confirmed. <a class="text-link" href="/guide/credit.html">Credit guide</a> · <a class="text-link" href="/legal/terms.html">Terms</a></p>
-            <p class="fair-bid-pledge" id="fairBidPledge">
-              <strong data-i18n="proj.fair_pledge">WakeAgain will keep improving for fair bidding.</strong>
-              <span class="sub" data-i18n="proj.fair_pledge_sub">Live price, bidder count, and bids are public. Rules follow the Terms.</span>
+            <p class="price-meta" style="margin-top:0.65rem;line-height:1.55" data-i18n-html data-i18n="proj.offer_fee_note">Make an offer with <a class="text-link" href="/app/#register">email verified (Lv1)</a>. After the sale is agreed, Lv2 (name + phone) for pay/accept. When sold, <strong>seller fee 10%</strong>.</p>
+            <p class="price-meta offer-notice" style="margin-top:0.45rem;line-height:1.55" data-i18n-html data-i18n="proj.offer_notice">This page focuses on <strong>features &amp; demo</strong>. Source, keys, and DB are handed over after payment is confirmed. <a class="text-link" href="/guide/credit.html">Credit guide</a> · <a class="text-link" href="/legal/terms.html">Terms</a></p>
+            <p class="fair-deal-pledge" id="fairDealPledge">
+              <strong data-i18n="proj.fair_pledge">WakeAgain will keep improving for fair deals.</strong>
+              <span class="sub" data-i18n="proj.fair_pledge_sub">Asking price, offer count, and offers are public. Rules follow the Terms.</span>
             </p>
 
             <div class="safety-pair">
@@ -1196,7 +1239,7 @@
                   <li>
                     <span class="sm-n" aria-hidden="true">1</span>
                     <strong data-i18n="safe4.s1_t">PG payment</strong>
-                    <span class="sm-desc" data-i18n="safe4.s1_d">Safe payment within 1 hour of winning</span>
+                    <span class="sm-desc" data-i18n="safe4.s1_d">Safe payment within 1 hour of the sale being agreed</span>
                   </li>
                   <li>
                     <span class="sm-n" aria-hidden="true">2</span>
@@ -1231,8 +1274,8 @@
             <button type="button" class="btn btn-ghost btn-sm" id="btnToggleReport" style="width:100%;border-color:rgba(248,113,113,0.45);color:#fca5a5" data-i18n="proj.report_btn">
               Report (low quality · plagiarism · broken)
             </button>
-            <form id="reportForm" class="bid-form" hidden style="margin-top:0.65rem">
-              <p class="price-meta" style="margin:0 0 0.5rem;line-height:1.5" data-i18n-html data-i18n="proj.report_help">Only <strong>buyers (Lv2)</strong> can report · once per listing. <strong>3</strong> distinct reports pause the auction; <strong>5</strong> total on a seller auto-suspends the account.</p>
+            <form id="reportForm" class="sale-form" hidden style="margin-top:0.65rem">
+              <p class="price-meta" style="margin:0 0 0.5rem;line-height:1.5" data-i18n-html data-i18n="proj.report_help">Only <strong>buyers (Lv2)</strong> can report · once per listing. <strong>3</strong> distinct reports pause the listing; <strong>5</strong> total on a seller auto-suspends the account.</p>
               <label for="reportReason" data-i18n="proj.report_reason">Reason</label>
               <select id="reportReason" required>
                 <option value="low_quality" data-i18n="proj.r_low">Low-quality code</option>
@@ -1253,7 +1296,7 @@
               Block this seller
             </button>
             <p class="price-meta" id="blockSellerHint" style="margin:0.4rem 0 0;line-height:1.45" data-i18n="proj.block_help">
-              Blocking hides their listings and blocks bids/messages. Separate from reports. Unblock under App → Profile → Block list.
+              Blocking hides their listings and blocks offers/messages. Separate from reports. Unblock under App → Profile → Block list.
             </p>
             <p class="form-error" id="blockSellerErr" hidden></p>
             <p class="price-meta" id="blockSellerOk" hidden style="color:#86efac"></p>
@@ -1261,13 +1304,17 @@
         </details>
 
         <div id="ownerActions" hidden style="margin-top:1rem">
-          <p class="price-meta" data-i18n-html data-i18n="proj.owner_note"><strong>Seller</strong> · confirm sale after settlement account (Lv3)</p>
+          <p class="price-meta" data-i18n-html data-i18n="proj.owner_note"><strong>Seller</strong> · accept an offer after settlement account (Lv3)</p>
           <div class="safety-notice" role="note" style="margin-top:0.65rem">
             <span class="safety-notice-title" data-i18n="proj.seller_protect">Seller protection</span>
             <span data-i18n-html data-i18n="proj.seller_protect_body">Do not transfer source, domain, or accounts <strong>before</strong> payment is confirmed. Losses from early transfer are yours — platform does not reimburse.</span>
           </div>
-          <button type="button" class="btn btn-primary" id="closeDealBtn" data-i18n="proj.close_deal">Confirm sale at high bid</button>
-          <p class="form-error" id="closeErr" hidden></p>
+          <p class="price-meta" style="margin-top:0.65rem" data-i18n="proj.owner_offers_note">Accept or decline offers in the list below. Accepting agrees the sale right away — then payment → transfer → inspection. Offers expire if you don't answer within 48 hours.</p>
+          <div class="owner-offers">
+            <h4 style="margin:0.85rem 0 0.5rem;font-size:0.92rem" data-i18n="proj.owner_offers_title">Offers received</h4>
+            <ul class="sale-list" id="ownerOfferList"></ul>
+            <p class="form-error" id="closeErr" hidden></p>
+          </div>
           <ul class="price-meta" id="transferList" style="margin-top:0.75rem;padding-left:1.1rem" hidden></ul>
 
           <!-- Share & Promote — always English (global-first launch surface) -->
@@ -1328,7 +1375,7 @@
       }
 
       var lastPrice = null;
-      var lastBidEvents = null;
+      var lastOfferEvents = null;
       var pollMs = 4000;
       // PayPal SPB는 페이지에 **박히는** 위젯이라(카드 결제는 팝업이라 무관)
       // 4초 폴러가 renderProject()로 결제 영역을 다시 그리면 그대로 지워진다.
@@ -1337,12 +1384,15 @@
       var mentionState = {
         init: false,
         price: null,
-        bidders: null,
-        bidEvents: null,
+        offers: null,
+        pending: null,
         status: null,
         lastKey: "",
         lines: [],
       };
+      // 제안 폼에 입력 중일 때 4초 폴러가 값을 지우지 않게 막는 플래그
+      // (결제 위젯의 paypalUiMounted 와 같은 취지)
+      var offerFormBusy = false;
       var MAX_MENTIONS = 8;
 
       /* —— ECG wave field (public atmosphere) —— */
@@ -1352,7 +1402,7 @@
         var ctx = canvas.getContext("2d");
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
         var w = 0, h = 0, raf = 0, t0 = performance.now();
-        var spike = 0; // 0..1 burst energy on new bid
+        var spike = 0; // 0..1 burst energy on a new offer
         var soldBoost = 0;
         var hot = 0;
         var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1451,7 +1501,7 @@
       function pushMention(key, text, force) {
         if (!text) return;
         if (!force && mentionState.lastKey === key) return;
-        // allow same key only when price/bidder payload changes
+        // allow same key only when price/offer payload changes
         var fullKey = key + "|" + text;
         if (!force && mentionState.lines.length && mentionState.lines[0].fullKey === fullKey) return;
         mentionState.lastKey = key;
@@ -1466,7 +1516,7 @@
         if (!mentionState.lines.length) {
           ul.innerHTML =
             "<li class='muted'><span class='tag'>WA</span>" +
-            t("입찰이 붙으면 여기에 자동 멘션이 올라갑니다.", "Auto mentions appear here when bids land.") +
+            t("제안이 들어오면 여기에 자동으로 표시됩니다.", "Offer activity shows up here automatically.") +
             "</li>";
           return;
         }
@@ -1487,56 +1537,80 @@
         });
       }
 
-      function updateAutoMentions(p, bids) {
-        var live = (p.auction_status || "live") === "live" && p.listing_status === "approved";
-        var sold = (p.auction_status || "") === "sold";
-        var paused = (p.auction_status || "") === "paused";
-        var bidders =
-          p.bidder_count != null ? Number(p.bidder_count) || 0 : Number(p.bid_count) || 0;
-        var events = Number(p.bid_count) || 0;
-        var price = p.price_current != null ? Number(p.price_current) : Number(p.price_start) || 0;
+      /* —— sale-model helpers (fixed price + offers) —— */
+      function saleStatus(p) {
+        return String((p && (p.sale_status || p.auction_status)) || "live");
+      }
+      function listingEndsAt(p) {
+        if (!p) return "";
+        if (p.listing_ends_at != null && p.listing_ends_at !== "") return p.listing_ends_at;
+        return p.auction_ends_at || "";
+      }
+      function askPrice(p) {
+        if (!p) return 0;
+        var v = p.price != null ? p.price : p.price_start;
+        return Number(v) || 0;
+      }
+      function offerCount(p) {
+        if (!p) return 0;
+        var v = p.offer_count != null ? p.offer_count : p.bid_count;
+        return Number(v) || 0;
+      }
+      function pendingOfferCount(p) {
+        if (!p) return 0;
+        return Number(p.pending_offer_count) || 0;
+      }
+      function topOfferAmount(p) {
+        if (!p || !p.top_offer || p.top_offer.amount == null) return null;
+        var n = Number(p.top_offer.amount);
+        return isNaN(n) ? null : n;
+      }
+      function fmtStamp(v) {
+        return String(v || "").replace("T", " ").slice(0, 16);
+      }
+
+      function updateAutoMentions(p, offers) {
+        var live = saleStatus(p) === "live" && p.listing_status === "approved";
+        var sold = saleStatus(p) === "sold";
+        var paused = saleStatus(p) === "paused";
+        var count = offerCount(p);
+        var pending = pendingOfferCount(p);
+        var price = askPrice(p);
+        var top = topOfferAmount(p);
         var prev = mentionState;
 
         if (!prev.init) {
           prev.init = true;
           prev.price = price;
-          prev.bidders = bidders;
-          prev.bidEvents = events;
-          prev.status = p.auction_status || "live";
+          prev.offers = count;
+          prev.pending = pending;
+          prev.status = saleStatus(p);
           if (sold) {
             pushMention("sold", t("이 프로젝트는 팔렸습니다. 입금·이전 안내를 확인해 주세요.", "This project sold. Follow payment & transfer steps."), true);
           } else if (paused) {
-            pushMention("paused", t("경매가 잠시 멈췄습니다. 운영 검토 중일 수 있어요.", "Auction paused — ops may be reviewing."), true);
-          } else if (bidders >= 3) {
+            pushMention("paused", t("판매가 잠시 멈췄습니다. 운영 검토 중일 수 있어요.", "Listing paused — ops may be reviewing."), true);
+          } else if (pending >= 1) {
             pushMention(
-              "hot",
-              t("지금 입찰자 ", "Live: ") + bidders + t("명 · 경쟁이 붙었습니다. 지금 가격 ", " bidders in play. Current ") + won(price),
-              true
-            );
-          } else if (bidders >= 1) {
-            pushMention(
-              "live",
-              t("입찰 진행 중 · 입찰자 ", "Bidding · ") + bidders + t("명 · 지금 가격 ", " bidders · ") + won(price),
+              "pending",
+              t("대기 중인 제안 ", "Pending offers: ") + pending + t("건 · 판매가 ", " · asking ") + won(price),
               true
             );
           } else if (live) {
             pushMention(
               "wait",
-              t("첫 입찰을 기다리는 중 · 시작가 ", "Awaiting first bid · start ") + won(p.price_start) + t(" · 누구나 볼 수 있어요.", " · public to all."),
+              t("판매 중 · 판매가 ", "For sale · asking ") + won(price) + t(" · 아직 제안이 없어요.", " · no offers yet."),
               true
             );
           } else {
-            pushMention("idle", t("이 매물의 판매 상태를 확인해 주세요.", "Check this listing’s sale status."), true);
+            pushMention("idle", t("이 매물의 판매 상태를 확인해 주세요.", "Check this listing\u2019s sale status."), true);
           }
-          // recent bid ticker from history
-          if (bids && bids.length) {
-            var top = bids[0];
+          if (top != null) {
+            pushMention("top", t("최고 제안 ", "Top offer ") + won(top), true);
+          } else if (offers && offers.length) {
+            var first = offers[0];
             pushMention(
               "last",
-              t("최근 호가 ", "Latest bid ") +
-                won(top.amount) +
-                " · " +
-                (top.bidder_label || t("입찰자", "Bidder")),
+              t("최근 제안 · ", "Latest offer · ") + (first.buyer_label || t("구매자", "Buyer")),
               true
             );
           }
@@ -1544,63 +1618,51 @@
         }
 
         if (sold && prev.status !== "sold") {
-          pushMention("sold", t("낙찰·성사 처리되었습니다. 지금 가격 ", "Sale closed at ") + won(p.sold_price != null ? p.sold_price : price), true);
+          pushMention("sold", t("판매가 성사되었습니다. 금액 ", "Sale agreed at ") + won(p.sold_price != null ? p.sold_price : price), true);
         } else if (paused && prev.status !== "paused") {
-          pushMention("paused", t("신고 등으로 경매가 중단되었습니다.", "Auction paused due to reports or review."), true);
+          pushMention("paused", t("신고 등으로 판매가 일시 중단되었습니다.", "Listing paused due to reports or review."), true);
         }
 
         if (live && !sold && !paused) {
-          if (prev.bidders === 0 && bidders >= 1) {
+          if ((prev.offers || 0) === 0 && count >= 1) {
             pushMention(
               "first",
-              t("첫 입찰이 들어왔습니다! 지금 가격 ", "First bid in! Current ") + won(price) + t(" · 전원 공개", " · public"),
+              t("첫 제안이 들어왔습니다! 판매가 ", "First offer in! Asking ") + won(price) + t(" · 전원 공개", " · public"),
               true
             );
-          } else if (bidders > (prev.bidders || 0)) {
+          } else if (count > (prev.offers || 0)) {
             pushMention(
-              "join",
-              t("새 입찰자가 합류 · 입찰자 ", "New bidder joined · ") + bidders + t("명", " bidders"),
+              "new",
+              t("새 제안이 들어왔습니다 · 대기 중 ", "New offer · pending ") + pending + t("건", ""),
+              true
+            );
+          } else if (pending < (prev.pending || 0)) {
+            pushMention(
+              "handled",
+              t("판매자가 제안을 처리했습니다 · 대기 중 ", "Seller handled an offer · pending ") + pending + t("건", ""),
               true
             );
           }
 
-          if (events > (prev.bidEvents || 0) && price > (prev.price || 0)) {
-            var jump = price - (prev.price || 0);
-            pushMention(
-              "up",
-              t("가격 상승! ", "Price up! ") +
-                won(price) +
-                (jump > 0 ? t(" (+", " (+") + won(jump) + ")" : "") +
-                t(" · 실시간 반영 중", " · updating live"),
-              true
-            );
-          } else if (events > (prev.bidEvents || 0)) {
-            pushMention("bid", t("새 호가가 등록되었습니다 · ", "New bid posted · ") + won(price), true);
+          if (price !== (prev.price || 0)) {
+            pushMention("price", t("판매가가 바뀌었습니다 · ", "Asking price updated · ") + won(price), true);
           }
 
-          if (bidders >= 3 && (prev.bidders || 0) < 3) {
+          if (pending >= 3 && (prev.pending || 0) < 3) {
             pushMention(
-              "heat",
-              t("입찰자 3명 돌파! 경쟁이 뜨거워지고 있어요.", "3+ bidders — competition is heating up."),
-              true
-            );
-          }
-          if (bidders >= 5 && (prev.bidders || 0) < 5) {
-            pushMention(
-              "heat5",
-              t("입찰자 5명! 이 매물에 관심이 몰리고 있습니다.", "5 bidders — strong interest on this listing."),
+              "interest",
+              t("대기 중인 제안이 3건을 넘었습니다.", "3+ offers waiting on this listing."),
               true
             );
           }
         }
 
         prev.price = price;
-        prev.bidders = bidders;
-        prev.bidEvents = events;
-        prev.status = p.auction_status || "live";
+        prev.offers = count;
+        prev.pending = pending;
+        prev.status = saleStatus(p);
       }
       var projectCache = null;
-      var countdownTimer = null;
 
       function isEn() {
         return !!(window.WakeAgainI18n && window.WakeAgainI18n.getLang && window.WakeAgainI18n.getLang() === "en");
@@ -1620,7 +1682,7 @@
           el.classList.add("flash");
           setTimeout(function () { el.classList.remove("flash"); }, 600);
         }
-        var rise = document.getElementById("riseNow");
+        var rise = document.getElementById("figTopOffer");
         if (rise) {
           rise.style.transform = "scale(1.06)";
           rise.style.color = "#e8b86d";
@@ -1632,84 +1694,46 @@
         if (waveField && waveField.spike) waveField.spike();
       }
 
-      function fmtRemain(ms) {
-        if (ms <= 0) return t("마감됨", "Ended");
-        var s = Math.floor(ms / 1000);
-        var d = Math.floor(s / 86400);
-        s %= 86400;
-        var h = Math.floor(s / 3600);
-        s %= 3600;
-        var m = Math.floor(s / 60);
-        s %= 60;
-        if (d > 0) return isEn() ? (d + "d " + h + "h " + m + "m") : (d + "일 " + h + "시간 " + m + "분");
-        return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-      }
-
-      function tickCountdown(endsAt) {
-        var el = document.getElementById("countdownLine");
-        var pulse = document.getElementById("pulseCountdown");
-        if ((!el && !pulse) || !endsAt) {
-          if (el) el.textContent = "";
+      /** Quiet listing window — no countdown drama, just the end date. */
+      function paintListedUntil(p) {
+        var endsAt = listingEndsAt(p);
+        var pulse = document.getElementById("pulseListedUntil");
+        var line = document.getElementById("endsLine");
+        if (!endsAt) {
           if (pulse) pulse.textContent = "—";
+          if (line) line.textContent = t("게시 기간이 아직 시작되지 않았어요", "Listing period not started yet");
           return;
         }
-        function run() {
-          var end = Date.parse(endsAt);
-          var text;
-          if (isNaN(end)) {
-            text = endsAt;
-          } else {
-            text = fmtRemain(end - Date.now());
-          }
-          if (el) {
-            el.textContent = isNaN(end)
-              ? t("마감 ", "Ends ") + endsAt
-              : t("끝나는 때까지 ", "Time left ") + text;
-          }
-          if (pulse) pulse.textContent = text;
-        }
-        run();
-        if (countdownTimer) clearInterval(countdownTimer);
-        countdownTimer = setInterval(run, 1000);
+        var stamp = fmtStamp(endsAt);
+        if (pulse) pulse.textContent = stamp.slice(0, 10) || stamp;
+        if (line) line.textContent = t("게시 마감 ", "Listed until ") + stamp;
       }
 
-      function updatePriceRise(p) {
-        var start = Number(p.price_start) || 0;
-        var cur = p.price_current != null ? Number(p.price_current) : start;
-        var buy = p.price_buy_now != null ? Number(p.price_buy_now) : null;
-        var sold = (p.auction_status || "") === "sold";
-        var soldPrice = p.sold_price != null ? Number(p.sold_price) : cur;
-        if (sold && soldPrice) cur = soldPrice;
-
-        var riseStart = document.getElementById("riseStart");
-        var riseNow = document.getElementById("riseNow");
-        var fill = document.getElementById("riseFill");
-        var delta = document.getElementById("riseDelta");
-        if (riseStart) riseStart.textContent = won(start);
-        if (riseNow) riseNow.textContent = won(cur);
-
-        // Progress: start → current relative to start..max(start*2, buy_now, current)
-        var ceiling = Math.max(start * 2, cur, buy || 0, 1);
-        var pct = start <= 0 ? 8 : Math.min(100, Math.max(6, ((cur - start) / (ceiling - start || 1)) * 100 + 8));
-        if (sold) pct = 100;
-        if (fill) fill.style.width = pct + "%";
-
-        if (delta) {
+      function updateSaleFigures(p) {
+        var ask = askPrice(p);
+        var sold = saleStatus(p) === "sold";
+        var soldPrice = p.sold_price != null ? Number(p.sold_price) : null;
+        var top = topOfferAmount(p);
+        var askEl = document.getElementById("figAsk");
+        var topEl = document.getElementById("figTopOffer");
+        var note = document.getElementById("figNote");
+        if (askEl) askEl.textContent = won(sold && soldPrice ? soldPrice : ask);
+        var count = offerCount(p);
+        var pending = pendingOfferCount(p);
+        if (topEl) {
+          topEl.textContent =
+            top != null ? won(top) : count > 0 ? "—" : t("없음", "None");
+        }
+        if (note) {
+          note.removeAttribute("data-i18n");
           if (sold) {
-            delta.textContent = t(
-              "낙찰가까지 올라간 뒤, 다음 주인을 만났습니다",
-              "Climbed to the winning price — found its next owner"
-            );
-          } else if (cur > start) {
-            delta.textContent =
-              t("시작가 대비 ", "Up ") +
-              won(cur - start) +
-              t(" 상승 · 모두가 실시간으로 봅니다", " from start · live & public");
+            note.textContent = t("다음 주인을 만났습니다", "It found its next owner");
+          } else if (pending > 0) {
+            note.textContent = t("대기 중인 제안 ", "Pending offers ") + pending + t("건 · 전원 공개", " · public to all");
+          } else if (count > 0) {
+            note.textContent = t("지난 제안 ", "Past offers ") + count + t("건", "");
           } else {
-            delta.textContent = t(
-              "상승 흐름이 실시간으로 공개됩니다",
-              "The rise will be public in real time"
-            );
+            note.textContent = t("제안이 들어오면 여기에 바로 보여요", "Offers show up here in real time");
           }
         }
       }
@@ -1731,7 +1755,7 @@
           inspection: t("검수 · 인수 대기", "Inspection"),
           completed: t("확정 · 정산", "Completed · settled"),
           disputed: t("이의 제기", "Disputed"),
-          payment_default: t("미입금 · 낙찰 무효", "Payment default"),
+          payment_default: t("미입금 · 성사 무효", "Payment default"),
         };
         return map[st] || st || "—";
       }
@@ -1743,7 +1767,7 @@
         var isOwner = meIsOwner(p);
         var isBuyer = meIsBuyer(p);
         var st = p.deal_status || "";
-        var sold = (p.auction_status || "") === "sold" || !!st;
+        var sold = saleStatus(p) === "sold" || !!st;
         if (!sold || !ho || !ho.items || !ho.items.length || !(isOwner || isBuyer)) {
           hbox.hidden = true;
           return;
@@ -1846,7 +1870,7 @@
         var box = document.getElementById("dealProtectBox");
         if (!box) return;
         var st = p.deal_status || "";
-        var sold = (p.auction_status || "") === "sold" || !!st;
+        var sold = saleStatus(p) === "sold" || !!st;
         if (!sold && !st) {
           box.hidden = true;
           return;
@@ -1870,7 +1894,7 @@
         if (payMeta) {
           payMeta.textContent = p.payment_deadline_at
             ? t("기한 ", "Due ") + String(p.payment_deadline_at).replace("T", " ").slice(0, 19)
-            : t("낙찰 후 ", "Within ") + payH + t("시간", "h");
+            : t("성사 후 ", "Within ") + payH + t("시간", "h");
         }
         var inspMeta = document.getElementById("dealStepInsp");
         if (inspMeta) {
@@ -1884,7 +1908,7 @@
         document.getElementById("dealPolicyLine").textContent =
           (isEn() && pol.message_en) ? pol.message_en : (pol.message_ko ||
             t(
-              "낙찰 후 1시간 입금 → 이전 → 검수 후 인수. 이의 없으면 자동 확정·정산. 입금 전 이전 금지.",
+              "성사 후 1시간 입금 → 이전 → 검수 후 인수. 이의 없으면 자동 확정·정산. 입금 전 이전 금지.",
               "Pay in 1h → transfer → accept. Auto-settle if no dispute. No transfer before payment."
             ));
 
@@ -1986,7 +2010,7 @@
           addBtn(
             st === "completed"
               ? t("거래 기록 확인서", "Transaction confirmation")
-              : t("낙찰 기록 확인서", "Award confirmation"),
+              : t("성사 기록 확인서", "Sale confirmation"),
             "btn-ghost",
             function () {
               if (window.WakeAgainDealCertificate) {
@@ -2118,8 +2142,8 @@
             gate.className = "price-meta";
             gate.style.margin = "0.35rem 0 0";
             gate.innerHTML = t(
-              "다음 단계(결제·인수)를 위해 <a class=\"text-link\" href=\"/app/#profile\">실명·휴대폰 확인</a>이 필요합니다. 입찰 단계에서는 이메일만으로 충분했습니다.",
-              "For pay/accept, complete <a class=\"text-link\" href=\"/app/#profile\">identity (Lv2)</a>. Bidding only needed email."
+              "다음 단계(결제·인수)를 위해 <a class=\"text-link\" href=\"/app/#profile\">실명·휴대폰 확인</a>이 필요합니다. 제안 단계에서는 이메일만으로 충분했습니다.",
+              "For pay/accept, complete <a class=\"text-link\" href=\"/app/#profile\">identity (Lv2)</a>. Making an offer only needed email."
             );
             actions.appendChild(gate);
           }
@@ -2406,43 +2430,30 @@
             : "";
         }
 
-        var price = p.price_current != null ? p.price_current : p.price_start;
+        var sold0 = saleStatus(p) === "sold";
+        var price = sold0 && p.sold_price != null ? p.sold_price : askPrice(p);
         var priceEl = document.getElementById("priceCurrent");
-        var bidEvents = Number(p.bid_count) || 0;
+        var offerEvents = offerCount(p);
         if (lastPrice != null && Number(price) !== Number(lastPrice)) flashPrice();
-        else if (lastBidEvents != null && bidEvents > lastBidEvents) flashPrice();
+        else if (lastOfferEvents != null && offerEvents > lastOfferEvents) flashPrice();
         lastPrice = price;
-        lastBidEvents = bidEvents;
+        lastOfferEvents = offerEvents;
         if (priceEl) priceEl.textContent = won(price);
-        updatePriceRise(p);
+        updateSaleFigures(p);
 
-        document.getElementById("priceStartLine").textContent =
-          t("시작 가격 ", "Start ") + won(p.price_start) +
-          (p.price_buy_now != null ? t(" · 지금 바로 사기 ", " · buy now ") + won(p.price_buy_now) : "");
-        var uniqueBidders =
-          p.bidder_count != null ? Number(p.bidder_count) || 0 : Number(p.bid_count) || 0;
-        document.getElementById("bidCountLine").textContent =
-          t("입찰자 ", "Bidders ") +
-          uniqueBidders +
-          t("명 · 한 번에 올릴 최소 금액 ", " · min step ") +
-          won(p.min_increment || 10000);
-        var pulseBids = document.getElementById("pulseBids");
-        if (pulseBids) {
-          pulseBids.textContent =
-            uniqueBidders +
-            t("명 · ", " · ") +
-            bidEvents +
-            t("회", " bids");
+        var pendingN = pendingOfferCount(p);
+        document.getElementById("offerCountLine").textContent =
+          offerEvents > 0
+            ? t("제안 ", "") + offerEvents + t("건 · 대기 중 ", " offers · ") + pendingN + t("건", " pending")
+            : t("아직 제안 없음", "No offers yet");
+        var pulseOffersEl = document.getElementById("pulseOffers");
+        if (pulseOffersEl) {
+          pulseOffersEl.textContent =
+            offerEvents > 0
+              ? offerEvents + t("건 · 대기 ", " · ") + pendingN + t("건", " pending")
+              : t("0건", "0");
         }
-        document.getElementById("endsLine").textContent =
-          p.auction_ends_at
-            ? t("끝나는 시간 ", "Ends ") + String(p.auction_ends_at).replace("T", " ").slice(0, 19)
-            : t("끝나는 시간 미정", "End time TBD");
-        tickCountdown(p.auction_ends_at);
-        document.getElementById("nextMinLine").textContent =
-          (p.auction_status || "live") === "live"
-            ? t("다음에 쓸 수 있는 최소 가격 ", "Next min bid ") + won(p.next_min_bid)
-            : "";
+        paintListedUntil(p);
         document.getElementById("feeLine").textContent =
           t("팔리면 판매자 수수료 10% · 구매자는 합의 가격만", "10% seller fee when sold · buyers pay agreed price only");
         if (p.seller) {
@@ -2535,8 +2546,8 @@
                 : "—") +
               (id.contact_phone ? " · " + id.contact_phone : "") +
               (revealed
-                ? t(" <span class='muted fine'>(전체 공개 · 낙찰/본인)</span>", " <span class='muted fine'>(full · winner/self)</span>")
-                : t(" <span class='muted fine'>(일부 가림 · 낙찰 후 전체)</span>", " <span class='muted fine'>(masked · full after win)</span>"));
+                ? t(" <span class='muted fine'>(전체 공개 · 구매자/본인)</span>", " <span class='muted fine'>(full · buyer/self)</span>")
+                : t(" <span class='muted fine'>(일부 가림 · 성사 후 전체)</span>", " <span class='muted fine'>(masked · full after the sale)</span>"));
             var addrEl = document.getElementById("sellerIdAddr");
             if (id.address) {
               addrEl.hidden = false;
@@ -2547,7 +2558,7 @@
             document.getElementById("sellerIdNote").textContent =
               (isEn() && id.note_en) ? id.note_en : (id.note_ko ||
               t(
-                "판매자 신고 정보(자기 입력)입니다. 운영자(코어랩스)는 통신판매중개자이며 거래 당사자가 아닙니다. 전화·이메일은 낙찰 구매자에게만 전체가 보입니다.",
+                "판매자 신고 정보(자기 입력)입니다. 운영자(코어랩스)는 통신판매중개자이며 거래 당사자가 아닙니다. 전화·이메일은 성사된 구매자에게만 전체가 보입니다.",
                 "Seller self-declared info. CoreLabs is an intermediary, not a party. Full phone/email only for the winning buyer."
               ));
           } else if (idCard) {
@@ -2570,20 +2581,18 @@
           if (trustBarEmpty) trustBarEmpty.hidden = true;
         }
 
-        var paused = (p.auction_status || "") === "paused";
-        var live = (p.auction_status || "live") === "live" && p.listing_status === "approved";
-        // Unique bidders (not total bid events)
-        var bidsN =
-          p.bidder_count != null ? Number(p.bidder_count) || 0 : Number(p.bid_count) || 0;
-        var sold = (p.auction_status || "") === "sold";
-        // Dynamic page atmosphere: quiet → live → hot competition
-        document.body.classList.toggle("auction-live", live);
-        document.body.classList.toggle("auction-hot", live && bidsN >= 1);
-        document.body.classList.toggle("auction-hotter", live && bidsN >= 3);
-        document.body.classList.toggle("auction-sold", sold);
+        var paused = saleStatus(p) === "paused";
+        var live = saleStatus(p) === "live" && p.listing_status === "approved";
+        var pendingCount = pendingOfferCount(p);
+        var sold = saleStatus(p) === "sold";
+        // Dynamic page atmosphere: quiet → for sale → offers waiting
+        document.body.classList.toggle("sale-live", live);
+        document.body.classList.toggle("sale-hot", live && pendingCount >= 1);
+        document.body.classList.toggle("sale-hotter", live && pendingCount >= 3);
+        document.body.classList.toggle("sale-sold", sold);
         if (waveField) {
           if (waveField.setSold) waveField.setSold(sold);
-          if (waveField.setHot) waveField.setHot(live ? (bidsN >= 3 ? 1 : bidsN >= 1 ? 0.55 : 0.2) : 0);
+          if (waveField.setHot) waveField.setHot(live ? (pendingCount >= 3 ? 1 : pendingCount >= 1 ? 0.55 : 0.2) : 0);
         }
         var soldRibbon = document.getElementById("soldRibbon");
         if (soldRibbon) {
@@ -2596,22 +2605,18 @@
             banS.textContent = t("다음 주인을 만났습니다", "It found its next owner");
             banT.textContent = t(" — 이 프로젝트는 팔렸습니다. 돈 보내기와 넘기기를 진행하세요.", " — This project sold. Proceed with payment and transfer.");
           } else if (paused) {
-            banS.textContent = t("경매 중단", "Auction paused");
+            banS.textContent = t("판매 일시 중단", "Listing paused");
             banT.textContent =
-              t(" — 신고 누적 등으로 가격 쓰기·바로 사기가 멈췄습니다. 운영 검토 중입니다.", " — Bidding paused due to reports. Ops is reviewing.") +
+              t(" — 신고 누적 등으로 구매·제안이 멈췄습니다. 운영 검토 중입니다.", " — Buying and offers are paused after reports. Ops is reviewing.") +
               (p.report_count ? t(" (신고 ", " (reports ") + p.report_count + t("건)", ")") : "");
-          } else if (live && bidsN >= 3) {
-            banS.textContent = t("입찰 중", "Bidding");
+          } else if (live && pendingCount >= 1) {
+            banS.textContent = t("판매 중", "For sale");
             banT.textContent =
-              t(" — 지금 입찰자 ", " — ") + bidsN + t("명. 가격이 실시간으로 올라갑니다. 누구나 볼 수 있어요.", " bidders live. Price rises in real time — public to everyone.");
-          } else if (live && bidsN >= 1) {
-            banS.textContent = t("가격 쓰기 진행 중", "Bids in progress");
-            banT.textContent =
-              t(" — 이미 입찰자가 있어요. 지금 가격은 이 사이트에 온 모든 사람이 볼 수 있어요.", " — Someone has bid. Live price is public to every visitor.");
+              t(" — 대기 중인 제안 ", " — ") + pendingCount + t("건. 판매가로 바로 사거나, 더 낮은 가격을 제안할 수 있어요.", " offers waiting. Buy at the asking price, or make an offer below it.");
           } else if (live) {
-            banS.textContent = t("첫 입찰 대기", "Awaiting first bid");
+            banS.textContent = t("판매 중", "For sale");
             banT.textContent =
-              t(" — 지금 가격은 누구나 볼 수 있어요. 첫 번째로 가격을 써 보세요.", " — Live price is public. Be the first to bid.");
+              t(" — 판매가는 누구나 볼 수 있어요. 판매가로 바로 사거나 가격을 제안해 보세요.", " — The asking price is public. Buy it now, or make the first offer.");
           } else {
             banS.textContent = t("안내", "Notice");
             banT.textContent = t(" — 이 프로젝트의 판매 상태를 확인해 주세요.", " — Check this project's sale status.");
@@ -2639,35 +2644,68 @@
             (fee.fee != null ? t(" · 판매자 수수료 ", " · seller fee ") + won(fee.fee) + t(" · 실수령 예상 ", " · seller net ~ ") + won(fee.seller_net) : "");
         } else if (paused) {
           document.getElementById("dealLine").hidden = true;
-          setBadges(t("중단 · 신고 검토", "Paused · under review"), "ending");
+          setBadges(t("판매 일시 중단", "Listing paused"), "ending");
         } else {
           document.getElementById("dealLine").hidden = true;
-          if (live && bidsN >= 1) {
-            setBadges(t("진행 중 · 입찰자 ", "Live · ") + bidsN + t("명", " bidders"), "live");
+          if (live && pendingCount >= 1) {
+            setBadges(t("판매 중 · 제안 ", "For sale · ") + pendingCount + t("건", " offers"), "live");
           } else if (live) {
-            setBadges(t("첫 입찰 대기", "Awaiting first bid"), "live");
+            setBadges(t("판매 중", "For sale"), "live");
+          } else if (saleStatus(p) === "ended") {
+            setBadges(t("게시 기간 종료", "Listing period ended"), "draft");
           } else {
-            setBadges((p.auction_status || "—").toUpperCase(), "draft");
+            setBadges(saleStatus(p).toUpperCase(), "draft");
           }
         }
 
-        var bidInput = document.getElementById("bidAmount");
-        if (!bidInput.dataset.touched) {
-          bidInput.value = p.next_min_bid || p.price_start || "";
-          bidInput.min = p.next_min_bid || 0;
+        // Ledger amount alongside the display currency (KRW is what the deal records).
+        var usdLine = document.getElementById("priceUsdLine");
+        if (usdLine) {
+          var curCode = "";
+          try {
+            curCode = (window.WakeAgainI18n && window.WakeAgainI18n.getCurrency && window.WakeAgainI18n.getCurrency()) || "";
+          } catch (eC) {}
+          if (curCode && curCode !== "KRW" && price != null) {
+            usdLine.hidden = false;
+            usdLine.textContent =
+              t("원화 기준 ", "Ledger ") + "₩" + Number(price).toLocaleString("ko-KR");
+          } else {
+            usdLine.hidden = true;
+            usdLine.textContent = "";
+          }
         }
-        document.getElementById("bidBtn").disabled = !live;
-        var buyBtn = document.getElementById("buyNowBtn");
-        buyBtn.hidden = !(live && p.price_buy_now != null);
-        buyBtn.textContent = p.price_buy_now != null ? t("즉시구매 ", "Buy now ") + won(p.price_buy_now) : t("즉시구매", "Buy now");
+
+        var offerFloor = p.offer_floor != null ? Number(p.offer_floor) : null;
+        var offerInput = document.getElementById("offerAmount");
+        if (offerInput && !offerInput.dataset.touched) {
+          offerInput.value = offerFloor != null ? offerFloor : "";
+          offerInput.min = offerFloor != null ? offerFloor : 0;
+        }
+        var floorHint = document.getElementById("offerFloorHint");
+        if (floorHint) {
+          floorHint.textContent =
+            (offerFloor != null
+              ? t("최소 ", "Minimum ") + won(offerFloor) + " · "
+              : "") +
+            t("판매가보다 낮아야 합니다", "must be below the asking price") +
+            " (" + won(askPrice(p)) + ")";
+        }
+        var offerBtnEl = document.getElementById("offerBtn");
+        if (offerBtnEl) offerBtnEl.disabled = !live;
+        var buyBtnEl = document.getElementById("buyBtn");
+        if (buyBtnEl) {
+          buyBtnEl.disabled = !live;
+          buyBtnEl.textContent = t("판매가로 바로 사기 ", "Buy at asking price ") + won(askPrice(p));
+          buyBtnEl.removeAttribute("data-i18n");
+        }
 
         var ownerBox = document.getElementById("ownerActions");
         var isOwner = meIsOwner(p);
-        ownerBox.hidden = !(isOwner && p.listing_status === "approved" && (p.auction_status || "live") !== "sold");
+        ownerBox.hidden = !(isOwner && p.listing_status === "approved" && !sold);
         if (isOwner) setupSharePromote(p);
-        var bidFormHidden = isOwner || (p.auction_status || "") === "sold";
-        document.querySelectorAll(".bid-form-related").forEach(function (el) {
-          el.style.display = bidFormHidden ? "none" : "";
+        var offerFormHidden = isOwner || sold;
+        document.querySelectorAll(".offer-form-related").forEach(function (el) {
+          el.style.display = offerFormHidden ? "none" : "";
         });
         var reportBox = document.getElementById("reportBox");
         if (reportBox) reportBox.hidden = !!isOwner;
@@ -2692,11 +2730,12 @@
         var tweetText =
           "I just listed my project " + titleEn + " on @WakeAgain! " +
           "Revive this abandoned side project or grab the source code. " +
-          "Check it out and bid: " + url + " #buildinpublic #indiehackers #saas";
+          "Check it out — buy at the asking price or make an offer: " + url +
+          " #buildinpublic #indiehackers #saas";
         var redditTemplate =
-          "[Show & Tell] I’ve decided to auction off my abandoned side project, " +
+          "[Show & Tell] I’ve listed my abandoned side project, " +
           titleEn + ", on WakeAgain. It’s " + oneLinerEn +
-          ", but I don’t have time to grow it. Bid now to revive it or get the full source code: " +
+          ", but I don’t have time to grow it. Check it out — buy at the asking price or make an offer: " +
           url;
 
         if (templateBox) templateBox.value = redditTemplate;
@@ -2754,19 +2793,39 @@
         );
       }
 
-      function renderTopBidder(top) {
-        var card = document.getElementById("topBidderCard");
+      var offersState = { offers: [], mine: null, amountsPublic: true, isOwner: false };
+
+      function offerStatusLabel(st) {
+        var map = {
+          pending: t("대기 중", "Pending"),
+          accepted: t("수락됨", "Accepted"),
+          declined: t("거절됨", "Declined"),
+          withdrawn: t("철회됨", "Withdrawn"),
+          expired: t("기간 만료", "Expired"),
+          replaced: t("새 제안으로 교체", "Replaced"),
+          closed: t("종료", "Closed"),
+        };
+        return map[st] || st || "—";
+      }
+
+      function offerAmountText(o) {
+        if (o && o.amount != null) return won(o.amount);
+        return "—";
+      }
+
+      function renderTopOffer(top) {
+        var card = document.getElementById("topOfferCard");
         if (!card) return;
-        if (!top || !top.bidder_label) {
+        if (!top || !top.buyer_label) {
           card.hidden = true;
           return;
         }
         card.hidden = false;
-        var nameEl = document.getElementById("topBidderName");
-        var badgeEl = document.getElementById("topBidderBadge");
-        var amtEl = document.getElementById("topBidderAmt");
-        if (nameEl) nameEl.textContent = top.bidder_label;
-        if (amtEl) amtEl.textContent = won(top.amount);
+        var nameEl = document.getElementById("topOfferName");
+        var badgeEl = document.getElementById("topOfferBadge");
+        var amtEl = document.getElementById("topOfferAmt");
+        if (nameEl) nameEl.textContent = top.buyer_label;
+        if (amtEl) amtEl.textContent = offerAmountText(top);
         if (badgeEl) {
           var br = top.buyer_rank;
           if (br && br.label) {
@@ -2781,94 +2840,217 @@
         }
       }
 
-      function renderBids(bids) {
-        var ul = document.getElementById("bidList");
-        // highest first
-        var sorted = (bids || []).slice().sort(function (a, b) {
-          return (Number(b.amount) || 0) - (Number(a.amount) || 0);
-        });
-        renderTopBidder(sorted[0] || null);
-        if (!sorted.length) {
-          ul.innerHTML =
-            "<li><span class='muted'>" +
-            t("아직 입찰 없음 — 첫 호가와 닉네임이 전원에게 공개됩니다.", "No bids yet — first bid and handle are public.") +
-            "</span></li>";
+      function renderMyOffer(mine) {
+        var card = document.getElementById("myOfferCard");
+        var form = document.getElementById("offerForm");
+        if (!card) return;
+        if (!mine || mine.status !== "pending") {
+          card.hidden = true;
+          if (form) form.hidden = false;
           return;
         }
-        ul.innerHTML = sorted
-          .map(function (b, i) {
-            var rank = b.rank || i + 1;
-            var isTop = rank === 1 || b.is_top;
-            return (
-              "<li class='" +
-              (isTop ? "is-top" : "") +
-              "'><span><span class='bid-rank'>#" +
-              rank +
-              "</span><span class='bid-handle'>" +
-              (b.bidder_label || t("입찰자", "Bidder")) +
-              "</span>" +
-              buyerBadgeHtml(b.buyer_rank) +
-              " <span class='muted fine'>· " +
-              (b.created_at || "").replace("T", " ").slice(0, 16) +
-              "</span></span><span class='amt'>" +
-              won(b.amount) +
-              "</span></li>"
-            );
-          })
-          .join("");
+        card.hidden = false;
+        if (form) form.hidden = true;
+        var amtEl = document.getElementById("myOfferAmt");
+        if (amtEl) amtEl.textContent = offerAmountText(mine);
+        var metaEl = document.getElementById("myOfferMeta");
+        if (metaEl) {
+          metaEl.textContent =
+            t("보낸 때 ", "Sent ") + fmtStamp(mine.created_at) +
+            (mine.expires_at ? t(" · 답변 기한 ", " · seller replies by ") + fmtStamp(mine.expires_at) : "");
+        }
+        var msgEl = document.getElementById("myOfferMsg");
+        if (msgEl) {
+          if (mine.message) {
+            msgEl.hidden = false;
+            msgEl.textContent = String(mine.message);
+          } else {
+            msgEl.hidden = true;
+            msgEl.textContent = "";
+          }
+        }
+        card.setAttribute("data-offer-id", String(mine.id));
+      }
+
+      function offerRowHtml(o, opts) {
+        var owner = !!(opts && opts.owner);
+        var isPending = o.status === "pending";
+        var actions = "";
+        if (owner && isPending) {
+          actions =
+            "<div class='offer-row-actions'>" +
+            "<button type='button' class='btn btn-primary btn-sm' data-offer-accept='" + escHtml(String(o.id)) + "'>" +
+            t("수락", "Accept") +
+            "</button>" +
+            "<button type='button' class='btn btn-ghost btn-sm' data-offer-decline='" + escHtml(String(o.id)) + "'>" +
+            t("거절", "Decline") +
+            "</button>" +
+            "</div>";
+        }
+        var statusBit = owner || !isPending
+          ? "<span class='offer-status' data-st='" + escHtml(o.status || "") + "'>" + escHtml(offerStatusLabel(o.status)) + "</span>"
+          : "";
+        var msgBit =
+          owner && o.message
+            ? "<p class='my-offer-msg'>" + escHtml(o.message) + "</p>"
+            : "";
+        return (
+          "<li class='offer-row" + (o.is_top ? " is-top" : "") + (o.is_mine ? " is-mine" : "") + "'>" +
+          "<span class='offer-line'><span>" +
+          "<span class='offer-handle'>" + escHtml(o.buyer_label || t("구매자", "Buyer")) + "</span>" +
+          buyerBadgeHtml(o.buyer_rank) +
+          statusBit +
+          " <span class='muted fine'>· " + escHtml(fmtStamp(o.created_at)) + "</span>" +
+          "</span><span class='amt'>" + offerAmountText(o) + "</span></span>" +
+          msgBit +
+          actions +
+          "</li>"
+        );
+      }
+
+      function renderOffers(data, p) {
+        var offers = (data && data.offers) || [];
+        offersState.offers = offers;
+        offersState.mine = (data && data.mine) || null;
+        offersState.amountsPublic = !(data && data.amounts_public === false);
+        var isOwner = meIsOwner(p);
+        offersState.isOwner = isOwner;
+
+        renderTopOffer((p && p.top_offer) || null);
+        renderMyOffer(offersState.mine);
+
+        var pending = offers.filter(function (o) {
+          return o.status === "pending";
+        });
+        var ul = document.getElementById("offerList");
+        if (ul) {
+          if (!pending.length) {
+            ul.innerHTML =
+              "<li><span class='muted'>" +
+              t("아직 제안이 없어요 — 첫 번째로 제안해 보세요.", "No offers yet — be the first.") +
+              "</span></li>";
+          } else {
+            ul.innerHTML = pending
+              .slice()
+              .sort(function (a, b) {
+                return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+              })
+              .map(function (o) {
+                return offerRowHtml(o, { owner: false });
+              })
+              .join("");
+          }
+        }
+
+        var ownerUl = document.getElementById("ownerOfferList");
+        if (ownerUl) {
+          if (!isOwner) {
+            ownerUl.innerHTML = "";
+          } else if (!offers.length) {
+            ownerUl.innerHTML =
+              "<li><span class='muted'>" +
+              t("아직 받은 제안이 없습니다.", "No offers received yet.") +
+              "</span></li>";
+          } else {
+            ownerUl.innerHTML = offers
+              .slice()
+              .sort(function (a, b) {
+                if ((a.status === "pending") !== (b.status === "pending")) {
+                  return a.status === "pending" ? -1 : 1;
+                }
+                return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+              })
+              .map(function (o) {
+                return offerRowHtml(o, { owner: true });
+              })
+              .join("");
+          }
+        }
       }
 
       async function refresh() {
         try {
           var data = await api.getProject(id);
           renderProject(data.project);
-          var bids = await api.listBids(id);
-          var list = bids.bids || [];
-          renderBids(list);
-          updateAutoMentions(data.project, list);
+          var offers = null;
+          try {
+            offers = await api.listOffers(id);
+          } catch (e2) {
+            offers = null;
+          }
+          renderOffers(offers || { offers: [] }, data.project);
+          updateAutoMentions(data.project, (offers && offers.offers) || []);
         } catch (e) {
           document.getElementById("pTitle").textContent = e.message || t("불러오기 실패", "Failed to load");
         }
       }
 
-      document.getElementById("bidAmount").addEventListener("input", function () {
+      document.getElementById("offerAmount").addEventListener("input", function () {
         this.dataset.touched = "1";
       });
 
-      document.getElementById("bidForm").addEventListener("submit", async function (e) {
+      // 폴링이 입력 중인 제안 폼을 지우지 않도록 (paypalUiMounted 와 같은 취지)
+      var offerFormEl = document.getElementById("offerForm");
+      if (offerFormEl) {
+        offerFormEl.addEventListener("focusin", function () {
+          offerFormBusy = true;
+        });
+        offerFormEl.addEventListener("focusout", function () {
+          var amt = document.getElementById("offerAmount");
+          var msg = document.getElementById("offerMessage");
+          offerFormBusy = !!((amt && amt.dataset.touched) || (msg && msg.value.trim()));
+        });
+      }
+
+      function handleAuthError(ex) {
+        if (ex && ex.status === 401) {
+          location.href = "/app/#login";
+          return true;
+        }
+        if (ex && ex.code === "email_unverified") {
+          location.href = "/app/#verify";
+          return true;
+        }
+        if (ex && ex.code === "profile_incomplete") {
+          location.href = "/app/#profile";
+          return true;
+        }
+        return false;
+      }
+
+      document.getElementById("offerForm").addEventListener("submit", async function (e) {
         e.preventDefault();
-        var err = document.getElementById("bidErr");
+        var err = document.getElementById("offerErr");
         err.hidden = true;
         if (!api.isLoggedIn()) {
           location.href = "/app/#login";
           return;
         }
+        var amtEl = document.getElementById("offerAmount");
+        var msgEl = document.getElementById("offerMessage");
         try {
-          await api.placeBid(id, document.getElementById("bidAmount").value);
-          document.getElementById("bidAmount").dataset.touched = "";
+          await api.makeOffer(id, amtEl.value, msgEl ? msgEl.value : "");
+          amtEl.dataset.touched = "";
+          if (msgEl) msgEl.value = "";
+          offerFormBusy = false;
           await refresh();
         } catch (ex) {
-          if (ex.status === 401) { location.href = "/app/#login"; return; }
-          if (ex.code === "email_unverified") {
-            location.href = "/app/#verify";
-            return;
-          }
-          if (ex.code === "profile_incomplete") {
-            location.href = "/app/#profile";
-            return;
-          }
+          if (handleAuthError(ex)) return;
           err.hidden = false;
-          err.textContent = ex.message || t("입찰 실패", "Bid failed");
+          err.textContent = ex.message || t("제안 실패", "Offer failed");
         }
       });
 
-      document.getElementById("buyNowBtn").addEventListener("click", async function () {
-        var err = document.getElementById("bidErr");
-        err.hidden = true;
+      document.getElementById("buyBtn").addEventListener("click", async function () {
+        var err = document.getElementById("buyErr");
+        if (err) err.hidden = true;
         if (!api.isLoggedIn()) { location.href = "/app/#login"; return; }
-        if (!confirm(t("즉시구매로 성사할까요? 구매자는 합의가만 부담하고, 판매자 수수료 10%가 안내됩니다. 낙찰 후 결제·인수 때 실명·휴대폰이 필요합니다.", "Buy now? Buyer pays agreed price; 10% seller fee. After award, Lv2 identity is required for pay/accept."))) return;
+        if (!confirm(t(
+          "판매가 그대로 바로 구매할까요? 구매자는 합의가만 부담하고, 판매자 수수료 10%가 안내됩니다. 성사 후 결제·인수 때 실명·휴대폰이 필요합니다.",
+          "Buy at the asking price? You pay only the agreed price; the seller pays a 10% fee. After the sale is agreed, Lv2 identity is required for pay/accept."
+        ))) return;
         try {
-          await api.buyNow(id);
+          await api.buyAtPrice(id);
           await refresh();
           if (window.WakeAgainDealCertificate) {
             window.WakeAgainDealCertificate.openFromApi(id, "award", {
@@ -2876,29 +3058,51 @@
             });
           }
         } catch (ex) {
-          if (ex.code === "email_unverified") {
-            location.href = "/app/#verify";
-            return;
+          if (handleAuthError(ex)) return;
+          if (err) {
+            err.hidden = false;
+            err.textContent = ex.message || t("구매 실패", "Purchase failed");
           }
-          if (ex.code === "profile_incomplete") {
-            location.href = "/app/#profile";
-            return;
-          }
-          err.hidden = false;
-          err.textContent = ex.message || t("즉시구매 실패", "Buy now failed");
         }
       });
 
-      document.getElementById("closeDealBtn").addEventListener("click", async function () {
+      var withdrawBtn = document.getElementById("withdrawOfferBtn");
+      if (withdrawBtn) {
+        withdrawBtn.addEventListener("click", async function () {
+          var err = document.getElementById("myOfferErr");
+          if (err) err.hidden = true;
+          var mine = offersState.mine;
+          if (!mine) return;
+          if (!confirm(t("제안을 철회할까요? 다시 제안할 수 있습니다.", "Withdraw this offer? You can make a new one later."))) return;
+          withdrawBtn.disabled = true;
+          try {
+            await api.withdrawOffer(id, mine.id);
+            await refresh();
+          } catch (ex) {
+            if (handleAuthError(ex)) return;
+            if (err) {
+              err.hidden = false;
+              err.textContent = ex.message || t("철회 실패", "Withdraw failed");
+            }
+          } finally {
+            withdrawBtn.disabled = false;
+          }
+        });
+      }
+
+      async function acceptOfferFlow(offerId) {
         var err = document.getElementById("closeErr");
-        err.hidden = true;
-        if (!confirm(t("현재 최고 입찰가(또는 현재가)로 성사 확정할까요? 판매자 수수료 10%가 적용됩니다.", "Confirm sale at the current high bid? 10% seller fee applies."))) return;
+        if (err) err.hidden = true;
+        if (!confirm(t(
+          "이 제안을 수락할까요? 바로 성사되고 결제 → 이전 → 검수로 이어집니다. 판매자 수수료 10%가 적용됩니다.",
+          "Accept this offer? The sale is agreed right away, then payment → transfer → inspection. A 10% seller fee applies."
+        ))) return;
         try {
-          var res = await api.closeDeal(id, { use_current_bid: true });
+          var res = await api.acceptOffer(id, offerId);
           var tl = document.getElementById("transferList");
-          if (res.transfer_checklist) {
+          if (res && res.transfer_checklist && tl) {
             tl.hidden = false;
-            tl.innerHTML = res.transfer_checklist.map(function (t) { return "<li>" + t + "</li>"; }).join("");
+            tl.innerHTML = res.transfer_checklist.map(function (line) { return "<li>" + escHtml(line) + "</li>"; }).join("");
           }
           await refresh();
           if (window.WakeAgainDealCertificate) {
@@ -2907,15 +3111,51 @@
             });
           }
         } catch (ex) {
-          if (ex.code === "deal_not_ready") {
-            err.hidden = false;
-            err.textContent = t("정산 계좌(Lv3)를 먼저 등록해 주세요. 앱 → 내 정보 → 정산", "Register settlement account (Lv3) first: App → Profile → Settlement");
+          if (ex && ex.code === "deal_not_ready") {
+            if (err) {
+              err.hidden = false;
+              err.textContent = t("정산 계좌(Lv3)를 먼저 등록해 주세요. 앱 → 내 정보 → 정산", "Register settlement account (Lv3) first: App → Profile → Settlement");
+            }
             return;
           }
-          err.hidden = false;
-          err.textContent = ex.message || t("성사 확정 실패", "Close failed");
+          if (err) {
+            err.hidden = false;
+            err.textContent = (ex && ex.message) || t("수락 실패", "Accept failed");
+          }
         }
-      });
+      }
+
+      async function declineOfferFlow(offerId) {
+        var err = document.getElementById("closeErr");
+        if (err) err.hidden = true;
+        var note = window.prompt(
+          t("거절 사유를 적어 주세요 (선택 · 구매자에게 전달됩니다)", "Add a note for the buyer (optional)"),
+          ""
+        );
+        if (note === null) return;
+        try {
+          await api.declineOffer(id, offerId, note);
+          await refresh();
+        } catch (ex) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = (ex && ex.message) || t("거절 실패", "Decline failed");
+          }
+        }
+      }
+
+      var ownerOfferListEl = document.getElementById("ownerOfferList");
+      if (ownerOfferListEl) {
+        ownerOfferListEl.addEventListener("click", function (ev) {
+          var acc = ev.target.closest ? ev.target.closest("[data-offer-accept]") : null;
+          if (acc) {
+            acceptOfferFlow(acc.getAttribute("data-offer-accept"));
+            return;
+          }
+          var dec = ev.target.closest ? ev.target.closest("[data-offer-decline]") : null;
+          if (dec) declineOfferFlow(dec.getAttribute("data-offer-decline"));
+        });
+      }
 
       async function loadMessages() {
         var box = document.getElementById("msgBox");
@@ -2948,7 +3188,7 @@
               .join("");
           }
         } catch (e) {
-          // not owner/bidder
+          // not owner / not an offering buyer
           document.getElementById("msgBox").hidden = true;
         }
       }
@@ -3163,7 +3403,7 @@
             ok.hidden = false;
             ok.textContent = (isEn() && res.message_en) ? res.message_en : (res.message_ko || t("신고가 접수되었습니다.", "Report submitted."));
             if (res.project && res.project.is_paused) {
-              ok.textContent += t(" (경매 자동 중단됨)", " (auction auto-paused)");
+              ok.textContent += t(" (판매 자동 일시 중단됨)", " (listing auto-paused)");
             }
             await refresh();
           } catch (ex) {
@@ -3195,8 +3435,8 @@
             return;
           }
           var confirmMsg = t(
-            "이 판매자를 차단할까요? 상대 매물이 숨겨지고 입찰·쪽지가 불가합니다.",
-            "Block this seller? Their listings will be hidden and bids/messages blocked."
+            "이 판매자를 차단할까요? 상대 매물이 숨겨지고 제안·쪽지가 불가합니다.",
+            "Block this seller? Their listings will be hidden and offers/messages blocked."
           );
           if (!window.confirm(confirmMsg)) return;
           btnBlockSeller.disabled = true;
@@ -3232,6 +3472,7 @@
       });
       setInterval(function () {
         if (paypalUiMounted) return;  // 결제 위젯이 떠 있는 동안은 다시 그리지 않는다
+        if (offerFormBusy) return;    // 제안 폼에 입력 중이면 값을 지우지 않는다
         refresh().then(function () {
         loadMessages();
         loadQCredits();

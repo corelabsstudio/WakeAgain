@@ -81,22 +81,22 @@
     el.textContent = msg;
   }
 
-  function showBidCancelPolicyModal() {
+  function showOfferPolicyModal() {
     return new Promise((resolve) => {
       const root = document.createElement("div");
-      root.id = "waBidCancelNotice";
+      root.id = "waOfferPolicyNotice";
       root.setAttribute("role", "dialog");
       root.setAttribute("aria-modal", "true");
       root.style.cssText =
         "position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;" +
         "padding:1rem;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)";
-      const title = t("app.bid_cancel_notice_title", "You can't cancel once bidding starts");
+      const title = t("app.offer_policy_title", "Before you list");
       const body = t(
-        "app.bid_cancel_notice_body",
-        "Once this listing goes live and receives a bid, you (the seller) can no longer cancel or delete it — the bidder is committed to the deal. Deletion only works before any bid has landed. After that, contact support if something is wrong."
+        "app.offer_policy_body",
+        "A listing can't be deleted while an offer is pending or a sale is in progress; accepted offers are binding — the buyer pays within 1 hour."
       );
-      const cta = t("app.bid_cancel_notice_confirm", "Understood, list it");
-      const back = t("app.bid_cancel_notice_back", "Go back");
+      const cta = t("app.offer_policy_confirm", "Understood, list it");
+      const back = t("app.offer_policy_back", "Go back");
       root.innerHTML =
         '<div style="max-width:420px;width:100%;border-radius:16px;background:linear-gradient(165deg,#1a1814 0%,#16140f 55%,#12100c 100%);' +
         'border:1px solid rgba(212,160,23,.4);box-shadow:0 20px 50px rgba(0,0,0,.45);padding:1.35rem 1.4rem;color:#f0e8d8">' +
@@ -108,10 +108,10 @@
         body +
         "</p>" +
         '<div style="display:flex;gap:.5rem;flex-wrap:wrap">' +
-        '<button type="button" id="waBidCancelNoticeConfirm" class="btn btn-primary" style="flex:1;min-width:8rem">' +
+        '<button type="button" id="waOfferPolicyConfirm" class="btn btn-primary" style="flex:1;min-width:8rem">' +
         cta +
         "</button>" +
-        '<button type="button" id="waBidCancelNoticeBack" class="btn btn-ghost" style="flex:1;min-width:6rem">' +
+        '<button type="button" id="waOfferPolicyBack" class="btn btn-ghost" style="flex:1;min-width:6rem">' +
         back +
         "</button>" +
         "</div></div>";
@@ -123,8 +123,8 @@
       root.addEventListener("click", (ev) => {
         if (ev.target === root) finish(false);
       });
-      const confirmBtn = document.getElementById("waBidCancelNoticeConfirm");
-      const backBtn = document.getElementById("waBidCancelNoticeBack");
+      const confirmBtn = document.getElementById("waOfferPolicyConfirm");
+      const backBtn = document.getElementById("waOfferPolicyBack");
       if (confirmBtn) confirmBtn.addEventListener("click", () => finish(true));
       if (backBtn) backBtn.addEventListener("click", () => finish(false));
     });
@@ -722,9 +722,11 @@
         "<p class='p-meta'></p>" +
         "<p class='p-live'></p>" +
         "</div>";
-      const cur = p.price_current != null ? p.price_current : p.price_start;
-      const bids =
-        p.bidder_count != null ? Number(p.bidder_count) || 0 : Number(p.bid_count) || 0;
+      const askPrice = p.price != null ? p.price : p.price_start;
+      const cur = p.price_current != null ? p.price_current : askPrice;
+      const offers =
+        p.offer_count != null ? Number(p.offer_count) || 0 : Number(p.bid_count) || 0;
+      const pendingOffers = Number(p.pending_offer_count) || 0;
       const enLang =
         window.WakeAgainI18n &&
         window.WakeAgainI18n.getLang &&
@@ -749,7 +751,7 @@
         if (p.one_liner_en) oneLine = p.one_liner_en;
       }
       const ls = p.listing_status || "";
-      const aStatus = p.auction_status || "live";
+      const aStatus = p.sale_status || p.auction_status || "live";
       el.querySelector("h3").textContent = titleShow;
       el.querySelector(".p-one").textContent = oneLine;
       let kws = Array.isArray(p.keywords) ? p.keywords.filter(Boolean) : [];
@@ -788,15 +790,13 @@
         badgeText = t("app.badge_rejected", "Rejected");
         badgeCls = "is-bad";
       } else if (ls === "archived" || aStatus === "ended") {
-        badgeText = t("app.badge_archived", "Round ended");
+        badgeText = t("app.badge_archived", "Listing period ended");
         badgeCls = "is-wait";
       } else if (aStatus === "sold") {
         badgeText = t("app.badge_sold", "Sold");
         badgeCls = "is-sold";
-      } else if (bids > 0) {
-        badgeText = t("app.badge_live", "Bidding");
       } else if (ls === "approved" && aStatus === "live") {
-        badgeText = t("app.badge_open", "This round");
+        badgeText = t("app.badge_live", "For sale");
       }
       badge.textContent = badgeText;
       if (badgeCls) badge.classList.add(badgeCls);
@@ -810,9 +810,9 @@
             ? money(p.sold_price != null ? p.sold_price : cur)
             : "—";
       } else {
-        priceLabel.textContent = bids > 0 ? t("app.price_now", "Current bid") : t("app.price_start", "Starting bid");
+        priceLabel.textContent = t("app.price_ask", "Asking price");
         priceVal.textContent =
-          cur != null ? money(cur) : "—";
+          askPrice != null ? money(askPrice) : "—";
       }
 
       const qOff = p.q_credits_offered != null ? Number(p.q_credits_offered) : null;
@@ -836,26 +836,29 @@
         statusBit,
         qBit,
         exp,
-        bids > 0
-          ? t("app.bids_n", "{n} bidders", { n: bids })
-          : t("app.bids_none", "No bids yet"),
+        offers > 0
+          ? t("app.offers_n", "{n} offers", { n: offers })
+          : t("app.offers_none", "No offers yet"),
       ]
         .filter(Boolean)
         .join(" · ");
 
-      let liveText = t("app.live_wait", "Waiting for first bid");
+      let liveText = t("app.offers_none", "No offers yet");
       if (ls === "pending") liveText = t("app.live_pending", "In review · not public yet");
       else if (ls === "hold") liveText = t("app.live_hold", "On hold");
       else if (ls === "rejected") liveText = t("app.live_reject", "Please revise");
       else if (ls === "archived" || aStatus === "ended")
-        liveText = t("app.live_archived", "Round ended · delisted · re-list needs re-review (lower priority)"
+        liveText = t("app.live_archived", "Listing period ended · delisted · re-listing needs re-review (lower priority)"
         );
       else if (aStatus === "sold") liveText = t("app.live_sold", "Sold");
       else if (ls === "approved" && aStatus === "live")
-        liveText = bids > 0 ? t("app.badge_live", "Bidding") : t("app.live_wait", "Waiting for first bid");
+        liveText =
+          pendingOffers > 0
+            ? t("app.live_offers_pending", "{n} offers waiting for a reply", { n: pendingOffers })
+            : t("app.live_for_sale", "For sale · buy at the asking price or make an offer");
       el.querySelector(".p-live").textContent = liveText;
 
-      // Mine feed: re-list after round ends (re-review, back of queue)
+      // Mine feed: re-list after the listing period ends (re-review, back of queue)
       if (feed === "mine" && p.can_relist) {
         const actions = document.createElement("div");
         actions.className = "p-card-actions";
@@ -873,15 +876,15 @@
         el.appendChild(actions);
       }
 
-      // Mine feed: adjust starting price up or down — only while no bid has landed
-      if (feed === "mine" && ls === "approved" && aStatus === "live" && bids === 0) {
+      // Mine feed: adjust the asking price up or down — any time while the listing is live
+      if (feed === "mine" && ls === "approved" && aStatus === "live") {
         const priceActions = document.createElement("div");
         priceActions.className = "p-card-actions";
         priceActions.style.marginTop = "8px";
         const priceBtn = document.createElement("button");
         priceBtn.type = "button";
         priceBtn.className = "btn btn-sm btn-ghost";
-        priceBtn.textContent = t("app.btn_edit_price", "Adjust starting price");
+        priceBtn.textContent = t("app.btn_edit_price", "Adjust asking price");
         priceBtn.addEventListener("click", function (ev) {
           ev.preventDefault();
           ev.stopPropagation();
@@ -915,8 +918,12 @@
         }
       }
 
-      // Mine feed: self-delete a mistaken listing — only while no bid has landed
-      if (feed === "mine" && bids === 0 && aStatus !== "sold") {
+      // Mine feed: self-delete a mistaken listing — only while no offer is pending and no sale is in progress
+      const dealSt = String(p.deal_status || "");
+      const saleInProgress =
+        aStatus === "sold" ||
+        (dealSt !== "" && dealSt !== "payment_default");
+      if (feed === "mine" && pendingOffers === 0 && !saleInProgress) {
         const delActions = document.createElement("div");
         delActions.className = "p-card-actions";
         delActions.style.marginTop = "8px";
@@ -943,21 +950,21 @@
   async function relistListing(p) {
     if (!p || !p.id) return;
     const ok = window.confirm(
-      t("app.relist_confirm", "Re-list “{title}”?\n\n· Ops re-review required\n· After approval it starts at the end of this round’s public list\n· Not a paid pin or bump",
+      t("app.relist_confirm", "Re-list “{title}”?\n\nThis puts a listing whose listing period ended back up. After re-review it is published again from the back of the list.\n· Not a paid pin or bump",
         { title: p.title || "" }
       )
     );
     if (!ok) return;
     try {
       const daysRaw = window.prompt(
-        t("app.relist_days_prompt", "Auction days (1–30, default 7)"),
+        t("app.relist_days_prompt", "Listing days (1–30, default 7)"),
         "7"
       );
       let days = parseInt(daysRaw == null || daysRaw === "" ? "7" : daysRaw, 10);
       if (!Number.isFinite(days)) days = 7;
       days = Math.max(1, Math.min(30, days));
       const res = await api.relistProject(p.id, {
-        auction_days: days,
+        listing_days: days,
         attest_works: true,
         attest_features: true,
         attest_license: true,
@@ -982,9 +989,9 @@
 
   async function editPriceListing(p) {
     if (!p || !p.id) return;
-    const cur = Number(p.price_start) || 0;
+    const cur = Number(p.price != null ? p.price : p.price_start) || 0;
     const raw = window.prompt(
-      t("app.edit_price_prompt", "New starting price (₩)\n\nNo bids yet, so you can raise or lower it freely.", {}),
+      t("app.edit_price_prompt", "New asking price (₩)\n\nYou can raise or lower it any time while the listing is live. Pending offers stay as they are.", {}),
       String(cur)
     );
     if (raw == null || raw.trim() === "") return;
@@ -997,7 +1004,7 @@
       const res = await api.updateProjectPrice(p.id, next);
       window.alert(
         (res && res.note && api.translateBackendText(res.note)) ||
-          t("app.edit_price_ok", "Starting price updated.")
+          t("app.edit_price_ok", "Asking price updated.")
       );
       feed = "mine";
       loadProjects(true);
@@ -1011,7 +1018,7 @@
   }
 
   // 필수 필드 정책(2026-08-15) 이전에 올라온 매물은 저장소·라이브데모·활동일이 비어 있고
-  // "미등록" 배지가 붙는다. relist는 라이브 라운드에서 막히므로 여기서 채워 넣는다.
+  // "미등록" 배지가 붙는다. relist는 게시 중인 매물에서 막히므로 여기서 채워 넣는다.
   function missingVerification(p) {
     if (!p) return [];
     const gaps = [];
@@ -1086,7 +1093,7 @@
   async function deleteListing(p) {
     if (!p || !p.id) return;
     const ok = window.confirm(
-      t("app.delete_confirm", "Delete “{title}”?\n\nThis can't be undone. Only works while no bid has landed.",
+      t("app.delete_confirm", "Delete “{title}”?\n\nThis can't be undone. Only works while no offer is pending and no sale is in progress.",
         { title: p.title || "" }
       )
     );
@@ -2296,7 +2303,7 @@
     });
   });
 
-  // Start price bands by product status
+  // Asking price bands by product status
   let pricingBands = null;
   function bandForStatus(status) {
     if (!pricingBands || !pricingBands.statuses) return null;
@@ -2422,7 +2429,7 @@
     if (!band) {
       if (guide)
         guide.textContent = en
-          t("app.status_price_note", "Start-price band depends on status.");
+          t("app.status_price_note", "Asking price band depends on status.");
       if (criteria) criteria.hidden = true;
       return;
     }
@@ -2443,10 +2450,7 @@
         moneyFn(band.suggest) +
         "</strong> · " +
         t("app.price_min", "Min ") +
-        moneyFn(band.min) +
-        " · " +
-        t("app.price_step", "Bid step ") +
-        moneyFn(band.min_increment);
+        moneyFn(band.min);
     }
     if (hint) {
       const moneyFn =
@@ -2461,7 +2465,7 @@
     }
     if (price) {
       price.min = band.min;
-      price.step = band.min_increment;
+      if (band.min_increment) price.step = band.min_increment;
       if (forceSuggest || !price.value) {
         price.value = band.suggest;
       }
@@ -3019,10 +3023,15 @@
     const st = fieldValue("pStatus");
     const band = bandForStatus(st);
     const start = $("pPrice").value ? Number($("pPrice").value) : null;
-    if (band && (start == null || start < band.min)) {
+    if (start == null || !(start > 0)) {
+      showErr($("projErr"), t("app.err_price_required", "Enter an asking price (KRW)."));
+      $("pPrice").focus();
+      return;
+    }
+    if (band && start < band.min) {
       showErr(
         $("projErr"),
-        t("app.err_start_min", "{label}: minimum start is {p}.", {
+        t("app.err_start_min", "{label}: minimum asking price is {p}.", {
           label: band.label || st,
           p: money(band.min),
         })
@@ -3046,29 +3055,10 @@
     if (start != null && start > PRICE_MAX) {
       showErr(
         $("projErr"),
-        t("app.err_start_max", "Start price max is {p}.", { p: money(PRICE_MAX) })
+        t("app.err_start_max", "Asking price max is {p}.", { p: money(PRICE_MAX) })
       );
       $("pPrice").focus();
       return;
-    }
-    const buyNowRaw = $("pBuyNow") && $("pBuyNow").value ? Number($("pBuyNow").value) : null;
-    if (buyNowRaw != null) {
-      if (buyNowRaw > PRICE_MAX) {
-        showErr(
-          $("projErr"),
-          t("app.err_buy_max", "Buy-now max is {p}. Leave blank to skip.", { p: money(PRICE_MAX) })
-        );
-        if ($("pBuyNow")) $("pBuyNow").focus();
-        return;
-      }
-      if (start != null && buyNowRaw < start) {
-        showErr(
-          $("projErr"),
-          t("app.err_buy_vs_start", "Buy-now must be ≥ start ({p}). Leave blank to skip.", { p: money(start) })
-        );
-        if ($("pBuyNow")) $("pBuyNow").focus();
-        return;
-      }
     }
     if (!listingKeywords.length) {
       showErr($("projErr"), t("app.kw_need", "Add 1–5 search keywords."));
@@ -3125,8 +3115,8 @@
       demo_images: demoImageUrls.slice(0, DEMO_MAX),
       assets,
       keywords: listingKeywords.slice(0, KW_MAX),
+      price: start,
       price_start: start,
-      min_increment: band ? band.min_increment : 10000,
       contact: (api.getUser() && api.getUser().email) || "",
       license_note: licenseNote,
       attest_works: true,
@@ -3145,9 +3135,6 @@
         ? parseInt($("pQSla").value || "48", 10) || 48
         : 48,
     };
-    if (buyNowRaw != null && buyNowRaw > 0) {
-      payload.price_buy_now = buyNowRaw;
-    }
     // Extra help tickets: 0 = not sold, else min 5,000 KRW ledger units (server clamps)
     if (payload.q_credit_unit_price > 0 && payload.q_credit_unit_price < 5000) {
       showErr(
@@ -3159,7 +3146,7 @@
       if ($("pQUnitPrice")) $("pQUnitPrice").focus();
       return;
     }
-    const proceed = await showBidCancelPolicyModal();
+    const proceed = await showOfferPolicyModal();
     if (!proceed) return;
     const btn = e.target.querySelector('button[type="submit"]');
     if (btn) btn.disabled = true;
