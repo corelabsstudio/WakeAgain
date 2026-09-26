@@ -35,7 +35,17 @@ const catSelect=value=>`<div><label for="f-category">작업 분야</label><selec
 function formData(form){return Object.fromEntries(new FormData(form));}
 function bindForm(fn){$('#active-form').addEventListener('submit',e=>{e.preventDefault();run(()=>fn(formData(e.currentTarget),e.currentTarget,e.submitter),e.submitter);});}
 function empty(title,text,action=''){return `<div class="service-empty"><h3>${title}</h3><p>${text}</p>${action}</div>`;}
-function updateAccount(){$('#account-button').textContent=user?'내 작업 공간':'로그인';}
+function updateAccount(){
+ const button=$('#account-button'),menu=$('#account-menu'),drop=$('#account-dropdown');
+ if(!button||!menu||!drop)return;
+ button.classList.toggle('has-account',!!user);
+ button.setAttribute('aria-label',user?`${user.name||'내 계정'} 메뉴`:'로그인');
+ button.innerHTML=user?`${user.avatar?`<img class="account-avatar" src="/api/upload-preview/${encodeURIComponent(user.avatar.split('/').pop())}" alt="">`:`<span class="account-avatar account-initial" aria-hidden="true">${esc((user.name||'W').slice(0,1))}</span>`}<span class="account-name">${esc(user.name||'내 계정')}</span><span class="account-caret" aria-hidden="true">⌄</span>`:'로그인';
+ if(!user)closeAccountMenu();
+}
+function openAccountMenu(open){const button=$('#account-button'),drop=$('#account-dropdown');if(!button||!drop)return;drop.hidden=!open;button.setAttribute('aria-expanded',String(open));}
+function closeAccountMenu(){openAccountMenu(false);}
+function profilePhotoUrl(path){return path?`/api/upload-preview/${encodeURIComponent(path.split('/').pop())}`:'';}
 async function requireUser(next){if(user)return next();return login(next);}
 function login(next=()=>dashboard()){
  show('이메일로 시작하세요',`<div class="login-panel"><p>비밀번호 없이 인증번호로 로그인합니다.<br>처음이라면 계정이 함께 만들어집니다.</p><form id="active-form">${input('email','이메일','','email','required autocomplete="email" maxlength="254"')}${input('name','표시 이름','','text','required minlength="2" maxlength="40" autocomplete="nickname"')}<p class="subtle">이메일은 인증과 서비스 이용에, 이름은 작업과 상담 화면에 사용됩니다.</p><label class="check"><input type="checkbox" required>위 계정 정보의 수집·이용에 동의합니다. 탈퇴 요청 시 삭제하며, 공개 작업에는 표시 이름만 노출됩니다.</label>${err}<div class="app-actions"><button class="button primary">인증번호 받기</button></div></form></div>`,'WELCOME');
@@ -219,7 +229,14 @@ document.addEventListener('click',e=>{
  if(b.dataset.collection){collection=b.dataset.collection;render();return;}
 });
 $('#collection-select').addEventListener('change',e=>{collection=e.target.value;render();});
-$('#account-button').addEventListener('click',()=>run(()=>requireUser(()=>dashboard())));
+$('#account-button').addEventListener('click',()=>{if(!user){run(()=>requireUser(()=>dashboard()));return;}if(matchMedia('(hover: hover) and (pointer: fine)').matches&&!$('#account-dropdown').hidden)return;openAccountMenu($('#account-dropdown').hidden);});
+$('#account-menu').addEventListener('pointerenter',e=>{if(e.pointerType!=='touch'&&matchMedia('(hover: hover) and (pointer: fine)').matches&&user)openAccountMenu(true);});
+$('#account-menu').addEventListener('pointerleave',e=>{if(e.pointerType!=='touch'&&matchMedia('(hover: hover) and (pointer: fine)').matches)closeAccountMenu();});
+$('#account-menu').addEventListener('focusin',()=>{if(user)openAccountMenu(true);});
+$('#account-menu').addEventListener('focusout',e=>{if(!$('#account-menu').contains(e.relatedTarget))closeAccountMenu();});
+$('#account-menu').addEventListener('click',e=>{if(e.target.closest('a[role="menuitem"]'))closeAccountMenu();});
+document.addEventListener('click',e=>{if(!$('#account-menu').contains(e.target))closeAccountMenu();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#account-dropdown').hidden){closeAccountMenu();$('#account-button').focus();}});
 $('#search-form').addEventListener('submit',e=>{e.preventDefault();query=$('#search-input').value;render();$('#explore').scrollIntoView();});
 $('#saved-filter').addEventListener('click',()=>{savedOnly=!savedOnly;render();});
 $('#saved-nav')?.addEventListener('click',()=>{savedOnly=true;render();$('#explore').scrollIntoView();});
@@ -227,4 +244,4 @@ $('#reset-filters').addEventListener('click',()=>{category='all';collection='all
 $('#about-preview').addEventListener('click',()=>show('WakeAgain 이용 안내',`<h3>좋은 작업에서 시작하는 연결</h3><p>콘셉트 컬렉션은 의뢰 방향을 고르는 예시입니다. 등록 전문가의 작업에는 실제 표시 이름이 붙습니다.</p><h3>비용 확인 → 의뢰 확정 → 작업 가능 응답 → 견적 비교</h3><p>초안과 비용 확인은 전문가에게 노출되지 않습니다. 실제 진행할 의뢰만 적합한 전문가에게 전달합니다.</p><h3>서비스 이용 범위</h3><p>현재 작업 탐색, 의뢰, 견적 비교와 상담을 지원하며, 사이트 내 결제·에스크로·정산은 제공하지 않습니다. 전문가 선택만으로 결제나 계약이 체결되지 않습니다.</p><h3>새로운 전문가에게도 기회를</h3><p>후기 수 순위 대신 분야, 작업 가능 상태와 최근 초대 순서를 기준으로 연결합니다. 견적 발송료를 받지 않습니다.</p>`));
 render();
 (async()=>{try{config=await api('/config');if(config.development)$('#environment-note').textContent='로컬 베타 · 데이터는 서버에 저장됩니다. 공개 사이트와는 연결되지 않았습니다.';await refreshWorks();user=await api('/session');updateAccount();}catch(e){toast(e.message);$('#environment-note').textContent='서버 연결을 확인해 주세요. 등록 작업을 불러오지 못했습니다.';}})();
-setInterval(async()=>{if(user&&document.visibilityState==='visible'){try{const d=await api('/dashboard');const n=d.notices.filter(x=>!x.read).length;$('#account-button').textContent='내 작업 공간'+(n?' '+n:'');}catch{}}},30000);
+setInterval(async()=>{if(user&&document.visibilityState==='visible'){try{const d=await api('/dashboard');const n=d.notices.filter(x=>!x.read).length;$('#account-button').dataset.unread=n||'';}catch{}}},30000);

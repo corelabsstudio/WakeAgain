@@ -18,7 +18,7 @@ navigation=function(){
  const expert=workspaceRole==='expert',items=expert?[['portfolio','내 작업물'],['inbox','받은 의뢰'],['templates','견적서 보관함'],['statistics','작업 통계']]:[['requests','내 의뢰']];
  const active=k=>key===k||(k==='preferences'&&['profile','availability','settings','account','alimtalk','admin'].includes(key))||(k==='conversations'&&kind==='chat');
  const links=rows=>rows.map(([k,label])=>`<a href="#/workspace/${k}" ${active(k)?'aria-current="page"':''}>${deskIcon(k)}<span>${label}</span></a>`).join('');
- $('#workspace-navigation').innerHTML=`<div class="desk-member"><span class="desk-avatar" aria-hidden="true">${esc((user?.name||'W').slice(0,1))}</span><div><strong>${esc(user?.name||'WakeAgain')}</strong><a href="#/workspace/preferences">내 정보 관리 <span aria-hidden="true">›</span></a></div></div><div class="desk-role" role="group" aria-label="이용 화면"><button type="button" data-action="workspace-role" data-value="client" aria-pressed="${!expert}">의뢰인</button><button type="button" data-action="workspace-role" data-value="expert" aria-pressed="${expert}">전문가</button></div><nav class="desk-navigation" aria-label="내 업무"><div>${links(items)}</div><div>${links([['conversations','대화'],['notices','알림'],['preferences','설정']])}</div></nav><div class="desk-nav-foot"><a href="#explore">작업 둘러보기 <span aria-hidden="true">↗</span></a><button data-action="logout">로그아웃</button></div>`;
+ $('#workspace-navigation').innerHTML=`<div class="desk-member"><span class="desk-avatar" aria-hidden="true">${user?.avatar?`<img src="${profilePhotoUrl(user.avatar)}" alt="">`:esc((user?.name||'W').slice(0,1))}</span><div><strong>${esc(user?.name||'WakeAgain')}</strong><a href="#/workspace/member-profile">프로필 관리 <span aria-hidden="true">›</span></a></div></div><div class="desk-role" role="group" aria-label="이용 화면"><button type="button" data-action="workspace-role" data-value="client" aria-pressed="${!expert}">의뢰인</button><button type="button" data-action="workspace-role" data-value="expert" aria-pressed="${expert}">전문가</button></div><nav class="desk-navigation" aria-label="내 업무"><div>${links(items)}</div><div>${links([['conversations','대화'],['notices','알림'],['preferences','설정']])}</div></nav><div class="desk-nav-foot"><a href="#explore">작업 둘러보기 <span aria-hidden="true">↗</span></a><button data-action="logout">로그아웃</button></div>`;
 };
 actions['workspace-role']=async role=>{workspaceRole=role==='expert'?'expert':'client';try{localStorage.setItem('wa.role.'+user.id,workspaceRole);}catch{}await dashboard(workspaceRole==='expert'?'portfolio':'requests');};
 const deskShow=show;
@@ -46,12 +46,25 @@ function deskRow(title,status,meta,action,extra=''){return `<article class="desk
 const inheritedDashboard=dashboard;
 dashboard=async function(tab){
  tab=tab||defaultWorkspaceTab();
- if(!['portfolio','requests','inbox','templates','notices','preferences','statistics','conversations','requesthub'].includes(tab))return inheritedDashboard(tab);
+ if(!['portfolio','requests','inbox','templates','notices','preferences','statistics','conversations','requesthub','member-profile'].includes(tab))return inheritedDashboard(tab);
  if(tab==='requesthub')return dashboard(workspaceRole==='expert'?'inbox':'requests');
  return page('workspace/'+tab,async()=>{
   [dashboardData,user]=await Promise.all([api('/dashboard'),api('/me')]);updateAccount();navigation();
   show(routes[tab]||'내 작업 공간','');workspaceRoot.dataset.ui='list';
   const all=()=>true,link=(label,href)=>`<a class="button primary" href="${href}">${label}</a>`;
+  if(tab==='member-profile'){
+   deskHeader('프로필 관리','사진과 이름을 설정하세요.');
+   const currentPhoto=user.avatar||null;
+   $('#app-content').innerHTML=`<form id="member-profile-form" class="member-profile-editor"><div class="member-photo-row"><div class="member-photo-preview" id="member-photo-preview">${currentPhoto?`<img src="${profilePhotoUrl(currentPhoto)}" alt="현재 프로필 사진">`:`<span aria-hidden="true">${esc((user.name||'W').slice(0,1))}</span>`}</div><div class="member-photo-controls"><label for="member-photo">프로필 사진</label><input id="member-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp"><button type="button" class="text-button" id="member-photo-remove" ${currentPhoto?'':'hidden'}>사진 지우기</button><p class="subtle">JPG, PNG, WebP · 8MB 이하 · 100px 이상</p></div></div><label for="member-name">표시 이름</label><input id="member-name" name="name" value="${esc(user.name||'')}" required minlength="2" maxlength="40" autocomplete="nickname"><p class="subtle">작업과 대화, 의뢰 화면에 표시됩니다.</p><p class="member-profile-privacy">전문가로 공개 작업을 등록하면 이 사진이 공개 프로필에 표시됩니다. 의뢰인 계정의 사진은 다른 사용자에게 공개되지 않습니다.</p><p class="app-error" id="member-profile-error" role="alert"></p><div class="app-actions"><button class="button primary" type="submit">변경 내용 저장</button></div></form>`;
+   let avatar=currentPhoto,selectedFile=null,previewObjectUrl=null;
+   const preview=$('#member-photo-preview'),remove=$('#member-photo-remove'),file=$('#member-photo');
+   const paintPhoto=()=>{const src=selectedFile?previewObjectUrl:avatar?profilePhotoUrl(avatar):'';preview.innerHTML=src?`<img src="${src}" alt="프로필 사진 미리보기">`:`<span aria-hidden="true">${esc(($('#member-name').value||'W').slice(0,1))}</span>`;remove.hidden=!avatar;};
+   $('#member-name').addEventListener('input',()=>{if(!avatar)paintPhoto();});
+   file.addEventListener('change',()=>{const next=file.files?.[0];if(!next)return;if(next.size>8*1024*1024){file.value='';$('#member-profile-error').textContent='이미지는 8MB 이하로 올려 주세요.';return;}selectedFile=next;avatar='selected';if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=URL.createObjectURL(next);preview.innerHTML=`<img src="${previewObjectUrl}" alt="프로필 사진 미리보기">`;remove.hidden=false;$('#member-profile-error').textContent='';});
+   remove.addEventListener('click',()=>{selectedFile=null;avatar=null;file.value='';if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;}paintPhoto();});
+   $('#member-profile-form').addEventListener('submit',e=>{e.preventDefault();run(async()=>{let nextAvatar=avatar;if(selectedFile){const form=new FormData();form.append('file',selectedFile);nextAvatar=(await api('/uploads',{method:'POST',body:form})).path;}await api('/profile/basic',{method:'PUT',body:{name:$('#member-name').value.trim(),avatar:nextAvatar}});if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;}user=await api('/me');updateAccount();navigation();toast('프로필을 저장했습니다.');await dashboard('member-profile');},e.submitter);});
+   return;
+  }
   if(tab==='portfolio'){
    const items=await api('/my/portfolios'),published=items.filter(x=>x.published).length;
    deskHeader('내 작업물','공개한 작업과 작성 중인 작업을 관리하세요.',link('작업물 등록','#/work/new'));

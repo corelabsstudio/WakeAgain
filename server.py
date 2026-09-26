@@ -77,6 +77,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS throttle(key TEXT PRIMARY KEY,n INTEGER NOT NULL,until REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS profiles(user_id TEXT PRIMARY KEY REFERENCES users(id),category TEXT NOT NULL,bio TEXT NOT NULL,accepting INTEGER NOT NULL,last_invited REAL NOT NULL DEFAULT 0);
         CREATE TABLE IF NOT EXISTS uploads(path TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id));
+        CREATE TABLE IF NOT EXISTS profile_photos(user_id TEXT PRIMARY KEY REFERENCES users(id),path TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS portfolios(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),title TEXT NOT NULL,category TEXT NOT NULL,image TEXT NOT NULL,description TEXT NOT NULL,scope TEXT NOT NULL,price INTEGER NOT NULL,published INTEGER NOT NULL,created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),data TEXT NOT NULL,status TEXT NOT NULL,created REAL NOT NULL,updated REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS invites(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES requests(id),expert_id TEXT NOT NULL REFERENCES users(id),status TEXT NOT NULL,created REAL NOT NULL,UNIQUE(request_id,expert_id));
@@ -318,7 +319,8 @@ def logout(request: Request,response: Response):
 def me(user=Depends(current)):
     with db() as c:
         profile = c.execute('SELECT * FROM profiles WHERE user_id=?',(user['id'],)).fetchone()
-    return {**user,'email':user['email'] if social_auth.real_email(user['email']) else None,'profile':dict(profile) if profile else None}
+        photo = c.execute('SELECT path FROM profile_photos WHERE user_id=?',(user['id'],)).fetchone()
+    return {**user,'email':user['email'] if social_auth.real_email(user['email']) else None,'profile':dict(profile) if profile else None,'avatar':photo['path'] if photo else None}
 
 @app.get('/api/session')
 def session(request: Request):
@@ -338,6 +340,26 @@ def profile(body: Profile,user=Depends(current)):
     with db() as c:
         c.execute('UPDATE users SET name=? WHERE id=?',(body.name,user['id']))
         c.execute('INSERT INTO profiles VALUES(?,?,?,?,0) ON CONFLICT(user_id) DO UPDATE SET category=excluded.category,bio=excluded.bio,accepting=excluded.accepting',(user['id'],body.category,body.bio,body.accepting))
+    return {'ok':True}
+
+class BasicProfile(Input):
+    name: str = Field(min_length=2,max_length=40)
+    avatar: str | None = None
+
+@app.put('/api/profile/basic')
+def basic_profile(body: BasicProfile,user=Depends(current)):
+    if body.avatar is not None:
+        match=re.fullmatch(r'/uploads/([a-f0-9]{24}\.webp)',body.avatar)
+        if not match: fail('프로필 사진을 다시 선택해 주세요.')
+        with db() as c:
+            owned=c.execute('SELECT 1 FROM uploads WHERE path=? AND user_id=?',(body.avatar,user['id'])).fetchone()
+        if not owned or not (UPLOADS/match.group(1)).is_file(): fail('본인이 올린 사진만 프로필에 사용할 수 있습니다.')
+    with db() as c:
+        c.execute('UPDATE users SET name=? WHERE id=?',(body.name,user['id']))
+        if body.avatar is None:
+            c.execute('DELETE FROM profile_photos WHERE user_id=?',(user['id'],))
+        else:
+            c.execute('INSERT INTO profile_photos VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET path=excluded.path',(user['id'],body.avatar))
     return {'ok':True}
 
 @app.post('/api/uploads')
@@ -709,6 +731,8 @@ def public_upload(name:str):
     if not re.fullmatch(r'[a-f0-9]{24}\.webp',name): fail('이미지를 찾을 수 없습니다.',404)
     with db() as c:
         published=c.execute('SELECT 1 FROM portfolios p WHERE published=1 AND (image=? OR EXISTS(SELECT 1 FROM portfolio_images pi WHERE pi.portfolio_id=p.id AND pi.path=?))',('/uploads/'+name,'/uploads/'+name)).fetchone()
+        if not published:
+            published=c.execute('SELECT 1 FROM profile_photos pf WHERE pf.path=? AND EXISTS(SELECT 1 FROM portfolios p WHERE p.user_id=pf.user_id AND p.published=1)',('/uploads/'+name,)).fetchone()
     if not published: fail('공개되지 않은 이미지입니다.',404)
     return FileResponse(UPLOADS/name,media_type='image/webp',headers={'Cache-Control':'no-cache'})
 

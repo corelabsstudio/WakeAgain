@@ -73,7 +73,7 @@ def install(s):
     @app.get('/api/experts/{key}')
     def expert(key:str):
         with s.db() as c:
-            p=c.execute('SELECT u.id,u.name,p.bio,p.category,p.accepting FROM users u JOIN profiles p ON p.user_id=u.id WHERE u.id=?',(key,)).fetchone()
+            p=c.execute('SELECT u.id,u.name,p.bio,p.category,p.accepting,pf.path AS avatar FROM users u JOIN profiles p ON p.user_id=u.id LEFT JOIN profile_photos pf ON pf.user_id=u.id WHERE u.id=?',(key,)).fetchone()
             works=[s.portfolio_record(c,r) for r in c.execute('SELECT * FROM portfolios WHERE user_id=? AND published=1 ORDER BY created DESC',(key,))]
             if not p or not works:s.fail('공개 프로필을 찾을 수 없습니다.',404)
             pref=c.execute('SELECT data FROM expert_preferences WHERE user_id=?',(key,)).fetchone()
