@@ -9,7 +9,7 @@ function bindSocial(link=false){$$('[data-social]').forEach(b=>b.addEventListene
 },b)));}
 login=async function(next=()=>dashboard()){
  const p=await api('/auth/providers');
- show('좋은 연결, 여기서 시작하세요',`<div class="login-panel"><p>쓰고 계신 계정으로 간편하게 시작하세요.<br>처음이라면 회원가입도 함께 진행됩니다.</p><div class="social-buttons">${socialButtons(p)}</div><label class="check"><input id="social-consent" type="checkbox">${consentText} 수집·이용에 동의합니다.</label><p class="subtle"><a href="/legal/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <a href="/legal/terms.html" target="_blank" rel="noopener">이용약관</a></p>${p.email_ready?`<div class="login-divider">또는</div><button type="button" class="button secondary email-login" id="email-login">이메일 인증으로 시작하기</button><p class="subtle">기존 계정이 있다면 기존 방식으로 로그인한 후 ‘로그인·연락처’에서 다른 계정을 연결해 주세요.</p>`:""}</div>`,'WELCOME');
+ show('WakeAgain 로그인',`<div class="login-panel"><p>쓰고 계신 계정으로 간편하게 시작하세요.<br>처음이라면 회원가입도 함께 진행됩니다.</p><div class="social-buttons">${socialButtons(p)}</div><label class="check"><input id="social-consent" type="checkbox">${consentText} 수집·이용에 동의합니다.</label><p class="subtle"><a href="/legal/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <a href="/legal/terms.html" target="_blank" rel="noopener">이용약관</a></p>${p.email_ready?`<div class="login-divider">또는</div><button type="button" class="button secondary email-login" id="email-login">이메일 인증으로 시작하기</button><p class="subtle">기존 계정이 있다면 기존 방식으로 로그인한 후 ‘로그인·연락처’에서 다른 계정을 연결해 주세요.</p>`:""}</div>`,'WELCOME');
  bindSocial();$('#email-login')?.addEventListener('click',()=>emailLogin(next));
 };
 async function accountSettings(){

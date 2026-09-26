@@ -33,7 +33,7 @@ show=function(title,body,eyebrow='WAKEAGAIN'){
 };
 close=function(){if(workspaceMode){leaveWorkspace();history.pushState(null,'','#top');}else originalClose();};
 const compactLogin=login;
-login=async function(next=()=>dashboard('portfolio')){
+login=async function(next=()=>dashboard()){
  if(workspaceMode)leaveWorkspace();pageDialog.classList.add('login-dialog');return compactLogin(next);
 };
 async function page(route,render){
@@ -102,7 +102,7 @@ async function resolveWorkspace(){
  }
  return dashboard('portfolio');
 }
-window.resumeWorkspace=async()=>{let route;try{route=sessionStorage.getItem('wa.afterLogin');sessionStorage.removeItem('wa.afterLogin');}catch{}history.replaceState(null,'',route?'#/'+route:'#/workspace/portfolio');await resolveWorkspace();};
+window.resumeWorkspace=async()=>{let route;try{route=sessionStorage.getItem('wa.afterLogin');sessionStorage.removeItem('wa.afterLogin');}catch{}history.replaceState(null,'',route?'#/'+route:'#/workspace/'+(typeof defaultWorkspaceTab==='function'?defaultWorkspaceTab():'portfolio'));await resolveWorkspace();};
 window.addEventListener('hashchange',()=>run(resolveWorkspace));
 window.addEventListener('beforeunload',e=>{flushDraft();if(workspaceBusy||workspaceDraftFailed){e.preventDefault();e.returnValue='';}});
 document.addEventListener('click',e=>{
