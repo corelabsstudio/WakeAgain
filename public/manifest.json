@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "WakeAgain",
+  "short_name": "WakeAgain",
+  "description": "좋은 작업에서 시작하는 외주. 작업을 찾고 의뢰를 등록하세요.",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#171c22",
+  "theme_color": "#171c22",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

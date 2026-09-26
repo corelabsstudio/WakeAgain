@@ -2,10 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#171c22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WakeAgain">
 <meta name="description" content="작업을 둘러보고, 맡길 일을 정리하세요. WakeAgain에서 작업을 찾고, 비용을 알아보고, 내 일에 맞는 전문가와 연결하세요.">
 <title>WakeAgain — 좋은 작업에서 시작하는 외주</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="styles.css?v=4">
@@ -46,7 +51,7 @@
   </section>
 </main>
 <section id="work-page" class="shell" role="main" hidden aria-labelledby="project-title"><nav class="work-breadcrumb" aria-label="현재 위치"><a href="/" data-work-back>← 작업 목록</a><span>작업 상세</span></nav><div id="project-content"></div></section>
-<footer class="footer shell"><div class="footer-top"><a class="brand" href="#top">wakeagain<span class="brand-dot">.</span></a><p>좋은 작업에서 시작하는 새로운 연결.</p><a href="#explore">작업 둘러보기 ↑</a></div><div class="footer-bottom"><span>© 2026 WakeAgain</span><span>작업 탐색부터 의뢰·견적 비교·상담까지.</span><a href="/legal/privacy.html">개인정보처리방침</a><a href="/legal/terms.html">이용약관</a><button type="button" id="about-preview">이용 안내</button></div></footer>
+<footer class="footer shell"><div class="footer-top"><a class="brand" href="#top">wakeagain<span class="brand-dot">.</span></a><p>좋은 작업에서 시작하는 새로운 연결.</p><a href="#explore">작업 둘러보기 ↑</a></div><div class="footer-bottom"><span>© 2026 WakeAgain</span><span>작업 탐색부터 의뢰·견적 비교·상담까지.</span><a href="/legal/privacy.html">개인정보처리방침</a><a href="/legal/terms.html">이용약관</a><button type="button" id="install-app">홈 화면에 추가</button><button type="button" id="about-preview">이용 안내</button></div></footer>
 
 <dialog id="app-dialog" class="app-dialog" aria-labelledby="app-title"><div class="dialog-head"><div><span class="small-label" id="app-eyebrow">WAKEAGAIN</span><h2 id="app-title"></h2></div><button class="close-button" data-close aria-label="창 닫기">×</button></div><div id="app-content" class="app-content"></div></dialog>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -57,4 +62,5 @@
 <script src="portfolio-detail.js?v=1" defer></script>
 <script src="request-room.js?v=1" defer></script>
 <script src="work-page.js?v=1" defer></script>
+<script src="install.js?v=1" defer></script>
 </body></html>
