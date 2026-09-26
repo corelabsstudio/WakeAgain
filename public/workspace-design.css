@@ -57,6 +57,7 @@
 .workspace-mode #workspace-navigation{font-size:16px}
 .workspace-mode .desk-member a,.workspace-mode .desk-nav-foot a,.workspace-mode .desk-nav-foot button{font-size:14px;line-height:1.5}
 .workspace-mode .desk-role button{font-size:15px}
+.workspace-mode .nav-actions .expert-register,.workspace-mode .nav-actions #account-button,.workspace-mode .nav-actions>.button{font-size:15px}
 .workspace-mode .desk-navigation a{font-size:16px;line-height:1.5;word-break:keep-all}
 .workspace-mode #app-title{font-size:28px;line-height:1.35}
 .workspace-mode .desk-page-description{font-size:16px;line-height:1.65;word-break:keep-all}
@@ -83,5 +84,6 @@
 .workspace-mode .flow-steps li,.workspace-mode .editor-steps li{font-size:15px}
 .workspace-mode .flow-panel>h2{font-size:25px}
 @media(max-width:1050px){.workspace-mode #workspace-shell{grid-template-columns:216px minmax(0,1fr);gap:20px}.workspace-mode .desk-metrics>div{padding:20px 14px}}
-@media(max-width:760px){.workspace-mode #workspace-shell{display:block}.workspace-mode .desk-member strong{font-size:16px}.workspace-mode .desk-member a{font-size:14px}.workspace-mode .desk-navigation a{font-size:14px;min-height:48px}.workspace-mode #app-title{font-size:25px}.workspace-mode .desk-page-description{font-size:15px}.workspace-mode .desk-page-action .button{font-size:14px}.workspace-mode .desk-stats>button>span,.workspace-mode .desk-stats small{font-size:14px!important}.workspace-mode .desk-stats strong{font-size:25px}.workspace-mode .desk-record-action .button{font-size:14px}.workspace-mode .desk-metrics span{font-size:15px}.workspace-mode .desk-metrics strong{font-size:30px}.workspace-mode .flow-steps li,.workspace-mode .editor-steps li{font-size:14px}.workspace-mode .flow-panel>h2{font-size:22px}}
+@media(max-width:760px){.workspace-mode #workspace-shell{display:block}.workspace-mode .nav-actions{gap:7px}.workspace-mode .nav-actions .expert-register,.workspace-mode .nav-actions #account-button,.workspace-mode .nav-actions>.button{font-size:13px}.workspace-mode .desk-member strong{font-size:16px}.workspace-mode .desk-member a{font-size:14px}.workspace-mode .desk-navigation a{font-size:15px;min-height:48px}.workspace-mode #app-title{font-size:25px}.workspace-mode .desk-page-description{font-size:15px}.workspace-mode .desk-page-action .button{font-size:14px}.workspace-mode .desk-stats>button>span,.workspace-mode .desk-stats small{font-size:14px!important}.workspace-mode .desk-stats strong{font-size:25px}.workspace-mode .desk-record-action .button{font-size:14px}.workspace-mode .desk-metrics span{font-size:16px}.workspace-mode .desk-metrics strong{font-size:30px}.workspace-mode .flow-steps li,.workspace-mode .editor-steps li{font-size:14px}.workspace-mode .flow-panel>h2{font-size:22px}}
+@media(max-width:360px){.workspace-mode .nav-actions .expert-register,.workspace-mode .nav-actions #account-button,.workspace-mode .nav-actions>.button{font-size:12px}}
 @media(max-width:420px){.workspace-mode .desk-metrics{grid-template-columns:1fr}.workspace-mode .desk-metrics>div{padding:17px 20px}.workspace-mode .desk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
