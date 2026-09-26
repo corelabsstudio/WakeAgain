@@ -30,6 +30,10 @@ window.addEventListener('load',()=>run(async()=>{
  url.searchParams.delete('auth');history.replaceState(null,'',url.pathname+url.search+url.hash);
  const messages={success:'로그인했습니다.',linked:'로그인 계정을 연결했습니다.',expired:'로그인 요청이 만료되거나 브라우저가 달라졌습니다. 다시 시작해 주세요.',cancelled:'로그인을 취소했습니다.',failed:'로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',in_use:'이미 다른 계정에 연결되어 있습니다.',existing:'같은 이메일로 가입한 계정이 있습니다. 기존 방식으로 로그인한 뒤 로그인·연락처에서 연결해 주세요.'};
  user=await api('/session');updateAccount();
- if(status==='success'&&user)await (window.resumeWorkspace?window.resumeWorkspace():dashboard('portfolio'));else if(status==='linked'&&user)await dashboard('account');else await login();
- toast(messages[status]||'로그인을 다시 시작해 주세요.');
+ if(status==='success'&&user){await (window.resumeWorkspace?window.resumeWorkspace():dashboard('portfolio'));toast(messages.success);return;}
+ if(status==='linked'&&user){await dashboard('account');toast(messages.linked);return;}
+ await login();
+ const issue=$('#social-error');
+ issue.textContent=(status==='success'||status==='linked')?'로그인 상태를 확인하지 못했습니다. 다시 시도해 주세요.':(messages[status]||'로그인을 다시 시작해 주세요.');
+ issue.scrollIntoView({block:'nearest'});
 }));
