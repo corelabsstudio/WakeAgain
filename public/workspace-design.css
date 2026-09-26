@@ -51,3 +51,37 @@
 .flow-steps{display:flex;gap:24px;list-style:none;padding:0 0 20px;margin:0 0 24px;border-bottom:1px solid var(--line)}.flow-steps li{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}.flow-steps span{font-weight:700}.flow-steps [data-current]{color:var(--sea);font-weight:700}.workspace-mode .flow-panel>h2{font-size:23px;letter-spacing:-.04em;outline:none;margin:0 0 10px}.flow-panel>p{color:var(--muted);margin:0 0 28px}.flow-panel>.form-grid>.form-grid{grid-column:1/-1}.flow-panel>.form-grid>p{grid-column:1/-1}.flow-controls{display:flex;justify-content:space-between;gap:12px;margin-top:24px}.flow-controls .primary{margin-left:auto}.flow-panel[hidden],.flow-controls [hidden],#active-form>.app-actions[hidden]{display:none!important}.workspace-mode form[data-guided]>.app-actions{margin-bottom:0}.workspace-mode form[data-guided] .flow-panel{max-width:760px}.workspace-mode form[data-guided]>.form-grid:empty{display:none}.workspace-mode .reading-details{padding:16px 0;border-top:1px solid var(--line);margin:20px 0}.reading-details summary{cursor:pointer;font-weight:600;font-size:14px}.reading-details p,.reading-details li{font-size:13px;color:var(--muted);line-height:1.8}.workspace-mode form[data-guided]~p{font-size:12px}@media(max-width:760px){.flow-steps{gap:16px}.flow-steps li{font-size:12px}.workspace-mode .flow-panel>h2{font-size:20px}}
 
 .workspace-mode .flow-controls>.app-actions{margin:0 0 0 auto;padding:0;border:0}.flow-controls>.app-actions[hidden]{display:none!important}
+
+/* Account readability: generous Korean text sizes without changing the marketplace. */
+.workspace-mode #workspace-shell{grid-template-columns:232px minmax(0,1fr);gap:32px}
+.workspace-mode #workspace-navigation{font-size:16px}
+.workspace-mode .desk-member a,.workspace-mode .desk-nav-foot a,.workspace-mode .desk-nav-foot button{font-size:14px;line-height:1.5}
+.workspace-mode .desk-role button{font-size:15px}
+.workspace-mode .desk-navigation a{font-size:16px;line-height:1.5;word-break:keep-all}
+.workspace-mode #app-title{font-size:28px;line-height:1.35}
+.workspace-mode .desk-page-description{font-size:16px;line-height:1.65;word-break:keep-all}
+.workspace-mode .button{font-size:16px}
+.workspace-mode .app-content h3{font-size:19px}
+.workspace-mode .desk-metrics span{font-size:16px;line-height:1.5;word-break:keep-all}
+.workspace-mode .desk-metrics strong{font-size:34px}
+.workspace-mode .desk-footnote{font-size:14px;line-height:1.65;word-break:keep-all}
+.workspace-mode .desk-stats>button>span,.workspace-mode .desk-stats small{font-size:15px!important;line-height:1.5}
+.workspace-mode .desk-stats strong{font-size:29px}
+.workspace-mode .desk-filters button,.workspace-mode .desk-filters span{font-size:15px}
+.workspace-mode .desk-search input{font-size:16px!important}
+.workspace-mode .desk-empty p,.workspace-mode .service-empty p,.workspace-mode .desk-notice p{font-size:16px;line-height:1.65}
+.workspace-mode .desk-empty h3,.workspace-mode .service-empty h3{font-size:21px!important}
+.workspace-mode .desk-record p,.workspace-mode .desk-record small,.workspace-mode .desk-work p,.workspace-mode .desk-conversation p,.workspace-mode .desk-notice small{font-size:15px!important;line-height:1.6}
+.workspace-mode .desk-status,.workspace-mode .desk-chat-meta,.workspace-mode .desk-conversation h3 small{font-size:14px}
+.workspace-mode .desk-work h3,.workspace-mode .desk-conversation h3{font-size:17px!important}
+.workspace-mode .desk-settings strong,.workspace-mode .settings-list strong{font-size:17px}
+.workspace-mode .desk-settings span,.workspace-mode .settings-list span,.workspace-mode .desk-account-actions>*{font-size:15px}
+.workspace-mode .app-content label,.workspace-mode .app-content>p,.workspace-mode .app-content .check,.workspace-mode .choice-grid .check,.workspace-mode .progress-panel p,.workspace-mode .entry-options p,.workspace-mode .quote-meta,.workspace-mode .reading-details p,.workspace-mode .reading-details li{font-size:16px}
+.workspace-mode .app-content input:not([type=checkbox]),.workspace-mode .app-content textarea,.workspace-mode .app-content select{font-size:16px}
+.workspace-mode .subtle,.workspace-mode .draft-status,.workspace-mode #chat-live,.workspace-mode form[data-guided]~p{font-size:14px!important;line-height:1.65}
+.workspace-mode legend,.workspace-mode .progress-panel h3,.workspace-mode .reading-details summary{font-size:16px!important}
+.workspace-mode .flow-steps li,.workspace-mode .editor-steps li{font-size:15px}
+.workspace-mode .flow-panel>h2{font-size:25px}
+@media(max-width:1050px){.workspace-mode #workspace-shell{grid-template-columns:216px minmax(0,1fr);gap:20px}.workspace-mode .desk-metrics>div{padding:20px 14px}}
+@media(max-width:760px){.workspace-mode #workspace-shell{display:block}.workspace-mode .desk-member strong{font-size:16px}.workspace-mode .desk-member a{font-size:14px}.workspace-mode .desk-navigation a{font-size:14px;min-height:48px}.workspace-mode #app-title{font-size:25px}.workspace-mode .desk-page-description{font-size:15px}.workspace-mode .desk-page-action .button{font-size:14px}.workspace-mode .desk-stats>button>span,.workspace-mode .desk-stats small{font-size:14px!important}.workspace-mode .desk-stats strong{font-size:25px}.workspace-mode .desk-record-action .button{font-size:14px}.workspace-mode .desk-metrics span{font-size:15px}.workspace-mode .desk-metrics strong{font-size:30px}.workspace-mode .flow-steps li,.workspace-mode .editor-steps li{font-size:14px}.workspace-mode .flow-panel>h2{font-size:22px}}
+@media(max-width:420px){.workspace-mode .desk-metrics{grid-template-columns:1fr}.workspace-mode .desk-metrics>div{padding:17px 20px}.workspace-mode .desk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
