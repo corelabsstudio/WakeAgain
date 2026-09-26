@@ -1,6 +1,6 @@
 'use strict';
 const emailLogin=login;
-const consentText='회원 식별정보·이름·제공에 동의한 이메일을 가입과 서비스 이용에 사용합니다. 탈퇴 요청 시 삭제합니다.';
+const consentText='회원 식별정보·이름·제공에 동의한 이메일을 가입과 서비스 이용에 사용합니다. 계정 삭제 요청은 운영 문의로 접수합니다.';
 function socialButtons(p,link=false){return ['kakao','google'].map(k=>`<button type="button" class="social-button ${k}" data-social="${k}" ${p[k].linked&&link?'disabled':''}><span aria-hidden="true">${k==='kakao'?'●':'G'}</span>${k==='kakao'?'카카오':'Google'}${link?(p[k].linked?' 연결됨':' 연결하기'):'로 시작하기'}${p[k].ready?'':' · 연결 준비 중'}</button>`).join('');}
 function bindSocial(link=false){$$('[data-social]').forEach(b=>b.addEventListener('click',()=>run(async()=>{
  if(!$('#social-consent').checked)throw Error('계정 정보 수집·이용에 동의해 주세요.');
@@ -9,7 +9,7 @@ function bindSocial(link=false){$$('[data-social]').forEach(b=>b.addEventListene
 },b)));}
 login=async function(next=()=>dashboard()){
  const p=await api('/auth/providers');
- show('좋은 연결, 여기서 시작하세요',`<div class="login-panel"><p>쓰고 계신 계정으로 간편하게 시작하세요.<br>처음이라면 회원가입도 함께 진행됩니다.</p><div class="social-buttons">${socialButtons(p)}</div><label class="check"><input id="social-consent" type="checkbox">${consentText} 수집·이용에 동의합니다.</label>${p.email_ready?`<div class="login-divider">또는</div><button type="button" class="button secondary email-login" id="email-login">이메일 인증으로 시작하기</button><p class="subtle">기존 계정이 있다면 기존 방식으로 로그인한 후 ‘로그인·연락처’에서 다른 계정을 연결해 주세요.</p>`:""}</div>`,'WELCOME');
+ show('좋은 연결, 여기서 시작하세요',`<div class="login-panel"><p>쓰고 계신 계정으로 간편하게 시작하세요.<br>처음이라면 회원가입도 함께 진행됩니다.</p><div class="social-buttons">${socialButtons(p)}</div><label class="check"><input id="social-consent" type="checkbox">${consentText} 수집·이용에 동의합니다.</label><p class="subtle"><a href="/legal/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · <a href="/legal/terms.html" target="_blank" rel="noopener">이용약관</a></p>${p.email_ready?`<div class="login-divider">또는</div><button type="button" class="button secondary email-login" id="email-login">이메일 인증으로 시작하기</button><p class="subtle">기존 계정이 있다면 기존 방식으로 로그인한 후 ‘로그인·연락처’에서 다른 계정을 연결해 주세요.</p>`:""}</div>`,'WELCOME');
  bindSocial();$('#email-login')?.addEventListener('click',()=>emailLogin(next));
 };
 async function accountSettings(){
