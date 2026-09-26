@@ -12,6 +12,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="theme.js?v=1"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="styles.css?v=4">
 <link rel="stylesheet" href="app.css?v=6">
@@ -19,6 +20,7 @@
 <link rel="stylesheet" href="marketplace.css?v=22">
 <link rel="stylesheet" href="browse.css?v=4">
 <link rel="stylesheet" href="workspace-design.css?v=6">
+<link rel="stylesheet" href="theme.css?v=2">
 </head>
 <body>
 <a class="skip" href="#main">본문으로 바로가기</a>
@@ -30,7 +32,7 @@
   <div class="nav-wrap">
     <a class="brand" href="#top" aria-label="웨이크어게인 홈">wakeagain<span class="brand-dot">.</span></a>
     <nav aria-label="주 메뉴"><a href="#explore" class="nav-active">전문가 찾아보기</a><button type="button" id="saved-nav">저장한 작업 <span id="saved-count">0</span></button></nav>
-    <div class="nav-actions"><button class="expert-register" type="button" data-workspace>전문가 등록</button><div class="account-menu" id="account-menu"><button class="quiet-button" id="account-button" aria-haspopup="menu" aria-expanded="false" aria-controls="account-dropdown">로그인</button><div class="account-dropdown" id="account-dropdown" role="menu" hidden><a role="menuitem" href="#/workspace/member-profile">프로필 관리</a><a role="menuitem" href="#/workspace/preferences">내 정보 관리</a><button type="button" role="menuitem" data-action="logout">로그아웃</button></div></div><button class="button primary compact" type="button" data-brief>의뢰 등록</button></div>
+    <div class="nav-actions"><button class="expert-register" type="button" data-workspace>전문가 등록</button><div class="account-menu" id="account-menu"><button class="quiet-button" id="account-button" aria-haspopup="menu" aria-expanded="false" aria-controls="account-dropdown">로그인</button><div class="account-dropdown" id="account-dropdown" role="menu" hidden><a role="menuitem" href="#/workspace/member-profile">프로필 관리</a><a role="menuitem" href="#/workspace/preferences">내 정보 관리</a><button type="button" role="menuitem" data-action="logout">로그아웃</button></div></div><button class="theme-toggle" id="theme-toggle" type="button" aria-label="다크 모드 켜기" aria-pressed="false" title="다크 모드 켜기"><span class="theme-toggle-icon theme-toggle-sun" aria-hidden="true"></span><span class="theme-toggle-icon theme-toggle-moon" aria-hidden="true"></span></button><button class="button primary compact" type="button" data-brief>의뢰 등록</button></div>
   </div>
 </header>
 <div class="preview-bar" id="environment-note">작업을 먼저 보고, 내 일에 맞는 파트너를 만나세요.</div>
