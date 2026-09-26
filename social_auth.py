@@ -94,7 +94,7 @@ def install(s):
         token=s.digest(request.cookies.get('wa_session',''))
         with s.db() as c:
             linked=[r['provider'] for r in c.execute('SELECT i.provider FROM social_identities i JOIN sessions t ON t.user_id=i.user_id WHERE t.digest=? AND t.expires>?',(token,time.time()))]
-        return {**{p:{'ready':ready(p),'linked':p in linked} for p in PROVIDERS},'email_ready':s.email_ready() or not s.PRODUCTION}
+        return {**{p:{'ready':ready(p),'linked':p in linked} for p in PROVIDERS},'email_ready':s.email_login_enabled() and (s.email_ready() or not s.PRODUCTION)}
 
     @app.post('/api/auth/oauth/{provider}/start')
     def start(provider: str, body: Start, request: Request):

@@ -256,7 +256,7 @@ def config(): return {'development':not PRODUCTION,'payments':False,'match_batch
 
 @app.post('/api/auth/code')
 def send_code(body: Login, request: Request):
-    if PRODUCTION and not email_ready():
+    if PRODUCTION and (not email_login_enabled() or not email_ready()):
         fail('이메일 인증은 준비 중입니다. 카카오 또는 Google 로그인으로 시작해 주세요.',503)
     email = body.email.lower()
     if not social_auth.real_email(email): fail('이메일 주소를 확인해 주세요.')
