@@ -1,0 +1,15 @@
+# 콘셉트 이미지 제작 기록
+
+제작: 2026-09-26, 내장 imagegen. 실제 상품·매장·고객 프로젝트를 촬영한 사진이 아닌 가상 브랜드 콘셉트다. PNG는 생성 원본, WebP는 품질 90으로 인코딩한 웹용 파일이다. 웹용 3장 합계 566,884 bytes.
+
+## moru.png / moru.webp
+
+Create a high-end photorealistic graphic-design portfolio photograph, landscape 3:2. An original fictional independent Korean coffee shop brand called 'moru' (exact lowercase Latin word), storefront wayfinding/signage design. Close-up three-quarter angle of a small brushed stainless-steel rectangular projecting sign with the black word moru in a beautiful confident geometric sans logotype, small blue square detail. The sign projects from an off-white plaster cafe facade, with a glimpse of large warm wooden window frame and subtle blurred reflections, street-level Seoul neighborhood independent cafe. Daylight, real lens, soft directional sunlight, delicate surface texture, sophisticated architectural photography with restrained grain, no people. Composition: the sign prominent in upper middle, storefront occupies full frame, natural crop. Editorial brand studio portfolio, not a promotional banner, no UI, no extra typography, no slogans, no badges, no watermarks. This is a fictional concept mockup for a marketplace interface, not a real client project.
+
+## still.png / still.webp
+
+A meticulously art-directed editorial product photograph for an original fictional skincare brand called 'still'. Wide landscape 3:2. One tall translucent pale amber glass pump bottle and a short matching frosted glass cream jar on a soft warm peach seamless studio surface. Labels have precise minimalist dark espresso sans-serif typography, large lowercase 'still', tiny 'DAILY SERUM' on the bottle, 'BARRIER CREAM' on jar. Sculptural hard daylight from upper left creates an architectural shadow. A thin translucent sheer fabric edge at lower right, restrained composition, bottle on right two-thirds of frame leaving one-third negative space left. Expensive independent brand portfolio, realistic glass reflections, delicate liquid, no floating objects, no CGI sheen, no generic AI embellishments, no leaves, no splashes, no badges, no extra graphics, no watermark. This is a concept product visual for a design marketplace demo, not a real product.
+
+## ondo.png / ondo.webp
+
+High-end editorial brand identity product photograph, landscape 3:2. Original fictional specialty tea brand 'ONDO'. A small open muted moss-green cardboard tea box, an ivory tea envelope with large forest-green ONDO lettering, a low handmade ceramic cup of tea and a few tea leaves, arranged carefully on a cool pale gray-green tabletop. Near-overhead angle, modern Japanese/Korean graphic design portfolio art direction, strong typographic packaging with 'ONDO' and small 'TEA FOR EVERYDAY' only, refined light olive and pale yellow color blocking on packaging, soft sunlight and authentic tactile paper, subtle realistic imperfections. No hands, no plants, no badges, no watermark, no web UI, no decoration. Composition clear and attractive at small thumbnail size. This is an original fictional concept project for a design marketplace demo.

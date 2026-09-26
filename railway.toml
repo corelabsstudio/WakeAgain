@@ -1,8 +1,6 @@
 [build]
-# Prefer Dockerfile so PORT is expanded via shell CMD (nixpacks/$PORT literal breaks uvicorn).
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 120

@@ -1,25 +1,10 @@
 FROM python:3.12-slim
-
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV DATA_DIR=/data
-
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_ENV=production MATCH_DATA_DIR=/data/matching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY server.py .
-COPY wakeagain ./wakeagain
+COPY server.py ops.py portfolio_import.py service_features.py social_auth.py alimtalk.py collaboration.py price_sources.json ./
 COPY public ./public
-# Optional: bake non-secret defaults only; secrets via Railway Variables
-ENV AUCTION_SCHEDULER=1
-ENV EMAIL_DEV_MODE=0
-ENV EMAIL_CODE_FALLBACK=0
-
-RUN mkdir -p /data
-# Note: Railway rejects Dockerfile VOLUME — use dashboard Volume mount on /data if needed
-
+RUN mkdir -p /data/matching
 EXPOSE 8080
-# Railway injects PORT; local default 8080
-# Railway sets PORT; shell form so variable expands (exec form would not)
-CMD sh -c "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"
+CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]

@@ -1,5 +1,0 @@
-﻿WakeAgain Daily SEO Trigger (backup log only)
-time: 2026-08-13T09:05:01.8104074+09:00
-prompt: C:\Users\hysoo\projects\WakeAgain\docs\marketing\DAILY_SEO_PROMPT.md
-primary: Grok durable scheduler — daily SEO (not this PS1)
-fallback: Open Grok and say: 웨이크어게인 오늘 블로그 올려

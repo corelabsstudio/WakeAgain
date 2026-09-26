@@ -1,0 +1,6 @@
+[
+  {"id":"soomgo-logo","category":"logo","platform":"숨고","url":"https://soomgo.com/prices/로고-디자인","checked":"2026-09-26","min":50000,"average":100000,"max":300000,"max_open":false,"note":"숨고가 공개한 고수 견적 기반 안내. 작업 조건이 혼합된 분야 전체 값. 집계 기간·표본 수 미공개.","enabled":true},
+  {"id":"kmong-logo","category":"logo","platform":"크몽","url":"https://kmong.com/prices/로고-디자인","checked":"2026-09-26","min":30000,"average":120000,"max":240000,"max_open":true,"note":"2026-01-23 공개 안내의 대략적인 금액. 최고 구간은 24만원 이상으로 상한이 아님. 고급 브랜딩 등 다른 범위 포함. 집계 기간·표본 수 미공개.","enabled":true},
+  {"id":"kmong-sign","category":"sign","platform":"크몽","url":"https://kmong.com/prices/간판-디자인","checked":"2026-09-26","min":30000,"average":90000,"max":190000,"max_open":true,"note":"2025-09-17 공개 안내의 3만·9만·19만원대. 높은 구간은 제작 연계·시공 설계가 섞여 있음. 우리 서비스의 디자인 파일 단독 가격으로 해석하지 마세요. 표본 수 미공개.","enabled":true},
+  {"id":"kmong-detail","category":"detail","platform":"크몽","url":"https://kmong.com/prices/상세페이지","checked":"2026-09-26","min":19000,"average":200000,"max":540000,"max_open":true,"note":"2025-09-17 공개 안내. 최저는 픽셀 단위 기본형, 높은 구간은 촬영 포함 패키지로 단위·분량이 서로 다름. 전체 의뢰의 최저/상한을 보장하지 않음. 표본 수 미공개.","enabled":true}
+]
