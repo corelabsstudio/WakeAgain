@@ -5,7 +5,7 @@ workspaceRoot.innerHTML='<aside id="workspace-navigation" aria-label="작업 공
 $('#app-dialog').before(workspaceRoot);
 const pageDialog=$('#app-dialog'),dialogHome=pageDialog.parentNode,originalShow=show,originalClose=close;
 const routes={portfolio:'내 작업물',requests:'내 의뢰',inbox:'받은 의뢰',notices:'알림',templates:'저장한 견적서',profile:'내 소개',availability:'작업 조건',settings:'수신 시간·이메일',account:'로그인·연락처',alimtalk:'카카오 알림톡',admin:'운영 관리',preferences:'내 정보',requesthub:'의뢰'};
-const groups=[['작업물',[['portfolio','내 작업물']]],['의뢰·채팅',[['requests','내 의뢰'],['inbox','받은 의뢰'],['notices','알림']]],['견적',[['templates','저장한 견적서']]],['설정',[['preferences','계정·작업·알림 설정']]]];
+const groups=[['작업',[['portfolio','내 작업물']]],['의뢰',[['inbox','받은 의뢰'],['requests','내 의뢰']]],['관리',[['templates','저장한 견적서'],['notices','알림'],['preferences','설정']]]];
 function mobileSection(){if(/^(chat\/|workspace\/conversations)/.test(workspaceRoute))return 'conversations';if(/^(request\/|invite\/|brief\/|direct\/|quote\/|workspace\/(requests|inbox|requesthub))/.test(workspaceRoute))return 'requesthub';if(/^(work\/|workspace\/portfolio)/.test(workspaceRoute))return 'portfolio';return 'preferences';}
 function navigation(){
  if(!user){$('#workspace-navigation').innerHTML='<a class="workspace-home" href="#explore">← 작업 둘러보기</a><p class="workspace-user">전문가 프로필</p>';return;}
@@ -71,9 +71,8 @@ dashboard=async function(tab='portfolio'){
   }
   await oldDashboard(tab);$('.app-tabs')?.remove();$('#app-title').textContent=routes[tab];document.title=routes[tab]+' · WakeAgain';
   if(['profile','availability'].includes(tab))attachFormDraft('workspace/'+tab);
-  if(tab==='portfolio'){
-   const works=await api('/my/portfolios');const resume=draftRead('work/new');
-   if(!works.length)$('#app-content').insertAdjacentHTML('afterbegin',`<section class="next-step"><span>첫 작업 등록</span><h3>${resume?'작성하던 작업이 있습니다.':'다른 곳에 올린 작업도 가져오세요.'}</h3><p>링크를 가져오거나 이미지를 올리고, 공개할 내용을 확인하면 됩니다.</p><a class="button primary" href="#/work/new">${resume?'작성 이어가기':'첫 작업 등록하기'} →</a></section>`);
+  if(tab==='portfolio'&&draftRead('work/new')){
+   const link=$('.portfolio-empty .button');if(link)link.textContent='작성하던 작업 이어가기 →';
   }
  });
 };

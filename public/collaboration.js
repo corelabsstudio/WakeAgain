@@ -25,8 +25,11 @@ briefForm=async function(data={},key=null){
 };
 async function readinessPanel(){
  const r=await api('/my/readiness');
- if(r.accepting)return `<section class="readiness readiness-compact"><strong>새 의뢰를 받고 있습니다.</strong><a href="#/expert/${user.id}">내 공개 프로필 보기 →</a><details><summary>수신 설정 확인</summary><a href="#/workspace/profile">의뢰 수신 설정</a> · <a href="#/workspace/alimtalk">외부 알림 ${r.external_notifications?'설정 보기':'연결 확인'}</a></details></section>`;
- return `<section class="readiness"><h3>${r.accepting?'의뢰를 받고 있습니다':r.published?'작업은 공개됐지만 아직 의뢰를 받지 않습니다':'첫 의뢰를 받을 준비를 해보세요'}</h3><ol>${[[r.published,'작업물 공개','portfolio'],[r.schedule,'작업 조건 설정','availability'],[r.external_notifications,'외부 알림 준비','alimtalk']].map(([ok,title,key])=>`<li><span>${ok?'완료':'확인 필요'}</span><a href="#/workspace/${key}">${title} →</a></li>`).join('')}</ol><p class="subtle">사이트 알림은 기본 제공됩니다. 외부 알림은 실제 발송 연결과 수신 설정이 필요합니다.</p>${!r.accepting?`<button class="button primary" data-action="activate-expert" ${r.can_activate?'':'disabled'}>의뢰 받기 시작</button>`:`<a href="#/workspace/profile">의뢰 수신 설정 변경 →</a>`}${r.published?`<a class="text-button" href="#/expert/${user.id}">내 공개 프로필 보기 →</a>`:''}</section>`;
+ if(!r.published)return '';
+ if(r.accepting)return `<section class="readiness-line"><p><strong>새 의뢰를 받고 있습니다.</strong></p><a href="#/expert/${user.id}">공개 프로필 보기 →</a></section>`;
+ if(!r.profile)return `<section class="readiness-line"><p>작업물은 공개 중입니다. 소개를 입력하면 의뢰를 받을 수 있습니다.</p><a href="#/workspace/profile">소개 입력 →</a></section>`;
+ if(!r.schedule)return `<section class="readiness-line"><p>작업물은 공개 중입니다. 작업 조건을 설정하면 의뢰를 받을 수 있습니다.</p><a href="#/workspace/availability">작업 조건 설정 →</a></section>`;
+ return `<section class="readiness-line"><p>작업물과 작업 조건을 공개했습니다. 이제 새 의뢰를 받을 수 있습니다.</p><button class="button primary" data-action="activate-expert">의뢰 받기</button></section>`;
 }
 actions['activate-expert']=async()=>{await post('/my/activate');user=await api('/me');await dashboard('portfolio');toast('의뢰 받기를 시작했습니다.');};
 const collaborationDashboard=dashboard;
