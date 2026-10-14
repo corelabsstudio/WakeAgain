@@ -9,8 +9,8 @@ const concepts = [
 function artwork(id) {
   if(extraArt[id]) return extraArt[id];
   if (id === 'ott') return '<div class="artwork art-ott"><div class="art-top"><span>OTT. EVERYDAY OBJECTS</span><span>BRAND IDENTITY</span></div><strong class="ott-logo">ott<i>·</i></strong><div class="art-bottom"><span>ordinary things,<br>thoughtfully made.</span><span class="dot-palette"><i></i><i></i><i></i></span></div></div>';
-  if (id === 'moru') return '<div class="artwork art-photo"><img src="assets/moru.webp" alt="moru 카페의 금속 간판 콘셉트" loading="lazy"><span class="photo-label">MORU COFFEE / SIGN DESIGN</span></div>';
-  if (id === 'still') return '<div class="artwork art-still"><div class="still-page"><span class="still-wordmark">still.</span><h4>조금 더 단순한,<br>매일의 루틴.</h4><p>피부에 닿는 순간부터<br>가볍고 편안하게.</p><span class="page-rule"></span><small>YOUR DAILY ESSENTIALS</small></div><img src="assets/still.webp" alt="스킨케어 제품과 소개 문구를 배치한 상세페이지 콘셉트" loading="lazy"></div>';
+  if (id === 'moru') return '<div class="artwork art-photo"><img src="/assets/moru.webp" alt="moru 카페의 금속 간판 콘셉트" loading="lazy"><span class="photo-label">MORU COFFEE / SIGN DESIGN</span></div>';
+  if (id === 'still') return '<div class="artwork art-still"><div class="still-page"><span class="still-wordmark">still.</span><h4>조금 더 단순한,<br>매일의 루틴.</h4><p>피부에 닿는 순간부터<br>가볍고 편안하게.</p><span class="page-rule"></span><small>YOUR DAILY ESSENTIALS</small></div><img src="/assets/still.webp" alt="스킨케어 제품과 소개 문구를 배치한 상세페이지 콘셉트" loading="lazy"></div>';
   if (id === 'form') return '<div class="artwork art-form"><div class="form-top"><span>FORM & FUNCTION</span><span>IDENTITY STUDY</span></div><div class="form-frame"></div><div class="form-wordmark"><b>form</b></div><div class="form-bottom"><span>Objects for a considered life.</span><span>F / F</span></div></div>';
-  return '<div class="artwork art-ondo"><div class="ondo-copy"><b>ONDO</b><span>오늘의 온도,<br>한 잔의 차.</span><small>TEA FOR EVERYDAY</small></div><img src="assets/ondo.webp" alt="차 패키지 사진과 제목으로 구성한 ONDO 상품 소개 콘셉트" loading="lazy"></div>';
+  return '<div class="artwork art-ondo"><div class="ondo-copy"><b>ONDO</b><span>오늘의 온도,<br>한 잔의 차.</span><small>TEA FOR EVERYDAY</small></div><img src="/assets/ondo.webp" alt="차 패키지 사진과 제목으로 구성한 ONDO 상품 소개 콘셉트" loading="lazy"></div>';
 }

@@ -3,7 +3,7 @@
 let workspaceRole='client';
 const workspaceFilters={};
 const deskIcons={portfolio:'portfolio',requests:'request',inbox:'request',templates:'quote',conversations:'chat',notices:'notice',statistics:'quote',preferences:'settings',profile:'portfolio',availability:'settings',account:'settings',settings:'settings',alimtalk:'notice'};
-function deskIcon(key,cls=''){return `<img class="desk-icon ${cls}" src="assets/workspace/${deskIcons[key]||key||'request'}.webp" alt="" width="64" height="64" aria-hidden="true">`;}
+function deskIcon(key,cls=''){return `<img class="desk-icon ${cls}" src="/assets/workspace/${deskIcons[key]||key||'request'}.webp" alt="" width="64" height="64" aria-hidden="true">`;}
 function defaultWorkspaceTab(){try{return localStorage.getItem('wa.role.'+user?.id)==='expert'?'portfolio':'requests';}catch{return user?.profile?'portfolio':'requests';}}
 function deskEmpty(kind,title,description,action=''){return `<section class="desk-empty">${deskIcon(kind)}<h3>${esc(title)}</h3><p>${esc(description)}</p>${action?`<div class="desk-empty-action">${action}</div>`:''}</section>`;}
 const baseEmpty=empty;

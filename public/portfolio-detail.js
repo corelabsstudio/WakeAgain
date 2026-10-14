@@ -11,9 +11,9 @@ detail=function(id){
  const mobile=sample?$('.case-phone',visual).outerHTML:null;
  const images=sample?[]:(p.images?.length?p.images:[p.image]);
  const slides=sample?[
-  {label:'홈페이지 시안',html:desktop,thumb:'assets/concepts/moru-interior.png'},
-  {label:'모바일 시안',html:mobile,thumb:'assets/concepts/moru-interior.png'},
-  {label:'메뉴 사진',html:'<img src="assets/concepts/moru-coffee.png" alt="메뉴 사진 콘셉트">',thumb:'assets/concepts/moru-coffee.png'}
+  {label:'홈페이지 시안',html:desktop,thumb:'/assets/concepts/moru-interior.png'},
+  {label:'모바일 시안',html:mobile,thumb:'/assets/concepts/moru-interior.png'},
+  {label:'메뉴 사진',html:'<img src="/assets/concepts/moru-coffee.png" alt="메뉴 사진 콘셉트">',thumb:'/assets/concepts/moru-coffee.png'}
  ]:images.map((src,i)=>({label:i===0?'대표 이미지':'작업 이미지 '+(i+1),src,thumb:src}));
  visual.innerHTML=`<section class="portfolio-gallery" aria-label="작업 포트폴리오"><div class="portfolio-gallery-head"><h2>포트폴리오</h2><button type="button" data-gallery-expand>크게 보기 ↗</button></div><div class="portfolio-stage" tabindex="0" aria-label="선택한 작업 이미지"></div><div class="portfolio-controls"><button type="button" data-gallery-prev aria-label="이전 작업 이미지">←</button><span role="status" aria-live="polite"></span><button type="button" data-gallery-next aria-label="다음 작업 이미지">→</button></div><div class="portfolio-thumbs">${slides.map((s,i)=>`<button type="button" data-gallery-index="${i}" aria-label="${esc(s.label)} 선택" aria-pressed="false"><img src="${esc(s.thumb)}" alt="" width="96" height="64"><span>${esc(s.label)}</span></button>`).join('')}</div></section>`;
  let index=0;
