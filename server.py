@@ -33,6 +33,7 @@ import alimtalk
 import collaboration
 import curation_routes
 import value_catalog
+import manual_catalog
 
 MATCHING_RETIRED = True
 
@@ -264,7 +265,7 @@ def health(): return {'ok':True,'service':'curation','matching_retired':True}
 
 @app.get('/api/curation/catalog')
 def curated_catalog():
-    try:return value_catalog.public_catalog(DATA/'curation',ROOT/'public')
+    try:return manual_catalog.merge_catalog(value_catalog.public_catalog(DATA/'curation',ROOT/'public'),ROOT/'public')
     except (OSError,ValueError,TypeError,KeyError):
         return {'products':[],'programs':[],'providers':value_catalog.PROVIDERS,'status':{'state':'configuration_error','collectionEnabled':False,'autoPublish':False,'connectedSources':0,'published':0}}
 
