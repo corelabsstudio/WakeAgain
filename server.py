@@ -31,6 +31,9 @@ import service_features as features
 import social_auth
 import alimtalk
 import collaboration
+import curation_routes
+
+MATCHING_RETIRED = True
 
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get('MATCH_DATA_DIR', ROOT / 'data'))
@@ -107,11 +110,12 @@ async def lifespan(app):
     if alimtalk.live(__import__(__name__)) and (not alimtalk.configured() or not os.getenv('SOLAPI_SMS_FROM') or not all(alimtalk.template(e) for e in alimtalk.EVENTS)):
         raise RuntimeError('Live Alimtalk requires SOLAPI credentials, verified SMS sender, channel and all approved template IDs')
     init_db()
-    task=asyncio.create_task(maintenance_loop())
+    task=None if MATCHING_RETIRED else asyncio.create_task(maintenance_loop())
     try: yield
     finally:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):await task
+        if task is not None:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):await task
 
 def maintain():
     now=time.time()
@@ -172,6 +176,7 @@ class BodyLimit:
 
 app = FastAPI(title='WakeAgain Matching', lifespan=lifespan, docs_url=None, redoc_url=None)
 app.add_middleware(BodyLimit)
+curation_routes.install(app)
 
 @app.middleware('http')
 async def security(request: Request, call_next):
@@ -250,7 +255,7 @@ class Verify(Login):
     name: str = Field(min_length=2,max_length=40)
 
 @app.get('/health')
-def health(): return {'ok':True,'service':'matching'}
+def health(): return {'ok':True,'service':'curation','matching_retired':True}
 
 @app.get('/api/config')
 def config(): return {'development':not PRODUCTION,'payments':False,'match_batch':BATCH,'remind_days':REMIND_DAYS,'pause_days':PAUSE_DAYS}
