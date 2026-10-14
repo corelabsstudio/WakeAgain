@@ -18,7 +18,7 @@
   else tracking=Array.isArray(program.requiredTrackingParams)&&program.requiredTrackingParams.length>0&&program.requiredTrackingParams.every(key=>url.searchParams.get(key));
   if(!tracking)return blocked('사용자 추적 링크 확인 전');
   if(!product.linkVerified)return blocked('발급 링크 검증 전');
-  return {enabled:true,reason:'판매처에서 구매하기',url:url.href};
+  return {enabled:true,reason:'판매처에서 구매하기',url:product.affiliateUrl};
  }
  function publicProducts(config){return config.products.filter(item=>!item.demo&&item.affiliateApproved===true);}
  function compareProducts(products,ids){return ids.slice(0,3).map(id=>products.find(item=>item.id===id)).filter(Boolean);}

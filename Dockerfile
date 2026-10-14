@@ -3,7 +3,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 APP_ENV=production MATCH_DATA_DIR=/data/matching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY server.py ops.py portfolio_import.py service_features.py social_auth.py alimtalk.py collaboration.py curation_routes.py price_sources.json ./
+COPY server.py ops.py portfolio_import.py service_features.py social_auth.py alimtalk.py collaboration.py curation_routes.py value_catalog.py price_sources.json ./
 COPY public ./public
 RUN mkdir -p /data/matching
 EXPOSE 8080

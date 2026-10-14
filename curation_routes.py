@@ -8,6 +8,8 @@ PUBLIC_PREFIXES = ('/curation/', '/icons/', '/legal/')
 
 
 def retired_action(path: str, method: str = 'GET') -> str | None:
+    if path == '/api/curation/catalog' and method in ('GET','HEAD'):
+        return None
     if path in PUBLIC_FILES or path.startswith(PUBLIC_PREFIXES):
         return None
     if path.startswith(AUTH_PATHS) or path in AUTH_READ_PATHS:

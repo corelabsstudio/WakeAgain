@@ -32,6 +32,7 @@ import social_auth
 import alimtalk
 import collaboration
 import curation_routes
+import value_catalog
 
 MATCHING_RETIRED = True
 
@@ -111,8 +112,12 @@ async def lifespan(app):
         raise RuntimeError('Live Alimtalk requires SOLAPI credentials, verified SMS sender, channel and all approved template IDs')
     init_db()
     task=None if MATCHING_RETIRED else asyncio.create_task(maintenance_loop())
+    catalog_task=asyncio.create_task(value_catalog.scheduler(DATA/'curation',ROOT/'public')) if value_catalog.settings(DATA/'curation').get('enabled') is True else None
     try: yield
     finally:
+        if catalog_task is not None:
+            catalog_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):await catalog_task
         if task is not None:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):await task
@@ -256,6 +261,12 @@ class Verify(Login):
 
 @app.get('/health')
 def health(): return {'ok':True,'service':'curation','matching_retired':True}
+
+@app.get('/api/curation/catalog')
+def curated_catalog():
+    try:return value_catalog.public_catalog(DATA/'curation',ROOT/'public')
+    except (OSError,ValueError,TypeError,KeyError):
+        return {'products':[],'programs':[],'providers':value_catalog.PROVIDERS,'status':{'state':'configuration_error','collectionEnabled':False,'autoPublish':False,'connectedSources':0,'published':0}}
 
 @app.get('/api/config')
 def config(): return {'development':not PRODUCTION,'payments':False,'match_batch':BATCH,'remind_days':REMIND_DAYS,'pause_days':PAUSE_DAYS}
